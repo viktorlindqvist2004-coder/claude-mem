@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import BadgeRow from "./BadgeRow";
 import AreaImage from "./AreaImage";
+import TextRollButton from "./TextRollButton";
 import { BRALANDA_HOUSE, BRALANDA_SORBYN } from "../images";
 
 export default function CaseStudies() {
@@ -77,6 +78,10 @@ export default function CaseStudies() {
               Sörbyn
             </h3>
           </a>
+        </div>
+
+        <div className="mt-10 px-5 sm:mt-14 sm:px-8 lg:px-12">
+          <TextRollButton label="Våra lägenheter" href="#/vara-lagenheter" />
         </div>
       </div>
     </section>

@@ -1,32 +1,33 @@
 import { useEffect } from "react";
-import Hero from "./components/Hero";
-import About from "./components/About";
-import CaseStudies from "./components/CaseStudies";
-import Contact from "./components/Contact";
+import Home from "./pages/Home";
 import AboutPage from "./pages/AboutPage";
+import ApartmentsPage from "./pages/ApartmentsPage";
 import { useHashRoute } from "./hooks/useHashRoute";
 
 export default function App() {
   const route = useHashRoute();
 
   useEffect(() => {
-    if (route.page === "om-oss") {
+    if (route.page === "home") {
+      // Startsidan: scrolla till rätt sektion (även efter byte från annan sida).
+      if (route.anchor) document.getElementById(route.anchor)?.scrollIntoView();
+    } else {
       // Dedikerad sida: börja alltid högst upp.
       window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    } else if (route.anchor) {
-      // Startsidan: scrolla till rätt sektion (även efter byte från annan sida).
-      document.getElementById(route.anchor)?.scrollIntoView();
     }
   }, [route]);
 
-  if (route.page === "om-oss") return <AboutPage />;
-
+  // key per sida => sidan monteras om vid byte och spelar upp fade-in-animationen.
+  // Ankarbyten inom startsidan behåller samma key och triggar därför ingen animation.
   return (
-    <main>
-      <Hero />
-      <About />
-      <CaseStudies />
-      <Contact />
-    </main>
+    <div key={route.page} className="page-enter">
+      {route.page === "om-oss" ? (
+        <AboutPage />
+      ) : route.page === "lagenheter" ? (
+        <ApartmentsPage />
+      ) : (
+        <Home />
+      )}
+    </div>
   );
 }

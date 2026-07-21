@@ -26,7 +26,7 @@ export default function About() {
             nära grannar som blir vänner.
           </p>
           <div className="mt-6">
-            <TextRollButton label="Läs mer om oss" href="#kontakt" />
+            <TextRollButton label="Läs mer om oss" href="#/om-oss" />
           </div>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:gap-5">
             <AreaImage
@@ -61,7 +61,7 @@ export default function About() {
                 inpå knuten. Här bor du tryggt och bekvämt.
               </p>
               <div className="mt-6">
-                <TextRollButton label="Läs mer om oss" href="#kontakt" />
+                <TextRollButton label="Läs mer om oss" href="#/om-oss" />
               </div>
             </div>
           </div>

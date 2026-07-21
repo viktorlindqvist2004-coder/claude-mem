@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Contact from "../components/Contact";
 import AreaImage from "../components/AreaImage";
-import { BRALANDA_HOUSE, BRALANDA_CHURCH } from "../images";
+import { SIKHALL, BRALANDA_OVERSIKT } from "../images";
 
 const VALUES = [
   {
@@ -60,6 +60,17 @@ export default function AboutPage() {
             det handlar om att du ska känna dig trygg, sedd och väl omhändertagen
             varje dag du bor hos oss.
           </p>
+
+          <figure className="mt-10 sm:mt-14">
+            <AreaImage
+              src={SIKHALL}
+              alt="Flygbild över Sikhall vid Vänern nära Brålanda"
+              className="aspect-[16/10] w-full rounded-2xl object-cover sm:aspect-[16/9] sm:rounded-3xl"
+            />
+            <figcaption className="mt-3 text-[13px] text-gray-500 sm:text-[14px]">
+              Naturnära boende – Sikhall vid Vänern, en kort tur från Brålanda.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
@@ -96,15 +107,10 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-5 sm:flex-row lg:flex-col">
+          <div>
             <AreaImage
-              src={BRALANDA_HOUSE}
-              alt="Bostadshus i centrala Brålanda"
-              className="aspect-[4/3] w-full rounded-2xl object-cover"
-            />
-            <AreaImage
-              src={BRALANDA_CHURCH}
-              alt="Brålanda kyrka i ortens centrum"
+              src={BRALANDA_OVERSIKT}
+              alt="Översikt över Brålanda med den karaktäristiska silon"
               className="aspect-[4/3] w-full rounded-2xl object-cover"
             />
           </div>

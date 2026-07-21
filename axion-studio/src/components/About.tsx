@@ -1,7 +1,7 @@
 import BadgeRow from "./BadgeRow";
 import TextRollButton from "./TextRollButton";
 import AreaImage from "./AreaImage";
-import { BRALANDA_CHURCH, DALBOSLATTEN } from "../images";
+import { HUMLOR_MURAL, SIKHALL } from "../images";
 
 export default function About() {
   return (
@@ -30,13 +30,13 @@ export default function About() {
           </div>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:gap-5">
             <AreaImage
-              src={BRALANDA_CHURCH}
-              alt="Brålanda kyrka i ortens centrum"
+              src={HUMLOR_MURAL}
+              alt="Humlemålningen – gatukonst i Brålanda"
               className="aspect-[438/346] w-full rounded-xl object-cover sm:w-[45%] sm:rounded-2xl"
             />
             <AreaImage
-              src={DALBOSLATTEN}
-              alt="Dalboslätten runt Brålanda"
+              src={SIKHALL}
+              alt="Flygbild över Sikhall vid Vänern nära Brålanda"
               className="aspect-[900/600] w-full rounded-xl object-cover sm:w-[55%] sm:rounded-2xl"
             />
           </div>
@@ -46,8 +46,8 @@ export default function About() {
         <div className="hidden grid-cols-[26%_1fr_48%] items-end gap-6 px-12 lg:grid xl:gap-8">
           <div className="self-end">
             <AreaImage
-              src={BRALANDA_CHURCH}
-              alt="Brålanda kyrka i ortens centrum"
+              src={HUMLOR_MURAL}
+              alt="Humlemålningen – gatukonst i Brålanda"
               className="aspect-[438/346] w-full rounded-2xl object-cover"
             />
           </div>
@@ -67,8 +67,8 @@ export default function About() {
           </div>
           <div className="self-end">
             <AreaImage
-              src={DALBOSLATTEN}
-              alt="Dalboslätten runt Brålanda"
+              src={SIKHALL}
+              alt="Flygbild över Sikhall vid Vänern nära Brålanda"
               className="aspect-[3/2] w-full rounded-2xl object-cover"
             />
           </div>

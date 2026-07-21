@@ -1,7 +1,7 @@
-# Brålanda Bostäder
+# Stolts Fastigheter
 
-En landningssida byggd med React + Vite + Tailwind CSS för **Brålanda
-Bostäder** – ett lokalt fastighetsföretag som hyr ut trygga och trivsamma
+En landningssida byggd med React + Vite + Tailwind CSS för **Stolts
+Fastigheter** – ett lokalt fastighetsföretag som hyr ut trygga och trivsamma
 bostäder i Brålanda, Sverige. Sidan riktar sig särskilt till äldre som
 värdesätter lugn, närhet till service och naturen runt Dalboslätten.
 

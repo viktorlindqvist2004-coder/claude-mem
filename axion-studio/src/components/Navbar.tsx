@@ -16,7 +16,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6 pl-1">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-900 sm:h-10 sm:w-10">
             <span className="text-[10px] font-bold tracking-tight text-white sm:text-[11px]">
-              BB
+              SF
             </span>
           </div>
           <div className="hidden items-center gap-6 md:flex">

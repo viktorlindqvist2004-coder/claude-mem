@@ -5,7 +5,7 @@ import { BRALANDA_CHURCH, DALBOSLATTEN } from "../images";
 
 export default function About() {
   return (
-    <section className="overflow-hidden bg-white pb-12 pt-16 sm:pb-16 sm:pt-20 lg:pb-24 lg:pt-32">
+    <section id="om-oss" className="overflow-hidden bg-[#F2F3F5] pb-12 pt-16 sm:pb-16 sm:pt-20 lg:pb-24 lg:pt-32">
       <div className="mx-auto w-full max-w-[1440px]">
         <BadgeRow number="1" label="Välkommen hem" borderClass="border-gray-200" />
 
@@ -26,7 +26,7 @@ export default function About() {
             nära grannar som blir vänner.
           </p>
           <div className="mt-6">
-            <TextRollButton label="Läs mer om oss" />
+            <TextRollButton label="Läs mer om oss" href="#kontakt" />
           </div>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:gap-5">
             <AreaImage
@@ -61,7 +61,7 @@ export default function About() {
                 inpå knuten. Här bor du tryggt och bekvämt.
               </p>
               <div className="mt-6">
-                <TextRollButton label="Läs mer om oss" />
+                <TextRollButton label="Läs mer om oss" href="#kontakt" />
               </div>
             </div>
           </div>

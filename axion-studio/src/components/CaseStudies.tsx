@@ -5,7 +5,7 @@ import { BRALANDA_HOUSE, BRALANDA_SORBYN } from "../images";
 
 export default function CaseStudies() {
   return (
-    <section className="bg-[#F5F5F5] pb-16 pt-16 sm:pb-20 sm:pt-20 lg:pb-28 lg:pt-28">
+    <section id="bostader" className="bg-[#E4E7EB] pb-16 pt-16 sm:pb-20 sm:pt-20 lg:pb-28 lg:pt-28">
       <div className="mx-auto w-full max-w-[1440px]">
         <BadgeRow number="2" label="Våra bostäder" borderClass="border-gray-300" />
 
@@ -24,7 +24,7 @@ export default function CaseStudies() {
 
         <div className="grid grid-cols-1 gap-5 px-5 sm:gap-6 sm:px-8 md:grid-cols-2 lg:gap-7 lg:px-12">
           {/* Kort 1: Storgatan */}
-          <div>
+          <a href="#kontakt" className="block">
             <div className="group relative aspect-[329/246] cursor-pointer overflow-hidden rounded-2xl bg-[#1a1d2e]">
               <AreaImage
                 src={BRALANDA_HOUSE}
@@ -47,10 +47,10 @@ export default function CaseStudies() {
             <h3 className="mt-1 text-[14px] font-semibold text-gray-900 sm:text-[15px]">
               Storgatan
             </h3>
-          </div>
+          </a>
 
           {/* Kort 2: Sörbyn */}
-          <div>
+          <a href="#kontakt" className="block">
             <div className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-[#6b6b6b]">
               <AreaImage
                 src={BRALANDA_SORBYN}
@@ -76,7 +76,7 @@ export default function CaseStudies() {
             <h3 className="mt-1 text-[14px] font-semibold text-gray-900 sm:text-[15px]">
               Sörbyn
             </h3>
-          </div>
+          </a>
         </div>
       </div>
     </section>

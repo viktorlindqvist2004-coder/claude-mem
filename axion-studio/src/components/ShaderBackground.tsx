@@ -8,13 +8,13 @@ export default function ShaderBackground() {
   return (
     <div className="absolute inset-0 z-10 pointer-events-none">
       <Shader className="w-full h-full" style={{ width: "100%", height: "100%" }}>
-        <Swirl colorA="#ffffff" colorB="#f0f0f0" detail={1.7} />
+        <Swirl colorA="#f5f6f8" colorB="#dfe3e8" detail={1.7} />
         <ChromaFlow
-          baseColor="#ffffff"
-          downColor="#ff5f03"
-          leftColor="#ff5f03"
-          rightColor="#ff5f03"
-          upColor="#ff5f03"
+          baseColor="#f5f6f8"
+          downColor="#2f4d78"
+          leftColor="#2f4d78"
+          rightColor="#2f4d78"
+          upColor="#2f4d78"
           momentum={13}
           radius={3.5}
         />

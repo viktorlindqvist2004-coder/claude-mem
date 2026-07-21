@@ -18,7 +18,7 @@ export default function AreaImage({
   if (failed) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-[#F26522]/15 via-[#EFEFEF] to-[#E8704E]/20 ${className ?? ""}`}
+        className={`flex items-center justify-center bg-gradient-to-br from-[#1E3A5F]/15 via-[#EAEBEE] to-[#2E4B72]/20 ${className ?? ""}`}
         role="img"
         aria-label={alt}
       >

@@ -5,7 +5,7 @@ import PartnerIcon from "./PartnerIcon";
 
 export default function Hero() {
   return (
-    <section className="relative flex min-h-screen flex-col bg-[#EFEFEF]">
+    <section id="hem" className="relative flex min-h-screen flex-col bg-[#E7E9EC]">
       <ShaderBackground />
 
       <Navbar />
@@ -39,10 +39,10 @@ export default function Hero() {
         </h1>
 
         <div className="mt-8 flex flex-col gap-4 sm:mt-12 sm:flex-row sm:gap-5">
-          <TextRollButton label="Se lediga bostäder" />
+          <TextRollButton label="Se lediga bostäder" href="#bostader" />
 
           <div className="flex w-fit items-center gap-2 rounded-[4px] bg-white px-3 py-2 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-            <PartnerIcon className="h-5 w-5 fill-current text-[#E8704E] sm:h-6 sm:w-6" />
+            <PartnerIcon className="h-5 w-5 fill-current text-[#1E3A5F] sm:h-6 sm:w-6" />
             <span className="text-[13px] font-medium text-gray-900 sm:text-[14px]">
               Trygg hyresvärd
             </span>

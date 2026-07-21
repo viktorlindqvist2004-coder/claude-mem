@@ -64,8 +64,8 @@ export default function ApartmentsPage() {
           </p>
 
           {/* FILM */}
-          <div className="reveal mt-10 grid gap-6 sm:mt-14 lg:grid-cols-2 lg:gap-8">
-            <figure>
+          <div className="reveal mt-10 flex flex-col gap-12 sm:mt-14 sm:gap-16">
+            <figure className="mx-auto w-full max-w-[1100px]">
               <video
                 src={interiorVideo}
                 controls
@@ -77,7 +77,7 @@ export default function ApartmentsPage() {
                 Inredning och känsla i våra lägenheter.
               </figcaption>
             </figure>
-            <figure>
+            <figure className="mx-auto w-full max-w-[1100px]">
               <video
                 src={tourVideo}
                 controls

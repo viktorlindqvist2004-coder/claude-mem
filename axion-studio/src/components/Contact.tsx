@@ -39,7 +39,7 @@ export default function Contact() {
               href="mailto:info@stoltsfastigheter.se"
               className="group mt-8 inline-flex w-fit items-center gap-3 rounded-full bg-white py-2 pl-5 pr-2 text-[13px] font-medium text-[#1E3A5F] transition-colors duration-300 hover:bg-white/90 sm:pl-6 sm:text-[14px]"
             >
-              Boka en visning
+              Kom i kontakt med oss
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1E3A5F] transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-rotate-45 sm:h-8 sm:w-8">
                 <ArrowRight size={16} className="text-white" />
               </span>

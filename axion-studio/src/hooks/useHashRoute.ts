@@ -8,10 +8,14 @@ import { useEffect, useState } from "react";
  * - Vanliga "#sektion"-hash (t.ex. "#bostader") tolkas som scroll-ankare
  *   på startsidan.
  */
-export type Route = { page: "home"; anchor?: string } | { page: "om-oss" };
+export type Route =
+  | { page: "home"; anchor?: string }
+  | { page: "om-oss" }
+  | { page: "lagenheter" };
 
 function parse(hash: string): Route {
   if (hash === "#/om-oss") return { page: "om-oss" };
+  if (hash === "#/vara-lagenheter") return { page: "lagenheter" };
   const anchor =
     hash.startsWith("#") && !hash.startsWith("#/") ? hash.slice(1) : undefined;
   return { page: "home", anchor: anchor || undefined };

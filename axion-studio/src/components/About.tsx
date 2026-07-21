@@ -1,7 +1,7 @@
 import BadgeRow from "./BadgeRow";
 import TextRollButton from "./TextRollButton";
 import AreaImage from "./AreaImage";
-import { HUMLOR_MURAL, SIKHALL } from "../images";
+import { BRALANDA_OVERSIKT, SIKHALL } from "../images";
 
 export default function About() {
   return (
@@ -30,8 +30,8 @@ export default function About() {
           </div>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:gap-5">
             <AreaImage
-              src={HUMLOR_MURAL}
-              alt="Humlemålningen – gatukonst i Brålanda"
+              src={BRALANDA_OVERSIKT}
+              alt="Översikt över Brålanda med den karaktäristiska silon"
               className="aspect-[438/346] w-full rounded-xl object-cover sm:w-[45%] sm:rounded-2xl"
             />
             <AreaImage
@@ -43,26 +43,21 @@ export default function About() {
         </div>
 
         {/* DATOR */}
-        <div className="hidden grid-cols-[26%_1fr_48%] items-end gap-6 px-12 lg:grid xl:gap-8">
+        <div className="hidden grid-cols-[26%_36%_38%] items-end gap-8 px-12 lg:grid xl:gap-10">
           <div className="self-end">
             <AreaImage
-              src={HUMLOR_MURAL}
-              alt="Humlemålningen – gatukonst i Brålanda"
+              src={BRALANDA_OVERSIKT}
+              alt="Översikt över Brålanda med den karaktäristiska silon"
               className="aspect-[438/346] w-full rounded-2xl object-cover"
             />
           </div>
-          <div className="flex justify-end self-start">
-            <div>
-              <p className="text-[16px] font-medium leading-[1.65] text-gray-900 sm:text-[18px] whitespace-nowrap">
-                Vi erbjuder välskötta hyresbostäder mitt i
-                <br />
-                Brålanda — med lugnet, servicen och naturen
-                <br />
-                inpå knuten. Här bor du tryggt och bekvämt.
-              </p>
-              <div className="mt-6">
-                <TextRollButton label="Läs mer om oss" href="#/om-oss" />
-              </div>
+          <div className="self-end pb-1">
+            <p className="text-[19px] font-medium leading-[1.55] text-gray-900 xl:text-[22px]">
+              Vi erbjuder välskötta hyresbostäder mitt i Brålanda — med lugnet,
+              servicen och naturen inpå knuten. Här bor du tryggt och bekvämt.
+            </p>
+            <div className="mt-7">
+              <TextRollButton label="Läs mer om oss" href="#/om-oss" />
             </div>
           </div>
           <div className="self-end">

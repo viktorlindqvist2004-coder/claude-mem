@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Contact from "../components/Contact";
 import AreaImage from "../components/AreaImage";
-import { SIKHALL, BRALANDA_OVERSIKT } from "../images";
+import { SIKHALL, HUMLOR_MURAL } from "../images";
 
 const VALUES = [
   {
@@ -109,8 +109,8 @@ export default function AboutPage() {
 
           <div>
             <AreaImage
-              src={BRALANDA_OVERSIKT}
-              alt="Översikt över Brålanda med den karaktäristiska silon"
+              src={HUMLOR_MURAL}
+              alt="Humlemålningen i Brålanda – lokal gatukonst"
               className="aspect-[4/3] w-full rounded-2xl object-cover"
             />
           </div>

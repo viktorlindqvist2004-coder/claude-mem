@@ -4,7 +4,7 @@ import { useLocalTime } from "../hooks/useLocalTime";
 
 const NAV_LINKS = [
   { label: "Bostäder", href: "#bostader" },
-  { label: "Om oss", href: "#om-oss" },
+  { label: "Om oss", href: "#/om-oss" },
   { label: "Området", href: "#om-oss" },
   { label: "Kontakt", href: "#kontakt" },
 ];

@@ -56,8 +56,8 @@ export default function Navbar() {
           >
             <span className="flex h-[20px] flex-col overflow-hidden">
               <span className="flex h-[20px] flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-translate-y-1/2">
-                <span className="flex h-[20px] items-center">Boka en visning</span>
-                <span className="flex h-[20px] items-center">Boka en visning</span>
+                <span className="flex h-[20px] items-center">Kom i kontakt med oss</span>
+                <span className="flex h-[20px] items-center">Kom i kontakt med oss</span>
               </span>
             </span>
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-rotate-45">

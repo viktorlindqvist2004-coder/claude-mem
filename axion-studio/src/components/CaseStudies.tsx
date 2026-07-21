@@ -61,8 +61,7 @@ export default function CaseStudies() {
             </div>
           </div>
 
-          <div className="reveal mt-10 flex flex-col gap-4 sm:mt-14 sm:flex-row sm:gap-5">
-            <TextRollButton label="Anmäl intresse" href="#kontakt" />
+          <div className="reveal mt-10 sm:mt-14">
             <TextRollButton label="Våra lägenheter" href="#/vara-lagenheter" />
           </div>
         </div>

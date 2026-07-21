@@ -22,12 +22,42 @@ html {
   animation: page-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
+/* Scroll-reveal: element tonar in och glider upp när de kommer i vy. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Mjuk in-zoom på bilder vid hover (kräver overflow-hidden på föräldern). */
+.zoom-img {
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.group:hover .zoom-img {
+  transform: scale(1.05);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
   .page-enter {
     animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .group:hover .zoom-img {
+    transform: none;
   }
 }
 

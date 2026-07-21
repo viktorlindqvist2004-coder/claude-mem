@@ -48,25 +48,27 @@ export default function AboutPage() {
           </div>
 
           <h1
-            className="max-w-[15ch] font-medium leading-[1.08] tracking-[-0.03em] text-gray-900"
+            className="reveal max-w-[15ch] font-medium leading-[1.08] tracking-[-0.03em] text-gray-900"
             style={{ fontSize: "clamp(2rem, 6vw, 4.2rem)" }}
           >
             Hos oss kommer hyresgästen alltid först.
           </h1>
 
-          <p className="mt-8 max-w-2xl text-[16px] leading-[1.7] text-gray-700 sm:mt-10 sm:text-[18px]">
+          <p className="reveal mt-8 max-w-2xl text-[16px] leading-[1.7] text-gray-700 sm:mt-10 sm:text-[18px]">
             Stolts Fastigheter är en liten, lokalt ägd hyresvärd i Brålanda. För
             oss handlar ett boende om långt mer än fyra väggar och ett kontrakt –
             det handlar om att du ska känna dig trygg, sedd och väl omhändertagen
             varje dag du bor hos oss.
           </p>
 
-          <figure className="mt-10 sm:mt-14">
-            <AreaImage
-              src={SIKHALL}
-              alt="Flygbild över Sikhall vid Vänern nära Brålanda"
-              className="aspect-[16/10] w-full rounded-2xl object-cover sm:aspect-[16/9] sm:rounded-3xl"
-            />
+          <figure className="reveal mt-10 sm:mt-14">
+            <div className="group overflow-hidden rounded-2xl sm:rounded-3xl">
+              <AreaImage
+                src={SIKHALL}
+                alt="Flygbild över Sikhall vid Vänern nära Brålanda"
+                className="zoom-img aspect-[16/10] w-full object-cover sm:aspect-[16/9]"
+              />
+            </div>
             <figcaption className="mt-3 text-[13px] text-gray-500 sm:text-[14px]">
               Naturnära boende – Sikhall vid Vänern, en kort tur från Brålanda.
             </figcaption>
@@ -77,7 +79,7 @@ export default function AboutPage() {
       {/* STORY */}
       <section className="bg-[#F2F3F5] py-16 sm:py-20 lg:py-28">
         <div className="mx-auto grid w-full max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-12">
-          <div>
+          <div className="reveal">
             <h2
               className="mb-6 font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-8"
               style={{ fontSize: "clamp(1.5rem, 4vw, 2.6rem)" }}
@@ -107,11 +109,14 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div>
+          <div
+            className="reveal group overflow-hidden rounded-2xl"
+            style={{ transitionDelay: "120ms" }}
+          >
             <AreaImage
               src={HUMLOR_MURAL}
               alt="Humlemålningen i Brålanda – lokal gatukonst"
-              className="aspect-[4/3] w-full rounded-2xl object-cover"
+              className="zoom-img aspect-[4/3] w-full object-cover"
             />
           </div>
         </div>
@@ -121,7 +126,7 @@ export default function AboutPage() {
       <section className="bg-[#E4E7EB] py-16 sm:py-20 lg:py-28">
         <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <h2
-            className="mb-10 max-w-[18ch] font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-14"
+            className="reveal mb-10 max-w-[18ch] font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-14"
             style={{ fontSize: "clamp(1.5rem, 4vw, 2.6rem)" }}
           >
             Så tar vi hand om dig som hyresgäst.
@@ -129,7 +134,11 @@ export default function AboutPage() {
 
           <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:gap-x-16 lg:gap-y-14">
             {VALUES.map((value, i) => (
-              <div key={value.title} className="border-t border-gray-300 pt-6">
+              <div
+                key={value.title}
+                className="reveal border-t border-gray-300 pt-6"
+                style={{ transitionDelay: `${i * 80}ms` }}
+              >
                 <span className="text-[13px] font-semibold text-gray-500">
                   0{i + 1}
                 </span>
@@ -143,7 +152,7 @@ export default function AboutPage() {
             ))}
           </div>
 
-          <div className="mt-14 flex flex-col gap-6 border-t border-gray-300 pt-10 sm:mt-20 sm:flex-row sm:items-center sm:justify-between">
+          <div className="reveal mt-14 flex flex-col gap-6 border-t border-gray-300 pt-10 sm:mt-20 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-xl text-[16px] leading-[1.7] text-gray-800 sm:text-[18px]">
               Vill du veta mer om hur det är att bo hos oss? Vi svarar gärna på
               dina frågor – hör bara av dig.

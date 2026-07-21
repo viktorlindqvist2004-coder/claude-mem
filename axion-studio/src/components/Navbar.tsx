@@ -2,7 +2,12 @@ import { useState } from "react";
 import { ArrowRight, Clock, Menu, X } from "lucide-react";
 import { useLocalTime } from "../hooks/useLocalTime";
 
-const NAV_LINKS = ["Bostäder", "Om oss", "Området", "Kontakt"];
+const NAV_LINKS = [
+  { label: "Bostäder", href: "#bostader" },
+  { label: "Om oss", href: "#om-oss" },
+  { label: "Området", href: "#om-oss" },
+  { label: "Kontakt", href: "#kontakt" },
+];
 
 export default function Navbar() {
   const time = useLocalTime();
@@ -14,19 +19,23 @@ export default function Navbar() {
         <nav className="flex items-center justify-between rounded-full bg-white p-[5px]">
         {/* VÄNSTER: logotyp + navigering */}
         <div className="flex items-center gap-6 pl-1">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-900 sm:h-10 sm:w-10">
+          <a
+            href="#hem"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-900 sm:h-10 sm:w-10"
+            aria-label="Till toppen"
+          >
             <span className="text-[10px] font-bold tracking-tight text-white sm:text-[11px]">
               SF
             </span>
-          </div>
+          </a>
           <div className="hidden items-center gap-6 md:flex">
             {NAV_LINKS.map((link) => (
               <a
-                key={link}
-                href="#"
+                key={link.label}
+                href={link.href}
                 className="text-[14px] text-gray-900 transition-colors duration-300 hover:text-gray-500"
               >
-                {link}
+                {link.label}
               </a>
             ))}
           </div>
@@ -42,7 +51,7 @@ export default function Navbar() {
             <span>{time} i Brålanda</span>
           </div>
           <a
-            href="#"
+            href="#kontakt"
             className="group flex items-center gap-2 rounded-full bg-gray-900 py-2 pl-5 pr-2 text-[13px] font-medium text-white"
           >
             <span className="flex h-[20px] flex-col overflow-hidden">
@@ -122,24 +131,24 @@ function MobileMenu({
         <div className="flex flex-col">
           {NAV_LINKS.map((link) => (
             <a
-              key={link}
-              href="#"
+              key={link.label}
+              href={link.href}
               onClick={onClose}
               className="py-2 text-[28px] font-medium leading-[32px] tracking-[-0.02em] text-gray-900"
             >
-              {link}
+              {link.label}
             </a>
           ))}
         </div>
 
         <a
-          href="#"
+          href="#kontakt"
           onClick={onClose}
-          className="mt-6 flex items-center justify-between rounded-full bg-[#F26522] py-2 pl-6 pr-2 text-[14px] font-medium text-white"
+          className="mt-6 flex items-center justify-between rounded-full bg-[#1E3A5F] py-2 pl-6 pr-2 text-[14px] font-medium text-white"
         >
           Anmäl intresse
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-            <ArrowRight size={16} className="text-[#F26522]" />
+            <ArrowRight size={16} className="text-[#1E3A5F]" />
           </span>
         </a>
       </div>

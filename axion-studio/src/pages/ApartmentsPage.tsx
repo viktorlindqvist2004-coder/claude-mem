@@ -2,7 +2,9 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Contact from "../components/Contact";
 
-const videoSrc = `${import.meta.env.BASE_URL}videos/vara-lagenheter.mp4`;
+const base = import.meta.env.BASE_URL;
+const interiorVideo = `${base}videos/vara-lagenheter.mp4`;
+const tourVideo = `${base}videos/vara-lagenheter-2.mp4`;
 
 const CARE = [
   {
@@ -48,13 +50,13 @@ export default function ApartmentsPage() {
           </div>
 
           <h1
-            className="max-w-[16ch] font-medium leading-[1.08] tracking-[-0.03em] text-gray-900"
+            className="reveal max-w-[16ch] font-medium leading-[1.08] tracking-[-0.03em] text-gray-900"
             style={{ fontSize: "clamp(2rem, 6vw, 4.2rem)" }}
           >
             Välskötta lägenheter, nöjda hyresgäster.
           </h1>
 
-          <p className="mt-8 max-w-2xl text-[16px] leading-[1.7] text-gray-700 sm:mt-10 sm:text-[18px]">
+          <p className="reveal mt-8 max-w-2xl text-[16px] leading-[1.7] text-gray-700 sm:mt-10 sm:text-[18px]">
             Vi tar hand om våra lägenheter som om vi bodde i dem själva. Med
             regelbundet underhåll, snabb service och en genuin omtanke om dig som
             bor hos oss vill vi att ditt hem alltid ska kännas tryggt, fräscht
@@ -62,17 +64,31 @@ export default function ApartmentsPage() {
           </p>
 
           {/* FILM */}
-          <div className="mt-10 sm:mt-14">
-            <video
-              src={videoSrc}
-              controls
-              playsInline
-              preload="metadata"
-              className="mx-auto w-full max-w-[960px] rounded-2xl bg-black shadow-sm sm:rounded-3xl"
-            />
-            <p className="mx-auto mt-3 max-w-[960px] text-[13px] text-gray-500 sm:text-[14px]">
-              En titt hos oss – välkommen hem till Stolts Fastigheter.
-            </p>
+          <div className="reveal mt-10 grid gap-6 sm:mt-14 lg:grid-cols-2 lg:gap-8">
+            <figure>
+              <video
+                src={interiorVideo}
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-2xl bg-black shadow-sm sm:rounded-3xl"
+              />
+              <figcaption className="mt-3 text-[13px] text-gray-500 sm:text-[14px]">
+                Inredning och känsla i våra lägenheter.
+              </figcaption>
+            </figure>
+            <figure>
+              <video
+                src={tourVideo}
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-2xl bg-black shadow-sm sm:rounded-3xl"
+              />
+              <figcaption className="mt-3 text-[13px] text-gray-500 sm:text-[14px]">
+                En titt hos oss i Brålanda.
+              </figcaption>
+            </figure>
           </div>
         </div>
       </section>
@@ -81,7 +97,7 @@ export default function ApartmentsPage() {
       <section className="bg-[#E4E7EB] py-16 sm:py-20 lg:py-28">
         <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <h2
-            className="mb-10 max-w-[18ch] font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-14"
+            className="reveal mb-10 max-w-[18ch] font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-14"
             style={{ fontSize: "clamp(1.5rem, 4vw, 2.6rem)" }}
           >
             Så sköter vi om ditt hem.
@@ -89,7 +105,11 @@ export default function ApartmentsPage() {
 
           <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:gap-x-16 lg:gap-y-14">
             {CARE.map((item, i) => (
-              <div key={item.title} className="border-t border-gray-300 pt-6">
+              <div
+                key={item.title}
+                className="reveal border-t border-gray-300 pt-6"
+                style={{ transitionDelay: `${i * 80}ms` }}
+              >
                 <span className="text-[13px] font-semibold text-gray-500">
                   0{i + 1}
                 </span>
@@ -109,14 +129,14 @@ export default function ApartmentsPage() {
       <section className="bg-[#F2F3F5] py-16 sm:py-20 lg:py-28">
         <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <blockquote
-            className="max-w-4xl font-medium leading-[1.2] tracking-[-0.02em] text-gray-900"
+            className="reveal max-w-4xl font-medium leading-[1.2] tracking-[-0.02em] text-gray-900"
             style={{ fontSize: "clamp(1.6rem, 4.5vw, 3rem)" }}
           >
             “Vår viktigaste kvalitetsmätare är enkel: att våra hyresgäster
             trivs så bra att de vill bo kvar.”
           </blockquote>
 
-          <div className="mt-10 grid gap-8 sm:mt-14 sm:grid-cols-2 lg:gap-16">
+          <div className="reveal mt-10 grid gap-8 sm:mt-14 sm:grid-cols-2 lg:gap-16">
             <p className="text-[15px] leading-[1.75] text-gray-700 sm:text-[17px]">
               Många av våra hyresgäster har bott hos oss i många år, och en stor
               del av dem som flyttar in har hört talas om oss genom vänner och
@@ -132,7 +152,7 @@ export default function ApartmentsPage() {
             </p>
           </div>
 
-          <div className="mt-12 sm:mt-16">
+          <div className="reveal mt-12 sm:mt-16">
             <a
               href="#kontakt"
               className="group inline-flex w-fit items-center gap-3 rounded-full bg-[#1E3A5F] py-2 pl-5 pr-2 text-[13px] font-medium text-white transition-colors duration-300 hover:bg-[#16304F] sm:pl-6 sm:text-[14px]"

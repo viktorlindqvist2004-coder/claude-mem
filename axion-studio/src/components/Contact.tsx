@@ -9,6 +9,7 @@ export default function Contact() {
   return (
     <section
       id="kontakt"
+      data-footer
       className="bg-[#1E3A5F] pb-14 pt-16 text-white sm:pb-16 sm:pt-20 lg:pb-20 lg:pt-28"
     >
       <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
@@ -22,14 +23,14 @@ export default function Contact() {
         </div>
 
         <h2
-          className="mb-10 font-medium leading-[1.08] tracking-[-0.03em] sm:mb-14"
+          className="reveal mb-10 font-medium leading-[1.08] tracking-[-0.03em] sm:mb-14"
           style={{ fontSize: "clamp(1.75rem, 7vw, 4.2rem)" }}
         >
           Hitta hem till Brålanda.
         </h2>
 
         <div className="grid gap-10 md:grid-cols-2 md:gap-12">
-          <div>
+          <div className="reveal">
             <p className="max-w-md text-[15px] leading-[1.7] text-white/80 sm:text-[17px]">
               Vill du boka en visning eller anmäla intresse för en av våra
               bostäder? Hör av dig så återkommer vi så snart vi kan.
@@ -45,7 +46,7 @@ export default function Contact() {
             </a>
           </div>
 
-          <div className="flex flex-col gap-5">
+          <div className="reveal flex flex-col gap-5" style={{ transitionDelay: "120ms" }}>
             <a
               href="tel:+4652100000"
               className="flex items-center gap-4 border-t border-white/15 pt-5 transition-colors hover:text-white/70"

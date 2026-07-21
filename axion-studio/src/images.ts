@@ -9,9 +9,6 @@ export const SIKHALL = `${base}images/sikhall-scaled.jpg`;
 /** Humlemålningen (gatukonst) i Brålanda. */
 export const HUMLOR_MURAL = `${base}images/stolt.jpg`;
 
-/** Översiktsbild över Brålanda med den karaktäristiska silon. */
-export const BRALANDA_OVERSIKT = `${base}images/stolt-2.png`;
-
 // Autentiska bilder från Brålanda och Dalboslätten (Wikimedia Commons).
 // Byt gärna ut mot egna foton av era bostäder när ni har dem.
 export const BRALANDA_HOUSE =

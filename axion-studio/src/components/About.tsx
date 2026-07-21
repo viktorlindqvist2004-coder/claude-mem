@@ -1,7 +1,7 @@
 import BadgeRow from "./BadgeRow";
 import TextRollButton from "./TextRollButton";
 import AreaImage from "./AreaImage";
-import { BRALANDA_OVERSIKT, SIKHALL } from "../images";
+import { SIKHALL } from "../images";
 
 export default function About() {
   return (
@@ -10,7 +10,7 @@ export default function About() {
         <BadgeRow number="1" label="Välkommen hem" borderClass="border-gray-200" />
 
         <h2
-          className="mb-12 px-5 font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-16 sm:px-8 lg:mb-28 lg:px-12"
+          className="reveal mb-12 px-5 font-medium leading-[1.12] tracking-[-0.02em] text-gray-900 sm:mb-16 sm:px-8 lg:mb-24 lg:px-12"
           style={{ fontSize: "clamp(1.5rem, 4vw, 3.2rem)" }}
         >
           Nära, trygg och personlig —
@@ -20,51 +20,43 @@ export default function About() {
 
         {/* MOBIL / SURFPLATTA */}
         <div className="px-5 sm:px-8 lg:hidden">
-          <p className="text-[15px] font-medium leading-[1.6] text-gray-900 sm:text-[17px]">
+          <p className="reveal text-[16px] font-medium leading-[1.6] text-gray-900 sm:text-[18px]">
             Vi erbjuder välskötta hyresbostäder mitt i Brålanda, med lugnet,
             servicen och naturen inpå knuten. Här bor du tryggt och bekvämt,
             nära grannar som blir vänner.
           </p>
-          <div className="mt-6">
+          <div className="reveal mt-6">
             <TextRollButton label="Läs mer om oss" href="#/om-oss" />
           </div>
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:gap-5">
-            <AreaImage
-              src={BRALANDA_OVERSIKT}
-              alt="Översikt över Brålanda med den karaktäristiska silon"
-              className="aspect-[438/346] w-full rounded-xl object-cover sm:w-[45%] sm:rounded-2xl"
-            />
+          <div className="reveal group mt-8 overflow-hidden rounded-xl sm:rounded-2xl">
             <AreaImage
               src={SIKHALL}
               alt="Flygbild över Sikhall vid Vänern nära Brålanda"
-              className="aspect-[900/600] w-full rounded-xl object-cover sm:w-[55%] sm:rounded-2xl"
+              className="zoom-img aspect-[3/2] w-full object-cover"
             />
           </div>
         </div>
 
         {/* DATOR */}
-        <div className="hidden grid-cols-[26%_36%_38%] items-end gap-8 px-12 lg:grid xl:gap-10">
-          <div className="self-end">
-            <AreaImage
-              src={BRALANDA_OVERSIKT}
-              alt="Översikt över Brålanda med den karaktäristiska silon"
-              className="aspect-[438/346] w-full rounded-2xl object-cover"
-            />
-          </div>
-          <div className="self-end pb-1">
-            <p className="text-[19px] font-medium leading-[1.55] text-gray-900 xl:text-[22px]">
+        <div className="hidden grid-cols-2 items-end gap-10 px-12 lg:grid xl:gap-16">
+          <div className="reveal self-end pb-1">
+            <p className="text-[20px] font-medium leading-[1.55] text-gray-900 xl:text-[24px]">
               Vi erbjuder välskötta hyresbostäder mitt i Brålanda — med lugnet,
-              servicen och naturen inpå knuten. Här bor du tryggt och bekvämt.
+              servicen och naturen inpå knuten. Här bor du tryggt och bekvämt,
+              nära grannar som blir vänner.
             </p>
-            <div className="mt-7">
+            <div className="mt-8">
               <TextRollButton label="Läs mer om oss" href="#/om-oss" />
             </div>
           </div>
-          <div className="self-end">
+          <div
+            className="reveal group self-end overflow-hidden rounded-2xl"
+            style={{ transitionDelay: "120ms" }}
+          >
             <AreaImage
               src={SIKHALL}
               alt="Flygbild över Sikhall vid Vänern nära Brålanda"
-              className="aspect-[3/2] w-full rounded-2xl object-cover"
+              className="zoom-img aspect-[3/2] w-full object-cover"
             />
           </div>
         </div>

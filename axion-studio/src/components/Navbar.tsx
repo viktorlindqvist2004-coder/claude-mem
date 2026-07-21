@@ -44,7 +44,7 @@ export default function Navbar() {
         {/* HÖGER: status + tid + knapp */}
         <div className="hidden items-center gap-4 md:flex">
           <span className="hidden text-[13px] text-gray-600 lg:inline">
-            Lediga lägenheter våren 2026
+            Välkomnar nya hyresgäster
           </span>
           <div className="flex items-center gap-1.5 text-[13px] text-gray-600">
             <Clock size={14} />

@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Contact from "../components/Contact";
+import AutoVideo from "../components/AutoVideo";
 
 const base = import.meta.env.BASE_URL;
 const interiorVideo = `${base}videos/vara-lagenheter.mp4`;
@@ -66,11 +67,8 @@ export default function ApartmentsPage() {
           {/* FILM */}
           <div className="reveal mt-10 flex flex-col gap-12 sm:mt-14 sm:gap-16">
             <figure className="mx-auto w-full max-w-[1100px]">
-              <video
+              <AutoVideo
                 src={interiorVideo}
-                controls
-                playsInline
-                preload="metadata"
                 className="w-full rounded-2xl bg-black shadow-sm sm:rounded-3xl"
               />
               <figcaption className="mt-3 text-[13px] text-gray-500 sm:text-[14px]">
@@ -78,11 +76,8 @@ export default function ApartmentsPage() {
               </figcaption>
             </figure>
             <figure className="mx-auto w-full max-w-[1100px]">
-              <video
+              <AutoVideo
                 src={tourVideo}
-                controls
-                playsInline
-                preload="metadata"
                 className="w-full rounded-2xl bg-black shadow-sm sm:rounded-3xl"
               />
               <figcaption className="mt-3 text-[13px] text-gray-500 sm:text-[14px]">

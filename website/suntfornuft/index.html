@@ -456,8 +456,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 
 /* ===================== FACEBOOK FEED ===================== */
 .fb-feed{display:flex;justify-content:center;margin-top:2rem}
-.fb-feed .fb-page,.fb-feed .fb-page span,.fb-feed .fb-page iframe{width:100% !important;max-width:500px}
-.fb-feed>div{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;overflow:hidden}
+.fb-feed iframe{width:100%;max-width:500px;border-radius:var(--radius-lg)}
 .fb-follow-link{text-align:center;margin-top:2rem}
 .fb-follow-link .btn{display:inline-flex;align-items:center;gap:.6rem}
 .fb-follow-link svg{flex-shrink:0}
@@ -932,7 +931,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       <p>Våra senaste inlägg direkt från Facebook — uppdateras automatiskt.</p>
     </div>
     <div class="fb-feed reveal-scale">
-      <div class="fb-page" data-href="https://www.facebook.com/profile.php?id=100093525918563" data-tabs="timeline" data-width="500" data-height="800" data-small-header="false" data-adapt-container-width="true" data-hide-cover="false" data-show-facepile="true"><blockquote cite="https://www.facebook.com/profile.php?id=100093525918563"><a href="https://www.facebook.com/profile.php?id=100093525918563">Sunt Förnuft på Facebook</a></blockquote></div>
+      <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D100093525918563&tabs=timeline&width=500&height=700&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" width="500" height="700" style="border:none;overflow:hidden;max-width:100%;border-radius:var(--radius-lg)" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" loading="lazy"></iframe>
     </div>
     <div class="fb-follow-link reveal-scale">
       <a href="https://www.facebook.com/profile.php?id=100093525918563" target="_blank" rel="noopener" class="btn btn--primary">
@@ -1393,7 +1392,5 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   requestAnimationFrame(loop);
 })();
 </script>
-<div id="fb-root"></div>
-<script async defer crossorigin="anonymous" src="https://connect.facebook.net/sv_SE/sdk.js#xfbml=1&version=v22.0" nonce="fbsdk"></script>
 </body>
 </html>

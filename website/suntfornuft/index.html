@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="sv" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16362C">
+<meta name="description" content="Partiet Sunt Förnuft — ett nytt, blocköverskridande parti i Vänersborgs kommun. Hela kommunen ska leva och utvecklas. Val 2026.">
+<meta property="og:title" content="Sunt Förnuft — Hela kommunen ska leva och utvecklas">
+<meta property="og:description" content="Ett nytt, blocköverskridande parti i Vänersborg. Från centrum till landsbygd. Val 2026.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<title>Sunt Förnuft — Hela kommunen ska leva och utvecklas</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2316362C'/%3E%3Ccircle cx='32' cy='30' r='9' fill='%23E3A72E'/%3E%3Cpath d='M6 42h20l4-8h8l4 8h20v16H6z' fill='%230E2620'/%3E%3Cpath d='M14 42q18-12 36 0' fill='none' stroke='%233C6E8F' stroke-width='2.5' opacity='.7'/%3E%3C/svg%3E">
+</head>
+<body>
+<style>
+/* ============================================================
+   SUNT FÖRNUFT — self-contained campaign site
+   Palette, type & motion tokens
+   ============================================================ */
+:root{
+  /* base neutrals — green-biased warm paper (deliberately not AI-cream) */
+  --paper:#edefe8;
+  --paper-2:#e4e7dd;
+  --paper-3:#dadfd0;
+  --ink:#12241e;
+  --ink-soft:#48564d;
+  --ink-faint:#6c7a70;
+  --line:rgba(18,36,30,.12);
+  --line-strong:rgba(18,36,30,.22);
+  /* brand */
+  --pine:#16362c;
+  --pine-deep:#0e241d;
+  --pine-mid:#1d4437;
+  --gold:#e3a72e;
+  --gold-soft:#f0c860;
+  --gold-deep:#c78a17;
+  --lake:#3c6e8f;
+  --lake-soft:#79a6c1;
+  /* semantic surfaces (theme-swapped) */
+  --bg:var(--paper);
+  --bg-elev:#f4f5ef;
+  --bg-sunk:var(--paper-2);
+  --text:var(--ink);
+  --text-dim:var(--ink-soft);
+  --text-faint:var(--ink-faint);
+  --border:var(--line);
+  --border-strong:var(--line-strong);
+  --accent:var(--gold);
+  --accent-ink:#3a2a06;
+  --accent-2:var(--lake);
+  --shadow-color:26 46 38;
+  --card:#f7f8f2;
+  --card-2:#eef0e8;
+  /* fixed brand block (poster band) — same in both themes */
+  --band-bg:#16362c;
+  --band-bg-2:#0e241d;
+  --band-text:#eaf0e6;
+  --band-dim:#a9bcb0;
+  /* type */
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,ui-serif,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  /* scale */
+  --step--1:clamp(.78rem,.74rem + .2vw,.86rem);
+  --step-0:clamp(1rem,.96rem + .2vw,1.08rem);
+  --step-1:clamp(1.2rem,1.1rem + .5vw,1.45rem);
+  --step-2:clamp(1.45rem,1.25rem + .9vw,2rem);
+  --step-3:clamp(1.9rem,1.5rem + 1.8vw,3rem);
+  --step-4:clamp(2.5rem,1.9rem + 3vw,4.6rem);
+  --step-5:clamp(3.1rem,2.1rem + 5vw,6.6rem);
+  /* motion */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --radius:18px;
+  --radius-lg:26px;
+  --radius-sm:11px;
+  --maxw:1200px;
+  --gutter:clamp(1.15rem,4vw,3.5rem);
+  /* emblem sky (light) */
+  --sky-top:#bfe0ec;
+  --sky-bot:#f4e6c4;
+}
+:root[data-theme="dark"]{
+  --bg:#0d1a16;
+  --bg-elev:#12241e;
+  --bg-sunk:#0a1511;
+  --text:#e9efe5;
+  --text-dim:#a6b7ac;
+  --text-faint:#7d8f84;
+  --border:rgba(233,239,229,.13);
+  --border-strong:rgba(233,239,229,.24);
+  --accent:#f0be4a;
+  --accent-ink:#241a03;
+  --accent-2:#7aa8c8;
+  --shadow-color:0 0 0;
+  --card:#15271f;
+  --card-2:#101f19;
+  --sky-top:#20415a;
+  --sky-bot:#5c5330;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1a16;
+    --bg-elev:#12241e;
+    --bg-sunk:#0a1511;
+    --text:#e9efe5;
+    --text-dim:#a6b7ac;
+    --text-faint:#7d8f84;
+    --border:rgba(233,239,229,.13);
+    --border-strong:rgba(233,239,229,.24);
+    --accent:#f0be4a;
+    --accent-ink:#241a03;
+    --accent-2:#7aa8c8;
+    --shadow-color:0 0 0;
+    --card:#15271f;
+    --card-2:#101f19;
+    --sky-top:#20415a;
+    --sky-bot:#5c5330;
+  }
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:var(--step-0);line-height:1.65;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;transition:background .5s var(--ease),color .5s var(--ease);
+}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.05;letter-spacing:-.01em;text-wrap:balance;margin:0}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+img,svg{display:block;max-width:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+ul{margin:0;padding:0;list-style:none}
+::selection{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:2.5px solid var(--accent-2);outline-offset:3px;border-radius:4px}
+
+.wrap{width:100%;max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gutter)}
+.eyebrow{font-family:var(--mono);font-size:var(--step--1);letter-spacing:.24em;text-transform:uppercase;color:var(--text-faint);display:inline-flex;align-items:center;gap:.6em}
+.eyebrow::before{content:"";width:26px;height:1px;background:var(--accent);display:inline-block}
+.section{padding-block:clamp(4.5rem,9vw,8.5rem);position:relative}
+.section__head{max-width:44ch;margin-bottom:clamp(2.2rem,5vw,3.8rem)}
+.section__head h2{font-size:var(--step-3);margin-top:1rem}
+.section__head p{color:var(--text-dim);margin-top:1.1rem;font-size:var(--step-1);line-height:1.5}
+.serif{font-family:var(--serif)}
+.gold-word{color:var(--gold-deep)}
+:root[data-theme="dark"] .gold-word{color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .gold-word{color:var(--accent)}}
+
+/* ===================== PRELOADER ===================== */
+#preloader{position:fixed;inset:0;z-index:9999;background:var(--pine);color:var(--band-text);
+  display:grid;place-items:center;gap:1.4rem;transition:opacity .7s var(--ease),visibility .7s}
+#preloader.done{opacity:0;visibility:hidden;pointer-events:none}
+.pre-emblem{width:112px;height:112px;animation:preSpin 1.2s var(--ease-out) both}
+.pre-bar{width:180px;height:3px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden}
+.pre-bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:3px;transition:width .3s linear}
+.pre-txt{font-family:var(--mono);font-size:.72rem;letter-spacing:.35em;text-transform:uppercase;color:var(--band-dim)}
+@keyframes preSpin{from{opacity:0;transform:scale(.6) rotate(-25deg)}to{opacity:1;transform:none}}
+
+/* ===================== SCROLL PROGRESS ===================== */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:1200;
+  background:linear-gradient(90deg,var(--gold),var(--lake));box-shadow:0 0 12px rgba(227,167,46,.5)}
+
+/* ===================== CUSTOM CURSOR ===================== */
+.cursor,.cursor-dot{position:fixed;top:0;left:0;z-index:1300;pointer-events:none;border-radius:50%;
+  mix-blend-mode:normal;translate:-50% -50%;will-change:transform}
+.cursor{width:38px;height:38px;border:1.5px solid var(--accent);opacity:0;
+  transition:width .25s var(--ease),height .25s var(--ease),opacity .3s,background .25s,border-color .25s}
+.cursor-dot{width:6px;height:6px;background:var(--accent);opacity:0;transition:opacity .3s}
+.cursor.grow{width:66px;height:66px;background:rgba(227,167,46,.12);border-color:transparent}
+body.cursor-on .cursor,body.cursor-on .cursor-dot{opacity:1}
+@media (hover:none){.cursor,.cursor-dot{display:none}}
+
+/* ===================== NAV ===================== */
+.nav{position:fixed;inset:0 0 auto 0;z-index:1000;padding-block:1.1rem;
+  transition:padding .4s var(--ease),background .4s var(--ease),box-shadow .4s var(--ease),border-color .4s}
+.nav::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 78%,transparent);
+  backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);
+  opacity:0;transition:opacity .4s var(--ease);z-index:-1;border-bottom:1px solid transparent}
+.nav.scrolled{padding-block:.6rem}
+.nav.scrolled::after{opacity:1;border-bottom:1px solid var(--border)}
+.nav__row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.brand{display:flex;align-items:center;gap:.7rem;font-family:var(--serif);font-weight:600;font-size:1.18rem;letter-spacing:-.01em}
+.brand .brand-mark{width:42px;height:42px;flex:none;transition:transform .5s var(--ease)}
+.brand:hover .brand-mark{transform:rotate(-8deg) scale(1.05)}
+.brand small{display:block;font-family:var(--mono);font-size:.56rem;letter-spacing:.28em;text-transform:uppercase;color:var(--text-faint);font-weight:400;margin-top:1px}
+.nav__links{display:flex;align-items:center;gap:.35rem}
+.nav__links a{font-size:.92rem;padding:.5rem .8rem;border-radius:99px;color:var(--text-dim);position:relative;transition:color .25s}
+.nav__links a::after{content:"";position:absolute;left:.8rem;right:.8rem;bottom:.32rem;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease);border-radius:2px}
+.nav__links a:hover,.nav__links a.active{color:var(--text)}
+.nav__links a.active::after,.nav__links a:hover::after{transform:scaleX(1)}
+.nav__actions{display:flex;align-items:center;gap:.6rem}
+.icon-btn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--border-strong);
+  color:var(--text);transition:transform .3s var(--ease),background .3s,border-color .3s}
+.icon-btn:hover{transform:translateY(-2px);background:var(--bg-elev);border-color:var(--accent)}
+.icon-btn svg{width:19px;height:19px}
+.theme-toggle .moon{display:none}
+:root[data-theme="dark"] .theme-toggle .sun{display:none}
+:root[data-theme="dark"] .theme-toggle .moon{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme-toggle .sun{display:none}:root:not([data-theme="light"]) .theme-toggle .moon{display:block}}
+
+.btn{display:inline-flex;align-items:center;gap:.55em;padding:.82em 1.5em;border-radius:99px;font-weight:600;
+  font-size:.96rem;letter-spacing:.01em;position:relative;overflow:hidden;isolation:isolate;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),color .3s}
+.btn svg{width:17px;height:17px}
+.btn--primary{background:var(--gold);color:#2c2005;box-shadow:0 8px 26px -10px rgba(227,167,46,.9)}
+.btn--primary::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold-soft);
+  transform:translateY(101%);transition:transform .4s var(--ease)}
+.btn--primary:hover{transform:translateY(-3px);box-shadow:0 16px 34px -12px rgba(227,167,46,.95)}
+.btn--primary:hover::before{transform:translateY(0)}
+.btn--ghost{border:1.5px solid var(--border-strong);color:var(--text)}
+.btn--ghost::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--text);transform:scaleX(0);
+  transform-origin:left;transition:transform .4s var(--ease)}
+.btn--ghost:hover{color:var(--bg);border-color:var(--text)}
+.btn--ghost:hover::before{transform:scaleX(1)}
+.btn--light{background:var(--gold);color:#2c2005}
+.btn--light:hover{transform:translateY(-3px)}
+.nav-cta{display:inline-flex}
+
+.hamburger{display:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-strong);position:relative}
+.hamburger span{position:absolute;left:12px;right:12px;height:2px;background:var(--text);border-radius:2px;transition:.35s var(--ease)}
+.hamburger span:nth-child(1){top:16px}
+.hamburger span:nth-child(2){top:21px}
+.hamburger span:nth-child(3){top:26px}
+body.menu-open .hamburger span:nth-child(1){top:21px;transform:rotate(45deg)}
+body.menu-open .hamburger span:nth-child(2){opacity:0}
+body.menu-open .hamburger span:nth-child(3){top:21px;transform:rotate(-45deg)}
+
+/* mobile menu */
+.mobile-menu{position:fixed;inset:0;z-index:990;background:var(--pine);color:var(--band-text);
+  display:flex;flex-direction:column;justify-content:center;padding:6rem var(--gutter) 3rem;gap:.2rem;
+  clip-path:circle(0% at calc(100% - 44px) 44px);transition:clip-path .6s var(--ease-in-out);visibility:hidden}
+body.menu-open .mobile-menu{clip-path:circle(150% at calc(100% - 44px) 44px);visibility:visible}
+.mobile-menu a{font-family:var(--serif);font-size:clamp(1.8rem,7vw,2.8rem);padding:.35rem 0;color:var(--band-text);
+  border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:baseline;gap:.9rem;opacity:0;transform:translateY(20px);transition:.5s var(--ease)}
+body.menu-open .mobile-menu a{opacity:1;transform:none}
+.mobile-menu a i{font-family:var(--mono);font-size:.8rem;color:var(--gold);font-style:normal;letter-spacing:.1em}
+.mobile-menu .mm-foot{margin-top:2rem;font-family:var(--mono);font-size:.8rem;letter-spacing:.1em;color:var(--band-dim)}
+
+/* ===================== HERO ===================== */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;padding-top:6rem;padding-bottom:3rem;overflow:hidden}
+.hero__scene{position:absolute;inset:0;z-index:0;overflow:hidden}
+.hero__sky{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 78% 8%,color-mix(in srgb,var(--lake-soft) 30%,transparent),transparent 55%),
+  radial-gradient(90% 70% at 15% 100%,color-mix(in srgb,var(--gold) 16%,transparent),transparent 60%);}
+.hero__grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+:root[data-theme="dark"] .hero__grain{mix-blend-mode:screen;opacity:.045}
+.parallax-layer{position:absolute;left:-4%;right:-4%;bottom:0;will-change:transform}
+.hero__ridge{width:108%}
+.hero__ridge svg{width:100%;height:auto;display:block}
+
+.hero__inner{position:relative;z-index:3;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(1.5rem,4vw,3.5rem);align-items:center;width:100%}
+.hero__copy{max-width:none}
+.hero__tag{display:inline-flex;align-items:center;gap:.7rem;padding:.45rem .95rem;border-radius:99px;
+  border:1px solid var(--border-strong);background:color-mix(in srgb,var(--bg) 60%,transparent);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);backdrop-filter:blur(4px)}
+.hero__tag b{color:var(--gold-deep);font-weight:700}
+:root[data-theme="dark"] .hero__tag b{color:var(--accent)}
+.hero__pulse{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 0 rgba(227,167,46,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(227,167,46,.6)}70%{box-shadow:0 0 0 12px rgba(227,167,46,0)}100%{box-shadow:0 0 0 0 rgba(227,167,46,0)}}
+.hero h1{font-size:clamp(2.4rem,1.35rem + 4.3vw,4.75rem);margin:1.4rem 0 0;letter-spacing:-.032em}
+.hero h1 .line{display:block;overflow:hidden;padding-bottom:.04em}
+.hero h1 .line>span{display:block;white-space:nowrap;transform:translateY(110%);transition:transform 1s var(--ease-out)}
+.hero.reveal h1 .line>span{transform:none}
+.hero h1 em{font-style:italic;color:var(--gold-deep);position:relative}
+:root[data-theme="dark"] .hero h1 em{color:var(--accent)}
+.hero h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.06em;height:.09em;background:currentColor;opacity:.3;
+  transform:scaleX(0);transform-origin:left;transition:transform .8s .8s var(--ease)}
+.hero.reveal h1 em::after{transform:scaleX(1)}
+.hero__lead{margin-top:1.6rem;font-size:var(--step-1);line-height:1.55;color:var(--text-dim);max-width:34ch;
+  opacity:0;transform:translateY(16px);transition:.8s .5s var(--ease)}
+.hero.reveal .hero__lead{opacity:1;transform:none}
+.hero__cta{display:flex;flex-wrap:wrap;gap:.9rem;margin-top:2rem;opacity:0;transform:translateY(16px);transition:.8s .7s var(--ease)}
+.hero.reveal .hero__cta{opacity:1;transform:none}
+.hero__meta{display:flex;gap:2.2rem;margin-top:2.6rem;opacity:0;transition:.8s .9s var(--ease)}
+.hero.reveal .hero__meta{opacity:1}
+.hero__meta div{display:flex;flex-direction:column}
+.hero__meta b{font-family:var(--serif);font-size:1.7rem;line-height:1}
+.hero__meta span{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-top:.4rem}
+
+/* emblem stage */
+.hero__emblem{position:relative;justify-self:center;width:min(46vw,440px);aspect-ratio:1;
+  filter:drop-shadow(0 30px 50px rgba(14,36,29,.28))}
+.hero__emblem .emblem{width:100%;height:100%;opacity:0;transform:scale(.7) rotate(-12deg);transition:opacity 1s var(--ease-out),transform 1.2s var(--ease-out)}
+.hero.reveal .hero__emblem .emblem{opacity:1;transform:none}
+.emblem-halo{position:absolute;inset:-14%;border-radius:50%;z-index:-1;
+  background:radial-gradient(circle,color-mix(in srgb,var(--gold) 40%,transparent),transparent 62%);
+  filter:blur(30px);opacity:0;animation:haloIn 2s 1s var(--ease) forwards}
+@keyframes haloIn{to{opacity:.85}}
+.emblem-orbit{position:absolute;inset:-3%;border:1px dashed var(--border-strong);border-radius:50%;
+  opacity:0;transition:opacity 1s 1.2s}
+.hero.reveal .emblem-orbit{opacity:.6;animation:spin 40s linear infinite}
+.emblem-orbit b{position:absolute;top:-5px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--gold)}
+
+.scroll-cue{position:absolute;left:50%;bottom:1.6rem;translate:-50%;z-index:4;display:flex;flex-direction:column;
+  align-items:center;gap:.5rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--text-faint);opacity:0;transition:.8s 1.3s}
+.hero.reveal .scroll-cue{opacity:1}
+.scroll-cue .mouse{width:22px;height:34px;border:1.5px solid var(--text-faint);border-radius:12px;position:relative}
+.scroll-cue .mouse::after{content:"";position:absolute;top:6px;left:50%;translate:-50%;width:3px;height:6px;border-radius:2px;background:var(--gold);animation:wheel 1.8s infinite}
+@keyframes wheel{0%{opacity:0;transform:translate(-50%,-3px)}30%{opacity:1}60%{opacity:1}100%{opacity:0;transform:translate(-50%,10px)}}
+
+/* marquee */
+.marquee{position:relative;z-index:3;border-block:1px solid var(--border);background:color-mix(in srgb,var(--bg) 60%,transparent);
+  overflow:hidden;padding-block:.9rem;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marquee__track{display:flex;gap:2.6rem;width:max-content;animation:marq 32s linear infinite}
+.marquee:hover .marquee__track{animation-play-state:paused}
+.marquee__track span{font-family:var(--serif);font-size:1.15rem;color:var(--text-dim);display:inline-flex;align-items:center;gap:2.6rem}
+.marquee__track span::after{content:"✦";color:var(--gold);font-size:.8rem}
+@keyframes marq{to{transform:translateX(-50%)}}
+
+/* ===================== ABOUT ===================== */
+.about{background:var(--bg-elev)}
+.about__grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,5rem);align-items:center}
+.about__text h2{font-size:var(--step-3);margin-top:1rem}
+.about__text .lead{font-family:var(--serif);font-size:var(--step-2);line-height:1.28;margin-top:1.4rem;color:var(--text)}
+.about__text p{color:var(--text-dim);margin-top:1.3rem;line-height:1.7}
+.about__text .sign{margin-top:2rem;display:flex;align-items:center;gap:1rem}
+.about__text .sign .who b{font-family:var(--serif);font-size:1.05rem;display:block}
+.about__text .sign .who span{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint)}
+.about__card{position:relative;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:4/5;
+  background:linear-gradient(160deg,var(--pine),var(--pine-deep));color:var(--band-text);
+  padding:clamp(1.6rem,3vw,2.6rem);display:flex;flex-direction:column;justify-content:space-between;
+  box-shadow:0 40px 70px -30px rgba(14,36,29,.6);isolation:isolate}
+.about__card .scene{position:absolute;inset:0;z-index:-1;opacity:.9}
+.about__card .badge{align-self:flex-start;font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+  padding:.4rem .8rem;border:1px solid rgba(255,255,255,.2);border-radius:99px;color:var(--band-dim);background:rgba(0,0,0,.15)}
+.about__card blockquote{font-family:var(--serif);font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.22;margin:0}
+.about__card blockquote span{color:var(--gold-soft)}
+.about__card .src{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;color:var(--band-dim)}
+
+/* ===================== VALUES ===================== */
+.values__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;margin-top:1rem}
+.value{position:relative;padding:clamp(1.5rem,2.4vw,2rem);border-radius:var(--radius);background:var(--card);
+  border:1px solid var(--border);overflow:hidden;transition:transform .5s var(--ease),border-color .4s,box-shadow .5s}
+.value::before{content:"";position:absolute;inset:0;background:radial-gradient(400px circle at var(--mx,50%) var(--my,0%),
+  color-mix(in srgb,var(--accent) 14%,transparent),transparent 45%);opacity:0;transition:opacity .4s}
+.value:hover{transform:translateY(-6px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border));box-shadow:0 30px 50px -30px rgba(var(--shadow-color),.5)}
+.value:hover::before{opacity:1}
+.value__ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin-bottom:1.1rem;
+  background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--gold-deep);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+:root[data-theme="dark"] .value__ico{color:var(--accent)}
+.value__ico svg{width:26px;height:26px}
+.value h3{font-size:var(--step-1)}
+.value p{color:var(--text-dim);margin-top:.6rem;font-size:.96rem;line-height:1.6}
+.value__no{position:absolute;top:1.1rem;right:1.3rem;font-family:var(--mono);font-size:.72rem;color:var(--text-faint)}
+
+/* ===================== ISSUES ===================== */
+.issues{background:var(--bg-elev)}
+.issues__grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.1rem}
+.issue{position:relative;border-radius:var(--radius);border:1px solid var(--border);background:var(--card);
+  padding:clamp(1.5rem,2.6vw,2.2rem);transform-style:preserve-3d;transition:transform .3s var(--ease),box-shadow .4s,border-color .4s;overflow:hidden}
+.issue:hover{box-shadow:0 34px 60px -34px rgba(var(--shadow-color),.55);border-color:var(--border-strong)}
+.issue__top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;transform:translateZ(30px)}
+.issue__no{font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;color:var(--gold-deep);padding-top:.3rem}
+:root[data-theme="dark"] .issue__no{color:var(--accent)}
+.issue__ico{width:46px;height:46px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--bg-sunk);border:1px solid var(--border);color:var(--text)}
+.issue__ico svg{width:24px;height:24px}
+.issue h3{font-size:var(--step-1);margin-top:1.3rem;transform:translateZ(24px)}
+.issue p{color:var(--text-dim);margin-top:.7rem;line-height:1.65;transform:translateZ(14px)}
+.issue__tag{display:inline-block;margin-top:1.2rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-faint);border-top:1px solid var(--border);padding-top:.9rem;width:100%}
+
+/* ===================== BAND (thesis / poster) ===================== */
+.band{position:relative;background:var(--band-bg);color:var(--band-text);overflow:hidden;isolation:isolate}
+.band::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;
+  background:radial-gradient(70% 120% at 85% -10%,rgba(227,167,46,.28),transparent 55%),
+  radial-gradient(60% 100% at 5% 110%,rgba(60,110,143,.35),transparent 55%)}
+.band .band-rays{position:absolute;top:-30%;right:-10%;width:60vmax;height:60vmax;z-index:-1;opacity:.14;animation:spin 90s linear infinite}
+.band__inner{padding-block:clamp(4.5rem,9vw,8rem);text-align:center;max-width:22ch;margin-inline:auto}
+.band .eyebrow{color:var(--band-dim);justify-content:center}
+.band .eyebrow::before{background:var(--gold)}
+.band h2{font-size:var(--step-4);margin-top:1.4rem;line-height:1.02}
+.band h2 em{font-style:italic;color:var(--gold-soft)}
+.band p{color:var(--band-dim);margin:1.6rem auto 0;max-width:52ch;font-size:var(--step-1);line-height:1.5}
+.band__cta{margin-top:2.4rem;display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap}
+
+/* ===================== STATS ===================== */
+.stats__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}
+.stat{padding:clamp(1.6rem,2.6vw,2.2rem);border-radius:var(--radius);border:1px solid var(--border);background:var(--card);
+  position:relative;overflow:hidden;transition:transform .5s var(--ease),border-color .4s}
+.stat:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+.stat__num{font-family:var(--serif);font-size:clamp(2.6rem,5vw,3.8rem);line-height:1;letter-spacing:-.02em;
+  color:var(--gold-deep);font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:.1em}
+:root[data-theme="dark"] .stat__num{color:var(--accent)}
+.stat__num .suf{font-size:.5em;color:var(--text-dim)}
+.stat__lbl{margin-top:.9rem;font-size:.98rem;color:var(--text);font-weight:600}
+.stat__sub{margin-top:.3rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+.stat__bar{margin-top:1.1rem;height:5px;border-radius:5px;background:var(--bg-sunk);overflow:hidden}
+.stat__bar i{display:block;height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--lake));transition:width 1.4s var(--ease)}
+
+/* ===================== TIMELINE ===================== */
+.timeline{background:var(--bg-elev)}
+.tl{position:relative;margin-top:1rem;display:grid;gap:0}
+.tl::before{content:"";position:absolute;left:15px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(var(--gold),var(--lake),transparent)}
+.tl__item{position:relative;padding:0 0 2.6rem 3.4rem}
+.tl__item:last-child{padding-bottom:0}
+.tl__dot{position:absolute;left:6px;top:4px;width:20px;height:20px;border-radius:50%;background:var(--bg-elev);
+  border:2px solid var(--gold);display:grid;place-items:center}
+.tl__dot::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold);transform:scale(0);transition:transform .5s .2s var(--ease)}
+.tl__item.in-view .tl__dot::after{transform:scale(1)}
+.tl__date{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-deep)}
+:root[data-theme="dark"] .tl__date{color:var(--accent)}
+.tl__item h3{font-size:var(--step-1);margin-top:.5rem}
+.tl__item p{color:var(--text-dim);margin-top:.5rem;line-height:1.6;max-width:56ch}
+.tl__item.is-future .tl__dot{border-color:var(--lake)}
+.tl__item.is-future .tl__dot::after{background:var(--lake)}
+.tl__item.is-future .tl__date{color:var(--lake)}
+
+/* ===================== BULLETIN ===================== */
+.board__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}
+.post{display:flex;flex-direction:column;border-radius:var(--radius);border:1px solid var(--border);background:var(--card);
+  overflow:hidden;transition:transform .5s var(--ease),box-shadow .5s,border-color .4s}
+.post:hover{transform:translateY(-6px);box-shadow:0 34px 60px -34px rgba(var(--shadow-color),.5);border-color:var(--border-strong)}
+.post__top{height:132px;position:relative;overflow:hidden;background:linear-gradient(150deg,var(--pine-mid),var(--pine-deep))}
+.post__top svg{position:absolute;inset:0;width:100%;height:100%}
+.post__cat{position:absolute;top:.9rem;left:.9rem;font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--pine-deep);background:var(--gold);padding:.28rem .6rem;border-radius:99px;font-weight:700}
+.post__body{padding:1.3rem 1.4rem 1.5rem;display:flex;flex-direction:column;gap:.6rem;flex:1}
+.post__date{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;color:var(--text-faint)}
+.post h3{font-size:1.18rem;line-height:1.2}
+.post p{color:var(--text-dim);font-size:.94rem;line-height:1.55}
+.post__more{margin-top:auto;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-deep);
+  display:inline-flex;align-items:center;gap:.4rem;transition:gap .3s}
+:root[data-theme="dark"] .post__more{color:var(--accent)}
+.post:hover .post__more{gap:.8rem}
+
+/* ===================== ENGAGE ===================== */
+.engage__grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4rem)}
+.engage__intro h2{font-size:var(--step-3);margin-top:1rem}
+.engage__intro>p{color:var(--text-dim);margin-top:1.2rem;line-height:1.7;max-width:44ch}
+.channels{margin-top:2rem;display:grid;gap:.8rem}
+.channel{display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--card);transition:transform .3s var(--ease),border-color .3s}
+.channel:hover{transform:translateX(6px);border-color:var(--accent)}
+.channel__ico{width:44px;height:44px;flex:none;border-radius:11px;display:grid;place-items:center;background:var(--bg-sunk);color:var(--text)}
+.channel__ico svg{width:22px;height:22px}
+.channel b{display:block;font-size:.98rem}
+.channel span{font-family:var(--mono);font-size:.74rem;color:var(--text-faint);letter-spacing:.04em}
+.channel .arrow{margin-left:auto;color:var(--text-faint);transition:transform .3s}
+.channel:hover .arrow{transform:translateX(4px);color:var(--accent)}
+
+.form{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:clamp(1.6rem,3vw,2.4rem);
+  box-shadow:0 40px 70px -40px rgba(var(--shadow-color),.5)}
+.form h3{font-size:var(--step-2)}
+.form>p{color:var(--text-dim);margin-top:.5rem;font-size:.95rem}
+.field{position:relative;margin-top:1.4rem}
+.field input,.field textarea{width:100%;padding:1.15rem 1rem .5rem;background:var(--bg-sunk);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font:inherit;font-size:.98rem;transition:border-color .3s,box-shadow .3s}
+.field textarea{min-height:110px;resize:vertical;padding-top:1.5rem}
+.field label{position:absolute;left:1rem;top:.95rem;color:var(--text-faint);font-size:.98rem;pointer-events:none;
+  transition:.25s var(--ease);transform-origin:left}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.field input:focus+label,.field input:not(:placeholder-shown)+label,
+.field textarea:focus+label,.field textarea:not(:placeholder-shown)+label{transform:translateY(-.6rem) scale(.74);color:var(--gold-deep)}
+:root[data-theme="dark"] .field input:focus+label,:root[data-theme="dark"] .field textarea:focus+label{color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.4rem}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.chip span{display:inline-block;padding:.5rem .95rem;border-radius:99px;border:1px solid var(--border-strong);
+  font-size:.86rem;color:var(--text-dim);transition:.25s var(--ease)}
+.chip input:checked+span{background:var(--gold);color:#2c2005;border-color:var(--gold);font-weight:600}
+.chip input:focus-visible+span{outline:2.5px solid var(--accent-2);outline-offset:2px}
+.form__submit{margin-top:1.6rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.form__note{font-family:var(--mono);font-size:.68rem;color:var(--text-faint);letter-spacing:.03em}
+.form__msg{margin-top:1rem;font-size:.9rem;color:var(--gold-deep);opacity:0;transform:translateY(6px);transition:.4s}
+.form__msg.show{opacity:1;transform:none}
+:root[data-theme="dark"] .form__msg{color:var(--accent)}
+
+/* ===================== FAQ ===================== */
+.faq{background:var(--bg-elev)}
+.faq__list{margin-top:1rem;border-top:1px solid var(--border)}
+.faq__item{border-bottom:1px solid var(--border)}
+.faq__q{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1.4rem 0;font-family:var(--serif);font-size:var(--step-1)}
+.faq__q .pm{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid var(--border-strong);position:relative;transition:.35s var(--ease)}
+.faq__q .pm::before,.faq__q .pm::after{content:"";position:absolute;top:50%;left:50%;translate:-50% -50%;background:var(--text);border-radius:2px}
+.faq__q .pm::before{width:12px;height:2px}
+.faq__q .pm::after{width:2px;height:12px;transition:transform .35s var(--ease)}
+.faq__item.open .pm{background:var(--gold);border-color:var(--gold)}
+.faq__item.open .pm::before,.faq__item.open .pm::after{background:#2c2005}
+.faq__item.open .pm::after{transform:translate(-50%,-50%) scaleY(0)}
+.faq__a{max-height:0;overflow:hidden;transition:max-height .45s var(--ease)}
+.faq__a p{color:var(--text-dim);line-height:1.7;padding-bottom:1.5rem;max-width:66ch}
+
+/* ===================== FOOTER ===================== */
+.footer{background:var(--band-bg);color:var(--band-text);position:relative;overflow:hidden}
+.footer::before{content:"";position:absolute;inset:0;opacity:.4;
+  background:radial-gradient(60% 100% at 90% 0%,rgba(227,167,46,.25),transparent 55%)}
+.footer__top{position:relative;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2.5rem;padding-block:clamp(3.5rem,6vw,5.5rem)}
+.footer__brand{display:flex;align-items:center;gap:.8rem;font-family:var(--serif);font-size:1.4rem}
+.footer__brand .brand-mark{width:52px;height:52px}
+.footer__brand small{display:block;font-family:var(--mono);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--band-dim);font-weight:400}
+.footer__blurb{color:var(--band-dim);margin-top:1.3rem;max-width:38ch;line-height:1.65}
+.footer h4{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--band-dim);font-weight:500;margin-bottom:1.1rem}
+.footer__col a{display:block;padding:.32rem 0;color:var(--band-text);opacity:.82;transition:.25s;width:fit-content}
+.footer__col a:hover{opacity:1;color:var(--gold-soft);transform:translateX(4px)}
+.footer__bottom{position:relative;border-top:1px solid rgba(255,255,255,.12);padding-block:1.6rem;
+  display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--band-dim)}
+.footer__bottom a{color:var(--gold-soft)}
+
+/* back to top */
+#toTop{position:fixed;right:1.4rem;bottom:1.4rem;z-index:900;width:48px;height:48px;border-radius:50%;
+  background:var(--gold);color:#2c2005;display:grid;place-items:center;box-shadow:0 12px 30px -10px rgba(227,167,46,.8);
+  opacity:0;transform:translateY(20px) scale(.8);pointer-events:none;transition:.4s var(--ease)}
+#toTop.show{opacity:1;transform:none;pointer-events:auto}
+#toTop:hover{transform:translateY(-3px)}
+#toTop svg{width:22px;height:22px}
+
+/* ===================== REVEAL ===================== */
+.reveal-up{opacity:0;transform:translateY(34px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.reveal-up.in-view{opacity:1;transform:none}
+[data-stagger]>*{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+[data-stagger].in-view>*{opacity:1;transform:none}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===================== EMBLEM (shared component styles) ===================== */
+.emb-rays{transform-box:fill-box;transform-origin:center;animation:spin 60s linear infinite}
+.emb-sun-glow{transform-box:fill-box;transform-origin:center;animation:sunPulse 5s var(--ease-in-out) infinite}
+@keyframes sunPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.9;transform:scale(1.08)}}
+.emb-bird{animation:birdFly 12s linear infinite}
+.emb-bird.b2{animation-duration:16s;animation-delay:-4s}
+@keyframes birdFly{0%{transform:translate(0,0);opacity:0}8%{opacity:.8}92%{opacity:.8}100%{transform:translate(46px,-14px);opacity:0}}
+.emb-glint{animation:glint 4s var(--ease-in-out) infinite}
+.emb-glint.g2{animation-delay:1.3s}
+.emb-glint.g3{animation-delay:2.4s}
+@keyframes glint{0%,100%{opacity:.15}50%{opacity:.7}}
+.brand-mark .emb-rays{animation-duration:40s}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width:1000px){
+  .hero__inner{grid-template-columns:1fr;gap:1rem;text-align:left}
+  .hero__emblem{grid-row:1;width:min(58vw,330px);margin-bottom:1rem}
+  .hero__meta{gap:1.6rem}
+  .about__grid,.engage__grid{grid-template-columns:1fr}
+  .about__card{aspect-ratio:16/11;order:-1}
+  .stats__grid{grid-template-columns:repeat(2,1fr)}
+  .values__grid,.board__grid{grid-template-columns:repeat(2,1fr)}
+  .footer__top{grid-template-columns:1fr 1fr}
+  .footer__brand{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .nav__links,.nav-cta{display:none}
+  .hamburger{display:block}
+  .issues__grid,.values__grid,.board__grid,.stats__grid{grid-template-columns:1fr}
+  .footer__top{grid-template-columns:1fr}
+  .hero h1 .line{overflow:visible}
+  .hero h1 .line>span{white-space:normal}
+  .hero__meta{flex-wrap:wrap;gap:1.4rem 1.8rem}
+  .hero__meta div{flex:1 1 30%;min-width:120px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .reveal-up,[data-stagger]>*,.hero__lead,.hero__cta,.hero__meta{opacity:1 !important;transform:none !important}
+  .hero h1 .line>span{transform:none !important}
+  .hero__emblem .emblem{opacity:1 !important;transform:none !important}
+}
+</style>
+
+<!-- ===================== PRELOADER ===================== -->
+<div id="preloader" aria-hidden="true">
+  <svg class="pre-emblem" viewBox="0 0 120 120" role="img" aria-label="Sunt Förnuft">
+    <use href="#emblem-src"/>
+  </svg>
+  <div class="pre-bar"><i></i></div>
+  <div class="pre-txt">Sunt&nbsp;Förnuft</div>
+</div>
+
+<!-- ===================== SHARED EMBLEM SOURCE ===================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="emb-clip"><circle cx="60" cy="60" r="47"/></clipPath>
+    <linearGradient id="emb-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--sky-top)"/>
+      <stop offset="1" stop-color="var(--sky-bot)"/>
+    </linearGradient>
+    <linearGradient id="emb-lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f86a6"/>
+      <stop offset="1" stop-color="#2c5771"/>
+    </linearGradient>
+    <radialGradient id="emb-sunfill" cx="50%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="55%" stop-color="#f0bb3f"/>
+      <stop offset="100%" stop-color="#e3a72e"/>
+    </radialGradient>
+
+    <!-- The reusable emblem: sun over the Vänersborg platåberg + lake -->
+    <g id="emblem-src">
+      <circle cx="60" cy="60" r="57" fill="none" stroke="var(--band-bg-2, #0e241d)" stroke-width="0" />
+      <circle cx="60" cy="60" r="47.5" fill="url(#emb-sky)"/>
+      <g clip-path="url(#emb-clip)">
+        <!-- rays -->
+        <g class="emb-rays" opacity=".9">
+          <g stroke="#f0bb3f" stroke-width="2.4" stroke-linecap="round" opacity=".85">
+            <line x1="60" y1="18" x2="60" y2="30"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(30 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(60 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(90 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(120 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(150 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(180 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(210 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(240 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(270 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(300 60 50)"/>
+            <line x1="60" y1="18" x2="60" y2="30" transform="rotate(330 60 50)"/>
+          </g>
+        </g>
+        <!-- sun -->
+        <circle class="emb-sun-glow" cx="60" cy="50" r="16" fill="#ffd873" opacity=".6"/>
+        <circle cx="60" cy="50" r="12.5" fill="url(#emb-sunfill)"/>
+        <!-- birds -->
+        <path class="emb-bird" d="M28 40 q3 -2.4 6 0 q3 -2.4 6 0" fill="none" stroke="#3a4c44" stroke-width="1.4" stroke-linecap="round"/>
+        <path class="emb-bird b2" d="M34 34 q2.4 -2 4.8 0 q2.4 -2 4.8 0" fill="none" stroke="#3a4c44" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- distant platåberg (flat-topped mountains — Halle- & Hunneberg) -->
+        <path d="M-4 70 L14 70 L20 62 L44 62 L50 70 L74 70 L80 64 L102 64 L108 70 L124 70 L124 100 L-4 100 Z" fill="#2f6f5b" opacity=".55"/>
+        <!-- lake -->
+        <rect x="-4" y="70" width="128" height="16" fill="url(#emb-lake)"/>
+        <g stroke="#cfe8f2" stroke-width="1.3" stroke-linecap="round">
+          <line class="emb-glint" x1="18" y1="75" x2="30" y2="75"/>
+          <line class="emb-glint g2" x1="52" y1="79" x2="66" y2="79"/>
+          <line class="emb-glint g3" x1="80" y1="76" x2="92" y2="76"/>
+        </g>
+        <!-- near fields -->
+        <path d="M-4 84 Q30 76 60 84 T124 84 L124 104 L-4 104 Z" fill="#1d4437"/>
+        <path d="M-4 92 Q40 86 74 93 T124 92 L124 108 L-4 108 Z" fill="#16362c"/>
+        <!-- little village -->
+        <g fill="#0e241d">
+          <rect x="40" y="80" width="7" height="8"/>
+          <path d="M40 80 L43.5 76 L47 80 Z"/>
+          <rect x="49" y="82" width="5" height="6"/>
+          <path d="M49 82 L51.5 79 L54 82 Z"/>
+        </g>
+      </g>
+      <circle cx="60" cy="60" r="47.5" fill="none" stroke="var(--gold, #e3a72e)" stroke-width="2.4"/>
+      <!-- tick ring -->
+      <g stroke="var(--gold,#e3a72e)" stroke-width="1.2" opacity=".55">
+        <line x1="60" y1="9" x2="60" y2="14"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(45 60 60)"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(90 60 60)"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(135 60 60)"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(180 60 60)"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(225 60 60)"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(270 60 60)"/>
+        <line x1="60" y1="9" x2="60" y2="14" transform="rotate(315 60 60)"/>
+      </g>
+    </g>
+  </defs>
+</svg>
+
+<!-- ===================== CHROME ===================== -->
+<div id="progress"></div>
+<div class="cursor" aria-hidden="true"></div>
+<div class="cursor-dot" aria-hidden="true"></div>
+<a href="#hem" class="skip-link" style="position:absolute;left:-999px;top:0;z-index:2000;background:var(--gold);color:#2c2005;padding:.6rem 1rem;border-radius:0 0 8px 0">Hoppa till innehåll</a>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav" id="nav">
+  <div class="wrap nav__row">
+    <a href="#hem" class="brand" aria-label="Sunt Förnuft — startsida" data-magnetic>
+      <svg class="brand-mark" viewBox="0 0 120 120" aria-hidden="true"><use href="#emblem-src"/></svg>
+      <span>Sunt Förnuft<small>Vänersborgs kommun</small></span>
+    </a>
+    <nav class="nav__links" aria-label="Huvudmeny">
+      <a href="#om-oss">Om oss</a>
+      <a href="#fragor">Våra frågor</a>
+      <a href="#vagen">Vägen framåt</a>
+      <a href="#anslagstavla">Anslagstavla</a>
+      <a href="#engagera">Engagera dig</a>
+    </nav>
+    <div class="nav__actions">
+      <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Växla dagsljus / kvällsläge" title="Dag / natt">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      </button>
+      <a href="#engagera" class="btn btn--primary nav-cta" data-magnetic>Bli medlem</a>
+      <button class="hamburger" id="hamburger" aria-label="Öppna meny" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- mobile menu -->
+<nav class="mobile-menu" id="mobileMenu" aria-label="Mobilmeny">
+  <a href="#om-oss"><i>01</i> Om oss</a>
+  <a href="#fragor"><i>02</i> Våra frågor</a>
+  <a href="#vagen"><i>03</i> Vägen framåt</a>
+  <a href="#anslagstavla"><i>04</i> Anslagstavla</a>
+  <a href="#engagera"><i>05</i> Engagera dig</a>
+  <div class="mm-foot">suntfornuft0521@gmail.com</div>
+</nav>
+
+<main>
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hem">
+  <div class="hero__scene" aria-hidden="true">
+    <div class="hero__sky"></div>
+    <div class="parallax-layer hero__ridge" data-depth="0.10" style="bottom:8%;opacity:.5">
+      <svg viewBox="0 0 1440 220" preserveAspectRatio="none"><path d="M0 180 L220 180 L280 120 L520 120 L580 180 L900 180 L960 120 L1240 120 L1300 180 L1440 180 L1440 220 L0 220Z" fill="var(--lake)" opacity=".28"/></svg>
+    </div>
+    <div class="parallax-layer hero__ridge" data-depth="0.20" style="bottom:2%;opacity:.6">
+      <svg viewBox="0 0 1440 240" preserveAspectRatio="none"><path d="M0 200 Q360 150 720 200 T1440 200 L1440 240 L0 240Z" fill="var(--pine-mid)" opacity=".5"/></svg>
+    </div>
+    <div class="parallax-layer hero__ridge" data-depth="0.34" style="bottom:-1%">
+      <svg viewBox="0 0 1440 260" preserveAspectRatio="none"><path d="M0 210 Q300 170 620 205 Q900 235 1120 195 Q1300 165 1440 205 L1440 260 L0 260Z" fill="var(--pine)" opacity=".8"/></svg>
+    </div>
+    <div class="hero__grain"></div>
+  </div>
+
+  <div class="wrap hero__inner">
+    <div class="hero__copy">
+      <span class="hero__tag"><span class="hero__pulse"></span>Val 2026 · <b>Kommun &amp; region</b></span>
+      <h1>
+        <span class="line"><span>Hela kommunen</span></span>
+        <span class="line"><span>ska leva —</span></span>
+        <span class="line"><span>och <em>utvecklas.</em></span></span>
+      </h1>
+      <p class="hero__lead">Sunt Förnuft är ett nytt, blocköverskridande parti i Vänersborg. Vi sätter hela kommunen främst — från centrum till landsbygd, från Vänerns strand till platåbergen.</p>
+      <div class="hero__cta">
+        <a href="#engagera" class="btn btn--primary" data-magnetic>Bli medlem<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="#fragor" class="btn btn--ghost" data-magnetic>Läs våra frågor</a>
+      </div>
+      <div class="hero__meta">
+        <div><b data-count="7" data-suffix="/10">0</b><span>Investeringar centraliseras</span></div>
+        <div><b data-count="12">0</b><span>Kandidater till fullmäktige</span></div>
+        <div><b>1</b><span>Princip: hela kommunen</span></div>
+      </div>
+    </div>
+
+    <div class="hero__emblem" data-tilt>
+      <div class="emblem-halo"></div>
+      <div class="emblem-orbit"><b></b></div>
+      <svg class="emblem" viewBox="0 0 120 120" role="img" aria-label="Sunt Förnufts emblem: soluppgång över Vänerns platåberg"><use href="#emblem-src"/></svg>
+    </div>
+  </div>
+
+  <div class="scroll-cue" aria-hidden="true"><span class="mouse"></span>Skrolla</div>
+</section>
+
+<!-- marquee -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    <span>Öppenhet</span><span>Landsbygd &amp; centrum</span><span>Ansvarsfull ekonomi</span><span>Lika inför lagen</span><span>Mot centralisering</span><span>Sunt förnuft framför blockpolitik</span>
+    <span>Öppenhet</span><span>Landsbygd &amp; centrum</span><span>Ansvarsfull ekonomi</span><span>Lika inför lagen</span><span>Mot centralisering</span><span>Sunt förnuft framför blockpolitik</span>
+  </div>
+</div>
+
+<!-- ===================== ABOUT ===================== -->
+<section class="section about" id="om-oss">
+  <div class="wrap about__grid">
+    <div class="about__text reveal-up">
+      <span class="eyebrow">Om oss</span>
+      <h2>Ett parti som växte fram ur <span class="gold-word">sunt förnuft</span>.</h2>
+      <p class="lead">Vi startade efter samtal om något som inte höll ihop: när landsbygden ville satsa möttes den av sparkrav — medan pengarna sögs mot centrum.</p>
+      <p>Sunt Förnuft är ett nybildat och registrerat parti i Vänersborgs kommun. Vi verkar för ett samhälle där individens fri- och rättigheter respekteras, där alla är lika inför lagen och där vi hjälper våra svaga och utsatta. Stabila spelregler, öppenhet och ett bestämt motstånd mot korruption och mobbning är våra ledord.</p>
+      <p>Vi är inte höger eller vänster i första hand. Våra ledamöter röstar för förslag som gynnar kommunens invånare — oavsett vilken partifärg förslaget bär. Kort sagt: vi vill forma det samhälle vi själva vill leva och verka i.</p>
+      <div class="sign">
+        <svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true"><use href="#emblem-src"/></svg>
+        <div class="who"><b>Partiet Sunt Förnuft</b><span>Registrerat hos Valmyndigheten</span></div>
+      </div>
+    </div>
+    <figure class="about__card reveal-up" data-tilt>
+      <div class="scene" aria-hidden="true">
+        <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
+          <defs><linearGradient id="cardsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4437"/><stop offset="1" stop-color="#0e241d"/></linearGradient></defs>
+          <rect width="400" height="500" fill="url(#cardsky)"/>
+          <circle cx="300" cy="120" r="46" fill="#e3a72e" opacity=".9"/>
+          <circle cx="300" cy="120" r="66" fill="#e3a72e" opacity=".16"/>
+          <path d="M0 360 L90 360 L120 320 L220 320 L250 360 L400 360 L400 500 L0 500Z" fill="#2f6f5b" opacity=".5"/>
+          <path d="M0 400 Q120 360 240 400 T400 400 L400 500 L0 500Z" fill="#1d4437"/>
+          <path d="M0 440 Q140 410 280 445 T400 440 L400 500 L0 500Z" fill="#16362c"/>
+        </svg>
+      </div>
+      <span class="badge">Vänersborg · Västra Götaland</span>
+      <blockquote>”Hela kommunen ska <span>leva</span> och <span>utvecklas</span>.”</blockquote>
+      <span class="src">— Partiets grundprincip</span>
+    </figure>
+  </div>
+</section>
+
+<!-- ===================== VALUES ===================== -->
+<section class="section values" id="varderingar">
+  <div class="wrap">
+    <div class="section__head reveal-up">
+      <span class="eyebrow">Våra ledord</span>
+      <h2>Sex värderingar vi inte tummar på.</h2>
+      <p>Grunden för varje beslut vi fattar i fullmäktige.</p>
+    </div>
+    <div class="values__grid" data-stagger data-tilt-group>
+      <article class="value" data-tilt><span class="value__no">01</span>
+        <div class="value__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7Z"/></svg></div>
+        <h3>Individens frihet</h3>
+        <p>Varje människas möjlighet att forma sitt liv efter egen vilja ska säkras och respekteras.</p>
+      </article>
+      <article class="value" data-tilt><span class="value__no">02</span>
+        <div class="value__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7l7-3 7 3M4 11h4l-2 5a3 3 0 0 0 4 0l-2-5M16 11h4l-2 5a3 3 0 0 0 4 0l-2-5"/></svg></div>
+        <h3>Lika inför lagen</h3>
+        <p>Samma regler ska gälla alla. Rättvisa och tydlighet framför gräddfiler och undantag.</p>
+      </article>
+      <article class="value" data-tilt><span class="value__no">03</span>
+        <div class="value__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.3-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8C19 15.7 12 20 12 20Z"/></svg></div>
+        <h3>Vi hjälper de svaga</h3>
+        <p>Ett samhälle mäts i hur det tar hand om sina mest utsatta. Där ska vi finnas.</p>
+      </article>
+      <article class="value" data-tilt><span class="value__no">04</span>
+        <div class="value__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3>Stabila spelregler</h3>
+        <p>Långsiktighet och förutsägbarhet. Beslut som håller längre än en mandatperiod.</p>
+      </article>
+      <article class="value" data-tilt><span class="value__no">05</span>
+        <div class="value__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/></svg></div>
+        <h3>Öppenhet mot korruption</h3>
+        <p>Full insyn i hur skattepengar används. Vi bekämpar korruption och mobbning — utan undantag.</p>
+      </article>
+      <article class="value" data-tilt><span class="value__no">06</span>
+        <div class="value__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></div>
+        <h3>Sunt förnuft</h3>
+        <p>Vi röstar för det bästa förslaget — inte för blocket. Verkligheten före partipiskan.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ISSUES ===================== -->
+<section class="section issues" id="fragor">
+  <div class="wrap">
+    <div class="section__head reveal-up">
+      <span class="eyebrow">Våra hjärtefrågor</span>
+      <h2>Det här driver vi i Vänersborg.</h2>
+      <p>Konkreta frågor för hela kommunen — inte bara centrum.</p>
+    </div>
+    <div class="issues__grid" data-stagger data-tilt-group>
+      <article class="issue" data-tilt>
+        <div class="issue__top">
+          <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
+          <span class="issue__no">01</span>
+        </div>
+        <h3>Bryt centraliseringen</h3>
+        <p>Sju av tio investeringar hamnar i centrum medan landsbygden får stryka på foten. Vi vill se och höra hela kommunen — Brålanda, Frändefors och byarna lika mycket som staden.</p>
+        <span class="issue__tag">Landsbygd · Rättvisa satsningar</span>
+      </article>
+      <article class="issue" data-tilt>
+        <div class="issue__top">
+          <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <span class="issue__no">02</span>
+        </div>
+        <h3>Ansvarsfull ekonomi</h3>
+        <p>Vi är kritiska till kommunens lånepolitik och kostsamma prestigeprojekt. Skattepengar ska användas klokt — med tydlighet och ansvarsfull planering, inte på lånade löften.</p>
+        <span class="issue__tag">Ekonomi · Öppen budget</span>
+      </article>
+      <article class="issue" data-tilt>
+        <div class="issue__top">
+          <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2 4 4 10-10 2 2M4 20h16"/></svg></div>
+          <span class="issue__no">03</span>
+        </div>
+        <h3>Underhåll före prestige</h3>
+        <p>Eftersatt underhåll av vägar, fastigheter och infrastruktur kostar mer ju längre det skjuts upp. Vi prioriterar det som redan finns framför nästa dyra symbolbygge.</p>
+        <span class="issue__tag">Infrastruktur · Vägar</span>
+      </article>
+      <article class="issue" data-tilt>
+        <div class="issue__top">
+          <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5ZM6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5M22 10v6"/></svg></div>
+          <span class="issue__no">04</span>
+        </div>
+        <h3>Skola &amp; omsorg i hela kommunen</h3>
+        <p>Skola, vård och omsorg ska finnas nära människor — även utanför centralorten. Närhet skapar trygghet och gör att familjer kan bo och stanna kvar på landsbygden.</p>
+        <span class="issue__tag">Skola · Äldreomsorg</span>
+      </article>
+      <article class="issue" data-tilt>
+        <div class="issue__top">
+          <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14M9 21v-5h6v5M7 10h.01M12 10h.01M17 10h.01"/></svg></div>
+          <span class="issue__no">05</span>
+        </div>
+        <h3>Näringsliv &amp; företagande</h3>
+        <p>Vi välkomnar kommunens företagare att höra av sig — vi lovar att lyssna och verka för entreprenörskap. Fler jobb och en levande bygd hänger ihop.</p>
+        <span class="issue__tag">Jobb · Tillväxt</span>
+      </article>
+      <article class="issue" data-tilt>
+        <div class="issue__top">
+          <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4M7.8 4.5a3 3 0 0 1 4.2-1 3 3 0 0 1 4.2 1 3 3 0 0 1 3.3 3.3 3 3 0 0 1 1 4.2 3 3 0 0 1-1 4.2 3 3 0 0 1-3.3 3.3 3 3 0 0 1-4.2 1 3 3 0 0 1-4.2-1 3 3 0 0 1-3.3-3.3 3 3 0 0 1-1-4.2 3 3 0 0 1 1-4.2 3 3 0 0 1 3.3-3.3Z"/></svg></div>
+          <span class="issue__no">06</span>
+        </div>
+        <h3>Blocköverskridande beslut</h3>
+        <p>Vi lägger prestigen åt sidan och röstar för det som gynnar invånarna — oavsett vem som lägger fram förslaget. Bra idéer har ingen partifärg.</p>
+        <span class="issue__tag">Samarbete · Invånarnytta</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BAND / THESIS ===================== -->
+<section class="band">
+  <svg class="band-rays" viewBox="0 0 200 200" aria-hidden="true"><g stroke="#e3a72e" stroke-width="1"><line x1="100" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(30 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(60 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(90 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(120 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(150 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(180 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(210 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(240 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(270 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(300 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(330 100 100)"/></g></svg>
+  <div class="wrap band__inner reveal-up">
+    <span class="eyebrow">Vår övertygelse</span>
+    <h2>Politik närmare <em>verkligheten</em>, närmare <em>dig</em>.</h2>
+    <p>Vi vill att hela Vänersborg ska ses och höras — inte bara centrum. Beslut ska fattas nära dem de berör, med öppenhet och sunt förnuft.</p>
+    <div class="band__cta">
+      <a href="#engagera" class="btn btn--light" data-magnetic>Var med och påverka</a>
+      <a href="#vagen" class="btn btn--ghost" data-magnetic style="color:var(--band-text);border-color:rgba(255,255,255,.35)">Se vägen framåt</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STATS ===================== -->
+<section class="section stats" id="siffror">
+  <div class="wrap">
+    <div class="section__head reveal-up">
+      <span class="eyebrow">Fakta i siffror</span>
+      <h2>Varför vi behövs — kort och gott.</h2>
+    </div>
+    <div class="stats__grid" data-stagger>
+      <div class="stat"><div class="stat__num"><span data-count="7">0</span><span class="suf">/10</span></div><div class="stat__lbl">Investeringar centraliseras</div><div class="stat__sub">Landsbygden faller efter</div><div class="stat__bar"><i data-fill="70"></i></div></div>
+      <div class="stat"><div class="stat__num"><span data-count="2">0</span></div><div class="stat__lbl">Val vi ställer upp i 2026</div><div class="stat__sub">Kommun &amp; region</div><div class="stat__bar"><i data-fill="100"></i></div></div>
+      <div class="stat"><div class="stat__num"><span data-count="12">0</span></div><div class="stat__lbl">Kandidater till fullmäktige</div><div class="stat__sub">Från hela kommunen</div><div class="stat__bar"><i data-fill="85"></i></div></div>
+      <div class="stat"><div class="stat__num"><span data-count="100">0</span><span class="suf">%</span></div><div class="stat__lbl">Blocköverskridande</div><div class="stat__sub">Invånarnyttan avgör</div><div class="stat__bar"><i data-fill="100"></i></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TIMELINE ===================== -->
+<section class="section timeline" id="vagen">
+  <div class="wrap">
+    <div class="section__head reveal-up">
+      <span class="eyebrow">Vägen mot valet 2026</span>
+      <h2>Från idé till din röst i fullmäktige.</h2>
+    </div>
+    <div class="tl" data-stagger>
+      <div class="tl__item"><span class="tl__dot"></span>
+        <span class="tl__date">2023 · Registrering</span>
+        <h3>Partiet Sunt Förnuft bildas</h3>
+        <p>Valmyndigheten registrerar vårt deltagande i valen till både Vänersborgs kommunfullmäktige och Västra Götalandsregionen. Resan börjar.</p>
+      </div>
+      <div class="tl__item"><span class="tl__dot"></span>
+        <span class="tl__date">2024–2025 · Dialog</span>
+        <h3>Vi lyssnar i hela kommunen</h3>
+        <p>Möten och samtal från centrum till landsbygd. Vi samlar in de frågor som verkligen berör invånare, föreningar och företagare.</p>
+      </div>
+      <div class="tl__item is-future"><span class="tl__dot"></span>
+        <span class="tl__date">September 2026 · Valet</span>
+        <h3>Val till kommun &amp; region</h3>
+        <p>Nu avgör du. En röst på Sunt Förnuft är en röst för att hela kommunen ska leva — och för blocköverskridande, ansvarsfull politik.</p>
+      </div>
+      <div class="tl__item is-future"><span class="tl__dot"></span>
+        <span class="tl__date">Efter valet · Mandat</span>
+        <h3>Din röst i fullmäktige</h3>
+        <p>Vi tar plats i fullmäktige och röstar för förslag som gynnar invånarna — med öppenhet, sunt förnuft och hela kommunen i fokus.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BULLETIN ===================== -->
+<section class="section board" id="anslagstavla">
+  <div class="wrap">
+    <div class="section__head reveal-up">
+      <span class="eyebrow">Anslagstavla</span>
+      <h2>Senast från Sunt Förnuft.</h2>
+      <p>Nyheter, ställningstaganden och inbjudningar. Följ oss även på Facebook.</p>
+    </div>
+    <div class="board__grid" data-stagger>
+      <article class="post" data-tilt>
+        <div class="post__top"><svg viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><rect width="400" height="160" fill="#1d4437"/><circle cx="320" cy="46" r="28" fill="#e3a72e" opacity=".9"/><path d="M0 110 L90 110 L120 84 L210 84 L240 110 L400 110 L400 160 L0 160Z" fill="#2f6f5b" opacity=".6"/><path d="M0 130 Q120 108 240 130 T400 130 L400 160 L0 160Z" fill="#16362c"/></svg><span class="post__cat">Landsbygd</span></div>
+        <div class="post__body"><span class="post__date">Nyhet</span><h3>Vi vill bryta centraliseringen</h3><p>Landsbygden ska inte få stryka på foten. Så här vill vi fördela satsningarna rättvist över hela kommunen.</p><span class="post__more">Läs mer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+      </article>
+      <article class="post" data-tilt>
+        <div class="post__top"><svg viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><rect width="400" height="160" fill="#284d64"/><circle cx="76" cy="52" r="24" fill="#e3a72e" opacity=".85"/><rect x="0" y="96" width="400" height="30" fill="#3c6e8f"/><path d="M0 118 Q120 100 240 120 T400 118 L400 160 L0 160Z" fill="#16362c"/></svg><span class="post__cat">Ekonomi</span></div>
+        <div class="post__body"><span class="post__date">Ställningstagande</span><h3>Klokare med skattepengarna</h3><p>Kritik mot lånepolitik och prestigeprojekt. Vi vill se en öppen budget och underhåll före nästa dyra symbolbygge.</p><span class="post__more">Läs mer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+      </article>
+      <article class="post" data-tilt>
+        <div class="post__top"><svg viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><rect width="400" height="160" fill="#1d4437"/><g stroke="#e3a72e" stroke-width="2" opacity=".5"><line x1="200" y1="30" x2="200" y2="70"/><line x1="160" y1="50" x2="240" y2="50"/></g><circle cx="200" cy="50" r="14" fill="#e3a72e"/><path d="M0 120 Q140 100 280 122 T400 120 L400 160 L0 160Z" fill="#16362c"/></svg><span class="post__cat">Medlem</span></div>
+        <div class="post__body"><span class="post__date">Inbjudan</span><h3>Bli en av oss inför 2026</h3><p>Vill du engagera dig eller är du företagare med idéer? Hör av dig — vi lovar att lyssna och verka för hela kommunen.</p><span class="post__more">Engagera dig <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ENGAGE ===================== -->
+<section class="section engage" id="engagera">
+  <div class="wrap engage__grid">
+    <div class="engage__intro reveal-up">
+      <span class="eyebrow">Engagera dig</span>
+      <h2>Var med och forma <span class="gold-word">hela</span> kommunen.</h2>
+      <p>Bli medlem, hör av dig med en fråga eller berätta hur du vill hjälpa till. Vi lovar att lyssna — och att svara.</p>
+      <div class="channels">
+        <a class="channel" href="mailto:suntfornuft0521@gmail.com" data-magnetic>
+          <span class="channel__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 7l8 6 8-6"/></svg></span>
+          <span><b>Mejla oss</b><span>suntfornuft0521@gmail.com</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+        <a class="channel" href="https://www.facebook.com/profile.php?id=100093525918563" target="_blank" rel="noopener" data-magnetic>
+          <span class="channel__ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12Z"/></svg></span>
+          <span><b>Sunt förnuft – Folkets parti</b><span>Följ oss på Facebook</span></span>
+          <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+        <div class="channel">
+          <span class="channel__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg></span>
+          <span><b>Vänersborgs kommun</b><span>Västra Götalandsregionen</span></span>
+        </div>
+      </div>
+    </div>
+
+    <form class="form reveal-up" id="joinForm" novalidate>
+      <h3>Skriv till oss</h3>
+      <p>Fyll i formuläret så öppnas ett färdigt mejl till partiet.</p>
+      <div class="field"><input type="text" id="name" name="name" placeholder=" " required><label for="name">Ditt namn</label></div>
+      <div class="field"><input type="email" id="email" name="email" placeholder=" " required><label for="email">Din e-post</label></div>
+      <div class="field"><textarea id="msg" name="msg" placeholder=" "></textarea><label for="msg">Din fråga eller hälsning</label></div>
+      <div class="chips" role="group" aria-label="Så vill jag hjälpa till">
+        <label class="chip"><input type="checkbox" name="help" value="Bli medlem"><span>Bli medlem</span></label>
+        <label class="chip"><input type="checkbox" name="help" value="Kandidera"><span>Kandidera</span></label>
+        <label class="chip"><input type="checkbox" name="help" value="Sprida ordet"><span>Sprida ordet</span></label>
+        <label class="chip"><input type="checkbox" name="help" value="Företagare"><span>Jag är företagare</span></label>
+      </div>
+      <div class="form__submit">
+        <button type="submit" class="btn btn--primary" data-magnetic>Skicka<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/></svg></button>
+        <span class="form__note">Öppnas i din e-postklient · inget sparas här</span>
+      </div>
+      <p class="form__msg" id="formMsg"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section class="section faq" id="faq">
+  <div class="wrap">
+    <div class="section__head reveal-up">
+      <span class="eyebrow">Vanliga frågor</span>
+      <h2>Bra att veta om oss.</h2>
+    </div>
+    <div class="faq__list reveal-up">
+      <div class="faq__item"><button class="faq__q" aria-expanded="false">Är ni höger eller vänster?<span class="pm"></span></button><div class="faq__a"><p>Varken eller i första hand. Vi är blocköverskridande och röstar för de förslag som gynnar Vänersborgs invånare — oavsett vilket parti som lägger fram dem. Sunt förnuft går före partipiskan.</p></div></div>
+      <div class="faq__item"><button class="faq__q" aria-expanded="false">Var verkar ni?<span class="pm"></span></button><div class="faq__a"><p>I Vänersborgs kommun samt Västra Götalandsregionen. Vi bryr oss om hela kommunen — från centralorten till Brålanda, Frändefors och byarna på landsbygden.</p></div></div>
+      <div class="faq__item"><button class="faq__q" aria-expanded="false">Hur blir jag medlem?<span class="pm"></span></button><div class="faq__a"><p>Enklast mejlar du oss på suntfornuft0521@gmail.com, eller fyller i formuläret här på sidan. Du kan också följa och skriva till oss via vår Facebooksida.</p></div></div>
+      <div class="faq__item"><button class="faq__q" aria-expanded="false">Vad är er viktigaste fråga?<span class="pm"></span></button><div class="faq__a"><p>Att bryta centraliseringen så att hela kommunen får leva och utvecklas — kombinerat med en ansvarsfull ekonomi där skattepengar används klokt och med full öppenhet.</p></div></div>
+      <div class="faq__item"><button class="faq__q" aria-expanded="false">Jag är företagare — kan jag höra av mig?<span class="pm"></span></button><div class="faq__a"><p>Absolut, och det vill vi gärna. Vi välkomnar kommunens företagare att kontakta oss. Vi lovar att lyssna och att verka för entreprenörskap och fler jobb i hela kommunen.</p></div></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__top">
+      <div class="footer__brand-col">
+        <div class="footer__brand">
+          <svg class="brand-mark" viewBox="0 0 120 120" aria-hidden="true"><use href="#emblem-src"/></svg>
+          <span>Sunt Förnuft<small>Partiet · Vänersborg</small></span>
+        </div>
+        <p class="footer__blurb">Ett nytt, blocköverskridande parti som sätter hela kommunen främst. Från centrum till landsbygd, med öppenhet och sunt förnuft.</p>
+      </div>
+      <div class="footer__col">
+        <h4>Sidan</h4>
+        <a href="#om-oss">Om oss</a>
+        <a href="#fragor">Våra frågor</a>
+        <a href="#vagen">Vägen framåt</a>
+        <a href="#anslagstavla">Anslagstavla</a>
+        <a href="#faq">Vanliga frågor</a>
+      </div>
+      <div class="footer__col">
+        <h4>Kontakt</h4>
+        <a href="mailto:suntfornuft0521@gmail.com">suntfornuft0521@gmail.com</a>
+        <a href="https://www.facebook.com/profile.php?id=100093525918563" target="_blank" rel="noopener">Facebook</a>
+        <a href="#engagera">Bli medlem</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© <span id="year">2026</span> Partiet Sunt Förnuft · Vänersborgs kommun</span>
+      <span>Hela kommunen ska leva &amp; utvecklas · <a href="#hem">Till toppen</a></span>
+    </div>
+  </div>
+</footer>
+
+<button id="toTop" aria-label="Till toppen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var doc = document.documentElement;
+  var $ = function(s,c){return (c||document).querySelector(s);};
+  var $$ = function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));};
+
+  /* ---------- year ---------- */
+  var y = $("#year"); if(y) y.textContent = new Date().getFullYear();
+
+  /* ---------- theme ---------- */
+  var stored;
+  try{ stored = localStorage.getItem("sf-theme"); }catch(e){}
+  if(stored){ doc.setAttribute("data-theme", stored); }
+  $("#themeToggle").addEventListener("click", function(){
+    var cur = doc.getAttribute("data-theme");
+    if(!cur){ cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark":"light"; }
+    var next = cur === "dark" ? "light" : "dark";
+    doc.setAttribute("data-theme", next);
+    try{ localStorage.setItem("sf-theme", next); }catch(e){}
+  });
+
+  /* ---------- preloader ---------- */
+  var pre = $("#preloader"), bar = $(".pre-bar i");
+  var p = 0;
+  var tick = setInterval(function(){
+    p = Math.min(100, p + Math.random()*26);
+    if(bar) bar.style.width = p + "%";
+    if(p >= 100){ clearInterval(tick); }
+  }, 140);
+  function launch(){
+    if(bar) bar.style.width = "100%";
+    setTimeout(function(){
+      pre.classList.add("done");
+      $(".hero").classList.add("reveal");
+    }, 380);
+  }
+  window.addEventListener("load", function(){ setTimeout(launch, 500); });
+  // safety fallback
+  setTimeout(function(){ if(!pre.classList.contains("done")) launch(); }, 3500);
+
+  /* ---------- scroll progress + nav + back to top ---------- */
+  var nav = $("#nav"), toTop = $("#toTop"), progress = $("#progress");
+  function onScroll(){
+    var st = window.pageYOffset || doc.scrollTop;
+    var h = doc.scrollHeight - window.innerHeight;
+    progress.style.width = (h > 0 ? (st/h*100) : 0) + "%";
+    nav.classList.toggle("scrolled", st > 30);
+    toTop.classList.toggle("show", st > 600);
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+  toTop.addEventListener("click", function(){ window.scrollTo({top:0, behavior: reduce?"auto":"smooth"}); });
+
+  /* ---------- mobile menu ---------- */
+  var burger = $("#hamburger"), mm = $("#mobileMenu");
+  function closeMenu(){ document.body.classList.remove("menu-open"); burger.setAttribute("aria-expanded","false"); }
+  burger.addEventListener("click", function(){
+    var open = document.body.classList.toggle("menu-open");
+    burger.setAttribute("aria-expanded", open ? "true":"false");
+  });
+  $$("#mobileMenu a").forEach(function(a){ a.addEventListener("click", closeMenu); });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeMenu(); });
+
+  /* ---------- active section highlight ---------- */
+  var links = $$(".nav__links a");
+  var map = {};
+  links.forEach(function(a){ var id=a.getAttribute("href").slice(1); if(id) map[id]=a; });
+  var secObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        links.forEach(function(l){ l.classList.remove("active"); });
+        var a = map[en.target.id]; if(a) a.classList.add("active");
+      }
+    });
+  }, {rootMargin:"-45% 0px -50% 0px"});
+  ["om-oss","fragor","vagen","anslagstavla","engagera"].forEach(function(id){
+    var el = document.getElementById(id); if(el) secObserver.observe(el);
+  });
+
+  /* ---------- reveal on scroll ---------- */
+  var revObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        var el = en.target;
+        el.classList.add("in-view");
+        if(el.hasAttribute("data-stagger")){
+          $$(":scope > *", el).forEach(function(child, i){
+            child.style.transitionDelay = (i*0.08) + "s";
+          });
+        }
+        revObserver.unobserve(el);
+      }
+    });
+  }, {rootMargin:"0px 0px -12% 0px", threshold:0.12});
+  $$(".reveal-up, [data-stagger]").forEach(function(el){ revObserver.observe(el); });
+  $$(".tl__item").forEach(function(el){ revObserver.observe(el); });
+
+  /* ---------- counters ---------- */
+  function animateCount(el){
+    var target = parseFloat(el.getAttribute("data-count"));
+    var suffix = el.getAttribute("data-suffix") || "";
+    var dur = 1500, start = null;
+    function step(ts){
+      if(!start) start = ts;
+      var prog = Math.min((ts-start)/dur, 1);
+      var eased = 1 - Math.pow(1-prog, 3);
+      el.textContent = Math.round(eased*target) + suffix;
+      if(prog < 1) requestAnimationFrame(step);
+      else el.textContent = target + suffix;
+    }
+    requestAnimationFrame(step);
+  }
+  var countObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ animateCount(en.target); countObserver.unobserve(en.target); }
+    });
+  }, {threshold:0.6});
+  $$("[data-count]").forEach(function(el){ countObserver.observe(el); });
+
+  /* ---------- stat bars ---------- */
+  var barObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.style.width = en.target.getAttribute("data-fill") + "%"; barObserver.unobserve(en.target); }
+    });
+  }, {threshold:0.5});
+  $$("[data-fill]").forEach(function(el){ barObserver.observe(el); });
+
+  /* ---------- FAQ ---------- */
+  $$(".faq__item").forEach(function(item){
+    var q = $(".faq__q", item), a = $(".faq__a", item);
+    q.addEventListener("click", function(){
+      var open = item.classList.toggle("open");
+      q.setAttribute("aria-expanded", open ? "true":"false");
+      a.style.maxHeight = open ? (a.scrollHeight + "px") : "0px";
+    });
+  });
+
+  /* ---------- form -> mailto ---------- */
+  var form = $("#joinForm"), fmsg = $("#formMsg");
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("#name").value.trim();
+    var email = $("#email").value.trim();
+    var msg = $("#msg").value.trim();
+    if(!name || !email){
+      fmsg.textContent = "Fyll i namn och e-post så vi kan återkomma.";
+      fmsg.classList.add("show"); return;
+    }
+    var help = $$("input[name=help]:checked").map(function(c){return c.value;});
+    var body = "Hej Sunt Förnuft!%0D%0A%0D%0A" + encodeURIComponent(msg || "Jag vill gärna veta mer.") +
+      "%0D%0A%0D%0A" + (help.length ? "Så vill jag hjälpa till: " + encodeURIComponent(help.join(", ")) + "%0D%0A" : "") +
+      "Hälsningar,%0D%0A" + encodeURIComponent(name) + "%0D%0A" + encodeURIComponent(email);
+    var subject = encodeURIComponent("Intresseanmälan – " + name);
+    fmsg.textContent = "Tack " + name + "! Vi öppnar ett färdigt mejl åt dig …";
+    fmsg.classList.add("show");
+    window.location.href = "mailto:suntfornuft0521@gmail.com?subject=" + subject + "&body=" + body;
+  });
+
+  if(reduce) return; // skip pointer-based flourishes
+
+  /* ---------- custom cursor ---------- */
+  var cur = $(".cursor"), dot = $(".cursor-dot");
+  var cx=0, cy=0, tx=0, ty=0;
+  if(window.matchMedia("(hover:hover)").matches){
+    document.addEventListener("mousemove", function(e){
+      tx = e.clientX; ty = e.clientY;
+      dot.style.transform = "translate("+tx+"px,"+ty+"px)";
+      document.body.classList.add("cursor-on");
+    });
+    (function ren(){
+      cx += (tx-cx)*0.18; cy += (ty-cy)*0.18;
+      cur.style.transform = "translate("+cx+"px,"+cy+"px)";
+      requestAnimationFrame(ren);
+    })();
+    $$("a, button, [data-tilt], .chip, input, textarea").forEach(function(el){
+      el.addEventListener("mouseenter", function(){ cur.classList.add("grow"); });
+      el.addEventListener("mouseleave", function(){ cur.classList.remove("grow"); });
+    });
+    document.addEventListener("mouseleave", function(){ document.body.classList.remove("cursor-on"); });
+  }
+
+  /* ---------- magnetic buttons ---------- */
+  $$("[data-magnetic]").forEach(function(el){
+    var strength = 22;
+    el.addEventListener("mousemove", function(e){
+      var r = el.getBoundingClientRect();
+      var mx = e.clientX - r.left - r.width/2;
+      var my = e.clientY - r.top - r.height/2;
+      el.style.transform = "translate("+(mx/r.width*strength)+"px,"+(my/r.height*strength)+"px)";
+    });
+    el.addEventListener("mouseleave", function(){ el.style.transform = ""; });
+  });
+
+  /* ---------- tilt cards ---------- */
+  $$("[data-tilt]").forEach(function(el){
+    var max = 8;
+    el.addEventListener("mousemove", function(e){
+      var r = el.getBoundingClientRect();
+      var px = (e.clientX - r.left)/r.width - 0.5;
+      var py = (e.clientY - r.top)/r.height - 0.5;
+      el.style.transform = "perspective(900px) rotateY("+(px*max)+"deg) rotateX("+(-py*max)+"deg)";
+      el.style.setProperty("--mx", (px*100+50)+"%");
+      el.style.setProperty("--my", (py*100+50)+"%");
+    });
+    el.addEventListener("mouseleave", function(){ el.style.transform = ""; });
+  });
+
+  /* ---------- hero parallax (mouse + scroll) ---------- */
+  var layers = $$(".parallax-layer");
+  var emblem = $(".hero__emblem");
+  var mxr=0, myr=0;
+  var hero = $(".hero");
+  hero.addEventListener("mousemove", function(e){
+    var r = hero.getBoundingClientRect();
+    mxr = ((e.clientX - r.left)/r.width - 0.5);
+    myr = ((e.clientY - r.top)/r.height - 0.5);
+  });
+  hero.addEventListener("mouseleave", function(){ mxr=0; myr=0; });
+  function loop(){
+    var st = window.pageYOffset || 0;
+    layers.forEach(function(l){
+      var d = parseFloat(l.getAttribute("data-depth"));
+      l.style.transform = "translate3d("+(mxr*40*d)+"px,"+(st*d*-0.35 + myr*20*d)+"px,0)";
+    });
+    if(emblem){ emblem.style.transform = "translate3d("+(mxr*-18)+"px,"+(myr*-14)+"px,0)"; }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1322,6 +1322,20 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     el.addEventListener("mouseleave", function(){ el.style.transform = ""; });
   });
 
+  /* ---------- force video play ---------- */
+  var vid = document.querySelector(".landsbygd__bg video");
+  if(vid){
+    vid.muted = true;
+    var tryPlay = function(){
+      vid.play().catch(function(){});
+    };
+    tryPlay();
+    document.addEventListener("click", tryPlay, {once:true});
+    document.addEventListener("scroll", tryPlay, {once:true});
+    document.addEventListener("touchstart", tryPlay, {once:true});
+    vid.addEventListener("loadeddata", tryPlay);
+  }
+
   /* ---------- landsbygd scroll parallax ---------- */
   var lbgBg = $(".landsbygd__bg");
   if(lbgBg){

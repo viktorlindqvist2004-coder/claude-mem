@@ -247,14 +247,10 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 /* ===================== HERO ===================== */
 .hero{position:relative;min-height:100svh;display:flex;align-items:center;padding-top:6rem;padding-bottom:3rem;overflow:hidden}
 .hero__scene{position:absolute;inset:0;z-index:0;overflow:hidden}
-.hero__sky{position:absolute;inset:0;background:
-  radial-gradient(120% 90% at 78% 8%,color-mix(in srgb,var(--lake-soft) 30%,transparent),transparent 55%),
-  radial-gradient(90% 70% at 15% 100%,color-mix(in srgb,var(--gold) 16%,transparent),transparent 60%);}
-.hero__flowers{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center 40%;opacity:.45}
-:root[data-theme="dark"] .hero__flowers{opacity:.28}
-.hero__grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-:root[data-theme="dark"] .hero__grain{mix-blend-mode:screen;opacity:.045}
+.hero__sky{display:none}
+.hero__flowers{position:absolute;inset:0;z-index:1;background-size:cover;background-position:center 40%;opacity:.55}
+:root[data-theme="dark"] .hero__flowers{opacity:.35}
+.hero__grain{display:none}
 .parallax-layer{position:absolute;left:-4%;right:-4%;bottom:0;will-change:transform}
 .hero__ridge{width:108%}
 .hero__ridge svg{width:100%;height:auto;display:block}

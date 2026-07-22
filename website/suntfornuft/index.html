@@ -295,8 +295,12 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 /* ===================== VISION ===================== */
 .vision{background:var(--bg)}
 .vision__wrap{max-width:720px;margin:0 auto;text-align:center}
-.vision__video{position:relative;margin-top:2rem;border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.35);aspect-ratio:9/16;max-height:70vh;margin-left:auto;margin-right:auto}
+.vision__video{position:relative;margin-top:2rem;border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.35);aspect-ratio:9/16;max-height:70vh;margin-left:auto;margin-right:auto;cursor:pointer}
 .vision__video video{width:100%;height:100%;object-fit:cover;display:block}
+.vision__play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);transition:opacity .3s var(--ease);z-index:2}
+.vision__play svg{width:72px;height:72px;fill:#fff;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));transition:transform .3s var(--ease)}
+.vision__video:hover .vision__play svg{transform:scale(1.12)}
+.vision__video.playing .vision__play{opacity:0;pointer-events:none}
 
 /* ===================== ABOUT ===================== */
 .about{background:var(--bg-elev)}
@@ -721,8 +725,9 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     <div class="section__head reveal-rotate">
       <h2>Våran vision</h2>
     </div>
-    <div class="vision__video reveal-scale">
-      <video autoplay loop muted playsinline src="vision.mp4"></video>
+    <div class="vision__video reveal-scale" id="visionPlayer">
+      <div class="vision__play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      <video loop playsinline preload="metadata" src="vision.mp4"></video>
     </div>
   </div>
 </section>
@@ -1342,7 +1347,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     el.addEventListener("mouseleave", function(){ el.style.transform = ""; });
   });
 
-  /* ---------- force video play ---------- */
+  /* ---------- force landsbygd video play ---------- */
   var vid = document.querySelector(".landsbygd__bg video");
   if(vid){
     vid.muted = true;
@@ -1354,6 +1359,21 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     document.addEventListener("scroll", tryPlay, {once:true});
     document.addEventListener("touchstart", tryPlay, {once:true});
     vid.addEventListener("loadeddata", tryPlay);
+  }
+
+  /* ---------- vision video play/pause ---------- */
+  var vp = $("#visionPlayer");
+  if(vp){
+    var vv = vp.querySelector("video");
+    vp.addEventListener("click", function(){
+      if(vv.paused){
+        vv.play().then(function(){ vp.classList.add("playing"); }).catch(function(){});
+      } else {
+        vv.pause();
+        vp.classList.remove("playing");
+      }
+    });
+    vv.addEventListener("ended", function(){ vp.classList.remove("playing"); });
   }
 
   /* ---------- landsbygd scroll parallax ---------- */

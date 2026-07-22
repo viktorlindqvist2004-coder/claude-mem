@@ -370,6 +370,34 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 .issue__tag{display:inline-block;margin-top:1.2rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;
   text-transform:uppercase;color:var(--text-faint);border-top:1px solid var(--border);padding-top:.9rem;width:100%}
 
+/* ===================== LANDSBYGD INTERLUDE ===================== */
+.landsbygd{position:relative;min-height:65vh;display:flex;align-items:center;justify-content:center;overflow:hidden;isolation:isolate}
+.landsbygd__bg{position:absolute;inset:0;z-index:-2;
+  background:
+    repeating-linear-gradient(92deg,rgba(180,130,40,.14) 0 2px,transparent 2px 9px),
+    repeating-linear-gradient(88deg,rgba(200,150,50,.1) 0 1.5px,transparent 1.5px 11px),
+    repeating-linear-gradient(175deg,rgba(140,100,30,.13) 0 3px,rgba(200,160,60,.07) 3px 7px,transparent 7px 15px),
+    linear-gradient(170deg,#c99325 0%,#daa63a 30%,#c48b22 60%,#a07020 100%);
+  animation:wheatWind 8s ease-in-out infinite}
+@keyframes wheatWind{0%,100%{background-position:0 0,0 0,0 0,0 0}50%{background-position:14px 4px,-10px -3px,6px 2px,0 0}}
+.landsbygd__bg::before{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(178deg,rgba(160,112,32,.09) 0 2px,transparent 2px 6px);
+  animation:wheatSway 5s ease-in-out infinite alternate}
+@keyframes wheatSway{0%{transform:translateX(-6px) skewX(-.5deg)}100%{transform:translateX(6px) skewX(.5deg)}}
+.landsbygd__bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.landsbygd__overlay{position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(22,54,44,.55) 0%,rgba(14,36,29,.72) 100%)}
+.landsbygd__content{position:relative;text-align:center;color:#fff;max-width:38ch;padding-block:clamp(5rem,10vw,9rem)}
+.landsbygd__content .eyebrow{color:rgba(255,255,255,.6);justify-content:center}
+.landsbygd__content .eyebrow::before{background:var(--gold-soft)}
+.landsbygd__content h2{font-size:var(--step-4);margin-top:1.2rem;line-height:1.05}
+.landsbygd__content h2 em{font-style:italic;color:var(--gold-soft)}
+.landsbygd__content p{margin-top:1.4rem;color:rgba(255,255,255,.72);font-size:var(--step-1);line-height:1.55}
+.troska{position:absolute;bottom:18%;width:clamp(100px,14vw,180px);height:auto;z-index:-1;opacity:.22;filter:drop-shadow(4px 4px 12px rgba(0,0,0,.3));animation:troskaDrive 45s linear infinite}
+@keyframes troskaDrive{0%{left:-18%}100%{left:112%}}
+.dust{position:absolute;border-radius:50%;background:rgba(255,230,150,.45);z-index:-1;animation:dustFloat linear infinite}
+@keyframes dustFloat{0%{opacity:0;transform:translate(0,0) scale(.5)}15%{opacity:.7}85%{opacity:.6}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1)}}
+
 /* ===================== BAND (thesis / poster) ===================== */
 .band{position:relative;background:var(--band-bg);color:var(--band-text);overflow:hidden;isolation:isolate}
 .band::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;
@@ -523,6 +551,21 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 .reveal-up.in-view{opacity:1;transform:none}
 [data-stagger]>*{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
 [data-stagger].in-view>*{opacity:1;transform:none}
+[data-stagger-alt]>*:nth-child(odd){transform:translateX(-40px) translateY(20px)}
+[data-stagger-alt]>*:nth-child(even){transform:translateX(40px) translateY(20px)}
+[data-stagger-alt].in-view>*{transform:none}
+.reveal-left{opacity:0;transform:translateX(-60px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.reveal-left.in-view{opacity:1;transform:none}
+.reveal-right{opacity:0;transform:translateX(60px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.reveal-right.in-view{opacity:1;transform:none}
+.reveal-scale{opacity:0;transform:scale(.82);transition:opacity 1s var(--ease-out),transform 1s var(--ease-out)}
+.reveal-scale.in-view{opacity:1;transform:none}
+.reveal-clip{clip-path:inset(0 100% 0 0);opacity:0;transition:clip-path 1.1s var(--ease-out),opacity .6s var(--ease-out)}
+.reveal-clip.in-view{clip-path:inset(0);opacity:1}
+.reveal-rotate{opacity:0;transform:translateY(30px) rotate(2.5deg);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.reveal-rotate.in-view{opacity:1;transform:none}
+.reveal-flip{opacity:0;transform:perspective(800px) rotateX(10deg) translateY(40px);transform-origin:bottom center;transition:opacity 1s var(--ease-out),transform 1s var(--ease-out)}
+.reveal-flip.in-view{opacity:1;transform:none}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -563,9 +606,11 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
-  .reveal-up,[data-stagger]>*,.hero__lead,.hero__cta,.hero__meta{opacity:1 !important;transform:none !important}
+  .reveal-up,.reveal-left,.reveal-right,.reveal-scale,.reveal-rotate,.reveal-flip,.reveal-clip,[data-stagger]>*,.hero__lead,.hero__cta,.hero__meta{opacity:1 !important;transform:none !important;clip-path:none !important}
   .hero h1 .line>span{transform:none !important}
   .hero__emblem .emblem{opacity:1 !important;transform:none !important}
+  .landsbygd__bg,.landsbygd__bg::before{animation:none !important}
+  .troska,.dust{animation:none !important;display:none}
 }
 </style>
 
@@ -759,7 +804,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== ABOUT ===================== -->
 <section class="section about" id="om-oss">
   <div class="wrap about__grid">
-    <div class="about__text reveal-up">
+    <div class="about__text reveal-left">
       <span class="eyebrow">Om oss</span>
       <h2>Ett parti som växte fram ur <span class="gold-word">sunt förnuft</span>.</h2>
       <p class="lead">Vi startade efter samtal om något som inte höll ihop: när landsbygden ville satsa möttes den av sparkrav — medan pengarna sögs mot centrum.</p>
@@ -770,7 +815,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
         <div class="who"><b>Partiet Sunt Förnuft</b><span>Registrerat hos Valmyndigheten</span></div>
       </div>
     </div>
-    <figure class="about__card reveal-up" data-tilt>
+    <figure class="about__card reveal-right" data-tilt>
       <div class="scene" aria-hidden="true">
         <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
           <defs><linearGradient id="cardsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4437"/><stop offset="1" stop-color="#0e241d"/></linearGradient></defs>
@@ -792,7 +837,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== VALUES ===================== -->
 <section class="section values" id="varderingar">
   <div class="wrap">
-    <div class="section__head reveal-up">
+    <div class="section__head reveal-scale">
       <span class="eyebrow">Våra ledord</span>
       <h2>Sex värderingar vi inte tummar på.</h2>
       <p>Grunden för varje beslut vi fattar i fullmäktige.</p>
@@ -835,12 +880,12 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== ISSUES ===================== -->
 <section class="section issues" id="fragor">
   <div class="wrap">
-    <div class="section__head reveal-up">
+    <div class="section__head reveal-flip">
       <span class="eyebrow">Våra hjärtefrågor</span>
       <h2>Det här driver vi i Vänersborg.</h2>
       <p>Konkreta frågor för hela kommunen — inte bara centrum.</p>
     </div>
-    <div class="issues__grid" data-stagger data-tilt-group>
+    <div class="issues__grid" data-stagger data-stagger-alt data-tilt-group>
       <article class="issue" data-tilt>
         <div class="issue__top">
           <div class="issue__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
@@ -899,10 +944,35 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   </div>
 </section>
 
+<!-- ===================== LANDSBYGD INTERLUDE ===================== -->
+<section class="landsbygd">
+  <div class="landsbygd__bg" aria-hidden="true">
+    <!-- Byt ut mot riktig drönarfilm: <video src="troska.mp4" autoplay muted loop playsinline></video> -->
+  </div>
+  <svg class="troska" viewBox="0 0 240 100" aria-hidden="true" fill="rgba(60,40,15,.4)">
+    <rect x="0" y="42" width="55" height="22" rx="3"/><rect x="5" y="36" width="45" height="8" rx="1"/>
+    <polygon points="50,42 82,32 82,64 50,64"/>
+    <rect x="78" y="22" width="95" height="46" rx="7"/>
+    <rect x="98" y="12" width="55" height="14" rx="4"/>
+    <rect x="150" y="8" width="28" height="38" rx="5"/>
+    <rect x="174" y="26" width="18" height="32" rx="3"/>
+    <circle cx="108" cy="74" r="16"/><circle cx="108" cy="74" r="9" fill="rgba(60,40,15,.18)"/>
+    <circle cx="172" cy="74" r="11"/><circle cx="172" cy="74" r="5" fill="rgba(60,40,15,.18)"/>
+    <line x1="12" y1="33" x2="48" y2="33" stroke="rgba(60,40,15,.4)" stroke-width="2"/>
+    <rect x="168" y="2" width="5" height="16" rx="1" transform="rotate(-12 170 10)"/>
+  </svg>
+  <div class="landsbygd__overlay"></div>
+  <div class="wrap landsbygd__content reveal-scale">
+    <span class="eyebrow">Landsbygden lever</span>
+    <h2>Från <em>fält</em> till <em>framtid</em>.</h2>
+    <p>Vänersborgs landsbygd bär på kraften — åkrarna, skogarna och människorna som bygger samhället inifrån och ut.</p>
+  </div>
+</section>
+
 <!-- ===================== BAND / THESIS ===================== -->
 <section class="band">
   <svg class="band-rays" viewBox="0 0 200 200" aria-hidden="true"><g stroke="#e3a72e" stroke-width="1"><line x1="100" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(30 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(60 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(90 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(120 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(150 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(180 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(210 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(240 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(270 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(300 100 100)"/><line x1="100" y1="0" x2="100" y2="100" transform="rotate(330 100 100)"/></g></svg>
-  <div class="wrap band__inner reveal-up">
+  <div class="wrap band__inner reveal-clip">
     <span class="eyebrow">Vår övertygelse</span>
     <h2>Politik närmare <em>verkligheten</em>, närmare <em>dig</em>.</h2>
     <p>Vi vill att hela Vänersborg ska ses och höras — inte bara centrum. Beslut ska fattas nära dem de berör, med öppenhet och sunt förnuft.</p>
@@ -916,7 +986,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== STATS ===================== -->
 <section class="section stats" id="siffror">
   <div class="wrap">
-    <div class="section__head reveal-up">
+    <div class="section__head reveal-rotate">
       <span class="eyebrow">Fakta i siffror</span>
       <h2>Varför vi behövs — kort och gott.</h2>
     </div>
@@ -932,7 +1002,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== TIMELINE ===================== -->
 <section class="section timeline" id="vagen">
   <div class="wrap">
-    <div class="section__head reveal-up">
+    <div class="section__head reveal-left">
       <span class="eyebrow">Vägen mot valet 2026</span>
       <h2>Från idé till din röst i fullmäktige.</h2>
     </div>
@@ -964,12 +1034,12 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== BULLETIN ===================== -->
 <section class="section board" id="anslagstavla">
   <div class="wrap">
-    <div class="section__head reveal-up">
+    <div class="section__head reveal-scale">
       <span class="eyebrow">Anslagstavla</span>
       <h2>Senast från Sunt Förnuft.</h2>
       <p>Nyheter, ställningstaganden och inbjudningar. Följ oss även på Facebook.</p>
     </div>
-    <div class="board__grid" data-stagger>
+    <div class="board__grid" data-stagger data-stagger-alt>
       <article class="post" data-tilt>
         <div class="post__top"><svg viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><rect width="400" height="160" fill="#1d4437"/><circle cx="320" cy="46" r="28" fill="#e3a72e" opacity=".9"/><path d="M0 110 L90 110 L120 84 L210 84 L240 110 L400 110 L400 160 L0 160Z" fill="#2f6f5b" opacity=".6"/><path d="M0 130 Q120 108 240 130 T400 130 L400 160 L0 160Z" fill="#16362c"/></svg><span class="post__cat">Landsbygd</span></div>
         <div class="post__body"><span class="post__date">Nyhet</span><h3>Vi vill bryta centraliseringen</h3><p>Landsbygden ska inte få stryka på foten. Så här vill vi fördela satsningarna rättvist över hela kommunen.</p><span class="post__more">Läs mer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
@@ -989,7 +1059,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== ENGAGE ===================== -->
 <section class="section engage" id="engagera">
   <div class="wrap engage__grid">
-    <div class="engage__intro reveal-up">
+    <div class="engage__intro reveal-left">
       <span class="eyebrow">Engagera dig</span>
       <h2>Var med och forma <span class="gold-word">hela</span> kommunen.</h2>
       <p>Bli medlem, hör av dig med en fråga eller berätta hur du vill hjälpa till. Vi lovar att lyssna — och att svara.</p>
@@ -1011,7 +1081,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       </div>
     </div>
 
-    <form class="form reveal-up" id="joinForm" novalidate>
+    <form class="form reveal-right" id="joinForm" novalidate>
       <h3>Skriv till oss</h3>
       <p>Fyll i formuläret så öppnas ett färdigt mejl till partiet.</p>
       <div class="field"><input type="text" id="name" name="name" placeholder=" " required><label for="name">Ditt namn</label></div>
@@ -1035,11 +1105,11 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== FAQ ===================== -->
 <section class="section faq" id="faq">
   <div class="wrap">
-    <div class="section__head reveal-up">
+    <div class="section__head reveal-right">
       <span class="eyebrow">Vanliga frågor</span>
       <h2>Bra att veta om oss.</h2>
     </div>
-    <div class="faq__list reveal-up">
+    <div class="faq__list reveal-flip">
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Är ni höger eller vänster?<span class="pm"></span></button><div class="faq__a"><p>Varken eller i första hand. Vi är blocköverskridande och röstar för de förslag som gynnar Vänersborgs invånare — oavsett vilket parti som lägger fram dem. Sunt förnuft går före partipiskan.</p></div></div>
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Var verkar ni?<span class="pm"></span></button><div class="faq__a"><p>I Vänersborgs kommun samt Västra Götalandsregionen. Vi bryr oss om hela kommunen — från centralorten till Brålanda, Frändefors och byarna på landsbygden.</p></div></div>
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Hur blir jag medlem?<span class="pm"></span></button><div class="faq__a"><p>Enklast mejlar du oss på suntfornuft0521@gmail.com, eller fyller i formuläret här på sidan. Du kan också följa och skriva till oss via vår Facebooksida.</p></div></div>
@@ -1187,8 +1257,20 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       }
     });
   }, {rootMargin:"0px 0px -12% 0px", threshold:0.12});
-  $$(".reveal-up, [data-stagger]").forEach(function(el){ revObserver.observe(el); });
+  $$(".reveal-up,.reveal-left,.reveal-right,.reveal-scale,.reveal-clip,.reveal-rotate,.reveal-flip,[data-stagger]").forEach(function(el){ revObserver.observe(el); });
   $$(".tl__item").forEach(function(el){ revObserver.observe(el); });
+
+  /* ---------- landsbygd floating dust particles ---------- */
+  var lbg = $(".landsbygd");
+  if(lbg && !reduce){
+    for(var di=0;di<18;di++){
+      var d=document.createElement("span");
+      d.className="dust";
+      var sz=2+Math.random()*4;
+      d.style.cssText="width:"+sz+"px;height:"+sz+"px;left:"+Math.random()*100+"%;top:"+Math.random()*100+"%;animation-duration:"+(6+Math.random()*10)+"s;animation-delay:"+(-Math.random()*12)+"s;--dx:"+(40+Math.random()*80)+"px;--dy:"+(-60-Math.random()*100)+"px";
+      lbg.appendChild(d);
+    }
+  }
 
   /* ---------- counters ---------- */
   function animateCount(el){
@@ -1299,6 +1381,21 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     });
     el.addEventListener("mouseleave", function(){ el.style.transform = ""; });
   });
+
+  /* ---------- landsbygd scroll parallax ---------- */
+  var lbgBg = $(".landsbygd__bg");
+  if(lbgBg){
+    var lbgSection = $(".landsbygd");
+    function lbgParallax(){
+      var r = lbgSection.getBoundingClientRect();
+      if(r.bottom > 0 && r.top < window.innerHeight){
+        var prog = (window.innerHeight - r.top) / (window.innerHeight + r.height);
+        lbgBg.style.transform = "translateY("+(prog*-40)+"px) scale(1.08)";
+      }
+    }
+    window.addEventListener("scroll", lbgParallax, {passive:true});
+    lbgParallax();
+  }
 
   /* ---------- hero parallax (mouse + scroll) ---------- */
   var layers = $$(".parallax-layer");

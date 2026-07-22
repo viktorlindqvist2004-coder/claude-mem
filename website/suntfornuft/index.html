@@ -372,18 +372,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 
 /* ===================== LANDSBYGD INTERLUDE ===================== */
 .landsbygd{position:relative;min-height:65vh;display:flex;align-items:center;justify-content:center;overflow:hidden;isolation:isolate}
-.landsbygd__bg{position:absolute;inset:0;z-index:-2;
-  background:
-    repeating-linear-gradient(92deg,rgba(180,130,40,.14) 0 2px,transparent 2px 9px),
-    repeating-linear-gradient(88deg,rgba(200,150,50,.1) 0 1.5px,transparent 1.5px 11px),
-    repeating-linear-gradient(175deg,rgba(140,100,30,.13) 0 3px,rgba(200,160,60,.07) 3px 7px,transparent 7px 15px),
-    linear-gradient(170deg,#c99325 0%,#daa63a 30%,#c48b22 60%,#a07020 100%);
-  animation:wheatWind 8s ease-in-out infinite}
-@keyframes wheatWind{0%,100%{background-position:0 0,0 0,0 0,0 0}50%{background-position:14px 4px,-10px -3px,6px 2px,0 0}}
-.landsbygd__bg::before{content:"";position:absolute;inset:0;
-  background:repeating-linear-gradient(178deg,rgba(160,112,32,.09) 0 2px,transparent 2px 6px);
-  animation:wheatSway 5s ease-in-out infinite alternate}
-@keyframes wheatSway{0%{transform:translateX(-6px) skewX(-.5deg)}100%{transform:translateX(6px) skewX(.5deg)}}
+.landsbygd__bg{position:absolute;inset:0;z-index:-2;background:#8a6b2a}
 .landsbygd__bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .landsbygd__overlay{position:absolute;inset:0;z-index:-1;
   background:linear-gradient(180deg,rgba(22,54,44,.55) 0%,rgba(14,36,29,.72) 100%)}
@@ -393,10 +382,6 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 .landsbygd__content h2{font-size:var(--step-4);margin-top:1.2rem;line-height:1.05}
 .landsbygd__content h2 em{font-style:italic;color:var(--gold-soft)}
 .landsbygd__content p{margin-top:1.4rem;color:rgba(255,255,255,.72);font-size:var(--step-1);line-height:1.55}
-.troska{position:absolute;bottom:18%;width:clamp(100px,14vw,180px);height:auto;z-index:-1;opacity:.22;filter:drop-shadow(4px 4px 12px rgba(0,0,0,.3));animation:troskaDrive 45s linear infinite}
-@keyframes troskaDrive{0%{left:-18%}100%{left:112%}}
-.dust{position:absolute;border-radius:50%;background:rgba(255,230,150,.45);z-index:-1;animation:dustFloat linear infinite}
-@keyframes dustFloat{0%{opacity:0;transform:translate(0,0) scale(.5)}15%{opacity:.7}85%{opacity:.6}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1)}}
 
 /* ===================== BAND (thesis / poster) ===================== */
 .band{position:relative;background:var(--band-bg);color:var(--band-text);overflow:hidden;isolation:isolate}
@@ -609,8 +594,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   .reveal-up,.reveal-left,.reveal-right,.reveal-scale,.reveal-rotate,.reveal-flip,.reveal-clip,[data-stagger]>*,.hero__lead,.hero__cta,.hero__meta{opacity:1 !important;transform:none !important;clip-path:none !important}
   .hero h1 .line>span{transform:none !important}
   .hero__emblem .emblem{opacity:1 !important;transform:none !important}
-  .landsbygd__bg,.landsbygd__bg::before{animation:none !important}
-  .troska,.dust{animation:none !important;display:none}
+  .landsbygd__bg video{display:none}
 }
 </style>
 
@@ -947,20 +931,8 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 <!-- ===================== LANDSBYGD INTERLUDE ===================== -->
 <section class="landsbygd">
   <div class="landsbygd__bg" aria-hidden="true">
-    <!-- Byt ut mot riktig drönarfilm: <video src="troska.mp4" autoplay muted loop playsinline></video> -->
+    <video src="troska.mp4" autoplay muted loop playsinline></video>
   </div>
-  <svg class="troska" viewBox="0 0 240 100" aria-hidden="true" fill="rgba(60,40,15,.4)">
-    <rect x="0" y="42" width="55" height="22" rx="3"/><rect x="5" y="36" width="45" height="8" rx="1"/>
-    <polygon points="50,42 82,32 82,64 50,64"/>
-    <rect x="78" y="22" width="95" height="46" rx="7"/>
-    <rect x="98" y="12" width="55" height="14" rx="4"/>
-    <rect x="150" y="8" width="28" height="38" rx="5"/>
-    <rect x="174" y="26" width="18" height="32" rx="3"/>
-    <circle cx="108" cy="74" r="16"/><circle cx="108" cy="74" r="9" fill="rgba(60,40,15,.18)"/>
-    <circle cx="172" cy="74" r="11"/><circle cx="172" cy="74" r="5" fill="rgba(60,40,15,.18)"/>
-    <line x1="12" y1="33" x2="48" y2="33" stroke="rgba(60,40,15,.4)" stroke-width="2"/>
-    <rect x="168" y="2" width="5" height="16" rx="1" transform="rotate(-12 170 10)"/>
-  </svg>
   <div class="landsbygd__overlay"></div>
   <div class="wrap landsbygd__content reveal-scale">
     <span class="eyebrow">Landsbygden lever</span>
@@ -1260,17 +1232,6 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   $$(".reveal-up,.reveal-left,.reveal-right,.reveal-scale,.reveal-clip,.reveal-rotate,.reveal-flip,[data-stagger]").forEach(function(el){ revObserver.observe(el); });
   $$(".tl__item").forEach(function(el){ revObserver.observe(el); });
 
-  /* ---------- landsbygd floating dust particles ---------- */
-  var lbg = $(".landsbygd");
-  if(lbg && !reduce){
-    for(var di=0;di<18;di++){
-      var d=document.createElement("span");
-      d.className="dust";
-      var sz=2+Math.random()*4;
-      d.style.cssText="width:"+sz+"px;height:"+sz+"px;left:"+Math.random()*100+"%;top:"+Math.random()*100+"%;animation-duration:"+(6+Math.random()*10)+"s;animation-delay:"+(-Math.random()*12)+"s;--dx:"+(40+Math.random()*80)+"px;--dy:"+(-60-Math.random()*100)+"px";
-      lbg.appendChild(d);
-    }
-  }
 
   /* ---------- counters ---------- */
   function animateCount(el){

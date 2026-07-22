@@ -153,8 +153,10 @@ ul{margin:0;padding:0;list-style:none}
 
 /* ===================== PRELOADER ===================== */
 #preloader{position:fixed;inset:0;z-index:9999;background:var(--pine);color:var(--band-text);
-  display:grid;place-items:center;gap:1.4rem;transition:opacity .7s var(--ease),visibility .7s}
-#preloader.done{opacity:0;visibility:hidden;pointer-events:none}
+  display:grid;place-items:center;gap:1.4rem;transition:opacity .7s var(--ease),visibility .7s;
+  animation:preloaderBackstop .8s 4s forwards}
+#preloader.done{opacity:0;visibility:hidden;pointer-events:none;animation:none}
+@keyframes preloaderBackstop{to{opacity:0;visibility:hidden;pointer-events:none}}
 .pre-emblem{width:112px;height:112px;animation:preSpin 1.2s var(--ease-out) both}
 .pre-bar{width:180px;height:3px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden}
 .pre-bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:3px;transition:width .3s linear}
@@ -1098,7 +1100,8 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   var stored;
   try{ stored = localStorage.getItem("sf-theme"); }catch(e){}
   if(stored){ doc.setAttribute("data-theme", stored); }
-  $("#themeToggle").addEventListener("click", function(){
+  var _tt = $("#themeToggle");
+  if(_tt) _tt.addEventListener("click", function(){
     var cur = doc.getAttribute("data-theme");
     if(!cur){ cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark":"light"; }
     var next = cur === "dark" ? "light" : "dark";
@@ -1106,24 +1109,29 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     try{ localStorage.setItem("sf-theme", next); }catch(e){}
   });
 
-  /* ---------- preloader ---------- */
-  var pre = $("#preloader"), bar = $(".pre-bar i");
-  var p = 0;
-  var tick = setInterval(function(){
-    p = Math.min(100, p + Math.random()*26);
-    if(bar) bar.style.width = p + "%";
-    if(p >= 100){ clearInterval(tick); }
-  }, 140);
+  /* ---------- preloader (robust: never leave the overlay stuck) ---------- */
+  var pre = $("#preloader"), bar = $(".pre-bar i"), launched = false;
   function launch(){
+    if(launched) return; launched = true;
     if(bar) bar.style.width = "100%";
     setTimeout(function(){
-      pre.classList.add("done");
-      $(".hero").classList.add("reveal");
-    }, 380);
+      if(pre) pre.classList.add("done");
+      var hero = $(".hero"); if(hero) hero.classList.add("reveal");
+    }, 280);
   }
-  window.addEventListener("load", function(){ setTimeout(launch, 500); });
-  // safety fallback
-  setTimeout(function(){ if(!pre.classList.contains("done")) launch(); }, 3500);
+  var p = 0;
+  var tick = setInterval(function(){
+    p = Math.min(100, p + Math.random()*32);
+    if(bar) bar.style.width = p + "%";
+    if(p >= 100){ clearInterval(tick); }
+  }, 120);
+  if(document.readyState === "interactive" || document.readyState === "complete"){
+    setTimeout(launch, 350);
+  } else {
+    document.addEventListener("DOMContentLoaded", function(){ setTimeout(launch, 350); });
+  }
+  window.addEventListener("load", function(){ setTimeout(launch, 150); });
+  setTimeout(launch, 1600); // hard safety net — overlay always clears
 
   /* ---------- scroll progress + nav + back to top ---------- */
   var nav = $("#nav"), toTop = $("#toTop"), progress = $("#progress");

@@ -401,9 +401,17 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 .swish-qr svg{width:100%;height:auto;display:block}
 .swish-number{font-family:var(--mono);font-size:clamp(1.4rem,3vw,2rem);letter-spacing:.08em;color:var(--text);font-weight:700;margin-top:1rem}
 .swish-label{font-size:.85rem;color:var(--text-faint);margin-top:.5rem}
-.swish-copy{margin-top:1.2rem;display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.4rem;border-radius:99px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;cursor:pointer;transition:.3s var(--ease)}
+.swish-copy{margin-top:1.2rem;display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.4rem;border-radius:99px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;cursor:pointer;transition:.3s var(--ease);position:relative;overflow:hidden}
 .swish-copy:hover{border-color:var(--gold);color:var(--gold)}
-.swish-copy.copied{border-color:var(--pine);color:var(--pine)}
+.swish-copy.copied{border-color:var(--pine);background:var(--pine);color:#fff;transform:scale(1.08);box-shadow:0 0 0 4px rgba(56,120,88,.25)}
+.swish-copy.pop{animation:copyPop .45s var(--ease)}
+@keyframes copyPop{0%{transform:scale(1)}25%{transform:scale(.92)}55%{transform:scale(1.12)}100%{transform:scale(1.08)}}
+.membership-info{margin-top:1.5rem;padding:1.2rem;border-radius:var(--radius);background:var(--bg);border:1px solid var(--border)}
+.membership-info h4{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.6rem}
+.membership-info ul{list-style:none;padding:0;margin:0;display:grid;gap:.4rem}
+.membership-info li{font-size:.88rem;color:var(--text-dim);display:flex;align-items:center;gap:.5rem}
+.membership-info li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.membership-info .note{font-size:.8rem;color:var(--text-faint);margin-top:.6rem;font-style:italic}
 @media(max-width:760px){.donate__grid{grid-template-columns:1fr}}
 
 /* ===================== BAND (thesis / poster) ===================== */
@@ -952,7 +960,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       </article>
       <article class="post" data-tilt>
         <div class="post__top"><svg viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><rect width="400" height="160" fill="#1d4437"/><g stroke="#e3a72e" stroke-width="2" opacity=".5"><line x1="200" y1="30" x2="200" y2="70"/><line x1="160" y1="50" x2="240" y2="50"/></g><circle cx="200" cy="50" r="14" fill="#e3a72e"/><path d="M0 120 Q140 100 280 122 T400 120 L400 160 L0 160Z" fill="#16362c"/></svg><span class="post__cat">Medlem</span></div>
-        <div class="post__body"><span class="post__date">Inbjudan</span><h3>Bli en av oss inför 2026</h3><p>Vill du engagera dig eller är du företagare med idéer? Hör av dig — vi lovar att lyssna och verka för hela kommunen.</p><span class="post__more">Engagera dig <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+        <div class="post__body"><span class="post__date">Inbjudan</span><h3>Bli en av oss inför 2026</h3><p>Vill du engagera dig eller är du företagare med idéer? Hör av dig — vi lovar att lyssna och verka för hela kommunen.</p><a href="#stotta" class="post__more" style="text-decoration:none;color:inherit">Engagera dig <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
       </article>
     </div>
   </div>
@@ -1027,7 +1035,15 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       </div>
       <div class="swish-number">123 016 19 27</div>
       <div class="swish-label">Skanna QR-koden i Swish-appen eller ange numret manuellt</div>
-      <button class="swish-copy" onclick="navigator.clipboard.writeText('1230161927');this.textContent='Kopierat!';this.classList.add('copied');var b=this;setTimeout(function(){b.textContent='Kopiera nummer';b.classList.remove('copied')},2000)">Kopiera nummer</button>
+      <button class="swish-copy" onclick="navigator.clipboard.writeText('1230161927');this.innerHTML='&#10003; Kopierat!';this.classList.add('copied','pop');var b=this;setTimeout(function(){b.innerHTML='Kopiera nummer';b.classList.remove('copied','pop')},2500)">Kopiera nummer</button>
+      <div class="membership-info">
+        <h4>Bli medlem</h4>
+        <ul>
+          <li>Ny medlem — swisha <strong>100 kr</strong></li>
+          <li>Återkommande medlem — swisha <strong>200 kr</strong></li>
+        </ul>
+        <p class="note">Skriv ditt namn i Swish-meddelandet.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1042,7 +1058,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     <div class="faq__list reveal-flip">
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Är ni höger eller vänster?<span class="pm"></span></button><div class="faq__a"><p>Varken eller i första hand. Vi är blocköverskridande och röstar för de förslag som gynnar Vänersborgs invånare — oavsett vilket parti som lägger fram dem. Sunt förnuft går före partipiskan.</p></div></div>
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Var verkar ni?<span class="pm"></span></button><div class="faq__a"><p>I Vänersborgs kommun. Vi bryr oss om hela kommunen — från centralorten till Brålanda, Frändefors och byarna på landsbygden.</p></div></div>
-      <div class="faq__item"><button class="faq__q" aria-expanded="false">Hur blir jag medlem?<span class="pm"></span></button><div class="faq__a"><p>Enklast mejlar du oss på suntfornuft0521@gmail.com, eller fyller i formuläret här på sidan. Du kan också följa och skriva till oss via vår Facebooksida.</p></div></div>
+      <div class="faq__item"><button class="faq__q" aria-expanded="false">Hur blir jag medlem?<span class="pm"></span></button><div class="faq__a"><p>Swisha <strong>100 kr</strong> (ny medlem) eller <strong>200 kr</strong> (återkommande medlem) till <strong>123 016 19 27</strong> och skriv ditt namn i meddelandet. Du kan också mejla oss på suntfornuft0521@gmail.com eller fylla i formuläret här på sidan.</p></div></div>
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Vad är er viktigaste fråga?<span class="pm"></span></button><div class="faq__a"><p>Att bryta centraliseringen så att hela kommunen får leva och utvecklas — kombinerat med en ansvarsfull ekonomi där skattepengar används klokt och med full öppenhet.</p></div></div>
       <div class="faq__item"><button class="faq__q" aria-expanded="false">Jag är företagare — kan jag höra av mig?<span class="pm"></span></button><div class="faq__a"><p>Absolut, och det vill vi gärna. Vi välkomnar kommunens företagare att kontakta oss. Vi lovar att lyssna och att verka för entreprenörskap och fler jobb i hela kommunen.</p></div></div>
     </div>

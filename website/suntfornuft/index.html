@@ -292,6 +292,12 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 .marquee__track span::after{content:"✦";color:var(--gold);font-size:.8rem}
 @keyframes marq{to{transform:translateX(-50%)}}
 
+/* ===================== VISION ===================== */
+.vision{background:var(--bg)}
+.vision__wrap{max-width:720px;margin:0 auto;text-align:center}
+.vision__video{position:relative;margin-top:2rem;border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.35);aspect-ratio:9/16;max-height:70vh;margin-left:auto;margin-right:auto}
+.vision__video video{width:100%;height:100%;object-fit:cover;display:block}
+
 /* ===================== ABOUT ===================== */
 .about{background:var(--bg-elev)}
 .about__grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,5rem);align-items:center}
@@ -624,6 +630,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       <span>Sunt Förnuft<small>Vänersborgs kommun</small></span>
     </a>
     <nav class="nav__links" aria-label="Huvudmeny">
+      <a href="#vision">Våran vision</a>
       <a href="#om-oss">Om oss</a>
       <a href="#fragor">Våra frågor</a>
       <a href="#vagen">Vägen framåt</a>
@@ -641,13 +648,14 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 
 <!-- mobile menu -->
 <nav class="mobile-menu" id="mobileMenu" aria-label="Mobilmeny">
-  <a href="#om-oss"><i>01</i> Om oss</a>
-  <a href="#fragor"><i>02</i> Våra frågor</a>
-  <a href="#vagen"><i>03</i> Vägen framåt</a>
-  <a href="#anslagstavla"><i>04</i> Anslagstavla</a>
-  <a href="#styrelsen"><i>05</i> Styrelsen</a>
-  <a href="#stotta"><i>06</i> Stötta oss</a>
-  <a href="#engagera"><i>07</i> Engagera dig</a>
+  <a href="#vision"><i>01</i> Våran vision</a>
+  <a href="#om-oss"><i>02</i> Om oss</a>
+  <a href="#fragor"><i>03</i> Våra frågor</a>
+  <a href="#vagen"><i>04</i> Vägen framåt</a>
+  <a href="#anslagstavla"><i>05</i> Anslagstavla</a>
+  <a href="#styrelsen"><i>06</i> Styrelsen</a>
+  <a href="#stotta"><i>07</i> Stötta oss</a>
+  <a href="#engagera"><i>08</i> Engagera dig</a>
   <div class="mm-foot">suntfornuft0521@gmail.com</div>
 </nav>
 
@@ -706,6 +714,18 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
     <span>Öppenhet</span><span>Landsbygd &amp; centrum</span><span>Ansvarsfull ekonomi</span><span>Lika inför lagen</span><span>Mot centralisering</span><span>Sunt förnuft framför blockpolitik</span>
   </div>
 </div>
+
+<!-- ===================== VISION ===================== -->
+<section class="section vision" id="vision">
+  <div class="wrap vision__wrap">
+    <div class="section__head reveal-rotate">
+      <h2>Våran vision</h2>
+    </div>
+    <div class="vision__video reveal-scale">
+      <video autoplay loop muted playsinline src="vision.mp4"></video>
+    </div>
+  </div>
+</section>
 
 <!-- ===================== ABOUT ===================== -->
 <section class="section about" id="om-oss">

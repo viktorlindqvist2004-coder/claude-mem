@@ -1,14 +1,17 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import emailjs from '@emailjs/browser'
 
 /* ═══ Types ═══ */
 
 interface Booking {
   id: string
-  date: string       // YYYY-MM-DD
-  time: string       // HH:MM
+  date: string
+  time: string
   service: string
-  duration: number   // minutes
+  duration: number
+  price: string
   email: string
+  phone: string
   name: string
   createdAt: string
 }
@@ -22,6 +25,13 @@ interface Service {
 
 /* ═══ Config ═══ */
 
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || ''
+const EMAILJS_CUSTOMER_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_CUSTOMER_TEMPLATE_ID || ''
+const EMAILJS_OWNER_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_OWNER_TEMPLATE_ID || ''
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || ''
+
+const OWNER_EMAIL = import.meta.env.VITE_OWNER_EMAIL || 'gentlemens@barbershop.se'
+
 const SERVICES: Service[] = [
   { name: 'Herrklippning', price: '300 kr', duration: 30, icon: 'scissors' },
   { name: 'Skinfade', price: '350 kr', duration: 45, icon: 'blade' },
@@ -31,18 +41,19 @@ const SERVICES: Service[] = [
   { name: 'Ansiktsbehandling', price: '470 kr', duration: 60, icon: 'drop' },
 ]
 
-const OWNER_EMAIL = 'gentlemens@barbershop.se'
-
 const SLOT_INTERVAL = 30
+const BUFFER_MINUTES = 10
+const MIN_ADVANCE_HOURS = 2
+const MAX_ADVANCE_WEEKS = 4
 
 const OPENING_HOURS: Record<number, { open: number; close: number } | null> = {
-  1: { open: 10, close: 18 },  // Monday
+  1: { open: 10, close: 18 },
   2: { open: 10, close: 18 },
   3: { open: 10, close: 18 },
   4: { open: 10, close: 18 },
-  5: { open: 10, close: 18 },  // Friday
-  6: { open: 10, close: 15 },  // Saturday
-  0: null,                      // Sunday - closed
+  5: { open: 10, close: 18 },
+  6: { open: 10, close: 15 },
+  0: null,
 }
 
 const DAY_NAMES = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön']
@@ -69,6 +80,17 @@ function addDays(d: Date, n: number): Date {
   return r
 }
 
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+function minutesToTime(mins: number): string {
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+}
+
 function generateTimeSlots(dayOfWeek: number): string[] {
   const hours = OPENING_HOURS[dayOfWeek]
   if (!hours) return []
@@ -76,18 +98,46 @@ function generateTimeSlots(dayOfWeek: number): string[] {
   let minutes = hours.open * 60
   const end = hours.close * 60
   while (minutes < end) {
-    const h = Math.floor(minutes / 60)
-    const m = minutes % 60
-    slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
+    slots.push(minutesToTime(minutes))
     minutes += SLOT_INTERVAL
   }
   return slots
 }
 
+function getDayName(date: string): string {
+  const d = new Date(date)
+  const dow = d.getDay()
+  return DAY_NAMES_FULL[dow === 0 ? 6 : dow - 1]
+}
+
+function formatSwedishDate(date: string): string {
+  const [y, m, d] = date.split('-')
+  return `${d}/${m} ${y}`
+}
+
+function generateBookingId(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let id = ''
+  for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)]
+  return id
+}
+
+/* ═══ Booking storage ═══ */
+
 function loadBookings(): Booking[] {
   try {
     const raw = localStorage.getItem('gentlemens_bookings')
-    return raw ? JSON.parse(raw) : []
+    if (!raw) return []
+    const bookings: Booking[] = JSON.parse(raw)
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const cutoff = new Date(now)
+    cutoff.setDate(cutoff.getDate() - 1)
+    const active = bookings.filter(b => new Date(b.date) >= cutoff)
+    if (active.length !== bookings.length) {
+      localStorage.setItem('gentlemens_bookings', JSON.stringify(active))
+    }
+    return active
   } catch {
     return []
   }
@@ -97,62 +147,168 @@ function saveBookings(bookings: Booking[]) {
   localStorage.setItem('gentlemens_bookings', JSON.stringify(bookings))
 }
 
-function isSlotBooked(bookings: Booking[], date: string, time: string): boolean {
-  return bookings.some(b => b.date === date && b.time === time)
-}
+/* ═══ Slot availability ═══ */
 
 function isSlotConflicting(bookings: Booking[], date: string, time: string, duration: number): boolean {
   const slotStart = timeToMinutes(time)
-  const slotEnd = slotStart + duration
+  const slotEnd = slotStart + duration + BUFFER_MINUTES
   return bookings
     .filter(b => b.date === date)
     .some(b => {
       const bStart = timeToMinutes(b.time)
-      const bEnd = bStart + b.duration
+      const bEnd = bStart + b.duration + BUFFER_MINUTES
       return slotStart < bEnd && slotEnd > bStart
     })
 }
 
-function timeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
+function getBookingAt(bookings: Booking[], date: string, time: string): Booking | undefined {
+  const slotMins = timeToMinutes(time)
+  return bookings
+    .filter(b => b.date === date)
+    .find(b => {
+      const bStart = timeToMinutes(b.time)
+      const bEnd = bStart + b.duration
+      return slotMins >= bStart && slotMins < bEnd
+    })
 }
 
-function isSlotInPast(date: string, time: string): boolean {
+function isSlotTooSoon(date: string, time: string): boolean {
   const now = new Date()
   const [y, mo, d] = date.split('-').map(Number)
   const [h, m] = time.split(':').map(Number)
   const slotTime = new Date(y, mo - 1, d, h, m)
-  return slotTime <= now
+  const minTime = new Date(now.getTime() + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
+  return slotTime < minTime
+}
+
+function isSlotTooFar(date: string): boolean {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const maxDate = addDays(now, MAX_ADVANCE_WEEKS * 7)
+  return new Date(date) > maxDate
 }
 
 function fitsBeforeClose(dayOfWeek: number, time: string, duration: number): boolean {
   const hours = OPENING_HOURS[dayOfWeek]
   if (!hours) return false
-  const slotEnd = timeToMinutes(time) + duration
-  return slotEnd <= hours.close * 60
+  return timeToMinutes(time) + duration <= hours.close * 60
+}
+
+/* ═══ Email ═══ */
+
+function emailConfigured(): boolean {
+  return !!(EMAILJS_SERVICE_ID && EMAILJS_CUSTOMER_TEMPLATE_ID && EMAILJS_OWNER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY)
 }
 
 async function sendBookingEmails(booking: Booking) {
-  const confirmationToCustomer = {
-    to: booking.email,
-    subject: `Bokningsbekräftelse - Gentlemen's Barbershop`,
-    body: `Hej ${booking.name}!\n\nDin bokning är bekräftad:\n\nTjänst: ${booking.service}\nDatum: ${booking.date}\nTid: ${booking.time}\nLängd: ${booking.duration} min\n\nVälkommen till Gentlemen's Barbershop!\nEdsgatan 23, Vänersborg\nTel: 076-214 99 29`,
+  if (!emailConfigured()) {
+    console.log('[Booking] E-postkonfiguration saknas. Bokningsdetaljer:', booking)
+    return
   }
 
-  const notificationToOwner = {
-    to: OWNER_EMAIL,
-    subject: `Ny bokning: ${booking.service} - ${booking.date} ${booking.time}`,
-    body: `Ny bokning mottagen:\n\nKund: ${booking.name}\nE-post: ${booking.email}\nTjänst: ${booking.service}\nDatum: ${booking.date}\nTid: ${booking.time}\nLängd: ${booking.duration} min`,
+  const endTime = minutesToTime(timeToMinutes(booking.time) + booking.duration)
+
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_CUSTOMER_TEMPLATE_ID,
+      {
+        to_email: booking.email,
+        to_name: booking.name,
+        service_name: booking.service,
+        booking_date: `${getDayName(booking.date)} ${formatSwedishDate(booking.date)}`,
+        booking_time: `${booking.time} – ${endTime}`,
+        booking_duration: `${booking.duration} min`,
+        booking_price: booking.price,
+        booking_id: booking.id,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+  } catch (err) {
+    console.error('[Booking] Kunde inte skicka kundmail:', err)
   }
 
-  console.log('E-post till kund:', confirmationToCustomer)
-  console.log('E-post till ägare:', notificationToOwner)
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_OWNER_TEMPLATE_ID,
+      {
+        to_email: OWNER_EMAIL,
+        customer_name: booking.name,
+        customer_email: booking.email,
+        customer_phone: booking.phone,
+        service_name: booking.service,
+        booking_date: `${getDayName(booking.date)} ${formatSwedishDate(booking.date)}`,
+        booking_time: `${booking.time} – ${endTime}`,
+        booking_duration: `${booking.duration} min`,
+        booking_price: booking.price,
+        booking_id: booking.id,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+  } catch (err) {
+    console.error('[Booking] Kunde inte skicka ägarmail:', err)
+  }
+}
 
-  // TODO: Connect to email service (EmailJS, SendGrid, etc.)
-  // Example with EmailJS:
-  // await emailjs.send(SERVICE_ID, TEMPLATE_ID, { ...params }, PUBLIC_KEY)
-  return { customerEmail: confirmationToCustomer, ownerEmail: notificationToOwner }
+async function sendCancellationEmails(booking: Booking) {
+  if (!emailConfigured()) {
+    console.log('[Booking] Avbokning (e-post ej konfigurerad):', booking)
+    return
+  }
+
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_CUSTOMER_TEMPLATE_ID,
+      {
+        to_email: booking.email,
+        to_name: booking.name,
+        service_name: `AVBOKAD: ${booking.service}`,
+        booking_date: `${getDayName(booking.date)} ${formatSwedishDate(booking.date)}`,
+        booking_time: booking.time,
+        booking_duration: `${booking.duration} min`,
+        booking_price: booking.price,
+        booking_id: `${booking.id} (avbokad)`,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+  } catch (err) {
+    console.error('[Booking] Kunde inte skicka avbokningsmail:', err)
+  }
+
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_OWNER_TEMPLATE_ID,
+      {
+        to_email: OWNER_EMAIL,
+        customer_name: booking.name,
+        customer_email: booking.email,
+        customer_phone: booking.phone,
+        service_name: `AVBOKAD: ${booking.service}`,
+        booking_date: `${getDayName(booking.date)} ${formatSwedishDate(booking.date)}`,
+        booking_time: booking.time,
+        booking_duration: `${booking.duration} min`,
+        booking_price: booking.price,
+        booking_id: `${booking.id} (avbokad)`,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+  } catch (err) {
+    console.error('[Booking] Kunde inte skicka avbokningsmail till ägare:', err)
+  }
+}
+
+/* ═══ useScrollLock ═══ */
+
+function useScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (locked) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [locked])
 }
 
 /* ═══ Subcomponents ═══ */
@@ -160,40 +316,57 @@ async function sendBookingEmails(booking: Booking) {
 function ServiceSelector({ selected, onSelect }: { selected: Service | null; onSelect: (s: Service) => void }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {SERVICES.map(s => (
-        <button
-          key={s.name}
-          onClick={() => onSelect(s)}
-          className={`text-left p-4 border transition-all duration-300 cursor-pointer bg-transparent ${
-            selected?.name === s.name
-              ? 'border-[#d4af37]/60 bg-[#d4af37]/5'
-              : 'border-white/[0.08] hover:border-[#d4af37]/25'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-white/80 text-sm font-semibold">{s.name}</span>
-            <span className="text-[#d4af37] text-sm font-bold tabular-nums">{s.price}</span>
-          </div>
-          <span className="text-white/30 text-xs">{s.duration} min</span>
-        </button>
-      ))}
+      {SERVICES.map(s => {
+        const isSelected = selected?.name === s.name
+        return (
+          <button
+            key={s.name}
+            onClick={() => onSelect(s)}
+            className={`text-left p-4 border transition-all duration-300 cursor-pointer bg-transparent ${
+              isSelected
+                ? 'border-[#d4af37]/60 bg-[#d4af37]/5'
+                : 'border-white/[0.08] hover:border-[#d4af37]/25'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-white/80 text-sm font-semibold">{s.name}</span>
+              <span className="text-[#d4af37] text-sm font-bold tabular-nums">{s.price}</span>
+            </div>
+            <span className="text-white/30 text-xs">{s.duration} min</span>
+            {isSelected && (
+              <div className="mt-2 w-full h-[2px] bg-gradient-to-r from-[#d4af37]/60 to-transparent" />
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
 
-function WeekNav({ weekStart, onPrev, onNext }: { weekStart: Date; onPrev: () => void; onNext: () => void }) {
+function WeekNav({
+  weekStart,
+  onPrev,
+  onNext,
+  canGoPrev,
+  canGoNext,
+}: {
+  weekStart: Date
+  onPrev: () => void
+  onNext: () => void
+  canGoPrev: boolean
+  canGoNext: boolean
+}) {
   const weekEnd = addDays(weekStart, 6)
   const fmt = (d: Date) => `${d.getDate()}/${d.getMonth() + 1}`
-  const canGoPrev = weekStart > getMonday(new Date())
 
   return (
     <div className="flex items-center justify-between mb-6">
       <button
         onClick={onPrev}
         disabled={!canGoPrev}
-        className={`text-xs uppercase tracking-[0.2em] px-4 py-2 border transition-all duration-300 bg-transparent cursor-pointer ${
+        className={`text-xs uppercase tracking-[0.2em] px-4 py-2 border transition-all duration-300 bg-transparent ${
           canGoPrev
-            ? 'border-white/10 text-white/50 hover:border-[#d4af37]/30 hover:text-[#d4af37]'
+            ? 'border-white/10 text-white/50 hover:border-[#d4af37]/30 hover:text-[#d4af37] cursor-pointer'
             : 'border-white/5 text-white/15 cursor-not-allowed'
         }`}
       >
@@ -204,7 +377,12 @@ function WeekNav({ weekStart, onPrev, onNext }: { weekStart: Date; onPrev: () =>
       </span>
       <button
         onClick={onNext}
-        className="text-xs uppercase tracking-[0.2em] px-4 py-2 border border-white/10 text-white/50 hover:border-[#d4af37]/30 hover:text-[#d4af37] transition-all duration-300 bg-transparent cursor-pointer"
+        disabled={!canGoNext}
+        className={`text-xs uppercase tracking-[0.2em] px-4 py-2 border transition-all duration-300 bg-transparent ${
+          canGoNext
+            ? 'border-white/10 text-white/50 hover:border-[#d4af37]/30 hover:text-[#d4af37] cursor-pointer'
+            : 'border-white/5 text-white/15 cursor-not-allowed'
+        }`}
       >
         Nästa &rarr;
       </button>
@@ -227,8 +405,7 @@ function CalendarGrid({
     const allSlots = new Set<string>()
     for (let i = 0; i < 7; i++) {
       const d = addDays(weekStart, i)
-      const dow = d.getDay()
-      generateTimeSlots(dow).forEach(s => allSlots.add(s))
+      generateTimeSlots(d.getDay()).forEach(s => allSlots.add(s))
     }
     return [...allSlots].sort()
   }, [weekStart])
@@ -238,13 +415,15 @@ function CalendarGrid({
   return (
     <div className="overflow-x-auto -mx-2 px-2">
       <div className="min-w-[700px]">
-        {/* Header row */}
+        {/* Header */}
         <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-1 mb-1">
           <div />
           {Array.from({ length: 7 }, (_, i) => {
             const d = addDays(weekStart, i)
             const dateStr = formatDate(d)
             const isToday = dateStr === today
+            const dow = d.getDay()
+            const isClosed = !OPENING_HOURS[dow]
             return (
               <div
                 key={i}
@@ -256,12 +435,15 @@ function CalendarGrid({
                 <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isToday ? 'text-[#d4af37]' : 'text-white/70'}`}>
                   {d.getDate()}
                 </div>
+                {isClosed && (
+                  <div className="text-[8px] text-red-400/50 uppercase tracking-wider mt-0.5">Stängt</div>
+                )}
               </div>
             )
           })}
         </div>
 
-        {/* Time slots */}
+        {/* Slots */}
         <div className="space-y-[2px]">
           {allTimeSlots.map(time => (
             <div key={time} className="grid grid-cols-[60px_repeat(7,1fr)] gap-[2px]">
@@ -279,46 +461,45 @@ function CalendarGrid({
                   return <div key={i} className="h-10 bg-white/[0.01]" />
                 }
 
-                const past = isSlotInPast(dateStr, time)
-                const booked = isSlotBooked(bookings, dateStr, time)
+                const tooSoon = isSlotTooSoon(dateStr, time)
+                const tooFar = isSlotTooFar(dateStr)
+                const existingBooking = getBookingAt(bookings, dateStr, time)
+                const isBookedHere = !!existingBooking
                 const conflicting = selectedService
                   ? isSlotConflicting(bookings, dateStr, time, selectedService.duration)
                   : false
                 const fitsSchedule = selectedService
                   ? fitsBeforeClose(dow, time, selectedService.duration)
                   : true
-                const available = !past && !booked && !conflicting && fitsSchedule && !!selectedService
+                const available = !tooSoon && !tooFar && !isBookedHere && !conflicting && fitsSchedule && !!selectedService
 
-                let cellClass = 'h-10 transition-all duration-200 border cursor-pointer '
-                let label = ''
+                let cellClass = 'h-10 transition-all duration-200 border relative group '
 
-                if (past) {
+                if (tooSoon || tooFar) {
                   cellClass += 'bg-white/[0.02] border-white/[0.03] cursor-default'
-                  label = ''
-                } else if (booked) {
+                } else if (isBookedHere) {
                   cellClass += 'bg-red-900/20 border-red-500/20 cursor-default'
-                  label = 'Bokad'
                 } else if (!selectedService) {
                   cellClass += 'bg-white/[0.03] border-white/[0.05] cursor-default'
                 } else if (conflicting || !fitsSchedule) {
                   cellClass += 'bg-white/[0.02] border-white/[0.04] cursor-default'
                 } else {
-                  cellClass += 'bg-emerald-900/15 border-emerald-500/20 hover:bg-emerald-900/30 hover:border-emerald-500/40'
-                  label = 'Ledig'
+                  cellClass += 'bg-emerald-900/15 border-emerald-500/20 hover:bg-emerald-900/30 hover:border-emerald-500/40 cursor-pointer'
                 }
 
                 return (
                   <button
                     key={i}
                     disabled={!available}
-                    onClick={() => available ? onSlotClick(dateStr, time) : undefined}
+                    onClick={() => available && onSlotClick(dateStr, time)}
                     className={`${cellClass} flex items-center justify-center`}
+                    title={isBookedHere ? `${existingBooking.service} (${existingBooking.time}–${minutesToTime(timeToMinutes(existingBooking.time) + existingBooking.duration)})` : undefined}
                   >
-                    {booked && (
-                      <span className="text-red-400/60 text-[9px] font-bold uppercase tracking-wider">{label}</span>
+                    {isBookedHere && (
+                      <span className="text-red-400/60 text-[9px] font-bold uppercase tracking-wider">Bokad</span>
                     )}
                     {available && (
-                      <span className="text-emerald-400/50 text-[9px] font-bold uppercase tracking-wider">{label}</span>
+                      <span className="text-emerald-400/50 text-[9px] font-bold uppercase tracking-wider group-hover:text-emerald-400/80">Ledig</span>
                     )}
                   </button>
                 )
@@ -353,19 +534,23 @@ function BookingForm({
   service,
   onConfirm,
   onCancel,
+  loading,
 }: {
   date: string
   time: string
   service: Service
-  onConfirm: (name: string, email: string) => void
+  onConfirm: (name: string, email: string, phone: string) => void
   onCancel: () => void
+  loading: boolean
 }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
 
-  const dayIndex = new Date(date).getDay()
-  const dayName = DAY_NAMES_FULL[dayIndex === 0 ? 6 : dayIndex - 1]
+  useScrollLock(true)
+
+  const endTime = minutesToTime(timeToMinutes(time) + service.duration)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -379,15 +564,19 @@ function BookingForm({
       setError('Ange en giltig e-postadress')
       return
     }
+    if (!phone.trim() || phone.replace(/\D/g, '').length < 8) {
+      setError('Ange ett giltigt telefonnummer')
+      return
+    }
 
-    onConfirm(name.trim(), email.trim())
+    onConfirm(name.trim(), email.trim(), phone.trim())
   }
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onCancel}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
       <div
-        className="relative bg-[#0e0e0e] border border-[#d4af37]/20 p-6 sm:p-8 max-w-md w-full"
+        className="relative bg-[#0e0e0e] border border-[#d4af37]/20 p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <button
@@ -411,41 +600,52 @@ function BookingForm({
           </div>
           <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
             <span className="text-white/40 text-sm">Dag</span>
-            <span className="text-white/80 text-sm">{dayName} {date}</span>
+            <span className="text-white/80 text-sm">{getDayName(date)} {formatSwedishDate(date)}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
             <span className="text-white/40 text-sm">Tid</span>
-            <span className="text-white/80 text-sm font-semibold tabular-nums">{time}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-white/40 text-sm">Längd</span>
-            <span className="text-white/80 text-sm">{service.duration} min</span>
+            <span className="text-white/80 text-sm font-semibold tabular-nums">{time} – {endTime}</span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.3em] mb-2">
-              Ditt namn
+              Ditt namn *
             </label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Förnamn Efternamn"
-              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20"
+              disabled={loading}
+              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20 disabled:opacity-50"
             />
           </div>
           <div>
             <label className="block text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.3em] mb-2">
-              E-postadress
+              E-postadress *
             </label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="din@email.se"
-              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20"
+              disabled={loading}
+              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20 disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="block text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.3em] mb-2">
+              Telefonnummer *
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="070-123 45 67"
+              disabled={loading}
+              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20 disabled:opacity-50"
             />
           </div>
 
@@ -455,9 +655,20 @@ function BookingForm({
 
           <button
             type="submit"
-            className="w-full bg-[#d4af37] text-black text-xs font-bold uppercase tracking-[0.2em] py-4 hover:bg-[#b8960b] transition-colors cursor-pointer border-none"
+            disabled={loading}
+            className="w-full bg-[#d4af37] text-black text-xs font-bold uppercase tracking-[0.2em] py-4 hover:bg-[#b8960b] transition-colors cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Boka Nu
+            {loading ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Bokar...
+              </>
+            ) : (
+              'Boka Nu'
+            )}
           </button>
         </form>
       </div>
@@ -466,8 +677,9 @@ function BookingForm({
 }
 
 function BookingConfirmation({ booking, onClose }: { booking: Booking; onClose: () => void }) {
-  const dayIndex = new Date(booking.date).getDay()
-  const dayName = DAY_NAMES_FULL[dayIndex === 0 ? 6 : dayIndex - 1]
+  useScrollLock(true)
+
+  const endTime = minutesToTime(timeToMinutes(booking.time) + booking.duration)
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onClose}>
@@ -483,8 +695,11 @@ function BookingConfirmation({ booking, onClose }: { booking: Booking; onClose: 
         </div>
 
         <h3 className="text-white text-lg font-bold uppercase tracking-[0.1em] mb-2">Bokning bekräftad!</h3>
-        <p className="text-white/40 text-sm mb-6">
-          En bekräftelse har skickats till <span className="text-[#d4af37]">{booking.email}</span>
+        <p className="text-white/40 text-sm mb-2">
+          En bekräftelse skickas till <span className="text-[#d4af37]">{booking.email}</span>
+        </p>
+        <p className="text-white/30 text-xs mb-6">
+          Ditt boknings-ID: <span className="text-white/70 font-mono font-bold">{booking.id}</span>
         </p>
 
         <div className="space-y-2 mb-6 text-left bg-white/[0.02] border border-white/[0.06] p-4">
@@ -493,12 +708,16 @@ function BookingConfirmation({ booking, onClose }: { booking: Booking; onClose: 
             <span className="text-white/80 text-sm font-semibold">{booking.service}</span>
           </div>
           <div className="flex justify-between">
+            <span className="text-white/40 text-sm">Pris</span>
+            <span className="text-[#d4af37] text-sm font-bold">{booking.price}</span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-white/40 text-sm">Datum</span>
-            <span className="text-white/80 text-sm">{dayName} {booking.date}</span>
+            <span className="text-white/80 text-sm">{getDayName(booking.date)} {formatSwedishDate(booking.date)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-white/40 text-sm">Tid</span>
-            <span className="text-white/80 text-sm font-semibold tabular-nums">{booking.time}</span>
+            <span className="text-white/80 text-sm font-semibold tabular-nums">{booking.time} – {endTime}</span>
           </div>
         </div>
 
@@ -513,6 +732,125 @@ function BookingConfirmation({ booking, onClose }: { booking: Booking; onClose: 
   )
 }
 
+function CancelBookingModal({ onCancel, onClose, bookings }: {
+  onCancel: (booking: Booking) => void
+  onClose: () => void
+  bookings: Booking[]
+}) {
+  const [bookingId, setBookingId] = useState('')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useScrollLock(true)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (!bookingId.trim() || !email.trim()) {
+      setError('Ange både boknings-ID och e-postadress')
+      return
+    }
+
+    const found = bookings.find(
+      b => b.id.toUpperCase() === bookingId.trim().toUpperCase() && b.email.toLowerCase() === email.trim().toLowerCase()
+    )
+
+    if (!found) {
+      setError('Ingen bokning hittades med dessa uppgifter')
+      return
+    }
+
+    const bookingDate = new Date(found.date)
+    const [h, m] = found.time.split(':').map(Number)
+    bookingDate.setHours(h, m, 0, 0)
+    if (bookingDate <= new Date()) {
+      setError('Denna bokning har redan passerat och kan inte avbokas')
+      return
+    }
+
+    setLoading(true)
+    await sendCancellationEmails(found)
+    setLoading(false)
+    onCancel(found)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div
+        className="relative bg-[#0e0e0e] border border-[#d4af37]/20 p-6 sm:p-8 max-w-md w-full"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors bg-transparent border-none cursor-pointer text-xl"
+        >
+          &times;
+        </button>
+
+        <h3 className="text-white text-lg font-bold uppercase tracking-[0.1em] mb-1">Avboka</h3>
+        <div className="w-12 h-px bg-[#d4af37]/40 mb-4" />
+        <p className="text-white/40 text-sm mb-6">
+          Ange ditt boknings-ID och den e-postadress du bokade med.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.3em] mb-2">
+              Boknings-ID
+            </label>
+            <input
+              type="text"
+              value={bookingId}
+              onChange={e => setBookingId(e.target.value.toUpperCase())}
+              placeholder="T.ex. A3K9F2"
+              disabled={loading}
+              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20 font-mono uppercase tracking-wider disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="block text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.3em] mb-2">
+              E-postadress
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="din@email.se"
+              disabled={loading}
+              className="w-full bg-white/[0.04] border border-white/[0.1] text-white text-sm px-4 py-3 outline-none focus:border-[#d4af37]/40 transition-colors placeholder:text-white/20 disabled:opacity-50"
+            />
+          </div>
+
+          {error && (
+            <p className="text-red-400 text-xs">{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-red-900/50 border border-red-500/30 text-red-200 text-xs font-bold uppercase tracking-[0.2em] py-4 hover:bg-red-900/70 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Avbokar...
+              </>
+            ) : (
+              'Avboka'
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 /* ═══ Main Calendar Component ═══ */
 
 export default function BookingCalendar() {
@@ -521,12 +859,19 @@ export default function BookingCalendar() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings())
   const [pendingSlot, setPendingSlot] = useState<{ date: string; time: string } | null>(null)
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const thisMonday = useMemo(() => getMonday(new Date()), [])
+  const maxMonday = useMemo(() => addDays(thisMonday, (MAX_ADVANCE_WEEKS - 1) * 7), [thisMonday])
+  const canGoPrev = weekStart > thisMonday
+  const canGoNext = weekStart < maxMonday
 
   const handleSlotClick = useCallback((date: string, time: string) => {
     setPendingSlot({ date, time })
   }, [])
 
-  const handleConfirm = useCallback(async (name: string, email: string) => {
+  const handleConfirm = useCallback(async (name: string, email: string, phone: string) => {
     if (!pendingSlot || !selectedService) return
 
     if (isSlotConflicting(bookings, pendingSlot.date, pendingSlot.time, selectedService.duration)) {
@@ -535,13 +880,17 @@ export default function BookingCalendar() {
       return
     }
 
+    setLoading(true)
+
     const booking: Booking = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: generateBookingId(),
       date: pendingSlot.date,
       time: pendingSlot.time,
       service: selectedService.name,
       duration: selectedService.duration,
+      price: selectedService.price,
       email,
+      phone,
       name,
       createdAt: new Date().toISOString(),
     }
@@ -550,10 +899,19 @@ export default function BookingCalendar() {
     setBookings(updated)
     saveBookings(updated)
     setPendingSlot(null)
-    setConfirmedBooking(booking)
 
     await sendBookingEmails(booking)
+
+    setLoading(false)
+    setConfirmedBooking(booking)
   }, [pendingSlot, selectedService, bookings])
+
+  const handleCancelBooking = useCallback((booking: Booking) => {
+    const updated = bookings.filter(b => b.id !== booking.id)
+    setBookings(updated)
+    saveBookings(updated)
+    setShowCancelModal(false)
+  }, [bookings])
 
   return (
     <section id="booking" className="relative bg-[#0a0a0a] py-24 sm:py-32">
@@ -566,7 +924,7 @@ export default function BookingCalendar() {
           <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-3">Boka Din Tid</h2>
           <div className="gold-line active" />
           <p className="text-white/40 text-sm mt-4 max-w-lg mx-auto">
-            Välj en tjänst, sedan en ledig tid i kalendern. Du behöver ange din e-postadress för att bekräfta.
+            Välj en tjänst och en ledig tid i kalendern. Bokning kan göras minst {MIN_ADVANCE_HOURS} timmar i förväg, upp till {MAX_ADVANCE_WEEKS} veckor framåt.
           </p>
         </div>
 
@@ -597,6 +955,8 @@ export default function BookingCalendar() {
             weekStart={weekStart}
             onPrev={() => setWeekStart(prev => addDays(prev, -7))}
             onNext={() => setWeekStart(prev => addDays(prev, 7))}
+            canGoPrev={canGoPrev}
+            canGoNext={canGoNext}
           />
 
           <CalendarGrid
@@ -606,9 +966,27 @@ export default function BookingCalendar() {
             onSlotClick={handleSlotClick}
           />
         </div>
+
+        {/* Cancel link */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => setShowCancelModal(true)}
+            className="text-white/25 text-xs underline underline-offset-4 hover:text-white/50 transition-colors bg-transparent border-none cursor-pointer"
+          >
+            Behöver du avboka? Klicka här
+          </button>
+        </div>
+
+        {!emailConfigured() && (
+          <div className="mt-6 p-4 border border-yellow-600/20 bg-yellow-900/10 text-center">
+            <p className="text-yellow-400/70 text-xs">
+              E-postbekräftelser är inte konfigurerade. Sätt VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_CUSTOMER_TEMPLATE_ID, VITE_EMAILJS_OWNER_TEMPLATE_ID och VITE_EMAILJS_PUBLIC_KEY i .env-filen.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Booking form modal */}
+      {/* Modals */}
       {pendingSlot && selectedService && (
         <BookingForm
           date={pendingSlot.date}
@@ -616,14 +994,22 @@ export default function BookingCalendar() {
           service={selectedService}
           onConfirm={handleConfirm}
           onCancel={() => setPendingSlot(null)}
+          loading={loading}
         />
       )}
 
-      {/* Confirmation modal */}
       {confirmedBooking && (
         <BookingConfirmation
           booking={confirmedBooking}
           onClose={() => setConfirmedBooking(null)}
+        />
+      )}
+
+      {showCancelModal && (
+        <CancelBookingModal
+          bookings={bookings}
+          onCancel={handleCancelBooking}
+          onClose={() => setShowCancelModal(false)}
         />
       )}
     </section>

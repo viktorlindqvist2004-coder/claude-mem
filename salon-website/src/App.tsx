@@ -145,7 +145,7 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#070707] grain-overlay" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen rich-bg grain-overlay" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* Progress bar */}
       <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] z-[200]"
@@ -250,8 +250,8 @@ function App() {
       </section>
 
       {/* ═══ OM OSS ═══ */}
-      <section id="about" className="relative bg-[#070707] py-24 sm:py-32">
-        <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[#070707] z-20 pointer-events-none" />
+      <section id="about" className="relative bg-transparent py-24 sm:py-32">
+        <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[#080808] z-20 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <p className="section-label mb-4">Om Oss</p>
@@ -290,8 +290,8 @@ function App() {
         <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
           style={{ backgroundImage: `url(${IMAGES.salon})` }} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
-        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#070707] to-transparent z-[3] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#070707] to-transparent z-[3] pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#080808] to-transparent z-[3] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080808] to-transparent z-[3] pointer-events-none" />
         <div className="ft-vignette" />
 
         <div className="relative z-10 h-full flex items-center px-6 sm:px-14 md:px-20">
@@ -328,8 +328,8 @@ function App() {
         <div data-parallax className="absolute inset-[-8%] bg-cover"
           style={{ backgroundImage: `url(${IMAGES.craft})`, backgroundPosition: 'center 40%' }} />
         <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/50 to-black/30" />
-        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#070707] to-transparent z-[3] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#070707] to-transparent z-[3] pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#080808] to-transparent z-[3] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080808] to-transparent z-[3] pointer-events-none" />
         <div className="ft-vignette" />
 
         <div className="relative z-10 h-full flex items-center justify-end px-6 sm:px-14 md:px-20">
@@ -363,11 +363,11 @@ function App() {
       </section>
 
       {/* ═══ TJÄNSTER ═══ */}
-      <section id="services" className="relative bg-[#070707] py-24 sm:py-32">
+      <section id="services" className="relative bg-transparent py-24 sm:py-32">
         <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <div className="text-center mb-14">
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Tjänster</h2>
+              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl" style={{ textTransform: 'none' }}>TJÄNSTER</h2>
               <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
               <p className="text-white/50 text-sm mt-4">Ring för att boka din tid</p>
             </div>
@@ -392,7 +392,7 @@ function App() {
       </section>
 
       {/* ═══ OMDÖMEN ═══ */}
-      <section id="reviews" className="relative bg-[#070707] py-24 sm:py-28 overflow-hidden">
+      <section id="reviews" className="relative bg-transparent py-24 sm:py-28 overflow-hidden">
 
         <FadeIn className="text-center mb-10 px-5">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -455,7 +455,7 @@ function App() {
       </section>
 
       {/* ═══ BOKA ═══ */}
-      <section className="relative bg-[#070707] py-20 sm:py-24 text-center">
+      <section className="relative bg-transparent py-20 sm:py-24 text-center">
         <FadeIn className="px-5">
           <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">Redo?</h2>
           <p className="text-white/50 text-base mb-10 max-w-md mx-auto">
@@ -475,7 +475,7 @@ function App() {
       </section>
 
       {/* ═══ BESÖK / KARTA ═══ */}
-      <section id="contact" className="relative bg-[#070707] py-24 sm:py-28">
+      <section id="contact" className="relative bg-transparent py-24 sm:py-28">
         <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <p className="section-label mb-3">Besök Salongen</p>
@@ -541,7 +541,7 @@ function App() {
       </section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="bg-[#070707] py-12 px-5">
+      <footer className="bg-transparent py-12 px-5">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">

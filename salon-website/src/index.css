@@ -8,6 +8,17 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; overflow-x: hidden; background: #070707; }
 
+/* ═══ Rich dark background with subtle warmth ═══ */
+.rich-bg {
+  background-color: #080808;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(212,175,55,0.018) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 60%, rgba(212,175,55,0.012) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(30,25,15,0.4) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Cpath d='M30 0v60M0 30h60' stroke='%23d4af37' stroke-width='.3' opacity='.03'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 100% 100%, 100% 100%, 60px 60px;
+}
+
 /* ═══ Fly-through sections ═══ */
 .ft-section {
   height: 100vh;

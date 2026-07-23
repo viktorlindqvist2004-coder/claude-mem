@@ -226,18 +226,18 @@ function App() {
 
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
           <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
-            <p className="section-label mb-5 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
-            <h1 className="font-script text-6xl sm:text-8xl md:text-[9rem] lg:text-[11rem] text-white leading-none"
+            <p className="section-label mb-3 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
+            <h1 className="font-script text-7xl sm:text-9xl md:text-[11rem] lg:text-[14rem] text-white leading-none"
               style={{ textShadow: '0 2px 4px rgba(212,175,55,0.15), 0 4px 20px rgba(0,0,0,0.6), 0 8px 40px rgba(0,0,0,0.4)' }}>
               Gentlemen's
             </h1>
-            <p className="text-[#d4af37]/90 text-xs sm:text-sm md:text-base mt-3 font-semibold tracking-[0.5em] uppercase"
+            <p className="text-[#d4af37]/90 text-sm sm:text-base md:text-lg mt-2 font-semibold tracking-[0.5em] uppercase"
               style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
               Barbershop
             </p>
-            <div className="gold-line active mx-auto mt-8" />
+            <div className="gold-line active mx-auto mt-6" />
             <a href="tel:+46762149929"
-              className="inline-block mt-8 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+              className="inline-block mt-6 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
               Boka Din Tid
             </a>
           </div>
@@ -250,8 +250,8 @@ function App() {
       </section>
 
       {/* ═══ OM OSS ═══ */}
-      <section id="about" className="relative bg-[#0a0a0a] py-24 sm:py-32">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+      <section id="about" className="relative bg-[#070707] py-24 sm:py-32">
+        <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[#070707] z-20 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <p className="section-label mb-4">Om Oss</p>
@@ -290,6 +290,8 @@ function App() {
         <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
           style={{ backgroundImage: `url(${IMAGES.salon})` }} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#070707] to-transparent z-[3] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#070707] to-transparent z-[3] pointer-events-none" />
         <div className="ft-vignette" />
 
         <div className="relative z-10 h-full flex items-center px-6 sm:px-14 md:px-20">
@@ -326,6 +328,8 @@ function App() {
         <div data-parallax className="absolute inset-[-8%] bg-cover"
           style={{ backgroundImage: `url(${IMAGES.craft})`, backgroundPosition: 'center 40%' }} />
         <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/50 to-black/30" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#070707] to-transparent z-[3] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#070707] to-transparent z-[3] pointer-events-none" />
         <div className="ft-vignette" />
 
         <div className="relative z-10 h-full flex items-center justify-end px-6 sm:px-14 md:px-20">
@@ -360,7 +364,6 @@ function App() {
 
       {/* ═══ TJÄNSTER ═══ */}
       <section id="services" className="relative bg-[#070707] py-24 sm:py-32">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent" />
         <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <div className="text-center mb-14">
@@ -389,9 +392,7 @@ function App() {
       </section>
 
       {/* ═══ OMDÖMEN ═══ */}
-      <section id="reviews" className="relative bg-[#050505] py-24 sm:py-28 overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+      <section id="reviews" className="relative bg-[#070707] py-24 sm:py-28 overflow-hidden">
 
         <FadeIn className="text-center mb-10 px-5">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -454,8 +455,7 @@ function App() {
       </section>
 
       {/* ═══ BOKA ═══ */}
-      <section className="relative bg-[#0a0a0a] py-20 sm:py-24 text-center">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent" />
+      <section className="relative bg-[#070707] py-20 sm:py-24 text-center">
         <FadeIn className="px-5">
           <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">Redo?</h2>
           <p className="text-white/50 text-base mb-10 max-w-md mx-auto">
@@ -476,7 +476,6 @@ function App() {
 
       {/* ═══ BESÖK / KARTA ═══ */}
       <section id="contact" className="relative bg-[#070707] py-24 sm:py-28">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
         <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <p className="section-label mb-3">Besök Salongen</p>
@@ -542,12 +541,12 @@ function App() {
       </section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="bg-[#030303] border-t border-white/[0.04] py-12 px-5">
+      <footer className="bg-[#070707] py-12 px-5">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Scissors className="w-3.5 h-3.5 text-[#d4af37]/40" />
-              <span className="text-white/30 text-sm font-playfair italic">Gentlemen's Barbershop</span>
+              <span className="text-white/30 text-base font-script">Gentlemen's Barbershop</span>
             </div>
             <p className="text-white/15 text-xs tracking-wide">Edsgatan 23, Vänersborg</p>
             <div className="flex items-center gap-3">

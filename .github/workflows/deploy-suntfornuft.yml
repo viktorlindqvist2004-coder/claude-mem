@@ -1,0 +1,32 @@
+name: Deploy Sunt Förnuft to GitHub Pages
+
+on:
+  push:
+    branches:
+      - claude/modern-interactive-website-8pdxx1
+    paths:
+      - "website/suntfornuft/**"
+      - ".github/workflows/deploy-suntfornuft.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to gh-pages
+        run: |
+          cp -r website/suntfornuft /tmp/deploy
+          touch /tmp/deploy/.nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan gh-pages-tmp
+          git rm -rf .
+          cp -r /tmp/deploy/* /tmp/deploy/.nojekyll .
+          git add -A
+          git commit -m "Deploy Sunt Förnuft"
+          git push origin gh-pages-tmp:gh-pages --force

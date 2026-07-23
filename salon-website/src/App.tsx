@@ -48,7 +48,7 @@ const IMAGES = {
   chairs: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
   craft: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
   result: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=1920&q=85&auto=format',
-  community: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?w=1920&q=85&auto=format',
+  community: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=1920&q=85&auto=format',
   cta: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
 }
 
@@ -101,8 +101,6 @@ const hours = [
   { day: 'Söndag', time: 'Stängt' },
 ]
 
-type Effect = 'zoom-in' | 'zoom-out' | '3d-tilt' | 'clip-reveal' | 'slide-left' | 'slide-right' | 'rotate-in' | 'split-reveal'
-
 function GoldParticles() {
   const particles = Array.from({ length: 12 }, (_, i) => ({
     left: `${8 + Math.random() * 84}%`,
@@ -132,25 +130,37 @@ function GoldParticles() {
   )
 }
 
-function VideoBackground({ src, poster, kenBurns, className = '' }: { src?: string; poster: string; kenBurns?: string; className?: string }) {
-  const [videoFailed, setVideoFailed] = useState(false)
+function AnamorphicFlare({ active, position = '40%', delay = '0s' }: { active: boolean; position?: string; delay?: string }) {
+  return (
+    <div className={`anamorphic-flare-wrap ${active ? 'active' : ''}`} style={{ animationDelay: delay }}>
+      <div className="anamorphic-streak" style={{ top: position }} />
+      <div className="anamorphic-orb" style={{ top: `calc(${position} - 40px)`, left: '62%' }} />
+      <div className="anamorphic-orb secondary" style={{ top: `calc(${position} - 20px)`, left: '38%' }} />
+    </div>
+  )
+}
 
-  if (!src || videoFailed) {
-    return (
-      <div className={`parallax-bg ${kenBurns || 'ken-burns-1'} ${className}`}
-        style={{ backgroundImage: `url(${poster})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-    )
-  }
+function CameraBackground({ image, video, active }: { image: string; video?: string; active: boolean }) {
+  const [videoFailed, setVideoFailed] = useState(false)
+  const showVideo = video && !videoFailed
 
   return (
-    <video
-      className={`parallax-bg video-bg ${className}`}
-      autoPlay muted loop playsInline
-      poster={poster}
-      onError={() => setVideoFailed(true)}
-    >
-      <source src={src} type="video/mp4" />
-    </video>
+    <>
+      <div
+        className={`camera-bg ${active ? 'active' : ''}`}
+        style={{ backgroundImage: `url(${image})` }}
+      />
+      {showVideo && (
+        <video
+          className={`camera-video ${active ? 'active' : ''}`}
+          autoPlay muted loop playsInline
+          poster={image}
+          onError={() => setVideoFailed(true)}
+        >
+          <source src={video} type="video/mp4" />
+        </video>
+      )}
+    </>
   )
 }
 
@@ -272,12 +282,13 @@ function App() {
       {/* ═══ Snap Container ═══ */}
       <div ref={containerRef} className="snap-container">
 
-        {/* HERO — Video background + particles */}
-        <section className="snap-section bg-black lens-flare">
-          <VideoBackground src={VIDEOS.hero} poster={IMAGES.hero} kenBurns="ken-burns-1" />
+        {/* HERO */}
+        <section className="snap-section bg-black">
+          <CameraBackground image={IMAGES.hero} video={VIDEOS.hero} active={activeSection === 0} />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70 z-[1]" />
+          <AnamorphicFlare active={activeSection === 0} position="38%" />
           <GoldParticles />
-          <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center text-center px-5">
+          <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
             <div className={`stagger-children ${activeSection === 0 ? 'active' : ''}`}>
               <p className="section-label mb-5">Edsgatan 23 &nbsp;&middot;&nbsp; Vänersborg</p>
               <h1 className="hero-title text-6xl sm:text-8xl md:text-9xl lg:text-[11rem]">
@@ -299,7 +310,7 @@ function App() {
           </div>
         </section>
 
-        {/* STIG IN — Zoom in + blur reveal */}
+        {/* STIG IN */}
         <CinematicSection
           image={IMAGES.inside}
           label="Salongen"
@@ -307,12 +318,11 @@ function App() {
           desc="Lämna vardagen vid dörren. Här väntar en stol med ditt namn på — kaffe, lugn och precision."
           idx={1}
           activeSection={activeSection}
-          effect="zoom-in"
-          kenBurns="ken-burns-2"
           flare
+          flarePos="35%"
         />
 
-        {/* DÄR KUNGAR SITTER — Split reveal */}
+        {/* DÄR KUNGAR SITTER */}
         <CinematicSection
           image={IMAGES.chairs}
           label="Miljön"
@@ -321,11 +331,11 @@ function App() {
           idx={2}
           activeSection={activeSection}
           align="right"
-          effect="split-reveal"
-          kenBurns="ken-burns-3"
+          flare
+          flarePos="45%"
         />
 
-        {/* VARJE LINJE — Video + 3D tilt */}
+        {/* VARJE LINJE */}
         <CinematicSection
           image={IMAGES.craft}
           video={VIDEOS.craft}
@@ -334,11 +344,11 @@ function App() {
           desc="Skinfades, klassiska nedtrappningar, skäggformning, varma handdukar och rakkniv. Varje detalj finjusterad av händer som gjort det tusentals gånger."
           idx={3}
           activeSection={activeSection}
-          effect="3d-tilt"
           flare
+          flarePos="42%"
         />
 
-        {/* GÅ UT VASSARE — Rotate in */}
+        {/* GÅ UT VASSARE */}
         <CinematicSection
           image={IMAGES.result}
           label="Resultatet"
@@ -347,11 +357,9 @@ function App() {
           idx={4}
           activeSection={activeSection}
           align="right"
-          effect="rotate-in"
-          kenBurns="ken-burns-1"
         />
 
-        {/* MER ÄN EN KLIPPNING — Clip reveal */}
+        {/* MER ÄN EN KLIPPNING */}
         <CinematicSection
           image={IMAGES.community}
           label="Gemenskapen"
@@ -359,11 +367,11 @@ function App() {
           desc="Stammisar, förstagångsbesökare, hela kvarteret. Kliv in, slå dig ner och bli en del av gänget."
           idx={5}
           activeSection={activeSection}
-          effect="clip-reveal"
-          kenBurns="ken-burns-2"
+          flare
+          flarePos="50%"
         />
 
-        {/* REVIEWS — Auto-scrolling ticker */}
+        {/* REVIEWS */}
         <section className="snap-section bg-[#070707] flex items-center overflow-hidden">
           <div className="absolute inset-0 z-[1]">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent" />
@@ -383,7 +391,6 @@ function App() {
               <div className={`gold-line ${reviewsAnim.visible ? 'active' : ''}`} />
             </div>
 
-            {/* Ticker row 1 */}
             <div className="overflow-hidden mb-4">
               <div className="review-ticker" style={{ animationDuration: '50s' }}>
                 {[...reviews, ...reviews].map((r, i) => (
@@ -409,7 +416,6 @@ function App() {
               </div>
             </div>
 
-            {/* Ticker row 2 — reversed */}
             <div className="overflow-hidden">
               <div className="review-ticker" style={{ animationDuration: '55s', animationDirection: 'reverse' }}>
                 {[...reviews.slice(4), ...reviews.slice(0, 4), ...reviews.slice(4), ...reviews.slice(0, 4)].map((r, i) => (
@@ -437,13 +443,14 @@ function App() {
           </div>
         </section>
 
-        {/* CTA — Video + zoom out */}
+        {/* CTA */}
         <section className="snap-section bg-black">
-          <VideoBackground src={VIDEOS.cta} poster={IMAGES.cta} kenBurns="ken-burns-3" />
+          <CameraBackground image={IMAGES.cta} video={VIDEOS.cta} active={activeSection === 7} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/55 z-[1]" />
+          <AnamorphicFlare active={activeSection === 7} position="42%" />
           <GoldParticles />
-          <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center text-center px-5">
-            <div className={`section-zoom-out ${activeSection === 7 ? 'active' : ''}`}>
+          <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
+            <div className={`camera-content ${activeSection === 7 ? 'active' : ''}`}>
               <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
                 Ta Din<br/>Plats
               </h2>
@@ -455,7 +462,7 @@ function App() {
                   style={{ animation: activeSection === 7 ? 'pulse-glow 3s ease-in-out infinite' : 'none' }}>
                   Boka Din Tid
                 </a>
-                <a href="https://maps.google.com/?q=Edsgatan+23+Vänersborg" target="_blank" rel="noopener noreferrer"
+                <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
                   className="border border-white/20 text-white/70 text-sm font-bold px-10 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
                   Hitta Hit
                 </a>
@@ -464,7 +471,7 @@ function App() {
           </div>
         </section>
 
-        {/* SERVICES — Staggered cards, no emojis */}
+        {/* SERVICES */}
         <section id="services" className="snap-section bg-[#070707] flex items-center">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
           <div ref={servicesAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
@@ -603,22 +610,20 @@ function useInView() {
   return { ref, visible }
 }
 
-function CinematicSection({ image, video, label, title, desc, idx, activeSection, align, flare, effect, kenBurns }: {
+function CinematicSection({ image, video, label, title, desc, idx, activeSection, align, flare, flarePos }: {
   image: string; video?: string; label: string; title: React.ReactNode; desc: string;
-  idx: number; activeSection: number; align?: 'right'; flare?: boolean;
-  effect: Effect; kenBurns?: string;
+  idx: number; activeSection: number; align?: 'right'; flare?: boolean; flarePos?: string;
 }) {
   const isActive = activeSection === idx
-  const effectClass = `section-${effect}`
 
   return (
-    <section className={`snap-section bg-black ${flare ? 'lens-flare' : ''}`}>
-      <VideoBackground src={video} poster={image} kenBurns={kenBurns || 'ken-burns-1'}
-        className={`section-clip-reveal ${isActive ? 'active' : ''}`} />
+    <section className="snap-section bg-black">
+      <CameraBackground image={image} video={video} active={isActive} />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/65 z-[1]" />
+      {flare && <AnamorphicFlare active={isActive} position={flarePos || '42%'} />}
       <GoldParticles />
-      <div className="absolute inset-0 z-[3] flex items-center px-6 sm:px-14 md:px-20">
-        <div className={`max-w-2xl ${align === 'right' ? 'ml-auto text-right' : ''} ${effectClass} ${isActive ? 'active' : ''}`}>
+      <div className="absolute inset-0 z-[5] flex items-center px-6 sm:px-14 md:px-20">
+        <div className={`max-w-2xl ${align === 'right' ? 'ml-auto text-right' : ''} camera-content ${isActive ? 'active' : ''}`}>
           <div className={`stagger-children ${isActive ? 'active' : ''}`}>
             <p className="section-label mb-4">{label}</p>
             <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl">{title}</h2>

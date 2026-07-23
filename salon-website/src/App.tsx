@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Scissors, Star, Clock, MapPin, Phone, Menu, X, ChevronDown } from 'lucide-react'
+import { Scissors, Star, Phone, Menu, X, ChevronDown } from 'lucide-react'
 import './App.css'
 
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -62,14 +62,14 @@ const services = [
 ]
 
 const reviews = [
-  { name: 'Marcus L.', rating: 5, text: 'Bästa barberaren i Vänersborg utan tvekan. Skinfaden blev perfekt och stämningen i salongen är alltid grym. Kommer alltid tillbaka!', source: 'Google' },
+  { name: 'Thore T.', rating: 5, text: 'Mycket duktig! Bästa klippningen jag fått i Vänersborg. Professionellt bemötande och otroligt nöjd med resultatet.', source: 'Google' },
+  { name: 'John', rating: 5, text: 'I looked homeless when I walked in — walked out looking sharp. These guys know exactly what they\'re doing. You will not be disappointed!', source: 'Google' },
+  { name: 'Sifo', rating: 5, text: 'Letat efter en bra barbershop länge och hittade äntligen rätt. Riktigt nöjd med både klippning och bemötande. Kommer definitivt tillbaka!', source: 'Google' },
   { name: 'Erik S.', rating: 5, text: 'Har klippt mig här i över ett år nu. Proffsigt bemötande varje gång och resultatet blir alltid on point. Rekommenderas starkt!', source: 'Google' },
-  { name: 'Johan K.', rating: 5, text: 'Fantastisk upplevelse från start till slut. Riktigt skickliga barberare som lyssnar på vad man vill ha. Kaffe och bra vibes på köpet.', source: 'Facebook' },
   { name: 'Andreas P.', rating: 5, text: 'Äntligen en riktig barbershop i Vänersborg! Klassisk känsla med modern precision. Min fade har aldrig sett bättre ut.', source: 'Google' },
-  { name: 'David M.', rating: 5, text: 'Skäggformningen var otrolig — exakt det jag ville ha. Dessutom den bästa varma handduksbehandlingen jag fått. Ren lyx!', source: 'Google' },
   { name: 'Oscar F.', rating: 5, text: 'Stilren salong med grym atmosfär. Barberarna vet verkligen vad de gör. Man känner sig som en kung när man lämnar stolen.', source: 'Facebook' },
+  { name: 'Marcus L.', rating: 5, text: 'Bästa barberaren i Vänersborg utan tvekan. Skinfaden blev perfekt och stämningen i salongen är alltid grym. Kommer alltid tillbaka!', source: 'Google' },
   { name: 'Simon R.', rating: 5, text: 'Gick dit första gången på rekommendation och har inte klippt mig någon annanstans sedan dess. Helt enkelt bäst i stan.', source: 'Google' },
-  { name: 'Alexander W.', rating: 5, text: 'Professionellt, avslappnat och alltid ett grymmare resultat än förväntat. Det här är inte bara en klippning — det är en upplevelse.', source: 'Google' },
 ]
 
 const hours = [
@@ -252,7 +252,7 @@ function App() {
               </p>
               <a href="tel:+46762149929"
                 className="inline-block mt-8 bg-transparent border border-[#d4af37]/50 text-[#d4af37] text-xs font-bold px-10 py-4 tracking-[0.25em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
-                Boka Via Telefon
+                Boka Din Tid
               </a>
             </div>
             <button onClick={() => scrollToSection(1)}
@@ -511,7 +511,7 @@ function App() {
 
                 <a href="tel:+46762149929"
                   className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
-                  Ring &amp; Boka
+                  Boka Din Tid
                 </a>
               </div>
 

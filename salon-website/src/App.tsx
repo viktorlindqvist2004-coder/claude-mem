@@ -1,6 +1,8 @@
-import { useRef, useState, useEffect, useCallback, forwardRef } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Scissors, Star, Phone, Menu, X } from 'lucide-react'
 import './App.css'
+
+/* ═══ Icons ═══ */
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,28 +38,50 @@ const ServiceIcon = ({ type }: { type: string }) => {
   }
 }
 
-const IMAGES = {
-  hero: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
-  atmosphere: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
-  craft: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
-  cta: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
-}
+/* ═══ Cinematic scenes ═══ */
 
-const VIDEOS = {
-  hero: 'https://videos.pexels.com/video-files/4177561/4177561-uhd_2560_1440_25fps.mp4',
-  craft: 'https://videos.pexels.com/video-files/3993394/3993394-hd_1920_1080_30fps.mp4',
-  cta: 'https://videos.pexels.com/video-files/4718407/4718407-uhd_2560_1440_25fps.mp4',
-}
+const SCROLL_VH = 750
+const SCENE_COUNT = 6
 
-const sections = [
-  { id: 'hero', label: '' },
-  { id: 'atmosphere', label: 'Salongen' },
-  { id: 'craft', label: 'Hantverket' },
-  { id: 'reviews', label: 'Omdömen' },
-  { id: 'services', label: 'Tjänster' },
-  { id: 'cta', label: 'Boka' },
-  { id: 'contact', label: 'Besök' },
+const cinematicScenes = [
+  {
+    image: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
+    video: 'https://videos.pexels.com/video-files/4177561/4177561-uhd_2560_1440_25fps.mp4',
+    bgPos: 'center 35%',
+    flare: true,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
+    bgPos: 'center 55%',
+    flare: false,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
+    bgPos: 'center',
+    flare: true,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
+    video: 'https://videos.pexels.com/video-files/3993394/3993394-hd_1920_1080_30fps.mp4',
+    bgPos: 'center 40%',
+    flare: false,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
+    bgPos: 'center 80%',
+    flare: true,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
+    video: 'https://videos.pexels.com/video-files/4718407/4718407-uhd_2560_1440_25fps.mp4',
+    bgPos: 'center',
+    flare: true,
+  },
 ]
+
+const sceneLabels = ['', 'Entrén', 'Salongen', 'Stolen', 'Hantverket', 'Boka']
+
+/* ═══ Content data ═══ */
 
 const services = [
   { name: 'Herrklippning', price: '300 kr', icon: 'scissors' },
@@ -85,12 +109,14 @@ const hours = [
   { day: 'Söndag', time: 'Stängt' },
 ]
 
+/* ═══ Helpers ═══ */
+
 function smoothstep(x: number) {
   const t = Math.max(0, Math.min(1, x))
   return t * t * (3 - 2 * t)
 }
 
-function GoldParticles({ count = 8 }: { count?: number }) {
+function GoldParticles({ count = 6 }: { count?: number }) {
   const particles = Array.from({ length: count }, (_, i) => ({
     left: `${8 + Math.random() * 84}%`,
     top: `${10 + Math.random() * 80}%`,
@@ -133,136 +159,203 @@ function useInView() {
   return { ref, visible }
 }
 
-function FtVideo({ src, poster }: { src: string; poster: string }) {
-  const [failed, setFailed] = useState(false)
-  if (failed) return null
-  return (
-    <video data-ft-video className="ft-video" autoPlay muted loop playsInline
-      poster={poster} onError={() => setFailed(true)}>
-      <source src={src} type="video/mp4" />
-    </video>
-  )
+/* ═══ Scene text content ═══ */
+
+function SceneContent({ index, heroReady }: { index: number; heroReady: boolean }) {
+  switch (index) {
+    case 0:
+      return (
+        <div className="w-full flex flex-col items-center text-center px-5">
+          <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
+            <p className="section-label mb-6 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
+            <h1 className="hero-title text-7xl sm:text-8xl md:text-[10rem] lg:text-[12rem]">
+              Gentlemen's
+            </h1>
+            <p className="font-playfair italic text-[#d4af37]/80 text-xl sm:text-2xl md:text-3xl mt-2"
+              style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
+              Barbershop
+            </p>
+            <div className="gold-line active mx-auto mt-8" />
+            <p className="text-white/25 text-xs tracking-[0.3em] uppercase mt-6">Scrolla ner</p>
+          </div>
+        </div>
+      )
+    case 1:
+      return (
+        <div className="w-full flex flex-col items-center text-center px-5">
+          <p className="section-label mb-4">Välkommen</p>
+          <h2 className="font-playfair italic text-white text-5xl sm:text-7xl md:text-8xl"
+            style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+            Stig in.
+          </h2>
+          <div className="gold-line active mx-auto mt-6" />
+          <p className="text-white/30 text-sm sm:text-base mt-4 max-w-sm">
+            Där varje besök är en upplevelse.
+          </p>
+        </div>
+      )
+    case 2:
+      return (
+        <div className="w-full px-6 sm:px-14 md:px-20">
+          <p className="section-label mb-4">Salongen</p>
+          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
+            Läder.<br />Mässing.<br />Tradition.
+          </h2>
+          <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
+          <p className="text-white/35 text-sm sm:text-base tracking-wide max-w-md">
+            Byggt för ritualen — inte stressen.
+          </p>
+        </div>
+      )
+    case 3:
+      return (
+        <div className="w-full flex justify-end px-6 sm:px-14 md:px-20">
+          <div className="text-right">
+            <p className="section-label mb-4">Stolen</p>
+            <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
+              Slå dig<br />ner.
+            </h2>
+            <div className="gold-line active" style={{ margin: '1.5rem 0 1.5rem auto' }} />
+            <p className="text-white/35 text-sm sm:text-base tracking-wide max-w-md ml-auto">
+              Din stund. Din stil.
+            </p>
+          </div>
+        </div>
+      )
+    case 4:
+      return (
+        <div className="w-full px-6 sm:px-14 md:px-20">
+          <p className="section-label mb-4">Hantverket</p>
+          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
+            Precision<br />i varje<br />linje.
+          </h2>
+          <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
+          <p className="text-white/35 text-sm sm:text-base tracking-wide max-w-md">
+            Skinfades. Rakkniv. Varma handdukar.
+          </p>
+        </div>
+      )
+    case 5:
+      return (
+        <div className="w-full flex flex-col items-center text-center px-5">
+          <p className="section-label mb-4">Boka Din Tid</p>
+          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-[10rem]">
+            Din tur.
+          </h2>
+          <div className="gold-line active mx-auto" />
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-10">
+            <a href="tel:+46762149929"
+              className="border border-[#d4af37]/40 text-[#d4af37] text-sm font-bold px-12 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+              076-214 99 29
+            </a>
+            <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
+              className="border border-white/15 text-white/50 text-sm font-bold px-12 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
+              Hitta Hit
+            </a>
+          </div>
+        </div>
+      )
+    default:
+      return null
+  }
 }
 
-const FlySection = forwardRef<HTMLElement, {
-  image: string; video?: string; title: React.ReactNode; subtitle?: string;
-  align?: 'right' | 'center'; flare?: boolean;
-}>(function FlySection({ image, video, title, subtitle, align = 'left', flare }, ref) {
-  return (
-    <section ref={ref} className="ft-section bg-black">
-      <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${image})` }} />
-      {video && <FtVideo src={video} poster={image} />}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/70 z-[1]" />
-      <div className="ft-vignette" />
-      {flare && (
-        <div data-ft-flare className="anamorphic-flare-wrap">
-          <div className="anamorphic-streak" style={{ top: '40%' }} />
-          <div className="anamorphic-orb" style={{ top: 'calc(40% - 40px)', left: '62%' }} />
-          <div className="anamorphic-orb secondary" style={{ top: 'calc(40% - 20px)', left: '38%' }} />
-        </div>
-      )}
-      <GoldParticles count={6} />
-      <div className={`absolute inset-0 z-[5] flex items-center ${
-        align === 'center' ? 'justify-center text-center px-5' :
-        align === 'right' ? 'justify-end text-right px-6 sm:px-14 md:px-20' :
-        'px-6 sm:px-14 md:px-20'
-      }`}>
-        <div data-ft-content className="max-w-2xl" style={{ willChange: 'opacity, transform, filter' }}>
-          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">{title}</h2>
-          {subtitle && (
-            <>
-              <div className="gold-line active" style={{
-                margin: align === 'right' ? '1.5rem 0 1.5rem auto' :
-                  align === 'center' ? '1.5rem auto' : '1.5rem auto 1.5rem 0'
-              }} />
-              <p className={`text-white/40 text-sm sm:text-base tracking-wide max-w-md ${
-                align === 'right' ? 'ml-auto' : align === 'center' ? 'mx-auto' : ''
-              }`}>{subtitle}</p>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-})
+/* ═══ App ═══ */
 
 function App() {
-  const sectionsRef = useRef<(HTMLElement | null)[]>([])
-  const [activeSection, setActiveSection] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [activeScene, setActiveScene] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [heroReady, setHeroReady] = useState(false)
+  const [inCinematic, setInCinematic] = useState(true)
 
-  const setSectionRef = useCallback((idx: number) => (el: HTMLElement | null) => {
-    sectionsRef.current[idx] = el
-  }, [])
+  const reviewsAnim = useInView()
+  const servicesAnim = useInView()
+  const contactAnim = useInView()
 
   useEffect(() => { setTimeout(() => setHeroReady(true), 100) }, [])
 
+  /* Scroll-driven cinematic animation */
   useEffect(() => {
     let ticking = false
+
     const update = () => {
-      const vh = window.innerHeight
-      const maxScroll = document.documentElement.scrollHeight - vh
+      const container = containerRef.current
+      if (!container) { ticking = false; return }
+
+      const rect = container.getBoundingClientRect()
+      const scrollable = container.offsetHeight - window.innerHeight
+      const progress = scrollable > 0 ? Math.max(0, Math.min(1, -rect.top / scrollable)) : 0
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
       setScrollProgress(maxScroll > 0 ? window.scrollY / maxScroll : 0)
+      setInCinematic(rect.bottom > window.innerHeight * 0.5)
 
-      let bestIdx = 0
-      let bestDist = Infinity
+      const currentFloat = progress * (SCENE_COUNT - 1)
+      setActiveScene(Math.round(currentFloat))
 
-      sectionsRef.current.forEach((el, i) => {
-        if (!el) return
-        const rect = el.getBoundingClientRect()
-        const center = rect.top + rect.height / 2
-        const dist = Math.abs(center - vh / 2)
-        if (dist < bestDist) { bestDist = dist; bestIdx = i }
+      const range = 1 / (SCENE_COUNT - 1) * 1.1
 
-        const offset = (center - vh / 2) / vh
-        const absOffset = Math.abs(offset)
+      for (let i = 0; i < SCENE_COUNT; i++) {
+        const layer = document.querySelector(`[data-scene="${i}"]`) as HTMLElement
+        if (!layer) continue
 
-        const bg = el.querySelector('[data-ft-bg]') as HTMLElement
+        const scenePos = i / (SCENE_COUNT - 1)
+        const delta = progress - scenePos
+        const absDelta = Math.abs(delta)
+
+        const bg = layer.querySelector('[data-scene-bg]') as HTMLElement
+        const vid = layer.querySelector('[data-scene-video]') as HTMLElement
+        const text = layer.querySelector('[data-scene-text]') as HTMLElement
+        const flare = layer.querySelector('[data-scene-flare]') as HTMLElement
+
+        if (absDelta > range * 1.4) {
+          if (bg) bg.style.opacity = '0'
+          if (vid) vid.style.opacity = '0'
+          if (text) { text.style.opacity = '0'; text.style.pointerEvents = 'none' }
+          if (flare) flare.style.opacity = '0'
+          continue
+        }
+
+        const t = smoothstep(1 - absDelta / range)
+
         if (bg) {
-          if (absOffset < 1.2) {
-            const t = smoothstep(1 - absOffset / 1.2)
-            const scale = offset > 0 ? 0.8 + t * 0.22 : 1.02 + (1 - t) * 0.18
-            bg.style.transform = `scale(${scale})`
-            bg.style.opacity = `${Math.min(1, t * 1.6)}`
-            bg.style.filter = `blur(${(1 - t) * 12}px)`
+          const scale = delta <= 0
+            ? 0.82 + t * 0.2
+            : 1.02 + (1 - t) * 0.22
+          bg.style.opacity = `${Math.min(1, t * 1.6)}`
+          bg.style.transform = `scale(${scale})`
+          bg.style.filter = `blur(${(1 - t) * 14}px)`
+        }
+
+        if (vid) {
+          const vt = smoothstep(1 - absDelta / (range * 0.75))
+          vid.style.opacity = `${vt}`
+          vid.style.filter = `blur(${(1 - vt) * 8}px)`
+        }
+
+        const textRange = range * 0.55
+        if (text) {
+          if (absDelta > textRange) {
+            text.style.opacity = '0'
+            text.style.transform = `translateY(${delta > 0 ? -40 : 50}px) scale(0.92)`
+            text.style.filter = 'blur(5px)'
+            text.style.pointerEvents = 'none'
           } else {
-            bg.style.opacity = '0'
+            const tt = smoothstep(1 - absDelta / textRange)
+            text.style.opacity = `${tt}`
+            text.style.transform = `translateY(${(1 - tt) * (delta > 0 ? -40 : 50)}px) scale(${0.92 + tt * 0.08})`
+            text.style.filter = `blur(${(1 - tt) * 5}px)`
+            text.style.pointerEvents = tt > 0.5 ? 'auto' : 'none'
           }
         }
 
-        const video = el.querySelector('[data-ft-video]') as HTMLElement
-        if (video) {
-          if (absOffset < 0.9) {
-            const t = smoothstep(1 - absOffset / 0.9)
-            video.style.opacity = `${t}`
-            video.style.filter = `blur(${(1 - t) * 6}px)`
-          } else {
-            video.style.opacity = '0'
-          }
-        }
-
-        const content = el.querySelector('[data-ft-content]') as HTMLElement
-        if (content) {
-          if (absOffset < 0.65) {
-            const t = smoothstep(1 - absOffset / 0.65)
-            content.style.opacity = `${t}`
-            content.style.transform = `translateY(${offset * 80}px) scale(${0.9 + t * 0.1})`
-            content.style.filter = `blur(${(1 - t) * 4}px)`
-          } else {
-            content.style.opacity = '0'
-            content.style.transform = `translateY(${offset > 0 ? 60 : -60}px) scale(0.9)`
-          }
-        }
-
-        const flare = el.querySelector('[data-ft-flare]') as HTMLElement
         if (flare) {
-          flare.style.opacity = absOffset < 0.45 ? `${smoothstep(1 - absOffset / 0.45)}` : '0'
+          flare.style.opacity = `${smoothstep(1 - absDelta / (range * 0.5)) * 0.7}`
         }
-      })
+      }
 
-      setActiveSection(bestIdx)
       ticking = false
     }
 
@@ -273,33 +366,38 @@ function App() {
     return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll) }
   }, [])
 
-  const scrollToSection = useCallback((idx: number) => {
-    sectionsRef.current[idx]?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToScene = useCallback((index: number) => {
+    const container = containerRef.current
+    if (!container) return
+    const scrollable = container.offsetHeight - window.innerHeight
+    const scenePos = index / (SCENE_COUNT - 1)
+    window.scrollTo({ top: container.offsetTop + scenePos * scrollable, behavior: 'smooth' })
     setMobileMenuOpen(false)
   }, [])
 
-  const servicesAnim = useInView()
-  const reviewsAnim = useInView()
-  const contactAnim = useInView()
+  const scrollToId = useCallback((id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    setMobileMenuOpen(false)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#070707] grain-overlay" style={{ fontFamily: "'Inter', sans-serif" }}>
 
-      {/* Progress */}
+      {/* Progress bar */}
       <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] z-[200]"
         style={{ width: `${scrollProgress * 100}%` }} />
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-6"
         style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)' }}>
-        <button onClick={() => scrollToSection(0)} className="flex items-center gap-2 group cursor-pointer bg-transparent border-none">
+        <button onClick={() => scrollToScene(0)} className="flex items-center gap-2 group cursor-pointer bg-transparent border-none">
           <Scissors className="w-5 h-5 text-[#d4af37] transition-transform group-hover:rotate-45 duration-500" />
           <span className="text-white text-lg font-playfair italic tracking-wide">Gentlemen's</span>
         </button>
         <div className="hidden md:flex items-center gap-8">
-          {['Omdömen', 'Tjänster', 'Boka'].map((label) => (
+          {['Omdömen', 'Tjänster', 'Besök'].map((label) => (
             <button key={label}
-              onClick={() => scrollToSection(label === 'Omdömen' ? 3 : label === 'Tjänster' ? 4 : 5)}
+              onClick={() => scrollToId(label === 'Omdömen' ? 'reviews' : label === 'Tjänster' ? 'services' : 'contact')}
               className="text-white/40 hover:text-[#d4af37] text-[11px] font-medium tracking-[0.2em] uppercase transition-all duration-300 bg-transparent border-none cursor-pointer">
               {label}
             </button>
@@ -317,10 +415,18 @@ function App() {
 
       {/* Mobile menu */}
       <div className={`fixed inset-0 z-[99] bg-black/98 backdrop-blur-2xl flex flex-col items-center justify-center gap-6 transition-all duration-700 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        {sections.filter(s => s.label).map((s) => (
-          <button key={s.id} onClick={() => scrollToSection(sections.indexOf(s))}
+        {sceneLabels.filter(Boolean).map((label, i) => (
+          <button key={label} onClick={() => scrollToScene(i + 1)}
             className="text-white/70 text-lg font-light uppercase tracking-[0.3em] hover:text-[#d4af37] transition-all duration-300 bg-transparent border-none cursor-pointer">
-            {s.label}
+            {label}
+          </button>
+        ))}
+        <div className="w-12 h-px bg-white/10 my-2" />
+        {['Omdömen', 'Tjänster', 'Besök'].map(label => (
+          <button key={label}
+            onClick={() => scrollToId(label === 'Omdömen' ? 'reviews' : label === 'Tjänster' ? 'services' : 'contact')}
+            className="text-white/70 text-lg font-light uppercase tracking-[0.3em] hover:text-[#d4af37] transition-all duration-300 bg-transparent border-none cursor-pointer">
+            {label}
           </button>
         ))}
         <a href="tel:+46762149929"
@@ -329,85 +435,93 @@ function App() {
         </a>
       </div>
 
-      {/* Dots */}
-      <div className="fixed right-3 sm:right-5 top-1/2 -translate-y-1/2 z-[100] flex flex-col items-center gap-3">
-        {sections.map((s, i) => (
-          <button key={s.id} onClick={() => scrollToSection(i)}
-            className="group relative bg-transparent border-none cursor-pointer p-1" title={s.label || 'Hem'}>
+      {/* Scene dots */}
+      <div className={`fixed right-3 sm:right-5 top-1/2 -translate-y-1/2 z-[100] flex flex-col items-center gap-3 transition-opacity duration-700 ${inCinematic ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {sceneLabels.map((label, i) => (
+          <button key={i} onClick={() => scrollToScene(i)}
+            className="group relative bg-transparent border-none cursor-pointer p-1" title={label || 'Hem'}>
             <div className={`w-1.5 h-1.5 rounded-full transition-all duration-700 ${
-              activeSection === i
+              activeScene === i
                 ? 'bg-[#d4af37] scale-[2] shadow-[0_0_12px_rgba(212,175,55,0.5)]'
                 : 'bg-white/15 hover:bg-white/40 hover:scale-150'
             }`} />
-            {s.label && (
+            {label && (
               <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/0 group-hover:text-white/50 text-[9px] uppercase tracking-[0.2em] whitespace-nowrap transition-all duration-300 pointer-events-none font-medium">
-                {s.label}
+                {label}
               </span>
             )}
           </button>
         ))}
       </div>
 
-      {/* ═══ 1. HERO ═══ */}
-      <section ref={setSectionRef(0)} className="ft-section bg-black">
-        <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${IMAGES.hero})`, backgroundPosition: 'center 35%' }} />
-        <FtVideo src={VIDEOS.hero} poster={IMAGES.hero} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/80 z-[1]" />
-        <div className="ft-vignette" />
-        <div data-ft-flare className="anamorphic-flare-wrap">
-          <div className="anamorphic-streak" style={{ top: '38%' }} />
-          <div className="anamorphic-orb" style={{ top: 'calc(38% - 40px)', left: '62%' }} />
-          <div className="anamorphic-orb secondary" style={{ top: 'calc(38% - 20px)', left: '38%' }} />
-        </div>
-        <GoldParticles count={6} />
-        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
-          <div data-ft-content style={{ willChange: 'opacity, transform, filter' }}>
-            <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
-              <p className="section-label mb-6 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
-              <h1 className="hero-title text-7xl sm:text-8xl md:text-[10rem] lg:text-[12rem]">
-                Gentlemen's
-              </h1>
-              <p className="font-playfair italic text-[#d4af37]/80 text-xl sm:text-2xl md:text-3xl mt-2"
-                style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
-                Barbershop
-              </p>
-              <div className="gold-line active mx-auto mt-8" />
-              <a href="tel:+46762149929"
-                className="inline-block mt-8 bg-transparent border border-[#d4af37]/30 text-[#d4af37] text-[10px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
-                Boka Din Tid
-              </a>
+      {/* ═══════════════════════════════════════════
+          CINEMATIC WALKTHROUGH
+          ═══════════════════════════════════════════ */}
+      <div ref={containerRef} style={{ height: `${SCROLL_VH}vh` }}>
+        <div className="sticky top-0 h-screen overflow-hidden bg-black">
+          {cinematicScenes.map((scene, i) => (
+            <div key={i} data-scene={i} className="absolute inset-0" style={{ zIndex: i + 1 }}>
+
+              {/* Background image */}
+              <div data-scene-bg
+                className="absolute bg-cover"
+                style={{
+                  inset: '-12%',
+                  backgroundImage: `url(${scene.image})`,
+                  backgroundPosition: scene.bgPos,
+                  opacity: 0,
+                  willChange: 'transform, opacity, filter',
+                }} />
+
+              {/* Video */}
+              {scene.video && (
+                <video data-scene-video
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ opacity: 0, willChange: 'opacity, filter' }}
+                  autoPlay muted loop playsInline poster={scene.image}>
+                  <source src={scene.video} type="video/mp4" />
+                </video>
+              )}
+
+              {/* Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/70" style={{ zIndex: 1 }} />
+
+              {/* Vignette */}
+              <div className="ft-vignette" />
+
+              {/* Anamorphic flare */}
+              {scene.flare && (
+                <div data-scene-flare className="anamorphic-flare-wrap">
+                  <div className="anamorphic-streak" style={{ top: '40%' }} />
+                  <div className="anamorphic-orb" style={{ top: 'calc(40% - 40px)', left: '62%' }} />
+                  <div className="anamorphic-orb secondary" style={{ top: 'calc(40% - 20px)', left: '38%' }} />
+                </div>
+              )}
+
+              {/* Gold particles */}
+              <GoldParticles count={5} />
+
+              {/* Scene text */}
+              <div data-scene-text
+                className="absolute inset-0 flex items-center"
+                style={{ zIndex: 5, opacity: 0, willChange: 'opacity, transform, filter' }}>
+                <SceneContent index={i} heroReady={heroReady} />
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* ═══ 2. SALONGEN ═══ */}
-      <FlySection
-        ref={setSectionRef(1)}
-        image={IMAGES.atmosphere}
-        title={<>Läder.<br/>Mässing.<br/>Precision.</>}
-        subtitle="Byggt för ritualen — inte stressen."
-        flare
-      />
+      {/* ═══════════════════════════════════════════
+          REGULAR SECTIONS
+          ═══════════════════════════════════════════ */}
 
-      {/* ═══ 3. HANTVERKET ═══ */}
-      <FlySection
-        ref={setSectionRef(2)}
-        image={IMAGES.craft}
-        video={VIDEOS.craft}
-        title={<>Varje<br/>Linje</>}
-        subtitle="Skinfades, rakkniv, varma handdukar. Tusentals timmar i stolen."
-        align="right"
-        flare
-      />
+      {/* ═══ OMDÖMEN ═══ */}
+      <section id="reviews" className="relative bg-[#050505] py-20 sm:py-28 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
 
-      {/* ═══ 4. OMDÖMEN ═══ */}
-      <section ref={setSectionRef(3)} className="ft-section bg-[#050505] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-[1]">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-        </div>
-        <div ref={reviewsAnim.ref} className="w-full relative z-[3]">
+        <div ref={reviewsAnim.ref}>
           <div className={`text-center mb-10 px-5 transition-all duration-1000 ${reviewsAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex items-center justify-center gap-2 mb-4">
               <div className="flex gap-0.5">
@@ -418,6 +532,7 @@ function App() {
             <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Omdömen</h2>
             <div className={`gold-line ${reviewsAnim.visible ? 'active' : ''}`} />
           </div>
+
           <div className="overflow-hidden mb-4">
             <div className="review-ticker" style={{ animationDuration: '50s' }}>
               {[...reviews, ...reviews].map((r, i) => (
@@ -441,6 +556,7 @@ function App() {
               ))}
             </div>
           </div>
+
           <div className="overflow-hidden">
             <div className="review-ticker" style={{ animationDuration: '55s', animationDirection: 'reverse' }}>
               {[...reviews.slice(4), ...reviews.slice(0, 4), ...reviews.slice(4), ...reviews.slice(0, 4)].map((r, i) => (
@@ -467,10 +583,10 @@ function App() {
         </div>
       </section>
 
-      {/* ═══ 5. TJÄNSTER ═══ */}
-      <section ref={setSectionRef(4)} className="ft-section bg-[#070707] flex items-center">
+      {/* ═══ TJÄNSTER ═══ */}
+      <section id="services" className="relative bg-[#070707] py-20 sm:py-28">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent" />
-        <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-5 py-16">
+        <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-5">
           <div className={`text-center mb-14 transition-all duration-1000 ${servicesAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Tjänster</h2>
             <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
@@ -494,42 +610,10 @@ function App() {
         </div>
       </section>
 
-      {/* ═══ 6. CTA ═══ */}
-      <section ref={setSectionRef(5)} className="ft-section bg-black">
-        <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${IMAGES.cta})` }} />
-        <FtVideo src={VIDEOS.cta} poster={IMAGES.cta} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/60 z-[1]" />
-        <div className="ft-vignette" />
-        <div data-ft-flare className="anamorphic-flare-wrap">
-          <div className="anamorphic-streak" style={{ top: '42%' }} />
-          <div className="anamorphic-orb" style={{ top: 'calc(42% - 40px)', left: '62%' }} />
-          <div className="anamorphic-orb secondary" style={{ top: 'calc(42% - 20px)', left: '38%' }} />
-        </div>
-        <GoldParticles count={6} />
-        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
-          <div data-ft-content style={{ willChange: 'opacity, transform, filter' }}>
-            <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-[10rem]">
-              Boka
-            </h2>
-            <div className="gold-line active mx-auto" />
-            <div className="flex flex-col sm:flex-row items-center gap-4 mt-10">
-              <a href="tel:+46762149929"
-                className="border border-[#d4af37]/40 text-[#d4af37] text-sm font-bold px-12 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
-                076-214 99 29
-              </a>
-              <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
-                className="border border-white/15 text-white/50 text-sm font-bold px-12 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
-                Hitta Hit
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ 7. BESÖK / KARTA ═══ */}
-      <section ref={setSectionRef(6)} id="contact" className="min-h-screen bg-[#070707] flex items-center">
+      {/* ═══ BESÖK / KARTA ═══ */}
+      <section id="contact" className="relative bg-[#070707] py-20 sm:py-28">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-        <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
+        <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-5">
           <div className={`transition-all duration-1000 ${contactAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <p className="section-label mb-3">Besök Salongen</p>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-3">Kom Förbi</h2>
@@ -543,7 +627,6 @@ function App() {
                 <p className="text-white text-lg font-medium">Edsgatan 23</p>
                 <p className="text-white/40 text-sm">462 33 Vänersborg</p>
               </div>
-
               <div>
                 <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Öppettider</p>
                 <div className="space-y-1.5">
@@ -555,7 +638,6 @@ function App() {
                   ))}
                 </div>
               </div>
-
               <div>
                 <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Kontakt</p>
                 <a href="tel:+46762149929" className="flex items-center gap-3 text-white/60 hover:text-[#d4af37] transition-all duration-300 text-sm no-underline group">
@@ -571,7 +653,6 @@ function App() {
                   </a>
                 </div>
               </div>
-
               <a href="tel:+46762149929"
                 className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
                 Boka Din Tid
@@ -594,46 +675,24 @@ function App() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ═══ FOOTER ═══ */}
       <footer className="bg-[#030303] border-t border-white/[0.04] py-12 px-5">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
-            <div>
-              <p className="text-[#d4af37]/60 text-[9px] font-bold uppercase tracking-[0.4em] mb-3">Adress</p>
-              <p className="text-white/60 text-sm">Edsgatan 23</p>
-              <p className="text-white/30 text-sm">462 33 Vänersborg</p>
-            </div>
-            <div>
-              <p className="text-[#d4af37]/60 text-[9px] font-bold uppercase tracking-[0.4em] mb-3">Öppettider</p>
-              {hours.map(h => (
-                <div key={h.day} className="flex justify-between max-w-[140px]">
-                  <span className="text-white/30 text-sm">{h.day}</span>
-                  <span className={`text-sm tabular-nums ${h.time === 'Stängt' ? 'text-white/15' : 'text-white/60'}`}>{h.time}</span>
-                </div>
-              ))}
-            </div>
-            <div>
-              <p className="text-[#d4af37]/60 text-[9px] font-bold uppercase tracking-[0.4em] mb-3">Kontakt</p>
-              <a href="tel:+46762149929" className="flex items-center gap-2 text-white/50 hover:text-[#d4af37] transition-colors text-sm no-underline">
-                <Phone className="w-3.5 h-3.5" /> 076-214 99 29
-              </a>
-              <div className="flex items-center gap-2 mt-4">
-                <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
-                  className="w-8 h-8 border border-white/[0.06] flex items-center justify-center hover:border-[#d4af37]/30 hover:text-[#d4af37] transition-all duration-500 text-white/20">
-                  <FacebookIcon className="w-3.5 h-3.5" />
-                </a>
-                <a href="#" className="w-8 h-8 border border-white/[0.06] flex items-center justify-center hover:border-[#d4af37]/30 hover:text-[#d4af37] transition-all duration-500 text-white/20">
-                  <InstagramIcon className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-white/[0.03] pt-6 flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Scissors className="w-3 h-3 text-[#d4af37]/40" />
-              <span className="text-white/20 text-xs font-playfair italic">Gentlemen's Barbershop</span>
+              <Scissors className="w-3.5 h-3.5 text-[#d4af37]/40" />
+              <span className="text-white/30 text-sm font-playfair italic">Gentlemen's Barbershop</span>
             </div>
-            <span className="text-white/10 text-[10px]">Vänersborg</span>
+            <p className="text-white/15 text-xs tracking-wide">Edsgatan 23, Vänersborg</p>
+            <div className="flex items-center gap-3">
+              <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
+                className="text-white/15 hover:text-[#d4af37] transition-colors duration-500">
+                <FacebookIcon className="w-3.5 h-3.5" />
+              </a>
+              <a href="#" className="text-white/15 hover:text-[#d4af37] transition-colors duration-500">
+                <InstagramIcon className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
         </div>
       </footer>

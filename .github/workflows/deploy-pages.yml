@@ -38,7 +38,7 @@ jobs:
       - name: Build axion-studio
         working-directory: axion-studio
         env:
-          BASE_PATH: /claude-mem/
+          BASE_PATH: /claude-mem/sunt-fornuft/
         run: npm run build
 
       - name: Install salon-website dependencies
@@ -49,10 +49,10 @@ jobs:
         working-directory: salon-website
         run: npm run build
 
-      - name: Combine sites
+      - name: Combine sites (preserve existing root content)
         run: |
-          mkdir -p _site
-          cp -r axion-studio/dist/* _site/
+          mkdir -p _site/sunt-fornuft
+          cp -r axion-studio/dist/* _site/sunt-fornuft/
           mkdir -p _site/barbershop
           cp -r salon-website/dist/* _site/barbershop/
 

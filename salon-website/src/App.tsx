@@ -156,7 +156,7 @@ function App() {
         style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
         <button onClick={() => scrollTo('hero')} className="flex items-center gap-2 group cursor-pointer bg-transparent border-none">
           <Scissors className="w-5 h-5 text-[#d4af37] transition-transform group-hover:rotate-45 duration-500" />
-          <span className="text-white text-lg font-playfair italic tracking-wide">Gentlemen's</span>
+          <span className="text-white text-xl font-script">Gentlemen's</span>
         </button>
         <div className="hidden md:flex items-center gap-8">
           {[
@@ -207,15 +207,31 @@ function App() {
         <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
           style={{ backgroundImage: `url(${IMAGES.hero})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" />
+
+        {/* Decorative gold corner accents */}
+        <div className="absolute top-0 left-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
+          style={{ borderTop: '1px solid #d4af37', borderLeft: '1px solid #d4af37', margin: '2rem' }} />
+        <div className="absolute top-0 right-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
+          style={{ borderTop: '1px solid #d4af37', borderRight: '1px solid #d4af37', margin: '2rem' }} />
+        <div className="absolute bottom-0 left-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
+          style={{ borderBottom: '1px solid #d4af37', borderLeft: '1px solid #d4af37', margin: '2rem' }} />
+        <div className="absolute bottom-0 right-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
+          style={{ borderBottom: '1px solid #d4af37', borderRight: '1px solid #d4af37', margin: '2rem' }} />
+
+        {/* Subtle radial gold glow behind text */}
+        <div className="absolute inset-0 z-[4] pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
+
         <div className="ft-vignette" />
 
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
           <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
             <p className="section-label mb-5 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
-            <h1 className="hero-title text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem]">
+            <h1 className="font-script text-6xl sm:text-8xl md:text-[9rem] lg:text-[11rem] text-white leading-none"
+              style={{ textShadow: '0 2px 4px rgba(212,175,55,0.15), 0 4px 20px rgba(0,0,0,0.6), 0 8px 40px rgba(0,0,0,0.4)' }}>
               Gentlemen's
             </h1>
-            <p className="font-playfair italic text-[#d4af37]/90 text-xl sm:text-2xl md:text-3xl mt-2"
+            <p className="text-[#d4af37]/90 text-xs sm:text-sm md:text-base mt-3 font-semibold tracking-[0.5em] uppercase"
               style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
               Barbershop
             </p>

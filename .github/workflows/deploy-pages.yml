@@ -47,6 +47,8 @@ jobs:
 
       - name: Build salon-website
         working-directory: salon-website
+        env:
+          BASE_PATH: /claude-mem/barbershop/
         run: npm run build
 
       - name: Combine sites (preserve existing root content)

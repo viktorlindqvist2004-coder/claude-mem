@@ -101,6 +101,11 @@ const hours = [
   { day: 'Söndag', time: 'Stängt' },
 ]
 
+function smoothstep(x: number) {
+  const t = Math.max(0, Math.min(1, x))
+  return t * t * (3 - 2 * t)
+}
+
 function GoldParticles() {
   const particles = Array.from({ length: 12 }, (_, i) => ({
     left: `${8 + Math.random() * 84}%`,
@@ -130,40 +135,6 @@ function GoldParticles() {
   )
 }
 
-function AnamorphicFlare({ active, position = '40%', delay = '0s' }: { active: boolean; position?: string; delay?: string }) {
-  return (
-    <div className={`anamorphic-flare-wrap ${active ? 'active' : ''}`} style={{ animationDelay: delay }}>
-      <div className="anamorphic-streak" style={{ top: position }} />
-      <div className="anamorphic-orb" style={{ top: `calc(${position} - 40px)`, left: '62%' }} />
-      <div className="anamorphic-orb secondary" style={{ top: `calc(${position} - 20px)`, left: '38%' }} />
-    </div>
-  )
-}
-
-function CameraBackground({ image, video, active }: { image: string; video?: string; active: boolean }) {
-  const [videoFailed, setVideoFailed] = useState(false)
-  const showVideo = video && !videoFailed
-
-  return (
-    <>
-      <div
-        className={`camera-bg ${active ? 'active' : ''}`}
-        style={{ backgroundImage: `url(${image})` }}
-      />
-      {showVideo && (
-        <video
-          className={`camera-video ${active ? 'active' : ''}`}
-          autoPlay muted loop playsInline
-          poster={image}
-          onError={() => setVideoFailed(true)}
-        >
-          <source src={video} type="video/mp4" />
-        </video>
-      )}
-    </>
-  )
-}
-
 function StarRating({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5">
@@ -174,29 +145,132 @@ function StarRating({ count }: { count: number }) {
   )
 }
 
+function useInView() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.25 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return { ref, visible }
+}
+
 function App() {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const sectionsRef = useRef<(HTMLElement | null)[]>([])
   const [activeSection, setActiveSection] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
+  const [heroReady, setHeroReady] = useState(false)
+
+  const setSectionRef = useCallback((idx: number) => (el: HTMLElement | null) => {
+    sectionsRef.current[idx] = el
+  }, [])
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const onScroll = () => {
-      const scrollTop = container.scrollTop
-      const h = window.innerHeight
-      const idx = Math.round(scrollTop / h)
-      setActiveSection(idx)
-      const totalHeight = container.scrollHeight - h
-      setScrollProgress(totalHeight > 0 ? scrollTop / totalHeight : 0)
+    setTimeout(() => setHeroReady(true), 100)
+  }, [])
+
+  useEffect(() => {
+    let ticking = false
+
+    const update = () => {
+      const vh = window.innerHeight
+      const maxScroll = document.documentElement.scrollHeight - vh
+      const scrollY = window.scrollY
+      setScrollProgress(maxScroll > 0 ? scrollY / maxScroll : 0)
+
+      let bestIdx = 0
+      let bestDist = Infinity
+
+      sectionsRef.current.forEach((el, i) => {
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const center = rect.top + rect.height / 2
+        const dist = Math.abs(center - vh / 2)
+        if (dist < bestDist) { bestDist = dist; bestIdx = i }
+
+        const offset = (center - vh / 2) / vh
+        const absOffset = Math.abs(offset)
+
+        const bg = el.querySelector('[data-ft-bg]') as HTMLElement
+        if (bg) {
+          if (absOffset < 1.2) {
+            const t = smoothstep(1 - absOffset / 1.2)
+            let scale: number
+            if (offset > 0) {
+              scale = 0.85 + t * 0.17
+            } else {
+              scale = 1.02 + (1 - t) * 0.13
+            }
+            const opacity = Math.min(1, t * 1.6)
+            const blur = (1 - t) * 10
+            bg.style.transform = `scale(${scale})`
+            bg.style.opacity = `${opacity}`
+            bg.style.filter = `blur(${blur}px)`
+          } else {
+            bg.style.opacity = '0'
+          }
+        }
+
+        const video = el.querySelector('[data-ft-video]') as HTMLElement
+        if (video) {
+          if (absOffset < 0.9) {
+            const t = smoothstep(1 - absOffset / 0.9)
+            video.style.opacity = `${t}`
+            video.style.filter = `blur(${(1 - t) * 5}px)`
+          } else {
+            video.style.opacity = '0'
+          }
+        }
+
+        const content = el.querySelector('[data-ft-content]') as HTMLElement
+        if (content) {
+          if (absOffset < 0.7) {
+            const t = smoothstep(1 - absOffset / 0.7)
+            content.style.opacity = `${t}`
+            content.style.transform = `translateY(${offset * 70}px) scale(${0.92 + t * 0.08})`
+            content.style.filter = `blur(${(1 - t) * 3}px)`
+          } else {
+            content.style.opacity = '0'
+            content.style.transform = `translateY(${offset > 0 ? 50 : -50}px) scale(0.92)`
+          }
+        }
+
+        const flare = el.querySelector('[data-ft-flare]') as HTMLElement
+        if (flare) {
+          if (absOffset < 0.5) {
+            flare.style.opacity = `${smoothstep(1 - absOffset / 0.5)}`
+          } else {
+            flare.style.opacity = '0'
+          }
+        }
+      })
+
+      setActiveSection(bestIdx)
+      ticking = false
     }
-    container.addEventListener('scroll', onScroll, { passive: true })
-    return () => container.removeEventListener('scroll', onScroll)
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(update)
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    update()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   const scrollToSection = useCallback((idx: number) => {
-    containerRef.current?.scrollTo({ top: idx * window.innerHeight, behavior: 'smooth' })
+    sectionsRef.current[idx]?.scrollIntoView({ behavior: 'smooth' })
     setMobileMenuOpen(false)
   }, [])
 
@@ -279,17 +353,20 @@ function App() {
         ))}
       </div>
 
-      {/* ═══ Snap Container ═══ */}
-      <div ref={containerRef} className="snap-container">
-
-        {/* HERO */}
-        <section className="snap-section bg-black">
-          <CameraBackground image={IMAGES.hero} video={VIDEOS.hero} active={activeSection === 0} />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70 z-[1]" />
-          <AnamorphicFlare active={activeSection === 0} position="38%" />
-          <GoldParticles />
-          <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
-            <div className={`stagger-children ${activeSection === 0 ? 'active' : ''}`}>
+      {/* ═══ HERO ═══ */}
+      <section ref={setSectionRef(0)} className="ft-section bg-black">
+        <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${IMAGES.hero})` }} />
+        <FtVideo src={VIDEOS.hero} poster={IMAGES.hero} />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70 z-[1]" />
+        <div data-ft-flare className="anamorphic-flare-wrap">
+          <div className="anamorphic-streak" style={{ top: '38%' }} />
+          <div className="anamorphic-orb" style={{ top: 'calc(38% - 40px)', left: '62%' }} />
+          <div className="anamorphic-orb secondary" style={{ top: 'calc(38% - 20px)', left: '38%' }} />
+        </div>
+        <GoldParticles />
+        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
+          <div data-ft-content style={{ willChange: 'opacity, transform, filter' }}>
+            <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
               <p className="section-label mb-5">Edsgatan 23 &nbsp;&middot;&nbsp; Vänersborg</p>
               <h1 className="hero-title text-6xl sm:text-8xl md:text-9xl lg:text-[11rem]">
                 Gentlemen's
@@ -308,272 +385,266 @@ function App() {
               </a>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* STIG IN */}
-        <CinematicSection
-          image={IMAGES.inside}
-          label="Salongen"
-          title="Stig In"
-          desc="Lämna vardagen vid dörren. Här väntar en stol med ditt namn på — kaffe, lugn och precision."
-          idx={1}
-          activeSection={activeSection}
-          flare
-          flarePos="35%"
-        />
+      {/* STIG IN */}
+      <FlySection
+        ref={setSectionRef(1)}
+        image={IMAGES.inside}
+        label="Salongen"
+        title="Stig In"
+        desc="Lämna vardagen vid dörren. Här väntar en stol med ditt namn på — kaffe, lugn och precision."
+        flarePos="35%"
+      />
 
-        {/* DÄR KUNGAR SITTER */}
-        <CinematicSection
-          image={IMAGES.chairs}
-          label="Miljön"
-          title={<>Där Kungar<br/>Sitter</>}
-          desc="Vintage läder, mässing och mahogny. Värme, gott ljus och bra samtal. En salong byggd för ritualen — inte stressen."
-          idx={2}
-          activeSection={activeSection}
-          align="right"
-          flare
-          flarePos="45%"
-        />
+      {/* DÄR KUNGAR SITTER */}
+      <FlySection
+        ref={setSectionRef(2)}
+        image={IMAGES.chairs}
+        label="Miljön"
+        title={<>Där Kungar<br/>Sitter</>}
+        desc="Vintage läder, mässing och mahogny. Värme, gott ljus och bra samtal. En salong byggd för ritualen — inte stressen."
+        align="right"
+        flarePos="45%"
+      />
 
-        {/* VARJE LINJE */}
-        <CinematicSection
-          image={IMAGES.craft}
-          video={VIDEOS.craft}
-          label="Hantverket"
-          title={<>Varje Linje<br/>Med Precision</>}
-          desc="Skinfades, klassiska nedtrappningar, skäggformning, varma handdukar och rakkniv. Varje detalj finjusterad av händer som gjort det tusentals gånger."
-          idx={3}
-          activeSection={activeSection}
-          flare
-          flarePos="42%"
-        />
+      {/* VARJE LINJE */}
+      <FlySection
+        ref={setSectionRef(3)}
+        image={IMAGES.craft}
+        video={VIDEOS.craft}
+        label="Hantverket"
+        title={<>Varje Linje<br/>Med Precision</>}
+        desc="Skinfades, klassiska nedtrappningar, skäggformning, varma handdukar och rakkniv. Varje detalj finjusterad av händer som gjort det tusentals gånger."
+        flarePos="42%"
+      />
 
-        {/* GÅ UT VASSARE */}
-        <CinematicSection
-          image={IMAGES.result}
-          label="Resultatet"
-          title={<>Gå Ut<br/>Vassare</>}
-          desc="Du kom in trött. Du lämnar rakare, skarpare, starkare. Den känslan i spegeln — det är hela poängen."
-          idx={4}
-          activeSection={activeSection}
-          align="right"
-        />
+      {/* GÅ UT VASSARE */}
+      <FlySection
+        ref={setSectionRef(4)}
+        image={IMAGES.result}
+        label="Resultatet"
+        title={<>Gå Ut<br/>Vassare</>}
+        desc="Du kom in trött. Du lämnar rakare, skarpare, starkare. Den känslan i spegeln — det är hela poängen."
+        align="right"
+      />
 
-        {/* MER ÄN EN KLIPPNING */}
-        <CinematicSection
-          image={IMAGES.community}
-          label="Gemenskapen"
-          title={<>Mer Än<br/>En Klippning</>}
-          desc="Stammisar, förstagångsbesökare, hela kvarteret. Kliv in, slå dig ner och bli en del av gänget."
-          idx={5}
-          activeSection={activeSection}
-          flare
-          flarePos="50%"
-        />
+      {/* MER ÄN EN KLIPPNING */}
+      <FlySection
+        ref={setSectionRef(5)}
+        image={IMAGES.community}
+        label="Gemenskapen"
+        title={<>Mer Än<br/>En Klippning</>}
+        desc="Stammisar, förstagångsbesökare, hela kvarteret. Kliv in, slå dig ner och bli en del av gänget."
+        flarePos="50%"
+      />
 
-        {/* REVIEWS */}
-        <section className="snap-section bg-[#070707] flex items-center overflow-hidden">
-          <div className="absolute inset-0 z-[1]">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent" />
-          </div>
-          <GoldParticles />
-          <div ref={reviewsAnim.ref} className="w-full relative z-[3]">
-            <div className={`text-center mb-10 px-5 transition-all duration-1000 ${reviewsAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <p className="section-label mb-3">Vad Våra Kunder Säger</p>
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Omdömen</h2>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(i => <Star key={i} className="w-5 h-5 fill-[#d4af37] text-[#d4af37]" />)}
-                </div>
-                <span className="text-white/60 text-sm font-medium">5.0 på Google</span>
+      {/* ═══ REVIEWS ═══ */}
+      <section ref={setSectionRef(6)} className="ft-section bg-[#070707] flex items-center overflow-hidden">
+        <div className="absolute inset-0 z-[1]">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent" />
+        </div>
+        <GoldParticles />
+        <div ref={reviewsAnim.ref} className="w-full relative z-[3]">
+          <div className={`text-center mb-10 px-5 transition-all duration-1000 ${reviewsAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <p className="section-label mb-3">Vad Våra Kunder Säger</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Omdömen</h2>
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <div className="flex gap-0.5">
+                {[1,2,3,4,5].map(i => <Star key={i} className="w-5 h-5 fill-[#d4af37] text-[#d4af37]" />)}
               </div>
-              <div className={`gold-line ${reviewsAnim.visible ? 'active' : ''}`} />
+              <span className="text-white/60 text-sm font-medium">5.0 på Google</span>
             </div>
+            <div className={`gold-line ${reviewsAnim.visible ? 'active' : ''}`} />
+          </div>
 
-            <div className="overflow-hidden mb-4">
-              <div className="review-ticker" style={{ animationDuration: '50s' }}>
-                {[...reviews, ...reviews].map((r, i) => (
-                  <div key={i} className="review-card min-w-[320px] max-w-[380px] flex-shrink-0">
-                    <p className="text-white/70 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
-                    <div className="flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 border border-[#d4af37]/20 flex items-center justify-center">
-                          <span className="text-[#d4af37] text-xs font-bold">{r.name[0]}</span>
-                        </div>
-                        <div>
-                          <p className="text-white/90 text-xs font-semibold">{r.name}</p>
-                          <StarRating count={r.rating} />
-                        </div>
+          <div className="overflow-hidden mb-4">
+            <div className="review-ticker" style={{ animationDuration: '50s' }}>
+              {[...reviews, ...reviews].map((r, i) => (
+                <div key={i} className="review-card min-w-[320px] max-w-[380px] flex-shrink-0">
+                  <p className="text-white/70 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 border border-[#d4af37]/20 flex items-center justify-center">
+                        <span className="text-[#d4af37] text-xs font-bold">{r.name[0]}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-white/30 text-[9px] uppercase tracking-widest">
-                        {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
-                        {r.source}
+                      <div>
+                        <p className="text-white/90 text-xs font-semibold">{r.name}</p>
+                        <StarRating count={r.rating} />
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="overflow-hidden">
-              <div className="review-ticker" style={{ animationDuration: '55s', animationDirection: 'reverse' }}>
-                {[...reviews.slice(4), ...reviews.slice(0, 4), ...reviews.slice(4), ...reviews.slice(0, 4)].map((r, i) => (
-                  <div key={i} className="review-card min-w-[320px] max-w-[380px] flex-shrink-0">
-                    <p className="text-white/70 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
-                    <div className="flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 border border-[#d4af37]/20 flex items-center justify-center">
-                          <span className="text-[#d4af37] text-xs font-bold">{r.name[0]}</span>
-                        </div>
-                        <div>
-                          <p className="text-white/90 text-xs font-semibold">{r.name}</p>
-                          <StarRating count={r.rating} />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 text-white/30 text-[9px] uppercase tracking-widest">
-                        {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
-                        {r.source}
-                      </div>
+                    <div className="flex items-center gap-1 text-white/30 text-[9px] uppercase tracking-widest">
+                      {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
+                      {r.source}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="snap-section bg-black">
-          <CameraBackground image={IMAGES.cta} video={VIDEOS.cta} active={activeSection === 7} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/55 z-[1]" />
-          <AnamorphicFlare active={activeSection === 7} position="42%" />
-          <GoldParticles />
-          <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
-            <div className={`camera-content ${activeSection === 7 ? 'active' : ''}`}>
-              <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
-                Ta Din<br/>Plats
-              </h2>
-              <div className={`gold-line ${activeSection === 7 ? 'active' : ''}`} />
-              <p className="text-white/50 text-sm mt-4 max-w-md mx-auto">Boka din tid — ring oss direkt eller besök salongen på Edsgatan 23.</p>
-              <div className="flex flex-col sm:flex-row items-center gap-4 mt-10">
-                <a href="tel:+46762149929"
-                  className="border border-[#d4af37]/50 text-[#d4af37] text-sm font-bold px-10 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline"
-                  style={{ animation: activeSection === 7 ? 'pulse-glow 3s ease-in-out infinite' : 'none' }}>
-                  Boka Din Tid
-                </a>
-                <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
-                  className="border border-white/20 text-white/70 text-sm font-bold px-10 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
-                  Hitta Hit
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SERVICES */}
-        <section id="services" className="snap-section bg-[#070707] flex items-center">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-          <div ref={servicesAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
-            <div className={`text-center mb-14 transition-all duration-1000 ${servicesAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <p className="section-label mb-3">Menyn</p>
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Tjänster &amp; Priser</h2>
-              <p className="text-white/30 text-sm mt-4 max-w-md mx-auto tracking-wide">Walk-ins välkomna — bokning rekommenderas.</p>
-              <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
-            </div>
-
-            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children ${servicesAnim.visible ? 'active' : ''}`}>
-              {services.map((s) => (
-                <div key={s.name}
-                  className="group border border-white/[0.06] hover:border-[#d4af37]/30 p-6 sm:p-8 transition-all duration-700 hover:bg-white/[0.02] relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#d4af37]/0 group-hover:via-[#d4af37]/30 to-transparent transition-all duration-700" />
-                  <div className="flex items-center gap-3 mb-4">
-                    <ServiceIcon type={s.icon} />
-                    <h3 className="text-white/90 text-sm font-bold uppercase tracking-[0.12em]">{s.name}</h3>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="flex-1 h-px bg-gradient-to-r from-[#d4af37]/0 group-hover:from-[#d4af37]/40 to-transparent transition-all duration-1000" />
-                    <span className="text-[#d4af37] text-lg font-bold ml-4 whitespace-nowrap tabular-nums">{s.price}</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </section>
 
-        {/* CONTACT */}
-        <section id="contact" className="snap-section bg-[#070707] flex items-center">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-          <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
-            <div className={`transition-all duration-1000 ${contactAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <p className="section-label mb-3">Besök Salongen</p>
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-3">Kom Förbi</h2>
-              <div className={`gold-line ${contactAnim.visible ? 'active' : ''} !mx-0`} style={{ margin: '0' }} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
-              <div className={`space-y-8 transition-all duration-1000 delay-200 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
-                <div>
-                  <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Adress</p>
-                  <p className="text-white text-lg font-medium">Edsgatan 23</p>
-                  <p className="text-white/40 text-sm">462 33 Vänersborg</p>
-                </div>
-
-                <div>
-                  <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Öppettider</p>
-                  <div className="space-y-1.5">
-                    {hours.map(h => (
-                      <div key={h.day} className="flex justify-between items-center py-1 border-b border-white/[0.04] last:border-none max-w-xs">
-                        <span className="text-white/45 text-sm">{h.day}</span>
-                        <span className={`text-sm font-medium tabular-nums ${h.time === 'Stängt' ? 'text-white/20' : 'text-white/80'}`}>{h.time}</span>
+          <div className="overflow-hidden">
+            <div className="review-ticker" style={{ animationDuration: '55s', animationDirection: 'reverse' }}>
+              {[...reviews.slice(4), ...reviews.slice(0, 4), ...reviews.slice(4), ...reviews.slice(0, 4)].map((r, i) => (
+                <div key={i} className="review-card min-w-[320px] max-w-[380px] flex-shrink-0">
+                  <p className="text-white/70 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 border border-[#d4af37]/20 flex items-center justify-center">
+                        <span className="text-[#d4af37] text-xs font-bold">{r.name[0]}</span>
                       </div>
-                    ))}
+                      <div>
+                        <p className="text-white/90 text-xs font-semibold">{r.name}</p>
+                        <StarRating count={r.rating} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-white/30 text-[9px] uppercase tracking-widest">
+                      {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
+                      {r.source}
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
-                <div>
-                  <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Kontakt</p>
-                  <a href="tel:+46762149929" className="flex items-center gap-3 text-white/60 hover:text-[#d4af37] transition-all duration-300 text-sm no-underline group">
-                    <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" /> 076-214 99 29
-                  </a>
+      {/* ═══ CTA ═══ */}
+      <section ref={setSectionRef(7)} className="ft-section bg-black">
+        <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${IMAGES.cta})` }} />
+        <FtVideo src={VIDEOS.cta} poster={IMAGES.cta} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/55 z-[1]" />
+        <div data-ft-flare className="anamorphic-flare-wrap">
+          <div className="anamorphic-streak" style={{ top: '42%' }} />
+          <div className="anamorphic-orb" style={{ top: 'calc(42% - 40px)', left: '62%' }} />
+          <div className="anamorphic-orb secondary" style={{ top: 'calc(42% - 20px)', left: '38%' }} />
+        </div>
+        <GoldParticles />
+        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center text-center px-5">
+          <div data-ft-content style={{ willChange: 'opacity, transform, filter' }}>
+            <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
+              Ta Din<br/>Plats
+            </h2>
+            <div className="gold-line active" />
+            <p className="text-white/50 text-sm mt-4 max-w-md mx-auto">Boka din tid — ring oss direkt eller besök salongen på Edsgatan 23.</p>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mt-10">
+              <a href="tel:+46762149929"
+                className="border border-[#d4af37]/50 text-[#d4af37] text-sm font-bold px-10 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+                Boka Din Tid
+              </a>
+              <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
+                className="border border-white/20 text-white/70 text-sm font-bold px-10 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
+                Hitta Hit
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                  <div className="flex items-center gap-2.5 mt-5">
-                    <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
-                      className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
-                      <FacebookIcon className="w-4 h-4" />
-                    </a>
-                    <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
-                      <InstagramIcon className="w-4 h-4" />
-                    </a>
-                    <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
-                      <TikTokIcon className="w-4 h-4" />
-                    </a>
-                  </div>
+      {/* ═══ SERVICES ═══ */}
+      <section ref={setSectionRef(8)} id="services" className="ft-section bg-[#070707] flex items-center">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+        <div ref={servicesAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
+          <div className={`text-center mb-14 transition-all duration-1000 ${servicesAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <p className="section-label mb-3">Menyn</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Tjänster &amp; Priser</h2>
+            <p className="text-white/30 text-sm mt-4 max-w-md mx-auto tracking-wide">Walk-ins välkomna — bokning rekommenderas.</p>
+            <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
+          </div>
+
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children ${servicesAnim.visible ? 'active' : ''}`}>
+            {services.map((s) => (
+              <div key={s.name}
+                className="group border border-white/[0.06] hover:border-[#d4af37]/30 p-6 sm:p-8 transition-all duration-700 hover:bg-white/[0.02] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#d4af37]/0 group-hover:via-[#d4af37]/30 to-transparent transition-all duration-700" />
+                <div className="flex items-center gap-3 mb-4">
+                  <ServiceIcon type={s.icon} />
+                  <h3 className="text-white/90 text-sm font-bold uppercase tracking-[0.12em]">{s.name}</h3>
                 </div>
+                <div className="flex items-center">
+                  <div className="flex-1 h-px bg-gradient-to-r from-[#d4af37]/0 group-hover:from-[#d4af37]/40 to-transparent transition-all duration-1000" />
+                  <span className="text-[#d4af37] text-lg font-bold ml-4 whitespace-nowrap tabular-nums">{s.price}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <a href="tel:+46762149929"
-                  className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
-                  Boka Din Tid
-                </a>
+      {/* ═══ CONTACT ═══ */}
+      <section ref={setSectionRef(9)} id="contact" className="ft-section bg-[#070707] flex items-center">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+        <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
+          <div className={`transition-all duration-1000 ${contactAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <p className="section-label mb-3">Besök Salongen</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-3">Kom Förbi</h2>
+            <div className={`gold-line ${contactAnim.visible ? 'active' : ''} !mx-0`} style={{ margin: '0' }} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+            <div className={`space-y-8 transition-all duration-1000 delay-200 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+              <div>
+                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Adress</p>
+                <p className="text-white text-lg font-medium">Edsgatan 23</p>
+                <p className="text-white/40 text-sm">462 33 Vänersborg</p>
               </div>
 
-              <div className={`transition-all duration-1000 delay-300 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
-                <div className="w-full h-full min-h-[400px] bg-[#0c0c0c] border border-white/[0.06] overflow-hidden relative">
-                  <iframe
-                    title="Karta"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2126.5!2d12.3233!3d58.3808!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTjCsDIyJzUxLjAiTiAxMsKwMTknMjQuMCJF!5e0!3m2!1ssv!2sse!4v1"
-                    className="w-full h-full min-h-[400px] border-0 grayscale invert opacity-70"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                  <div className="absolute inset-0 border border-[#d4af37]/10 pointer-events-none" />
+              <div>
+                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Öppettider</p>
+                <div className="space-y-1.5">
+                  {hours.map(h => (
+                    <div key={h.day} className="flex justify-between items-center py-1 border-b border-white/[0.04] last:border-none max-w-xs">
+                      <span className="text-white/45 text-sm">{h.day}</span>
+                      <span className={`text-sm font-medium tabular-nums ${h.time === 'Stängt' ? 'text-white/20' : 'text-white/80'}`}>{h.time}</span>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              <div>
+                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Kontakt</p>
+                <a href="tel:+46762149929" className="flex items-center gap-3 text-white/60 hover:text-[#d4af37] transition-all duration-300 text-sm no-underline group">
+                  <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" /> 076-214 99 29
+                </a>
+
+                <div className="flex items-center gap-2.5 mt-5">
+                  <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
+                    className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                    <FacebookIcon className="w-4 h-4" />
+                  </a>
+                  <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                    <InstagramIcon className="w-4 h-4" />
+                  </a>
+                  <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                    <TikTokIcon className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+
+              <a href="tel:+46762149929"
+                className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
+                Boka Din Tid
+              </a>
+            </div>
+
+            <div className={`transition-all duration-1000 delay-300 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+              <div className="w-full h-full min-h-[400px] bg-[#0c0c0c] border border-white/[0.06] overflow-hidden relative">
+                <iframe
+                  title="Karta"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2126.5!2d12.3233!3d58.3808!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTjCsDIyJzUxLjAiTiAxMsKwMTknMjQuMCJF!5e0!3m2!1ssv!2sse!4v1"
+                  className="w-full h-full min-h-[400px] border-0 grayscale invert opacity-70"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <div className="absolute inset-0 border border-[#d4af37]/10 pointer-events-none" />
               </div>
             </div>
           </div>
-        </section>
-
-      </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="bg-[#050505] border-t border-white/[0.04] py-8 px-5">
@@ -597,46 +668,55 @@ function App() {
   )
 }
 
-function useInView() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.25 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-  return { ref, visible }
+import { forwardRef } from 'react'
+
+function FtVideo({ src, poster }: { src: string; poster: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return null
+  return (
+    <video
+      data-ft-video
+      className="ft-video"
+      autoPlay muted loop playsInline
+      poster={poster}
+      onError={() => setFailed(true)}
+    >
+      <source src={src} type="video/mp4" />
+    </video>
+  )
 }
 
-function CinematicSection({ image, video, label, title, desc, idx, activeSection, align, flare, flarePos }: {
+const FlySection = forwardRef<HTMLElement, {
   image: string; video?: string; label: string; title: React.ReactNode; desc: string;
-  idx: number; activeSection: number; align?: 'right'; flare?: boolean; flarePos?: string;
-}) {
-  const isActive = activeSection === idx
-
+  align?: 'right'; flarePos?: string;
+}>(function FlySection({ image, video, label, title, desc, align, flarePos }, ref) {
   return (
-    <section className="snap-section bg-black">
-      <CameraBackground image={image} video={video} active={isActive} />
+    <section ref={ref} className="ft-section bg-black">
+      <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${image})` }} />
+      {video && <FtVideo src={video} poster={image} />}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/65 z-[1]" />
-      {flare && <AnamorphicFlare active={isActive} position={flarePos || '42%'} />}
+      {flarePos && (
+        <div data-ft-flare className="anamorphic-flare-wrap">
+          <div className="anamorphic-streak" style={{ top: flarePos }} />
+          <div className="anamorphic-orb" style={{ top: `calc(${flarePos} - 40px)`, left: '62%' }} />
+          <div className="anamorphic-orb secondary" style={{ top: `calc(${flarePos} - 20px)`, left: '38%' }} />
+        </div>
+      )}
       <GoldParticles />
       <div className="absolute inset-0 z-[5] flex items-center px-6 sm:px-14 md:px-20">
-        <div className={`max-w-2xl ${align === 'right' ? 'ml-auto text-right' : ''} camera-content ${isActive ? 'active' : ''}`}>
-          <div className={`stagger-children ${isActive ? 'active' : ''}`}>
-            <p className="section-label mb-4">{label}</p>
-            <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl">{title}</h2>
-            <div className={`gold-line ${isActive ? 'active' : ''} ${align === 'right' ? 'ml-auto mr-0' : 'mr-auto ml-0'}`}
-              style={{ margin: align === 'right' ? '1.5rem 0 1.5rem auto' : '1.5rem auto 1.5rem 0' }} />
-            <p className={`text-white/55 text-sm sm:text-base leading-relaxed max-w-lg ${align === 'right' ? 'ml-auto' : ''}`}>
-              {desc}
-            </p>
-          </div>
+        <div data-ft-content className={`max-w-2xl ${align === 'right' ? 'ml-auto text-right' : ''}`}
+          style={{ willChange: 'opacity, transform, filter' }}>
+          <p className="section-label mb-4">{label}</p>
+          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl">{title}</h2>
+          <div className={`gold-line active ${align === 'right' ? 'ml-auto mr-0' : 'mr-auto ml-0'}`}
+            style={{ margin: align === 'right' ? '1.5rem 0 1.5rem auto' : '1.5rem auto 1.5rem 0' }} />
+          <p className={`text-white/55 text-sm sm:text-base leading-relaxed max-w-lg ${align === 'right' ? 'ml-auto' : ''}`}>
+            {desc}
+          </p>
         </div>
       </div>
     </section>
   )
-}
+})
 
 export default App

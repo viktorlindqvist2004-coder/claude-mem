@@ -7,19 +7,31 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; overflow-x: hidden; background: #070707; }
 
-/* ═══ Snap scrolling ═══ */
-.snap-container {
-  height: 100dvh;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-}
-.snap-section {
-  height: 100dvh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+/* ═══ Fly-through sections ═══ */
+.ft-section {
+  height: 100vh;
   position: relative;
   overflow: hidden;
+}
+
+.ft-bg {
+  position: absolute;
+  inset: -12%;
+  background-size: cover;
+  background-position: center;
+  will-change: transform, opacity, filter;
+  opacity: 0;
+}
+
+.ft-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  will-change: opacity, filter;
+  opacity: 0;
 }
 
 /* ═══ Hero text — 3D emboss ═══ */
@@ -60,70 +72,6 @@ body { margin: 0; overflow-x: hidden; background: #070707; }
   background-size: 128px;
 }
 
-/* ═══ Camera fly-through background ═══ */
-.camera-bg {
-  position: absolute;
-  inset: -12%;
-  background-size: cover;
-  background-position: center;
-  will-change: transform, filter, opacity;
-  transform: scale(1.35);
-  filter: blur(8px);
-  opacity: 0.5;
-  transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 1.2s ease;
-}
-.camera-bg.active {
-  transform: scale(1.02);
-  filter: blur(0);
-  opacity: 1;
-  animation: cameraSubtle 20s ease-in-out infinite alternate;
-}
-
-.camera-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  will-change: transform, filter, opacity;
-  transform: scale(1.2);
-  filter: blur(6px);
-  opacity: 0;
-  transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 1.2s ease;
-}
-.camera-video.active {
-  transform: scale(1);
-  filter: blur(0);
-  opacity: 1;
-}
-
-@keyframes cameraSubtle {
-  0% { transform: scale(1.02) translate(0, 0); }
-  33% { transform: scale(1.06) translate(-0.8%, -0.5%); }
-  66% { transform: scale(1.04) translate(0.5%, 0.3%); }
-  100% { transform: scale(1.08) translate(-0.3%, 0.5%); }
-}
-
-/* ═══ Camera content entrance ═══ */
-.camera-content {
-  opacity: 0;
-  transform: translateY(40px) scale(0.95);
-  filter: blur(4px);
-  transition: opacity 1s ease 0.3s,
-              transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s,
-              filter 1s ease 0.2s;
-}
-.camera-content.active {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-
 /* ═══ Anamorphic lens flare ═══ */
 .anamorphic-flare-wrap {
   position: absolute;
@@ -132,10 +80,6 @@ body { margin: 0; overflow-x: hidden; background: #070707; }
   pointer-events: none;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.8s ease 0.6s;
-}
-.anamorphic-flare-wrap.active {
-  opacity: 1;
 }
 
 .anamorphic-streak {
@@ -197,28 +141,6 @@ body { margin: 0; overflow-x: hidden; background: #070707; }
   will-change: transform;
   transition: transform 0.1s linear;
 }
-
-/* ═══ Ken Burns variants ═══ */
-@keyframes kenBurns1 {
-  0% { transform: scale(1) translate(0, 0); }
-  100% { transform: scale(1.12) translate(-1.5%, -1%); }
-}
-@keyframes kenBurns2 {
-  0% { transform: scale(1.08) translate(-1%, 1%); }
-  100% { transform: scale(1) translate(1%, -0.5%); }
-}
-@keyframes kenBurns3 {
-  0% { transform: scale(1) translate(1%, 0); }
-  100% { transform: scale(1.1) translate(-0.5%, 1.5%); }
-}
-@keyframes kenBurns4 {
-  0% { transform: scale(1.1) translate(0, -1%); }
-  100% { transform: scale(1.02) translate(1%, 0.5%); }
-}
-.ken-burns-1 { animation: kenBurns1 18s ease-in-out infinite alternate; }
-.ken-burns-2 { animation: kenBurns2 22s ease-in-out infinite alternate; }
-.ken-burns-3 { animation: kenBurns3 20s ease-in-out infinite alternate; }
-.ken-burns-4 { animation: kenBurns4 24s ease-in-out infinite alternate; }
 
 /* ═══ Stagger children ═══ */
 .stagger-children > * {
@@ -339,11 +261,9 @@ body { margin: 0; overflow-x: hidden; background: #070707; }
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up { animation: none; opacity: 1; }
   .pulse-glow { animation: none; }
-  .ken-burns-1, .ken-burns-2, .ken-burns-3, .ken-burns-4 { animation: none; }
-  .camera-bg, .camera-bg.active { transform: none; filter: none; opacity: 1; animation: none; }
-  .camera-video, .camera-video.active { transform: none; filter: none; opacity: 1; }
-  .camera-content { opacity: 1; transform: none; filter: none; }
-  .anamorphic-flare-wrap { opacity: 0; }
+  .ft-bg { opacity: 1 !important; filter: none !important; transform: none !important; }
+  .ft-video { opacity: 1 !important; filter: none !important; }
+  .anamorphic-flare-wrap { opacity: 0 !important; }
   .review-ticker { animation: none; }
   .gold-line { width: 120px; }
   .stagger-children > * { opacity: 1; transform: none; }

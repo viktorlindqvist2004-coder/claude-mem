@@ -56,6 +56,7 @@ const sections = [
   { id: 'reviews', label: 'Omdömen' },
   { id: 'services', label: 'Tjänster' },
   { id: 'cta', label: 'Boka' },
+  { id: 'contact', label: 'Besök' },
 ]
 
 const services = [
@@ -279,6 +280,7 @@ function App() {
 
   const servicesAnim = useInView()
   const reviewsAnim = useInView()
+  const contactAnim = useInView()
 
   return (
     <div className="min-h-screen bg-[#070707] grain-overlay" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -348,7 +350,7 @@ function App() {
 
       {/* ═══ 1. HERO ═══ */}
       <section ref={setSectionRef(0)} className="ft-section bg-black">
-        <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${IMAGES.hero})` }} />
+        <div data-ft-bg className="ft-bg" style={{ backgroundImage: `url(${IMAGES.hero})`, backgroundPosition: 'center 35%' }} />
         <FtVideo src={VIDEOS.hero} poster={IMAGES.hero} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/80 z-[1]" />
         <div className="ft-vignette" />
@@ -519,6 +521,74 @@ function App() {
                 className="border border-white/15 text-white/50 text-sm font-bold px-12 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
                 Hitta Hit
               </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ 7. BESÖK / KARTA ═══ */}
+      <section ref={setSectionRef(6)} id="contact" className="min-h-screen bg-[#070707] flex items-center">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+        <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
+          <div className={`transition-all duration-1000 ${contactAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <p className="section-label mb-3">Besök Salongen</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-3">Kom Förbi</h2>
+            <div className={`gold-line ${contactAnim.visible ? 'active' : ''}`} style={{ margin: '1.5rem auto 1.5rem 0' }} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+            <div className={`space-y-8 transition-all duration-1000 delay-200 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+              <div>
+                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Adress</p>
+                <p className="text-white text-lg font-medium">Edsgatan 23</p>
+                <p className="text-white/40 text-sm">462 33 Vänersborg</p>
+              </div>
+
+              <div>
+                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Öppettider</p>
+                <div className="space-y-1.5">
+                  {hours.map(h => (
+                    <div key={h.day} className="flex justify-between items-center py-1 border-b border-white/[0.04] last:border-none max-w-xs">
+                      <span className="text-white/45 text-sm">{h.day}</span>
+                      <span className={`text-sm font-medium tabular-nums ${h.time === 'Stängt' ? 'text-white/20' : 'text-white/80'}`}>{h.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Kontakt</p>
+                <a href="tel:+46762149929" className="flex items-center gap-3 text-white/60 hover:text-[#d4af37] transition-all duration-300 text-sm no-underline group">
+                  <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" /> 076-214 99 29
+                </a>
+                <div className="flex items-center gap-2.5 mt-5">
+                  <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
+                    className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                    <FacebookIcon className="w-4 h-4" />
+                  </a>
+                  <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                    <InstagramIcon className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+
+              <a href="tel:+46762149929"
+                className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
+                Boka Din Tid
+              </a>
+            </div>
+
+            <div className={`transition-all duration-1000 delay-300 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+              <div className="w-full h-full min-h-[400px] bg-[#0c0c0c] border border-white/[0.06] overflow-hidden relative">
+                <iframe
+                  title="Karta"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2126.5!2d12.3233!3d58.3808!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTjCsDIyJzUxLjAiTiAxMsKwMTknMjQuMCJF!5e0!3m2!1ssv!2sse!4v1"
+                  className="w-full h-full min-h-[400px] border-0 grayscale invert opacity-70"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <div className="absolute inset-0 border border-[#d4af37]/10 pointer-events-none" />
+              </div>
             </div>
           </div>
         </div>

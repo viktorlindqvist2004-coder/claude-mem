@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-      - claude/axion-studio-landing-8mjkki
+      - claude/salon-hero-website-pg9kql
     paths:
-      - "axion-studio/**"
+      - "salon-website/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -30,11 +30,11 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        working-directory: axion-studio
+        working-directory: salon-website
         run: npm ci
 
       - name: Build
-        working-directory: axion-studio
+        working-directory: salon-website
         env:
           BASE_PATH: /claude-mem/
         run: npm run build
@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: axion-studio/dist
+          path: salon-website/dist
 
   deploy:
     needs: build

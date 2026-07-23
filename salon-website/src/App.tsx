@@ -46,7 +46,6 @@ const SCENE_COUNT = 6
 const cinematicScenes = [
   {
     image: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
-    video: 'https://videos.pexels.com/video-files/4177561/4177561-uhd_2560_1440_25fps.mp4',
     bgPos: 'center 35%',
     flare: true,
   },
@@ -57,23 +56,23 @@ const cinematicScenes = [
   },
   {
     image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
+    video: 'https://videos.pexels.com/video-files/7697046/7697046-hd_1920_1080_25fps.mp4',
     bgPos: 'center',
     flare: true,
   },
   {
     image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
-    video: 'https://videos.pexels.com/video-files/3993394/3993394-hd_1920_1080_30fps.mp4',
     bgPos: 'center 40%',
     flare: false,
   },
   {
     image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
+    video: 'https://videos.pexels.com/video-files/7697135/7697135-hd_1920_1080_25fps.mp4',
     bgPos: 'center 80%',
     flare: true,
   },
   {
     image: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
-    video: 'https://videos.pexels.com/video-files/4718407/4718407-uhd_2560_1440_25fps.mp4',
     bgPos: 'center',
     flare: true,
   },
@@ -478,7 +477,8 @@ function App() {
                 <video data-scene-video
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ opacity: 0, willChange: 'opacity, filter' }}
-                  autoPlay muted loop playsInline poster={scene.image}>
+                  autoPlay muted loop playsInline poster={scene.image}
+                  onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none' }}>
                   <source src={scene.video} type="video/mp4" />
                 </video>
               )}

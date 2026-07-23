@@ -36,7 +36,7 @@ export default function Contact() {
               bostäder? Hör av dig så återkommer vi så snart vi kan.
             </p>
             <a
-              href="mailto:info@stoltsfastigheter.se"
+              href="mailto:info@suntfornuft.se"
               className="group mt-8 inline-flex w-fit items-center gap-3 rounded-full bg-white py-2 pl-5 pr-2 text-[13px] font-medium text-[#1E3A5F] transition-colors duration-300 hover:bg-white/90 sm:pl-6 sm:text-[14px]"
             >
               Kom i kontakt med oss
@@ -55,12 +55,12 @@ export default function Contact() {
               <span className="text-[15px] sm:text-[17px]">0521-000 00</span>
             </a>
             <a
-              href="mailto:info@stoltsfastigheter.se"
+              href="mailto:info@suntfornuft.se"
               className="flex items-center gap-4 border-t border-white/15 pt-5 transition-colors hover:text-white/70"
             >
               <Mail size={20} className="shrink-0" />
               <span className="text-[15px] sm:text-[17px]">
-                info@stoltsfastigheter.se
+                info@suntfornuft.se
               </span>
             </a>
             <div className="flex items-center gap-4 border-t border-white/15 pt-5">

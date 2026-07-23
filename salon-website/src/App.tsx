@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Scissors, Star, Phone, Menu, X } from 'lucide-react'
+import { Scissors, Star, Phone, Menu, X, ChevronDown } from 'lucide-react'
 import './App.css'
 
 /* ═══ Icons ═══ */
@@ -38,49 +38,13 @@ const ServiceIcon = ({ type }: { type: string }) => {
   }
 }
 
-/* ═══ Cinematic scenes ═══ */
+/* ═══ Data ═══ */
 
-const SCROLL_VH = 750
-const SCENE_COUNT = 6
-
-const cinematicScenes = [
-  {
-    image: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
-    bgPos: 'center 35%',
-    flare: true,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
-    bgPos: 'center 55%',
-    flare: false,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
-    video: 'https://videos.pexels.com/video-files/7697046/7697046-hd_1920_1080_25fps.mp4',
-    bgPos: 'center',
-    flare: true,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
-    bgPos: 'center 40%',
-    flare: false,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
-    video: 'https://videos.pexels.com/video-files/7697135/7697135-hd_1920_1080_25fps.mp4',
-    bgPos: 'center 80%',
-    flare: true,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
-    bgPos: 'center',
-    flare: true,
-  },
-]
-
-const sceneLabels = ['', 'Entrén', 'Salongen', 'Stolen', 'Hantverket', 'Boka']
-
-/* ═══ Content data ═══ */
+const IMAGES = {
+  hero: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
+  salon: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
+  craft: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
+}
 
 const services = [
   { name: 'Herrklippning', price: '300 kr', icon: 'scissors' },
@@ -110,31 +74,6 @@ const hours = [
 
 /* ═══ Helpers ═══ */
 
-function smoothstep(x: number) {
-  const t = Math.max(0, Math.min(1, x))
-  return t * t * (3 - 2 * t)
-}
-
-function GoldParticles({ count = 6 }: { count?: number }) {
-  const particles = Array.from({ length: count }, (_, i) => ({
-    left: `${8 + Math.random() * 84}%`,
-    top: `${10 + Math.random() * 80}%`,
-    delay: `${Math.random() * 8}s`,
-    duration: `${6 + Math.random() * 6}s`,
-    anim: i % 3 === 0 ? 'particleFloat1' : i % 3 === 1 ? 'particleFloat2' : 'particleFloat3',
-    size: 2 + Math.random() * 3,
-  }))
-  return (
-    <div className="gold-particles">
-      {particles.map((p, i) => (
-        <div key={i} className="gold-particle"
-          style={{ left: p.left, top: p.top, width: p.size, height: p.size,
-            animation: `${p.anim} ${p.duration} ease-in-out ${p.delay} infinite` }} />
-      ))}
-    </div>
-  )
-}
-
 function StarRating({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5">
@@ -145,236 +84,62 @@ function StarRating({ count }: { count: number }) {
   )
 }
 
-function useInView() {
+function useInView(threshold = 0.2) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const obs = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.2 })
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [threshold])
   return { ref, visible }
 }
 
-/* ═══ Scene text content ═══ */
-
-function SceneContent({ index, heroReady }: { index: number; heroReady: boolean }) {
-  switch (index) {
-    case 0:
-      return (
-        <div className="w-full flex flex-col items-center text-center px-5">
-          <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
-            <p className="section-label mb-6 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
-            <h1 className="hero-title text-7xl sm:text-8xl md:text-[10rem] lg:text-[12rem]">
-              Gentlemen's
-            </h1>
-            <p className="font-playfair italic text-[#d4af37]/80 text-xl sm:text-2xl md:text-3xl mt-2"
-              style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
-              Barbershop
-            </p>
-            <div className="gold-line active mx-auto mt-8" />
-            <p className="text-white/25 text-xs tracking-[0.3em] uppercase mt-6">Scrolla ner</p>
-          </div>
-        </div>
-      )
-    case 1:
-      return (
-        <div className="w-full flex flex-col items-center text-center px-5">
-          <p className="section-label mb-4">Välkommen</p>
-          <h2 className="font-playfair italic text-white text-5xl sm:text-7xl md:text-8xl"
-            style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
-            Stig in.
-          </h2>
-          <div className="gold-line active mx-auto mt-6" />
-          <p className="text-white/30 text-sm sm:text-base mt-4 max-w-sm">
-            Där varje besök är en upplevelse.
-          </p>
-        </div>
-      )
-    case 2:
-      return (
-        <div className="w-full px-6 sm:px-14 md:px-20">
-          <p className="section-label mb-4">Salongen</p>
-          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
-            Läder.<br />Mässing.<br />Tradition.
-          </h2>
-          <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
-          <p className="text-white/35 text-sm sm:text-base tracking-wide max-w-md">
-            Byggt för ritualen — inte stressen.
-          </p>
-        </div>
-      )
-    case 3:
-      return (
-        <div className="w-full flex justify-end px-6 sm:px-14 md:px-20">
-          <div className="text-right">
-            <p className="section-label mb-4">Stolen</p>
-            <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
-              Slå dig<br />ner.
-            </h2>
-            <div className="gold-line active" style={{ margin: '1.5rem 0 1.5rem auto' }} />
-            <p className="text-white/35 text-sm sm:text-base tracking-wide max-w-md ml-auto">
-              Din stund. Din stil.
-            </p>
-          </div>
-        </div>
-      )
-    case 4:
-      return (
-        <div className="w-full px-6 sm:px-14 md:px-20">
-          <p className="section-label mb-4">Hantverket</p>
-          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
-            Precision<br />i varje<br />linje.
-          </h2>
-          <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
-          <p className="text-white/35 text-sm sm:text-base tracking-wide max-w-md">
-            Skinfades. Rakkniv. Varma handdukar.
-          </p>
-        </div>
-      )
-    case 5:
-      return (
-        <div className="w-full flex flex-col items-center text-center px-5">
-          <p className="section-label mb-4">Boka Din Tid</p>
-          <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-[10rem]">
-            Din tur.
-          </h2>
-          <div className="gold-line active mx-auto" />
-          <div className="flex flex-col sm:flex-row items-center gap-4 mt-10">
-            <a href="tel:+46762149929"
-              className="border border-[#d4af37]/40 text-[#d4af37] text-sm font-bold px-12 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
-              076-214 99 29
-            </a>
-            <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
-              className="border border-white/15 text-white/50 text-sm font-bold px-12 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
-              Hitta Hit
-            </a>
-          </div>
-        </div>
-      )
-    default:
-      return null
-  }
+function FadeIn({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const { ref, visible } = useInView(0.15)
+  return (
+    <div ref={ref} className={`transition-all duration-1000 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  )
 }
 
 /* ═══ App ═══ */
 
 function App() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [activeScene, setActiveScene] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [heroReady, setHeroReady] = useState(false)
-  const [inCinematic, setInCinematic] = useState(true)
 
-  const reviewsAnim = useInView()
   const servicesAnim = useInView()
   const contactAnim = useInView()
 
   useEffect(() => { setTimeout(() => setHeroReady(true), 100) }, [])
 
-  /* Scroll-driven cinematic animation */
+  /* Simple parallax on image backgrounds */
   useEffect(() => {
     let ticking = false
-
     const update = () => {
-      const container = containerRef.current
-      if (!container) { ticking = false; return }
-
-      const rect = container.getBoundingClientRect()
-      const scrollable = container.offsetHeight - window.innerHeight
-      const progress = scrollable > 0 ? Math.max(0, Math.min(1, -rect.top / scrollable)) : 0
-
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight
       setScrollProgress(maxScroll > 0 ? window.scrollY / maxScroll : 0)
-      setInCinematic(rect.bottom > window.innerHeight * 0.5)
 
-      const currentFloat = progress * (SCENE_COUNT - 1)
-      setActiveScene(Math.round(currentFloat))
-
-      const range = 1 / (SCENE_COUNT - 1) * 1.1
-
-      for (let i = 0; i < SCENE_COUNT; i++) {
-        const layer = document.querySelector(`[data-scene="${i}"]`) as HTMLElement
-        if (!layer) continue
-
-        const scenePos = i / (SCENE_COUNT - 1)
-        const delta = progress - scenePos
-        const absDelta = Math.abs(delta)
-
-        const bg = layer.querySelector('[data-scene-bg]') as HTMLElement
-        const vid = layer.querySelector('[data-scene-video]') as HTMLElement
-        const text = layer.querySelector('[data-scene-text]') as HTMLElement
-        const flare = layer.querySelector('[data-scene-flare]') as HTMLElement
-
-        if (absDelta > range * 1.4) {
-          if (bg) bg.style.opacity = '0'
-          if (vid) vid.style.opacity = '0'
-          if (text) { text.style.opacity = '0'; text.style.pointerEvents = 'none' }
-          if (flare) flare.style.opacity = '0'
-          continue
-        }
-
-        const t = smoothstep(1 - absDelta / range)
-
-        if (bg) {
-          const scale = delta <= 0
-            ? 0.82 + t * 0.2
-            : 1.02 + (1 - t) * 0.22
-          bg.style.opacity = `${Math.min(1, t * 1.6)}`
-          bg.style.transform = `scale(${scale})`
-          bg.style.filter = `blur(${(1 - t) * 14}px)`
-        }
-
-        if (vid) {
-          const vt = smoothstep(1 - absDelta / (range * 0.75))
-          vid.style.opacity = `${vt}`
-          vid.style.filter = `blur(${(1 - vt) * 8}px)`
-        }
-
-        const textRange = range * 0.55
-        if (text) {
-          if (absDelta > textRange) {
-            text.style.opacity = '0'
-            text.style.transform = `translateY(${delta > 0 ? -40 : 50}px) scale(0.92)`
-            text.style.filter = 'blur(5px)'
-            text.style.pointerEvents = 'none'
-          } else {
-            const tt = smoothstep(1 - absDelta / textRange)
-            text.style.opacity = `${tt}`
-            text.style.transform = `translateY(${(1 - tt) * (delta > 0 ? -40 : 50)}px) scale(${0.92 + tt * 0.08})`
-            text.style.filter = `blur(${(1 - tt) * 5}px)`
-            text.style.pointerEvents = tt > 0.5 ? 'auto' : 'none'
-          }
-        }
-
-        if (flare) {
-          flare.style.opacity = `${smoothstep(1 - absDelta / (range * 0.5)) * 0.7}`
-        }
-      }
-
+      document.querySelectorAll<HTMLElement>('[data-parallax]').forEach((el) => {
+        const rect = el.parentElement!.getBoundingClientRect()
+        const offset = rect.top / window.innerHeight
+        el.style.transform = `translateY(${offset * -40}px) scale(1.08)`
+      })
       ticking = false
     }
-
     const onScroll = () => { if (!ticking) { requestAnimationFrame(update); ticking = true } }
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
     update()
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll) }
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const scrollToScene = useCallback((index: number) => {
-    const container = containerRef.current
-    if (!container) return
-    const scrollable = container.offsetHeight - window.innerHeight
-    const scenePos = index / (SCENE_COUNT - 1)
-    window.scrollTo({ top: container.offsetTop + scenePos * scrollable, behavior: 'smooth' })
-    setMobileMenuOpen(false)
-  }, [])
-
-  const scrollToId = useCallback((id: string) => {
+  const scrollTo = useCallback((id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     setMobileMenuOpen(false)
   }, [])
@@ -388,16 +153,20 @@ function App() {
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-6"
-        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)' }}>
-        <button onClick={() => scrollToScene(0)} className="flex items-center gap-2 group cursor-pointer bg-transparent border-none">
+        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
+        <button onClick={() => scrollTo('hero')} className="flex items-center gap-2 group cursor-pointer bg-transparent border-none">
           <Scissors className="w-5 h-5 text-[#d4af37] transition-transform group-hover:rotate-45 duration-500" />
           <span className="text-white text-lg font-playfair italic tracking-wide">Gentlemen's</span>
         </button>
         <div className="hidden md:flex items-center gap-8">
-          {['Omdömen', 'Tjänster', 'Besök'].map((label) => (
-            <button key={label}
-              onClick={() => scrollToId(label === 'Omdömen' ? 'reviews' : label === 'Tjänster' ? 'services' : 'contact')}
-              className="text-white/40 hover:text-[#d4af37] text-[11px] font-medium tracking-[0.2em] uppercase transition-all duration-300 bg-transparent border-none cursor-pointer">
+          {[
+            { label: 'Om Oss', id: 'about' },
+            { label: 'Tjänster', id: 'services' },
+            { label: 'Omdömen', id: 'reviews' },
+            { label: 'Besök', id: 'contact' },
+          ].map(({ label, id }) => (
+            <button key={id} onClick={() => scrollTo(id)}
+              className="text-white/50 hover:text-[#d4af37] text-[11px] font-medium tracking-[0.2em] uppercase transition-all duration-300 bg-transparent border-none cursor-pointer">
               {label}
             </button>
           ))}
@@ -414,16 +183,15 @@ function App() {
 
       {/* Mobile menu */}
       <div className={`fixed inset-0 z-[99] bg-black/98 backdrop-blur-2xl flex flex-col items-center justify-center gap-6 transition-all duration-700 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        {sceneLabels.filter(Boolean).map((label, i) => (
-          <button key={label} onClick={() => scrollToScene(i + 1)}
-            className="text-white/70 text-lg font-light uppercase tracking-[0.3em] hover:text-[#d4af37] transition-all duration-300 bg-transparent border-none cursor-pointer">
-            {label}
-          </button>
-        ))}
-        <div className="w-12 h-px bg-white/10 my-2" />
-        {['Omdömen', 'Tjänster', 'Besök'].map(label => (
-          <button key={label}
-            onClick={() => scrollToId(label === 'Omdömen' ? 'reviews' : label === 'Tjänster' ? 'services' : 'contact')}
+        {[
+          { label: 'Om Oss', id: 'about' },
+          { label: 'Salongen', id: 'salon' },
+          { label: 'Hantverket', id: 'craft' },
+          { label: 'Tjänster', id: 'services' },
+          { label: 'Omdömen', id: 'reviews' },
+          { label: 'Besök', id: 'contact' },
+        ].map(({ label, id }) => (
+          <button key={id} onClick={() => scrollTo(id)}
             className="text-white/70 text-lg font-light uppercase tracking-[0.3em] hover:text-[#d4af37] transition-all duration-300 bg-transparent border-none cursor-pointer">
             {label}
           </button>
@@ -434,163 +202,157 @@ function App() {
         </a>
       </div>
 
-      {/* Scene dots */}
-      <div className={`fixed right-3 sm:right-5 top-1/2 -translate-y-1/2 z-[100] flex flex-col items-center gap-3 transition-opacity duration-700 ${inCinematic ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {sceneLabels.map((label, i) => (
-          <button key={i} onClick={() => scrollToScene(i)}
-            className="group relative bg-transparent border-none cursor-pointer p-1" title={label || 'Hem'}>
-            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-700 ${
-              activeScene === i
-                ? 'bg-[#d4af37] scale-[2] shadow-[0_0_12px_rgba(212,175,55,0.5)]'
-                : 'bg-white/15 hover:bg-white/40 hover:scale-150'
-            }`} />
-            {label && (
-              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/0 group-hover:text-white/50 text-[9px] uppercase tracking-[0.2em] whitespace-nowrap transition-all duration-300 pointer-events-none font-medium">
-                {label}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* ═══ HERO ═══ */}
+      <section id="hero" className="relative h-screen overflow-hidden">
+        <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
+          style={{ backgroundImage: `url(${IMAGES.hero})` }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" />
+        <div className="ft-vignette" />
 
-      {/* ═══════════════════════════════════════════
-          CINEMATIC WALKTHROUGH
-          ═══════════════════════════════════════════ */}
-      <div ref={containerRef} style={{ height: `${SCROLL_VH}vh` }}>
-        <div className="sticky top-0 h-screen overflow-hidden bg-black">
-          {cinematicScenes.map((scene, i) => (
-            <div key={i} data-scene={i} className="absolute inset-0" style={{ zIndex: i + 1 }}>
-
-              {/* Background image */}
-              <div data-scene-bg
-                className="absolute bg-cover"
-                style={{
-                  inset: '-12%',
-                  backgroundImage: `url(${scene.image})`,
-                  backgroundPosition: scene.bgPos,
-                  opacity: 0,
-                  willChange: 'transform, opacity, filter',
-                }} />
-
-              {/* Video */}
-              {scene.video && (
-                <video data-scene-video
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ opacity: 0, willChange: 'opacity, filter' }}
-                  autoPlay muted loop playsInline poster={scene.image}
-                  onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none' }}>
-                  <source src={scene.video} type="video/mp4" />
-                </video>
-              )}
-
-              {/* Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/70" style={{ zIndex: 1 }} />
-
-              {/* Vignette */}
-              <div className="ft-vignette" />
-
-              {/* Anamorphic flare */}
-              {scene.flare && (
-                <div data-scene-flare className="anamorphic-flare-wrap">
-                  <div className="anamorphic-streak" style={{ top: '40%' }} />
-                  <div className="anamorphic-orb" style={{ top: 'calc(40% - 40px)', left: '62%' }} />
-                  <div className="anamorphic-orb secondary" style={{ top: 'calc(40% - 20px)', left: '38%' }} />
-                </div>
-              )}
-
-              {/* Gold particles */}
-              <GoldParticles count={5} />
-
-              {/* Scene text */}
-              <div data-scene-text
-                className="absolute inset-0 flex items-center"
-                style={{ zIndex: 5, opacity: 0, willChange: 'opacity, transform, filter' }}>
-                <SceneContent index={i} heroReady={heroReady} />
-              </div>
-            </div>
-          ))}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
+          <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
+            <p className="section-label mb-5 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
+            <h1 className="hero-title text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem]">
+              Gentlemen's
+            </h1>
+            <p className="font-playfair italic text-[#d4af37]/90 text-xl sm:text-2xl md:text-3xl mt-2"
+              style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
+              Barbershop
+            </p>
+            <div className="gold-line active mx-auto mt-8" />
+            <a href="tel:+46762149929"
+              className="inline-block mt-8 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+              Boka Din Tid
+            </a>
+          </div>
         </div>
-      </div>
 
-      {/* ═══════════════════════════════════════════
-          REGULAR SECTIONS
-          ═══════════════════════════════════════════ */}
+        <button onClick={() => scrollTo('about')}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-white/30 hover:text-white/60 transition-colors bg-transparent border-none cursor-pointer animate-bounce">
+          <ChevronDown className="w-6 h-6" />
+        </button>
+      </section>
 
-      {/* ═══ OMDÖMEN ═══ */}
-      <section id="reviews" className="relative bg-[#050505] py-20 sm:py-28 overflow-hidden">
+      {/* ═══ OM OSS ═══ */}
+      <section id="about" className="relative bg-[#0a0a0a] py-24 sm:py-32">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+        <div className="max-w-4xl mx-auto px-6 sm:px-10">
+          <FadeIn>
+            <p className="section-label mb-4">Om Oss</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-6">Mer än en klippning</h2>
+            <div className="gold-line active" style={{ margin: '0 auto 0 0' }} />
+          </FadeIn>
 
-        <div ref={reviewsAnim.ref}>
-          <div className={`text-center mb-10 px-5 transition-all duration-1000 ${reviewsAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="flex gap-0.5">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-[#d4af37] text-[#d4af37]" />)}
+          <FadeIn delay={200}>
+            <p className="text-white/70 text-base sm:text-lg leading-relaxed mt-8 max-w-2xl">
+              Gentlemen's Barbershop grundades med en enkel vision — att skapa en plats
+              där kvalitet aldrig kompromissas. Vi tror på hantverket, på att ta sig tid,
+              och på att varje kund ska lämna stolen med en känsla av att ha fått det bästa.
+            </p>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-14">
+            {[
+              { title: 'Premiumprodukter', desc: 'Vi använder bara de bästa varumärkena inom herrgrooming. Inga genvägar, inga kompromisser.' },
+              { title: 'Tid för dig', desc: 'Varje besök bokas med marginal. Ingen stress, inga köer — du får den tid du behöver.' },
+              { title: 'Ständig utveckling', desc: 'Vi utbildar oss kontinuerligt i de senaste teknikerna. Klassiskt hantverk möter modern precision.' },
+            ].map((item, i) => (
+              <FadeIn key={item.title} delay={300 + i * 150}>
+                <div className="border border-white/[0.06] p-6 hover:border-[#d4af37]/20 transition-all duration-700">
+                  <div className="w-8 h-px bg-[#d4af37]/50 mb-4" />
+                  <h3 className="text-white/90 text-sm font-bold uppercase tracking-[0.1em] mb-3">{item.title}</h3>
+                  <p className="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ SALONGEN ═══ */}
+      <section id="salon" className="relative h-screen overflow-hidden">
+        <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
+          style={{ backgroundImage: `url(${IMAGES.salon})` }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+        <div className="ft-vignette" />
+
+        <div className="relative z-10 h-full flex items-center px-6 sm:px-14 md:px-20">
+          <div className="max-w-lg">
+            <FadeIn>
+              <p className="section-label mb-4">Salongen</p>
+              <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
+                Designad för<br />din stund
+              </h2>
+              <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
+            </FadeIn>
+            <FadeIn delay={200}>
+              <p className="text-white/70 text-base leading-relaxed mt-4">
+                Läder, mässing och varma träslag. Vår salong på Edsgatan 23 är byggd
+                för att du ska kunna slappna av. Ingen stress, inga köer — bara hantverk
+                och en stund för dig själv.
+              </p>
+            </FadeIn>
+            <FadeIn delay={400}>
+              <div className="flex flex-wrap gap-3 mt-8">
+                {['Klassisk inredning', 'Avslappnad atmosfär', 'Centralt läge'].map(tag => (
+                  <span key={tag} className="text-[10px] text-[#d4af37]/70 uppercase tracking-[0.15em] border border-[#d4af37]/15 px-3 py-1.5">
+                    {tag}
+                  </span>
+                ))}
               </div>
-              <span className="text-white/40 text-xs font-medium">5.0</span>
-            </div>
-            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Omdömen</h2>
-            <div className={`gold-line ${reviewsAnim.visible ? 'active' : ''}`} />
+            </FadeIn>
           </div>
+        </div>
+      </section>
 
-          <div className="overflow-hidden mb-4">
-            <div className="review-ticker" style={{ animationDuration: '50s' }}>
-              {[...reviews, ...reviews].map((r, i) => (
-                <div key={i} className="review-card min-w-[300px] max-w-[360px] flex-shrink-0">
-                  <p className="text-white/60 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/15 flex items-center justify-center">
-                        <span className="text-[#d4af37] text-[10px] font-bold">{r.name[0]}</span>
-                      </div>
-                      <div>
-                        <p className="text-white/80 text-[11px] font-semibold">{r.name}</p>
-                        <StarRating count={r.rating} />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-white/20 text-[8px] uppercase tracking-widest">
-                      {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* ═══ HANTVERKET ═══ */}
+      <section id="craft" className="relative h-screen overflow-hidden">
+        <div data-parallax className="absolute inset-[-8%] bg-cover"
+          style={{ backgroundImage: `url(${IMAGES.craft})`, backgroundPosition: 'center 40%' }} />
+        <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/50 to-black/30" />
+        <div className="ft-vignette" />
 
-          <div className="overflow-hidden">
-            <div className="review-ticker" style={{ animationDuration: '55s', animationDirection: 'reverse' }}>
-              {[...reviews.slice(4), ...reviews.slice(0, 4), ...reviews.slice(4), ...reviews.slice(0, 4)].map((r, i) => (
-                <div key={i} className="review-card min-w-[300px] max-w-[360px] flex-shrink-0">
-                  <p className="text-white/60 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/15 flex items-center justify-center">
-                        <span className="text-[#d4af37] text-[10px] font-bold">{r.name[0]}</span>
-                      </div>
-                      <div>
-                        <p className="text-white/80 text-[11px] font-semibold">{r.name}</p>
-                        <StarRating count={r.rating} />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-white/20 text-[8px] uppercase tracking-widest">
-                      {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="relative z-10 h-full flex items-center justify-end px-6 sm:px-14 md:px-20">
+          <div className="max-w-lg text-right">
+            <FadeIn>
+              <p className="section-label mb-4">Hantverket</p>
+              <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
+                Precision i<br />varje detalj
+              </h2>
+              <div className="gold-line active" style={{ margin: '1.5rem 0 1.5rem auto' }} />
+            </FadeIn>
+            <FadeIn delay={200}>
+              <p className="text-white/70 text-base leading-relaxed mt-4">
+                Från klassiska herrklippningar till skinfades med rakkniv. Vi behärskar
+                både traditionella och moderna tekniker — alltid med rakkniv, varma handdukar
+                och öga för detaljen. Varje klippning avslutas med styling och personliga
+                tips för att hålla looken hemma.
+              </p>
+            </FadeIn>
+            <FadeIn delay={400}>
+              <div className="flex flex-wrap justify-end gap-3 mt-8">
+                {['Skinfade', 'Rakkniv', 'Varma handdukar', 'Skäggvård'].map(tag => (
+                  <span key={tag} className="text-[10px] text-[#d4af37]/70 uppercase tracking-[0.15em] border border-[#d4af37]/15 px-3 py-1.5">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* ═══ TJÄNSTER ═══ */}
-      <section id="services" className="relative bg-[#070707] py-20 sm:py-28">
+      <section id="services" className="relative bg-[#070707] py-24 sm:py-32">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent" />
-        <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-5">
-          <div className={`text-center mb-14 transition-all duration-1000 ${servicesAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Tjänster</h2>
-            <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
-          </div>
+        <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-6 sm:px-10">
+          <FadeIn>
+            <div className="text-center mb-14">
+              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Tjänster</h2>
+              <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
+              <p className="text-white/50 text-sm mt-4">Ring för att boka din tid</p>
+            </div>
+          </FadeIn>
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children ${servicesAnim.visible ? 'active' : ''}`}>
             {services.map((s) => (
               <div key={s.name}
@@ -610,56 +372,144 @@ function App() {
         </div>
       </section>
 
-      {/* ═══ BESÖK / KARTA ═══ */}
-      <section id="contact" className="relative bg-[#070707] py-20 sm:py-28">
+      {/* ═══ OMDÖMEN ═══ */}
+      <section id="reviews" className="relative bg-[#050505] py-24 sm:py-28 overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
-        <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-5">
-          <div className={`transition-all duration-1000 ${contactAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+
+        <FadeIn className="text-center mb-10 px-5">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-[#d4af37] text-[#d4af37]" />)}
+            </div>
+            <span className="text-white/40 text-xs font-medium">5.0</span>
+          </div>
+          <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl">Omdömen</h2>
+          <div className="gold-line active" />
+        </FadeIn>
+
+        <div className="overflow-hidden mb-4">
+          <div className="review-ticker" style={{ animationDuration: '50s' }}>
+            {[...reviews, ...reviews].map((r, i) => (
+              <div key={i} className="review-card min-w-[300px] max-w-[360px] flex-shrink-0">
+                <p className="text-white/60 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/15 flex items-center justify-center">
+                      <span className="text-[#d4af37] text-[10px] font-bold">{r.name[0]}</span>
+                    </div>
+                    <div>
+                      <p className="text-white/80 text-[11px] font-semibold">{r.name}</p>
+                      <StarRating count={r.rating} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-white/20 text-[8px] uppercase tracking-widest">
+                    {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="overflow-hidden">
+          <div className="review-ticker" style={{ animationDuration: '55s', animationDirection: 'reverse' }}>
+            {[...reviews.slice(4), ...reviews.slice(0, 4), ...reviews.slice(4), ...reviews.slice(0, 4)].map((r, i) => (
+              <div key={i} className="review-card min-w-[300px] max-w-[360px] flex-shrink-0">
+                <p className="text-white/60 text-sm leading-relaxed mb-4 relative z-10">{r.text}</p>
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/15 flex items-center justify-center">
+                      <span className="text-[#d4af37] text-[10px] font-bold">{r.name[0]}</span>
+                    </div>
+                    <div>
+                      <p className="text-white/80 text-[11px] font-semibold">{r.name}</p>
+                      <StarRating count={r.rating} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-white/20 text-[8px] uppercase tracking-widest">
+                    {r.source === 'Google' ? <GoogleIcon className="w-3 h-3" /> : <FacebookIcon className="w-3 h-3" />}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ BOKA ═══ */}
+      <section className="relative bg-[#0a0a0a] py-20 sm:py-24 text-center">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent" />
+        <FadeIn className="px-5">
+          <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">Redo?</h2>
+          <p className="text-white/50 text-base mb-10 max-w-md mx-auto">
+            Ring oss direkt eller besök salongen på Edsgatan 23. Drop-in välkomnas men bokning rekommenderas.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="tel:+46762149929"
+              className="border border-[#d4af37]/40 text-[#d4af37] text-sm font-bold px-12 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+              076-214 99 29
+            </a>
+            <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
+              className="border border-white/15 text-white/50 text-sm font-bold px-12 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
+              Hitta Hit
+            </a>
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* ═══ BESÖK / KARTA ═══ */}
+      <section id="contact" className="relative bg-[#070707] py-24 sm:py-28">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
+        <div ref={contactAnim.ref} className="w-full max-w-6xl mx-auto px-6 sm:px-10">
+          <FadeIn>
             <p className="section-label mb-3">Besök Salongen</p>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl mb-3">Kom Förbi</h2>
             <div className={`gold-line ${contactAnim.visible ? 'active' : ''}`} style={{ margin: '1.5rem auto 1.5rem 0' }} />
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
-            <div className={`space-y-8 transition-all duration-1000 delay-200 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
-              <div>
-                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Adress</p>
-                <p className="text-white text-lg font-medium">Edsgatan 23</p>
-                <p className="text-white/40 text-sm">462 33 Vänersborg</p>
-              </div>
-              <div>
-                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Öppettider</p>
-                <div className="space-y-1.5">
-                  {hours.map(h => (
-                    <div key={h.day} className="flex justify-between items-center py-1 border-b border-white/[0.04] last:border-none max-w-xs">
-                      <span className="text-white/45 text-sm">{h.day}</span>
-                      <span className={`text-sm font-medium tabular-nums ${h.time === 'Stängt' ? 'text-white/20' : 'text-white/80'}`}>{h.time}</span>
-                    </div>
-                  ))}
+            <FadeIn delay={200}>
+              <div className="space-y-8">
+                <div>
+                  <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Adress</p>
+                  <p className="text-white text-lg font-medium">Edsgatan 23</p>
+                  <p className="text-white/40 text-sm">462 33 Vänersborg</p>
                 </div>
-              </div>
-              <div>
-                <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Kontakt</p>
-                <a href="tel:+46762149929" className="flex items-center gap-3 text-white/60 hover:text-[#d4af37] transition-all duration-300 text-sm no-underline group">
-                  <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" /> 076-214 99 29
+                <div>
+                  <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Öppettider</p>
+                  <div className="space-y-1.5">
+                    {hours.map(h => (
+                      <div key={h.day} className="flex justify-between items-center py-1 border-b border-white/[0.04] last:border-none max-w-xs">
+                        <span className="text-white/45 text-sm">{h.day}</span>
+                        <span className={`text-sm font-medium tabular-nums ${h.time === 'Stängt' ? 'text-white/20' : 'text-white/80'}`}>{h.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[#d4af37] text-[10px] font-bold uppercase tracking-[0.35em] mb-3">Kontakt</p>
+                  <a href="tel:+46762149929" className="flex items-center gap-3 text-white/60 hover:text-[#d4af37] transition-all duration-300 text-sm no-underline group">
+                    <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" /> 076-214 99 29
+                  </a>
+                  <div className="flex items-center gap-2.5 mt-5">
+                    <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
+                      className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                      <FacebookIcon className="w-4 h-4" />
+                    </a>
+                    <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
+                      <InstagramIcon className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+                <a href="tel:+46762149929"
+                  className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
+                  Boka Din Tid
                 </a>
-                <div className="flex items-center gap-2.5 mt-5">
-                  <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
-                    className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
-                    <FacebookIcon className="w-4 h-4" />
-                  </a>
-                  <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
-                    <InstagramIcon className="w-4 h-4" />
-                  </a>
-                </div>
               </div>
-              <a href="tel:+46762149929"
-                className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
-                Boka Din Tid
-              </a>
-            </div>
+            </FadeIn>
 
-            <div className={`transition-all duration-1000 delay-300 ${contactAnim.visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+            <FadeIn delay={400}>
               <div className="w-full h-full min-h-[400px] bg-[#0c0c0c] border border-white/[0.06] overflow-hidden relative">
                 <iframe
                   title="Karta"
@@ -670,7 +520,7 @@ function App() {
                 />
                 <div className="absolute inset-0 border border-[#d4af37]/10 pointer-events-none" />
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>

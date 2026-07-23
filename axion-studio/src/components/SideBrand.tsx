@@ -30,7 +30,7 @@ export default function SideBrand() {
         className="select-none text-[12px] font-semibold uppercase tracking-[0.4em] text-[#1E3A5F]"
         style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
       >
-        Stolts Fastigheter
+        Sunt Förnuft
       </span>
     </div>
   );

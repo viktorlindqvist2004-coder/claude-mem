@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Scissors, Star, Phone, Menu, X, ChevronDown } from 'lucide-react'
+import { Scissors, Star, Phone, Menu, X } from 'lucide-react'
 import './App.css'
 
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -29,6 +29,19 @@ const GoogleIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
+const ServiceIcon = ({ type }: { type: string }) => {
+  const cls = "w-5 h-5 text-[#d4af37]"
+  switch (type) {
+    case 'scissors': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+    case 'blade': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21c0 0 3-2 6-2s4 2 6 2c3 0 6-2 6-2V3c0 0-3 2-6 2s-4-2-6-2-6 2-6 2z"/></svg>
+    case 'razor': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="8" y="2" width="8" height="6" rx="1"/><path d="M10 8v2a6 6 0 0 0 4 0V8"/><line x1="12" y1="12" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>
+    case 'crown': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 17l3-12 5 6 2-8 2 8 5-6 3 12z"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+    case 'diamond': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 3h12l4 7-10 11L2 10z"/><path d="M2 10h20"/><path d="M12 21L8.5 10 12 3l3.5 7z"/></svg>
+    case 'drop': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+    default: return null
+  }
+}
+
 const IMAGES = {
   hero: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
   inside: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1920&q=85&auto=format',
@@ -37,6 +50,12 @@ const IMAGES = {
   result: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=1920&q=85&auto=format',
   community: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?w=1920&q=85&auto=format',
   cta: 'https://images.unsplash.com/photo-1587909209111-a8cc43812da8?w=1920&q=85&auto=format',
+}
+
+const VIDEOS = {
+  hero: 'https://videos.pexels.com/video-files/4177561/4177561-uhd_2560_1440_25fps.mp4',
+  craft: 'https://videos.pexels.com/video-files/3993394/3993394-hd_1920_1080_30fps.mp4',
+  cta: 'https://videos.pexels.com/video-files/4718407/4718407-uhd_2560_1440_25fps.mp4',
 }
 
 const sections = [
@@ -53,12 +72,12 @@ const sections = [
 ]
 
 const services = [
-  { name: 'Herrklippning', price: '300 kr', icon: '✂️' },
-  { name: 'Skinfade', price: '350 kr', icon: '💈' },
-  { name: 'Skägg', price: '200 kr', icon: '🪒' },
-  { name: 'Klippning + Skägg', price: '450 kr', icon: '👑' },
-  { name: 'Lyxbehandling Skägg', price: '299 kr', icon: '✨' },
-  { name: 'Ansiktsbehandling', price: '470 kr', icon: '💆' },
+  { name: 'Herrklippning', price: '300 kr', icon: 'scissors' },
+  { name: 'Skinfade', price: '350 kr', icon: 'blade' },
+  { name: 'Skägg', price: '200 kr', icon: 'razor' },
+  { name: 'Klippning + Skägg', price: '450 kr', icon: 'crown' },
+  { name: 'Lyxbehandling Skägg', price: '299 kr', icon: 'diamond' },
+  { name: 'Ansiktsbehandling', price: '470 kr', icon: 'drop' },
 ]
 
 const reviews = [
@@ -82,7 +101,7 @@ const hours = [
   { day: 'Söndag', time: 'Stängt' },
 ]
 
-type Effect = 'zoom-in' | 'zoom-out' | '3d-tilt' | 'clip-reveal' | 'slide-left' | 'slide-right'
+type Effect = 'zoom-in' | 'zoom-out' | '3d-tilt' | 'clip-reveal' | 'slide-left' | 'slide-right' | 'rotate-in' | 'split-reveal'
 
 function GoldParticles() {
   const particles = Array.from({ length: 12 }, (_, i) => ({
@@ -110,6 +129,28 @@ function GoldParticles() {
         />
       ))}
     </div>
+  )
+}
+
+function VideoBackground({ src, poster, kenBurns, className = '' }: { src?: string; poster: string; kenBurns?: string; className?: string }) {
+  const [videoFailed, setVideoFailed] = useState(false)
+
+  if (!src || videoFailed) {
+    return (
+      <div className={`parallax-bg ${kenBurns || 'ken-burns-1'} ${className}`}
+        style={{ backgroundImage: `url(${poster})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+    )
+  }
+
+  return (
+    <video
+      className={`parallax-bg video-bg ${className}`}
+      autoPlay muted loop playsInline
+      poster={poster}
+      onError={() => setVideoFailed(true)}
+    >
+      <source src={src} type="video/mp4" />
+    </video>
   )
 }
 
@@ -157,7 +198,7 @@ function App() {
     <div className="min-h-screen bg-[#070707] grain-overlay" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* Progress bar */}
-      <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-[#d4af37] via-[#e8702a] to-[#d4af37] z-[200] transition-all duration-150"
+      <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] z-[200] transition-all duration-150"
         style={{ width: `${scrollProgress * 100}%` }} />
 
       {/* Navigation */}
@@ -231,9 +272,9 @@ function App() {
       {/* ═══ Snap Container ═══ */}
       <div ref={containerRef} className="snap-container">
 
-        {/* HERO — Zoom + particles */}
+        {/* HERO — Video background + particles */}
         <section className="snap-section bg-black lens-flare">
-          <div className="parallax-bg ken-burns-1" style={{ backgroundImage: `url(${IMAGES.hero})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+          <VideoBackground src={VIDEOS.hero} poster={IMAGES.hero} kenBurns="ken-burns-1" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70 z-[1]" />
           <GoldParticles />
           <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center text-center px-5">
@@ -255,16 +296,10 @@ function App() {
                 Boka Din Tid
               </a>
             </div>
-            <button onClick={() => scrollToSection(1)}
-              className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[#d4af37]/40 bg-transparent border-none cursor-pointer anim-fade-up flex flex-col items-center gap-2"
-              style={{ animationDelay: '1.6s' }}>
-              <span className="text-[9px] uppercase tracking-[0.4em]">Utforska</span>
-              <ChevronDown className="w-4 h-4 animate-bounce" />
-            </button>
           </div>
         </section>
 
-        {/* STIG IN — Zoom in effect */}
+        {/* STIG IN — Zoom in + blur reveal */}
         <CinematicSection
           image={IMAGES.inside}
           label="Salongen"
@@ -277,7 +312,7 @@ function App() {
           flare
         />
 
-        {/* DÄR KUNGAR SITTER — 3D tilt */}
+        {/* DÄR KUNGAR SITTER — Split reveal */}
         <CinematicSection
           image={IMAGES.chairs}
           label="Miljön"
@@ -286,24 +321,24 @@ function App() {
           idx={2}
           activeSection={activeSection}
           align="right"
-          effect="3d-tilt"
+          effect="split-reveal"
           kenBurns="ken-burns-3"
         />
 
-        {/* VARJE LINJE — Clip reveal */}
+        {/* VARJE LINJE — Video + 3D tilt */}
         <CinematicSection
           image={IMAGES.craft}
+          video={VIDEOS.craft}
           label="Hantverket"
           title={<>Varje Linje<br/>Med Precision</>}
           desc="Skinfades, klassiska nedtrappningar, skäggformning, varma handdukar och rakkniv. Varje detalj finjusterad av händer som gjort det tusentals gånger."
           idx={3}
           activeSection={activeSection}
-          effect="clip-reveal"
-          kenBurns="ken-burns-4"
+          effect="3d-tilt"
           flare
         />
 
-        {/* GÅ UT VASSARE — Zoom out */}
+        {/* GÅ UT VASSARE — Rotate in */}
         <CinematicSection
           image={IMAGES.result}
           label="Resultatet"
@@ -312,11 +347,11 @@ function App() {
           idx={4}
           activeSection={activeSection}
           align="right"
-          effect="zoom-out"
+          effect="rotate-in"
           kenBurns="ken-burns-1"
         />
 
-        {/* MER ÄN EN KLIPPNING — Slide */}
+        {/* MER ÄN EN KLIPPNING — Clip reveal */}
         <CinematicSection
           image={IMAGES.community}
           label="Gemenskapen"
@@ -324,7 +359,7 @@ function App() {
           desc="Stammisar, förstagångsbesökare, hela kvarteret. Kliv in, slå dig ner och bli en del av gänget."
           idx={5}
           activeSection={activeSection}
-          effect="slide-left"
+          effect="clip-reveal"
           kenBurns="ken-burns-2"
         />
 
@@ -402,12 +437,12 @@ function App() {
           </div>
         </section>
 
-        {/* CTA — Ta Din Plats */}
+        {/* CTA — Video + zoom out */}
         <section className="snap-section bg-black">
-          <div className="parallax-bg ken-burns-3" style={{ backgroundImage: `url(${IMAGES.cta})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+          <VideoBackground src={VIDEOS.cta} poster={IMAGES.cta} kenBurns="ken-burns-3" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/55 z-[1]" />
           <GoldParticles />
-          <div className={`absolute inset-0 z-[3] flex flex-col items-center justify-center text-center px-5`}>
+          <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center text-center px-5">
             <div className={`section-zoom-out ${activeSection === 7 ? 'active' : ''}`}>
               <h2 className="hero-title text-5xl sm:text-7xl md:text-8xl lg:text-9xl">
                 Ta Din<br/>Plats
@@ -418,7 +453,7 @@ function App() {
                 <a href="tel:+46762149929"
                   className="border border-[#d4af37]/50 text-[#d4af37] text-sm font-bold px-10 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline"
                   style={{ animation: activeSection === 7 ? 'pulse-glow 3s ease-in-out infinite' : 'none' }}>
-                  Ring 076-214 99 29
+                  Boka Din Tid
                 </a>
                 <a href="https://maps.google.com/?q=Edsgatan+23+Vänersborg" target="_blank" rel="noopener noreferrer"
                   className="border border-white/20 text-white/70 text-sm font-bold px-10 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
@@ -429,7 +464,7 @@ function App() {
           </div>
         </section>
 
-        {/* SERVICES — Staggered cards */}
+        {/* SERVICES — Staggered cards, no emojis */}
         <section id="services" className="snap-section bg-[#070707] flex items-center">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/15 to-transparent" />
           <div ref={servicesAnim.ref} className="w-full max-w-6xl mx-auto px-5 py-16">
@@ -446,7 +481,7 @@ function App() {
                   className="group border border-white/[0.06] hover:border-[#d4af37]/30 p-6 sm:p-8 transition-all duration-700 hover:bg-white/[0.02] relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#d4af37]/0 group-hover:via-[#d4af37]/30 to-transparent transition-all duration-700" />
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-lg">{s.icon}</span>
+                    <ServiceIcon type={s.icon} />
                     <h3 className="text-white/90 text-sm font-bold uppercase tracking-[0.12em]">{s.name}</h3>
                   </div>
                   <div className="flex items-center">
@@ -568,8 +603,8 @@ function useInView() {
   return { ref, visible }
 }
 
-function CinematicSection({ image, label, title, desc, idx, activeSection, align, flare, effect, kenBurns }: {
-  image: string; label: string; title: React.ReactNode; desc: string;
+function CinematicSection({ image, video, label, title, desc, idx, activeSection, align, flare, effect, kenBurns }: {
+  image: string; video?: string; label: string; title: React.ReactNode; desc: string;
   idx: number; activeSection: number; align?: 'right'; flare?: boolean;
   effect: Effect; kenBurns?: string;
 }) {
@@ -578,11 +613,11 @@ function CinematicSection({ image, label, title, desc, idx, activeSection, align
 
   return (
     <section className={`snap-section bg-black ${flare ? 'lens-flare' : ''}`}>
-      <div className={`parallax-bg ${kenBurns || 'ken-burns-1'} section-clip-reveal ${isActive ? 'active' : ''}`}
-        style={{ backgroundImage: `url(${image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+      <VideoBackground src={video} poster={image} kenBurns={kenBurns || 'ken-burns-1'}
+        className={`section-clip-reveal ${isActive ? 'active' : ''}`} />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/65 z-[1]" />
       <GoldParticles />
-      <div className={`absolute inset-0 z-[3] flex items-center px-6 sm:px-14 md:px-20`}>
+      <div className="absolute inset-0 z-[3] flex items-center px-6 sm:px-14 md:px-20">
         <div className={`max-w-2xl ${align === 'right' ? 'ml-auto text-right' : ''} ${effectClass} ${isActive ? 'active' : ''}`}>
           <div className={`stagger-children ${isActive ? 'active' : ''}`}>
             <p className="section-label mb-4">{label}</p>

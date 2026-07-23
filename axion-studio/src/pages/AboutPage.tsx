@@ -55,7 +55,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="reveal mt-8 max-w-2xl text-[16px] leading-[1.7] text-gray-700 sm:mt-10 sm:text-[18px]">
-            Stolts Fastigheter är en liten, lokalt ägd hyresvärd i Brålanda. För
+            Sunt Förnuft är en liten, lokalt ägd hyresvärd i Brålanda. För
             oss handlar ett boende om långt mer än fyra väggar och ett kontrakt –
             det handlar om att du ska känna dig trygg, sedd och väl omhändertagen
             varje dag du bor hos oss.
@@ -88,7 +88,7 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-5 text-[15px] leading-[1.75] text-gray-700 sm:text-[17px]">
               <p>
-                Vi startade Stolts Fastigheter av en enkel anledning: vi tycker
+                Vi startade Sunt Förnuft av en enkel anledning: vi tycker
                 att alla förtjänar ett tryggt och trivsamt hem, med en hyresvärd
                 som faktiskt bryr sig. Därför prioriterar vi alltid våra
                 hyresgäster – era vardagar, er trygghet och er trivsel går före

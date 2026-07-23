@@ -73,7 +73,7 @@ export default function Contact() {
         </div>
 
         <div className="mt-14 flex flex-col gap-2 border-t border-white/15 pt-6 text-[13px] text-white/60 sm:mt-20 sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Stolts Fastigheter</span>
+          <span>© {new Date().getFullYear()} Sunt Förnuft</span>
           <span>Trygg, lokalt ägd hyresvärd i Brålanda</span>
         </div>
       </div>

@@ -15,7 +15,7 @@ export default function Hero() {
 
       <div className="relative z-20 mx-auto w-full max-w-[1440px] px-5 pb-14 sm:px-8 sm:pb-16 lg:px-12 lg:pb-20">
         <p className="mb-5 text-[13px] tracking-wide text-gray-900 sm:mb-8 sm:text-[14px]">
-          Stolts Fastigheter
+          Sunt Förnuft
         </p>
 
         <h1

@@ -385,7 +385,7 @@ function App() {
         <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-6 sm:px-10">
           <FadeIn>
             <div className="text-center mb-14">
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl" style={{ textTransform: 'none' }}>TJÄNSTER</h2>
+              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl" style={{ textTransform: 'none', paddingTop: '0.15em' }}>TJÄNSTER</h2>
               <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
               <p className="text-white/50 text-sm mt-4">Ring för att boka din tid</p>
             </div>

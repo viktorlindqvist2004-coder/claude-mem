@@ -121,33 +121,123 @@ function fits(dow: number, time: string, dur: number): boolean {
 function useScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return
+    const w = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    document.body.style.paddingRight = `${w}px`
+    return () => { document.body.style.overflow = ''; document.body.style.paddingRight = '' }
   }, [locked])
+}
+
+/* ═══ Icons ═══ */
+
+type IconProps = { className?: string; style?: React.CSSProperties }
+
+function IconClock({ className = '', style }: IconProps) {
+  return <svg className={className} style={style} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+}
+
+function IconCalendar({ className = '', style }: IconProps) {
+  return <svg className={className} style={style} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+}
+
+function IconChevron({ direction, className = '' }: { direction: 'left' | 'right'; className?: string }) {
+  return direction === 'left'
+    ? <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    : <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+}
+
+function IconX({ className = '', style }: IconProps) {
+  return <svg className={className} style={style} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+}
+
+function IconCheck({ className = '', style }: IconProps) {
+  return <svg className={className} style={style} width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" style={{ strokeDasharray: 24, animation: 'check-draw 0.4s ease-out 0.2s both' }}/></svg>
+}
+
+function IconMail({ className = '', style }: IconProps) {
+  return <svg className={className} style={style} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect width="20" height="16" x="2" y="4" rx="2"/><polyline points="22,7 12,13 2,7"/></svg>
+}
+
+function IconTag({ className = '', style }: IconProps) {
+  return <svg className={className} style={style} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L12 24"/><path d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L12 22"/><circle cx="6.5" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>
+}
+
+function Spinner() {
+  return (
+    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  )
+}
+
+/* ═══ Shared components ═══ */
+
+function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  useScrollLock(true)
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', animation: 'overlay-in 0.2s ease-out' }} />
+      <div className="relative w-full max-w-[440px] max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}
+        style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', animation: 'modal-in 0.25s ease-out' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function InfoRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
+      <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>{label}</span>
+      <span style={{ color: accent ? 'var(--accent)' : 'var(--text)', fontSize: '0.875rem', fontWeight: 600 }}>{value}</span>
+    </div>
+  )
+}
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', letterSpacing: '0.01em' }}>{label}</label>
+      {children}
+    </div>
+  )
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 14px', fontSize: '0.9375rem',
+  background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
+  color: 'var(--text)', transition: 'border-color 0.15s',
 }
 
 /* ═══ ServiceSelector ═══ */
 
 function ServiceSelector({ selected, onSelect }: { selected: Service | null; onSelect: (s: Service) => void }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {SERVICES.map(s => (
-        <button
-          key={s.name}
-          onClick={() => onSelect(s)}
-          className={`text-left p-4 border transition-all duration-300 cursor-pointer bg-transparent rounded-lg ${
-            selected?.name === s.name
-              ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
-              : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-white/90 text-sm font-semibold">{s.name}</span>
-            <span className="text-blue-400 text-sm font-bold tabular-nums">{s.price}</span>
-          </div>
-          <span className="text-white/40 text-xs">{s.duration} min</span>
-        </button>
-      ))}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+      {SERVICES.map(s => {
+        const active = selected?.name === s.name
+        return (
+          <button key={s.name} onClick={() => onSelect(s)}
+            style={{
+              textAlign: 'left', padding: '16px 18px', cursor: 'pointer',
+              background: active ? 'var(--accent-soft)' : 'var(--bg-card)',
+              border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: active ? 'none' : 'var(--shadow-sm)',
+              transition: 'all 0.15s ease',
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text)' }}>{s.name}</span>
+              <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>{s.price}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
+              <IconClock />
+              <span>{s.duration} min</span>
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -157,17 +247,33 @@ function ServiceSelector({ selected, onSelect }: { selected: Service | null; onS
 function WeekNav({ weekStart, canPrev, canNext, onPrev, onNext }: {
   weekStart: Date; canPrev: boolean; canNext: boolean; onPrev: () => void; onNext: () => void
 }) {
-  const f = (d: Date) => `${d.getDate()}/${d.getMonth() + 1}`
+  const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+  const end = addDays(weekStart, 6)
+  const sameMonth = weekStart.getMonth() === end.getMonth()
+  const label = sameMonth
+    ? `${weekStart.getDate()} – ${end.getDate()} ${monthNames[weekStart.getMonth()]} ${weekStart.getFullYear()}`
+    : `${weekStart.getDate()} ${monthNames[weekStart.getMonth()]} – ${end.getDate()} ${monthNames[end.getMonth()]} ${end.getFullYear()}`
+
+  const btnStyle = (enabled: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 'var(--radius-xs)',
+    border: '1px solid var(--border)', background: 'var(--bg-card)',
+    cursor: enabled ? 'pointer' : 'not-allowed',
+    color: enabled ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+    opacity: enabled ? 1 : 0.4, boxShadow: 'var(--shadow-sm)', transition: 'all 0.15s',
+  })
+
   return (
-    <div className="flex items-center justify-between mb-4">
-      <button onClick={onPrev} disabled={!canPrev}
-        className={`text-xs px-4 py-2 rounded border transition bg-transparent ${canPrev ? 'border-gray-600 text-white/60 hover:border-blue-500 hover:text-blue-400 cursor-pointer' : 'border-gray-800 text-white/20 cursor-not-allowed'}`}>
-        &larr; Förra
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <button onClick={onPrev} disabled={!canPrev} style={btnStyle(canPrev)}>
+        <IconChevron direction="left" />
       </button>
-      <span className="text-white/70 text-sm font-medium tabular-nums">{f(weekStart)} — {f(addDays(weekStart, 6))}</span>
-      <button onClick={onNext} disabled={!canNext}
-        className={`text-xs px-4 py-2 rounded border transition bg-transparent ${canNext ? 'border-gray-600 text-white/60 hover:border-blue-500 hover:text-blue-400 cursor-pointer' : 'border-gray-800 text-white/20 cursor-not-allowed'}`}>
-        Nästa &rarr;
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)', fontWeight: 600, fontSize: '0.9375rem' }}>
+        <IconCalendar style={{ color: 'var(--text-tertiary)' } as React.CSSProperties} />
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{label}</span>
+      </div>
+      <button onClick={onNext} disabled={!canNext} style={btnStyle(canNext)}>
+        <IconChevron direction="right" />
       </button>
     </div>
   )
@@ -187,35 +293,41 @@ function CalendarGrid({ weekStart, bookings, service, onSlot }: {
   const today = fmt(new Date())
 
   return (
-    <div className="overflow-x-auto -mx-2 px-2">
-      <div className="min-w-[700px]">
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-1 mb-1">
+    <div style={{ overflowX: 'auto', margin: '0 -4px', padding: '0 4px' }}>
+      <div style={{ minWidth: 700, background: 'var(--bg-card)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)' }}>
           <div />
           {Array.from({ length: 7 }, (_, i) => {
             const d = addDays(weekStart, i)
             const isToday = fmt(d) === today
             const closed = !OPENING_HOURS[d.getDay()]
             return (
-              <div key={i} className={`text-center py-2 rounded ${isToday ? 'bg-blue-500/10 ring-1 ring-blue-500/30' : ''}`}>
-                <div className={`text-[10px] font-bold uppercase tracking-widest ${isToday ? 'text-blue-400' : 'text-white/40'}`}>{DAY_NAMES[i]}</div>
-                <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isToday ? 'text-blue-400' : 'text-white/70'}`}>{d.getDate()}</div>
-                {closed && <div className="text-[8px] text-red-400/60 uppercase mt-0.5">Stängt</div>}
+              <div key={i} style={{ textAlign: 'center', padding: '12px 4px 10px', borderLeft: '1px solid var(--border)', position: 'relative' }}>
+                {isToday && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'var(--accent)', borderRadius: '0 0 2px 2px' }} />}
+                <div style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: isToday ? 'var(--accent)' : 'var(--text-tertiary)', marginBottom: 2 }}>{DAY_NAMES[i]}</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: isToday ? 'var(--accent)' : 'var(--text)' }}>{d.getDate()}</div>
+                {closed && <div style={{ fontSize: '0.5625rem', color: 'var(--danger)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em', marginTop: 2 }}>Stängt</div>}
               </div>
             )
           })}
         </div>
 
-        <div className="space-y-[2px]">
-          {allSlots.map(time => (
-            <div key={time} className="grid grid-cols-[60px_repeat(7,1fr)] gap-[2px]">
-              <div className="flex items-center justify-end pr-3">
-                <span className="text-white/25 text-[11px] font-medium tabular-nums">{time}</span>
+        {/* Slots */}
+        <div>
+          {allSlots.map((time, ti) => (
+            <div key={time} style={{ display: 'grid', gridTemplateColumns: '56px repeat(7, 1fr)', borderTop: ti > 0 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
+                {time}
               </div>
               {Array.from({ length: 7 }, (_, i) => {
                 const d = addDays(weekStart, i)
                 const ds = fmt(d)
                 const dow = d.getDay()
-                if (!timeSlots(dow).includes(time)) return <div key={i} className="h-10 bg-white/[0.01] rounded-sm" />
+
+                if (!timeSlots(dow).includes(time)) {
+                  return <div key={i} style={{ height: 44, borderLeft: '1px solid var(--border)', background: 'var(--bg-muted)', opacity: 0.5 }} />
+                }
 
                 const existing = bookingAt(bookings, ds, time)
                 const booked = !!existing
@@ -225,18 +337,32 @@ function CalendarGrid({ weekStart, bookings, service, onSlot }: {
                 const ok = service ? fits(dow, time, service.duration) : true
                 const available = !soon && !far && !booked && !clash && ok && !!service
 
-                let cls = 'h-10 rounded-sm transition-all duration-200 border flex items-center justify-center '
-                if (soon || far) cls += 'bg-white/[0.02] border-white/[0.03] cursor-default'
-                else if (booked) cls += 'bg-red-900/20 border-red-500/20 cursor-default'
-                else if (!service) cls += 'bg-white/[0.03] border-white/[0.05] cursor-default'
-                else if (clash || !ok) cls += 'bg-white/[0.02] border-white/[0.04] cursor-default'
-                else cls += 'bg-emerald-900/15 border-emerald-500/20 hover:bg-emerald-900/30 hover:border-emerald-500/40 cursor-pointer'
+                let bg = 'transparent'
+                let color = 'var(--text-tertiary)'
+                let cursor = 'default'
+                let label = ''
+                let fontWeight = 500
+
+                if (booked) {
+                  bg = 'var(--danger-soft)'; color = 'var(--danger)'; label = 'Bokad'; fontWeight = 600
+                } else if (available) {
+                  bg = 'var(--success-soft)'; color = 'var(--success)'; label = 'Ledig'; cursor = 'pointer'; fontWeight = 600
+                } else if (!service) {
+                  label = ''
+                }
 
                 return (
-                  <button key={i} disabled={!available} onClick={() => available && onSlot(ds, time)} className={cls}
-                    title={booked ? `${existing.service} (${existing.time}–${toTime(toMin(existing.time) + existing.duration)})` : undefined}>
-                    {booked && <span className="text-red-400/60 text-[9px] font-bold uppercase tracking-wider">Bokad</span>}
-                    {available && <span className="text-emerald-400/50 text-[9px] font-bold uppercase tracking-wider group-hover:text-emerald-400/80">Ledig</span>}
+                  <button key={i} disabled={!available} onClick={() => available && onSlot(ds, time)}
+                    title={booked ? `${existing.service} (${existing.time}–${toTime(toMin(existing.time) + existing.duration)})` : undefined}
+                    style={{
+                      height: 44, border: 'none', borderLeft: '1px solid var(--border)',
+                      background: bg, cursor, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.6875rem', fontWeight, color, textTransform: 'uppercase', letterSpacing: '0.04em',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => { if (available) (e.currentTarget.style.background = 'var(--success-border)') }}
+                    onMouseLeave={e => { if (available) (e.currentTarget.style.background = 'var(--success-soft)') }}>
+                    {label}
                   </button>
                 )
               })}
@@ -244,15 +370,16 @@ function CalendarGrid({ weekStart, bookings, service, onSlot }: {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-white/[0.06]">
+        {/* Legend */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-muted)' }}>
           {[
-            { bg: 'bg-emerald-900/30', border: 'border-emerald-500/30', label: 'Ledig' },
-            { bg: 'bg-red-900/30', border: 'border-red-500/30', label: 'Bokad' },
-            { bg: 'bg-white/[0.02]', border: 'border-white/[0.05]', label: 'Ej tillgänglig' },
+            { bg: 'var(--success-soft)', border: 'var(--success)', label: 'Ledig' },
+            { bg: 'var(--danger-soft)', border: 'var(--danger)', label: 'Bokad' },
+            { bg: 'var(--bg-muted)', border: 'var(--text-tertiary)', label: 'Ej tillgänglig' },
           ].map(l => (
-            <div key={l.label} className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-sm ${l.bg} border ${l.border}`} />
-              <span className="text-white/40 text-[10px] uppercase tracking-wider">{l.label}</span>
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: 10, height: 10, borderRadius: 3, background: l.bg, border: `2px solid ${l.border}` }} />
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{l.label}</span>
             </div>
           ))}
         </div>
@@ -271,7 +398,6 @@ function BookingForm({ date, time, service, loading, onConfirm, onCancel }: {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
-  useScrollLock(true)
 
   const end = toTime(toMin(time) + service.duration)
 
@@ -284,79 +410,115 @@ function BookingForm({ date, time, service, loading, onConfirm, onCancel }: {
   }
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onCancel}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <button onClick={onCancel} className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors bg-transparent border-none cursor-pointer text-xl">&times;</button>
-        <h3 className="text-white text-lg font-bold mb-1">Bekräfta bokning</h3>
-        <div className="w-10 h-0.5 bg-blue-500/50 rounded mb-6" />
-
-        <div className="space-y-2 mb-6">
-          {[
-            ['Tjänst', service.name],
-            ['Pris', service.price],
-            ['Dag', `${getDayName(date)} ${fmtSE(date)}`],
-            ['Tid', `${time} – ${end}`],
-          ].map(([k, v]) => (
-            <div key={k} className="flex justify-between py-2 border-b border-white/[0.06]">
-              <span className="text-white/40 text-sm">{k}</span>
-              <span className={`text-sm font-semibold ${k === 'Pris' ? 'text-blue-400' : 'text-white/80'}`}>{v}</span>
-            </div>
-          ))}
+    <Modal onClose={onCancel}>
+      <div style={{ padding: '28px 28px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Bekräfta bokning</h3>
+          <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, borderRadius: 6 }}>
+            <IconX />
+          </button>
         </div>
 
-        <form onSubmit={submit} className="space-y-4">
-          {[
-            { label: 'Ditt namn', type: 'text', value: name, set: setName, ph: 'Förnamn Efternamn' },
-            { label: 'E-postadress', type: 'email', value: email, set: setEmail, ph: 'din@email.se' },
-            { label: 'Telefonnummer', type: 'tel', value: phone, set: setPhone, ph: '070-123 45 67' },
-          ].map(f => (
-            <div key={f.label}>
-              <label className="block text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-2">{f.label} *</label>
-              <input type={f.type} value={f.value} onChange={e => f.set(e.target.value)} placeholder={f.ph} disabled={loading}
-                className="w-full bg-white/[0.04] border border-gray-700 rounded text-white text-sm px-4 py-3 outline-none focus:border-blue-500/50 transition-colors placeholder:text-white/20 disabled:opacity-50" />
-            </div>
-          ))}
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+        <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-xs)', padding: '14px 16px', marginBottom: 24 }}>
+          <InfoRow label="Tjänst" value={service.name} />
+          <InfoRow label="Pris" value={service.price} accent />
+          <InfoRow label="Dag" value={`${getDayName(date)} ${fmtSE(date)}`} />
+          <div className="flex items-center justify-between py-2.5">
+            <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>Tid</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{time} – {end}</span>
+          </div>
+        </div>
+
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FormField label="Ditt namn">
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Förnamn Efternamn" disabled={loading} style={inputStyle} />
+          </FormField>
+          <FormField label="E-postadress">
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="din@email.se" disabled={loading} style={inputStyle} />
+          </FormField>
+          <FormField label="Telefonnummer">
+            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="070-123 45 67" disabled={loading} style={inputStyle} />
+          </FormField>
+
+          {error && (
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--danger)', fontWeight: 500 }}>{error}</p>
+          )}
+
           <button type="submit" disabled={loading}
-            className="w-full bg-blue-600 text-white text-xs font-bold uppercase tracking-widest py-4 rounded hover:bg-blue-700 transition-colors cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-            {loading ? <><Spinner /> Bokar...</> : 'Boka Nu'}
+            style={{
+              width: '100%', padding: '13px', border: 'none', borderRadius: 'var(--radius-xs)',
+              background: 'var(--accent)', color: '#fff', fontSize: '0.9375rem', fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'background 0.15s',
+            }}>
+            {loading ? <><Spinner /> Bokar...</> : 'Bekräfta bokning'}
           </button>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }
 
 /* ═══ Confirmation ═══ */
 
 function Confirmation({ booking, onClose }: { booking: Booking; onClose: () => void }) {
-  useScrollLock(true)
   const end = toTime(toMin(booking.time) + booking.duration)
+  const hasEmail = emailConfigured()
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-6 sm:p-8 max-w-md w-full text-center" onClick={e => e.stopPropagation()}>
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-900/20 border border-emerald-500/30 flex items-center justify-center">
-          <svg className="w-8 h-8 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-        </div>
-        <h3 className="text-white text-lg font-bold mb-2">Bokning bekräftad!</h3>
-        <p className="text-white/40 text-sm mb-1">Bekräftelse skickas till <span className="text-blue-400">{booking.email}</span></p>
-        <p className="text-white/30 text-xs mb-6">Boknings-ID: <span className="text-white/70 font-mono font-bold">{booking.id}</span></p>
-
-        <div className="space-y-2 mb-6 text-left bg-white/[0.02] border border-white/[0.06] rounded-lg p-4">
-          {[['Tjänst', booking.service], ['Pris', booking.price], ['Datum', `${getDayName(booking.date)} ${fmtSE(booking.date)}`], ['Tid', `${booking.time} – ${end}`]].map(([k, v]) => (
-            <div key={k} className="flex justify-between">
-              <span className="text-white/40 text-sm">{k}</span>
-              <span className={`text-sm font-semibold ${k === 'Pris' ? 'text-blue-400' : 'text-white/80'}`}>{v}</span>
-            </div>
-          ))}
+    <Modal onClose={onClose}>
+      <div style={{ padding: '36px 28px 28px', textAlign: 'center' }}>
+        {/* Animated check */}
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--success-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', animation: 'check-pop 0.4s ease-out' }}>
+          <IconCheck style={{ color: 'var(--success)' } as React.CSSProperties} />
         </div>
 
-        <button onClick={onClose} className="border border-blue-500/40 text-blue-400 text-xs font-bold uppercase tracking-widest px-8 py-3 rounded hover:bg-blue-600 hover:text-white transition-all bg-transparent cursor-pointer">Stäng</button>
+        <h3 style={{ fontSize: '1.375rem', fontWeight: 700, margin: '0 0 6px' }}>Bokning bekräftad!</h3>
+
+        {hasEmail ? (
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <IconMail style={{ color: 'var(--text-tertiary)' } as React.CSSProperties} />
+            Bekräftelse skickas till <strong style={{ color: 'var(--accent)' }}>{booking.email}</strong>
+          </p>
+        ) : (
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 4px' }}>
+            Spara ditt boknings-ID nedan
+          </p>
+        )}
+
+        {/* Booking ID */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-muted)', borderRadius: 'var(--radius-xs)', padding: '10px 20px', margin: '16px 0 20px', border: '1px dashed var(--border-strong)' }}>
+          <IconTag style={{ color: 'var(--text-tertiary)' } as React.CSSProperties} />
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>ID:</span>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.12em', fontFamily: 'ui-monospace, monospace', color: 'var(--text)' }}>{booking.id}</span>
+        </div>
+
+        {/* Details */}
+        <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-xs)', padding: '14px 16px', marginBottom: 24, textAlign: 'left' }}>
+          <InfoRow label="Tjänst" value={booking.service} />
+          <InfoRow label="Pris" value={booking.price} accent />
+          <InfoRow label="Datum" value={`${getDayName(booking.date)} ${fmtSE(booking.date)}`} />
+          <div className="flex items-center justify-between py-2.5">
+            <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>Tid</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{booking.time} – {end}</span>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: '0 0 20px' }}>
+          Behöver du avboka? Använd ditt boknings-ID och e-postadress.
+        </p>
+
+        <button onClick={onClose}
+          style={{
+            padding: '11px 32px', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
+            background: 'var(--bg-card)', color: 'var(--text)', fontSize: '0.875rem', fontWeight: 600,
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}>
+          Stäng
+        </button>
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -369,7 +531,7 @@ function CancelModal({ bookings, onCancel, onClose }: {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  useScrollLock(true)
+  const [cancelled, setCancelled] = useState<Booking | null>(null)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setError('')
@@ -381,47 +543,87 @@ function CancelModal({ bookings, onCancel, onClose }: {
     setLoading(true)
     await sendCancellationEmails({ ...found, endTime: toTime(toMin(found.time) + found.duration), dayName: getDayName(found.date) })
     setLoading(false)
+    setCancelled(found)
     onCancel(found)
   }
 
+  if (cancelled) {
+    const end = toTime(toMin(cancelled.time) + cancelled.duration)
+    return (
+      <Modal onClose={onClose}>
+        <div style={{ padding: '36px 28px 28px', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--danger-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', animation: 'check-pop 0.4s ease-out' }}>
+            <IconX style={{ color: 'var(--danger)', width: 28, height: 28 } as React.CSSProperties} />
+          </div>
+
+          <h3 style={{ fontSize: '1.375rem', fontWeight: 700, margin: '0 0 6px' }}>Bokning avbokad</h3>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 20px' }}>
+            Din bokning har avbokats.
+            {emailConfigured() && ' En bekräftelse har skickats till din e-post.'}
+          </p>
+
+          <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-xs)', padding: '14px 16px', marginBottom: 24, textAlign: 'left' }}>
+            <InfoRow label="Tjänst" value={cancelled.service} />
+            <InfoRow label="Datum" value={`${getDayName(cancelled.date)} ${fmtSE(cancelled.date)}`} />
+            <div className="flex items-center justify-between py-2.5">
+              <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>Tid</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{cancelled.time} – {end}</span>
+            </div>
+          </div>
+
+          <button onClick={onClose}
+            style={{
+              padding: '11px 32px', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
+              background: 'var(--bg-card)', color: 'var(--text)', fontSize: '0.875rem', fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+            Stäng
+          </button>
+        </div>
+      </Modal>
+    )
+  }
+
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-6 sm:p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors bg-transparent border-none cursor-pointer text-xl">&times;</button>
-        <h3 className="text-white text-lg font-bold mb-1">Avboka</h3>
-        <div className="w-10 h-0.5 bg-blue-500/50 rounded mb-4" />
-        <p className="text-white/40 text-sm mb-6">Ange ditt boknings-ID och den e-post du bokade med.</p>
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="block text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-2">Boknings-ID</label>
+    <Modal onClose={onClose}>
+      <div style={{ padding: '28px 28px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Avboka</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, borderRadius: 6 }}>
+            <IconX />
+          </button>
+        </div>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 20px' }}>
+          Ange ditt boknings-ID och e-postadressen du bokade med.
+        </p>
+
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FormField label="Boknings-ID">
             <input type="text" value={bid} onChange={e => setBid(e.target.value.toUpperCase())} placeholder="T.ex. A3K9F2" disabled={loading}
-              className="w-full bg-white/[0.04] border border-gray-700 rounded text-white text-sm px-4 py-3 outline-none focus:border-blue-500/50 transition-colors placeholder:text-white/20 font-mono uppercase tracking-wider disabled:opacity-50" />
-          </div>
-          <div>
-            <label className="block text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-2">E-postadress</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="din@email.se" disabled={loading}
-              className="w-full bg-white/[0.04] border border-gray-700 rounded text-white text-sm px-4 py-3 outline-none focus:border-blue-500/50 transition-colors placeholder:text-white/20 disabled:opacity-50" />
-          </div>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
+              style={{ ...inputStyle, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em', textTransform: 'uppercase' }} />
+          </FormField>
+          <FormField label="E-postadress">
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="din@email.se" disabled={loading} style={inputStyle} />
+          </FormField>
+
+          {error && (
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--danger)', fontWeight: 500 }}>{error}</p>
+          )}
+
           <button type="submit" disabled={loading}
-            className="w-full bg-red-900/50 border border-red-500/30 text-red-200 text-xs font-bold uppercase tracking-widest py-4 rounded hover:bg-red-900/70 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+            style={{
+              width: '100%', padding: '13px', border: '1px solid var(--danger)',
+              borderRadius: 'var(--radius-xs)', background: 'var(--danger-soft)',
+              color: 'var(--danger)', fontSize: '0.9375rem', fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all 0.15s',
+            }}>
             {loading ? <><Spinner /> Avbokar...</> : 'Avboka'}
           </button>
         </form>
       </div>
-    </div>
-  )
-}
-
-/* ═══ Spinner ═══ */
-
-function Spinner() {
-  return (
-    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
+    </Modal>
   )
 }
 
@@ -459,32 +661,51 @@ export default function BookingCalendar() {
 
   const handleCancel = useCallback((b: Booking) => {
     const updated = bookings.filter(x => x.id !== b.id)
-    setBookings(updated); saveBookings(updated); setShowCancel(false)
+    setBookings(updated); saveBookings(updated)
   }, [bookings])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">{BUSINESS_NAME}</h1>
-          <p className="text-white/40 text-sm max-w-lg mx-auto">
-            Välj en tjänst och en ledig tid i kalendern. Bokning kan göras minst {MIN_ADVANCE_HOURS} timmar i förväg, upp till {MAX_ADVANCE_WEEKS} veckor framåt.
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 20px 64px' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.02em', color: 'var(--text)' }}>
+            {BUSINESS_NAME}
+          </h1>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: 0, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+            Boka en tid genom att välja tjänst och ledig tid i kalendern nedan.
           </p>
         </div>
 
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold ${service ? 'bg-blue-600 text-white' : 'bg-gray-800 text-white/40'}`}>1</span>
-            <h2 className="text-white/80 text-sm font-bold uppercase tracking-wider">Välj tjänst</h2>
+        {/* Step 1 */}
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.8125rem', fontWeight: 700,
+              background: service ? 'var(--success)' : 'var(--accent)', color: '#fff',
+            }}>
+              {service ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> : '1'}
+            </div>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Välj tjänst</h2>
           </div>
           <ServiceSelector selected={service} onSelect={setService} />
         </div>
 
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold ${service ? 'bg-blue-600 text-white' : 'bg-gray-800 text-white/20'}`}>2</span>
-            <h2 className={`text-sm font-bold uppercase tracking-wider ${service ? 'text-white/80' : 'text-white/20'}`}>Välj tid</h2>
-            {!service && <span className="text-white/20 text-xs italic ml-1">Välj en tjänst först</span>}
+        {/* Step 2 */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.8125rem', fontWeight: 700,
+              background: service ? 'var(--accent)' : 'var(--bg-muted)', color: service ? '#fff' : 'var(--text-tertiary)',
+              border: service ? 'none' : '1px solid var(--border)',
+            }}>
+              2
+            </div>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: service ? 'var(--text)' : 'var(--text-tertiary)' }}>Välj tid</h2>
+            {!service && <span style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Välj en tjänst först</span>}
           </div>
 
           <WeekNav weekStart={weekStart} canPrev={weekStart > thisMonday} canNext={weekStart < maxMonday}
@@ -492,17 +713,23 @@ export default function BookingCalendar() {
           <CalendarGrid weekStart={weekStart} bookings={bookings} service={service} onSlot={(d, t) => setPending({ date: d, time: t })} />
         </div>
 
-        <div className="mt-8 text-center">
+        {/* Cancel link */}
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
           <button onClick={() => setShowCancel(true)}
-            className="text-white/25 text-xs underline underline-offset-4 hover:text-white/50 transition-colors bg-transparent border-none cursor-pointer">
-            Behöver du avboka? Klicka här
+            style={{
+              background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
+              padding: '10px 24px', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}>
+            Behöver du avboka?
           </button>
         </div>
 
+        {/* Email warning */}
         {!emailConfigured() && (
-          <div className="mt-6 p-4 border border-yellow-600/20 bg-yellow-900/10 rounded-lg text-center">
-            <p className="text-yellow-400/70 text-xs">
-              E-postbekräftelser ej konfigurerade. Se .env.example för instruktioner.
+          <div style={{ marginTop: 24, padding: '14px 18px', border: '1px solid var(--warn-border)', background: 'var(--warn-bg)', borderRadius: 'var(--radius-xs)', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--warn-text)' }}>
+              E-postbekräftelser ej konfigurerade. Se <code style={{ background: 'var(--bg-muted)', padding: '2px 6px', borderRadius: 4, fontSize: '0.75rem' }}>.env.example</code> för instruktioner.
             </p>
           </div>
         )}

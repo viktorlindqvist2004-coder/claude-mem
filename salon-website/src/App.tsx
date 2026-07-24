@@ -112,19 +112,29 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [heroReady, setHeroReady] = useState(false)
+  const [heroScale, setHeroScale] = useState(3.5)
+  const [heroDetailsOpacity, setHeroDetailsOpacity] = useState(0)
+  const heroWrapRef = useRef<HTMLDivElement>(null)
 
   const servicesAnim = useInView()
   const contactAnim = useInView()
 
-  useEffect(() => { setTimeout(() => setHeroReady(true), 100) }, [])
-
-  /* Simple parallax on image backgrounds */
   useEffect(() => {
     let ticking = false
     const update = () => {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight
       setScrollProgress(maxScroll > 0 ? window.scrollY / maxScroll : 0)
+
+      const wrap = heroWrapRef.current
+      if (wrap) {
+        const wrapRect = wrap.getBoundingClientRect()
+        const scrollableHeight = wrap.offsetHeight - window.innerHeight
+        const rawProgress = Math.max(0, Math.min(1, -wrapRect.top / scrollableHeight))
+        const scale = 3.5 - rawProgress * 2.5
+        setHeroScale(scale)
+        const detailsFade = Math.max(0, Math.min(1, (rawProgress - 0.7) / 0.3))
+        setHeroDetailsOpacity(detailsFade)
+      }
 
       document.querySelectorAll<HTMLElement>('[data-parallax]').forEach((el) => {
         const rect = el.parentElement!.getBoundingClientRect()
@@ -202,52 +212,60 @@ function App() {
         </a>
       </div>
 
-      {/* ═══ HERO ═══ */}
-      <section id="hero" className="relative h-screen overflow-hidden">
-        <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
-          style={{ backgroundImage: `url(${IMAGES.hero})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" />
+      {/* ═══ HERO — scroll-shrink ═══ */}
+      <div ref={heroWrapRef} style={{ height: '250vh' }}>
+        <section id="hero" className="sticky top-0 h-screen overflow-hidden">
+          <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
+            style={{ backgroundImage: `url(${IMAGES.hero})` }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" />
 
-        {/* Decorative gold corner accents */}
-        <div className="absolute top-0 left-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
-          style={{ borderTop: '1px solid #d4af37', borderLeft: '1px solid #d4af37', margin: '2rem' }} />
-        <div className="absolute top-0 right-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
-          style={{ borderTop: '1px solid #d4af37', borderRight: '1px solid #d4af37', margin: '2rem' }} />
-        <div className="absolute bottom-0 left-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
-          style={{ borderBottom: '1px solid #d4af37', borderLeft: '1px solid #d4af37', margin: '2rem' }} />
-        <div className="absolute bottom-0 right-0 w-32 h-32 z-[5] pointer-events-none opacity-20"
-          style={{ borderBottom: '1px solid #d4af37', borderRight: '1px solid #d4af37', margin: '2rem' }} />
+          {/* Decorative gold corner accents */}
+          <div className="absolute top-0 left-0 w-32 h-32 z-[5] pointer-events-none"
+            style={{ borderTop: '1px solid #d4af37', borderLeft: '1px solid #d4af37', margin: '2rem', opacity: heroDetailsOpacity * 0.2 }} />
+          <div className="absolute top-0 right-0 w-32 h-32 z-[5] pointer-events-none"
+            style={{ borderTop: '1px solid #d4af37', borderRight: '1px solid #d4af37', margin: '2rem', opacity: heroDetailsOpacity * 0.2 }} />
+          <div className="absolute bottom-0 left-0 w-32 h-32 z-[5] pointer-events-none"
+            style={{ borderBottom: '1px solid #d4af37', borderLeft: '1px solid #d4af37', margin: '2rem', opacity: heroDetailsOpacity * 0.2 }} />
+          <div className="absolute bottom-0 right-0 w-32 h-32 z-[5] pointer-events-none"
+            style={{ borderBottom: '1px solid #d4af37', borderRight: '1px solid #d4af37', margin: '2rem', opacity: heroDetailsOpacity * 0.2 }} />
 
-        {/* Subtle radial gold glow behind text */}
-        <div className="absolute inset-0 z-[4] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
+          <div className="absolute inset-0 z-[4] pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
 
-        <div className="ft-vignette" />
+          <div className="ft-vignette" />
 
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
-          <div className={`stagger-children ${heroReady ? 'active' : ''}`}>
-            <p className="section-label mb-3 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
-            <h1 className="font-script text-7xl sm:text-9xl md:text-[11rem] lg:text-[14rem] text-white leading-none"
-              style={{ textShadow: '0 2px 4px rgba(212,175,55,0.15), 0 4px 20px rgba(0,0,0,0.6), 0 8px 40px rgba(0,0,0,0.4)' }}>
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
+            <h1 className="font-script text-white leading-none will-change-transform"
+              style={{
+                fontSize: 'clamp(4rem, 10vw, 14rem)',
+                transform: `scale(${heroScale})`,
+                textShadow: '0 2px 4px rgba(212,175,55,0.15), 0 4px 20px rgba(0,0,0,0.6), 0 8px 40px rgba(0,0,0,0.4)',
+              }}>
               Gentlemen's
             </h1>
-            <p className="text-[#d4af37]/90 text-sm sm:text-base md:text-lg mt-2 font-semibold tracking-[0.5em] uppercase"
-              style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
-              Barbershop
-            </p>
-            <div className="gold-line active mx-auto mt-6" />
-            <a href="tel:+46762149929"
-              className="inline-block mt-6 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
-              Boka Din Tid
-            </a>
-          </div>
-        </div>
 
-        <button onClick={() => scrollTo('about')}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-white/30 hover:text-white/60 transition-colors bg-transparent border-none cursor-pointer animate-bounce">
-          <ChevronDown className="w-6 h-6" />
-        </button>
-      </section>
+            <div style={{ opacity: heroDetailsOpacity, transform: `translateY(${(1 - heroDetailsOpacity) * 20}px)` }}
+              className="will-change-transform">
+              <p className="text-[#d4af37]/90 text-sm sm:text-base md:text-lg mt-2 font-semibold tracking-[0.5em] uppercase"
+                style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
+                Barbershop
+              </p>
+              <p className="section-label mt-4 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
+              <div className="gold-line active mx-auto mt-6" />
+              <a href="tel:+46762149929"
+                className="inline-block mt-6 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+                Boka Din Tid
+              </a>
+            </div>
+          </div>
+
+          <button onClick={() => scrollTo('about')}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 transition-colors bg-transparent border-none cursor-pointer animate-bounce"
+            style={{ opacity: heroDetailsOpacity * 0.4, color: 'rgba(255,255,255,0.5)' }}>
+            <ChevronDown className="w-6 h-6" />
+          </button>
+        </section>
+      </div>
 
       {/* ═══ OM OSS ═══ */}
       <section id="about" className="relative bg-transparent py-24 sm:py-32">

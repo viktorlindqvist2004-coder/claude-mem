@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Scissors, Star, Phone, Menu, X, ChevronDown } from 'lucide-react'
+import BookingCalendar from './BookingCalendar'
 import './App.css'
 
 /* ═══ Icons ═══ */
@@ -172,6 +173,7 @@ function App() {
           {[
             { label: 'Om Oss', id: 'about' },
             { label: 'Tjänster', id: 'services' },
+            { label: 'Boka', id: 'booking' },
             { label: 'Omdömen', id: 'reviews' },
             { label: 'Besök', id: 'contact' },
           ].map(({ label, id }) => (
@@ -180,10 +182,10 @@ function App() {
               {label}
             </button>
           ))}
-          <a href="tel:+46762149929"
-            className="bg-transparent border border-[#d4af37]/30 text-[#d4af37] text-[11px] font-bold px-5 py-2 hover:bg-[#d4af37] hover:text-black transition-all duration-500 tracking-[0.15em] uppercase no-underline">
-            076-214 99 29
-          </a>
+          <button onClick={() => scrollTo('booking')}
+            className="bg-transparent border border-[#d4af37]/30 text-[#d4af37] text-[11px] font-bold px-5 py-2 hover:bg-[#d4af37] hover:text-black transition-all duration-500 tracking-[0.15em] uppercase cursor-pointer">
+            Boka Nu
+          </button>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden text-white bg-transparent border-none cursor-pointer p-2">
@@ -198,6 +200,7 @@ function App() {
           { label: 'Salongen', id: 'salon' },
           { label: 'Hantverket', id: 'craft' },
           { label: 'Tjänster', id: 'services' },
+          { label: 'Boka', id: 'booking' },
           { label: 'Omdömen', id: 'reviews' },
           { label: 'Besök', id: 'contact' },
         ].map(({ label, id }) => (
@@ -206,10 +209,10 @@ function App() {
             {label}
           </button>
         ))}
-        <a href="tel:+46762149929"
-          className="mt-4 border border-[#d4af37]/30 text-[#d4af37] text-sm font-bold px-10 py-3 tracking-[0.2em] uppercase no-underline hover:bg-[#d4af37] hover:text-black transition-all duration-500">
+        <button onClick={() => scrollTo('booking')}
+          className="mt-4 border border-[#d4af37]/30 text-[#d4af37] text-sm font-bold px-10 py-3 tracking-[0.2em] uppercase bg-transparent cursor-pointer hover:bg-[#d4af37] hover:text-black transition-all duration-500">
           Boka Din Tid
-        </a>
+        </button>
       </div>
 
       {/* ═══ HERO — scroll-shrink ═══ */}
@@ -252,10 +255,10 @@ function App() {
               </p>
               <p className="section-label mt-4 text-[9px]">Edsgatan 23 &middot; Vänersborg</p>
               <div className="gold-line active mx-auto mt-6" />
-              <a href="tel:+46762149929"
-                className="inline-block mt-6 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
+              <button onClick={() => scrollTo('booking')}
+                className="inline-block mt-6 bg-transparent border border-[#d4af37]/40 text-[#d4af37] text-[11px] font-bold px-10 py-4 tracking-[0.3em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 cursor-pointer pulse-glow">
                 Boka Din Tid
-              </a>
+              </button>
             </div>
           </div>
 
@@ -409,6 +412,9 @@ function App() {
         </div>
       </section>
 
+      {/* ═══ BOKA ═══ */}
+      <BookingCalendar />
+
       {/* ═══ OMDÖMEN ═══ */}
       <section id="reviews" className="relative bg-transparent py-24 sm:py-28 overflow-hidden">
 
@@ -477,13 +483,13 @@ function App() {
         <FadeIn className="px-5">
           <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">Redo?</h2>
           <p className="text-white/50 text-base mb-10 max-w-md mx-auto">
-            Ring oss direkt eller besök salongen på Edsgatan 23. Drop-in välkomnas men bokning rekommenderas.
+            Boka din tid online eller besök salongen på Edsgatan 23. Drop-in välkomnas men bokning rekommenderas.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="tel:+46762149929"
-              className="border border-[#d4af37]/40 text-[#d4af37] text-sm font-bold px-12 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline pulse-glow">
-              076-214 99 29
-            </a>
+            <button onClick={() => scrollTo('booking')}
+              className="border border-[#d4af37]/40 text-[#d4af37] text-sm font-bold px-12 py-4 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 bg-transparent cursor-pointer pulse-glow">
+              Boka Online
+            </button>
             <a href="https://maps.google.com/?q=Edsgatan+23+V%C3%A4nersborg" target="_blank" rel="noopener noreferrer"
               className="border border-white/15 text-white/50 text-sm font-bold px-12 py-4 tracking-[0.15em] uppercase hover:bg-white/10 hover:text-white transition-all duration-500 no-underline">
               Hitta Hit
@@ -535,10 +541,10 @@ function App() {
                     </a>
                   </div>
                 </div>
-                <a href="tel:+46762149929"
-                  className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 no-underline">
+                <button onClick={() => scrollTo('booking')}
+                  className="inline-block border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold px-8 py-3.5 tracking-[0.2em] uppercase hover:bg-[#d4af37] hover:text-black transition-all duration-500 bg-transparent cursor-pointer">
                   Boka Din Tid
-                </a>
+                </button>
               </div>
             </FadeIn>
 

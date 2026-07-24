@@ -146,15 +146,6 @@ ul{margin:0;padding:0;list-style:none}
 #progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:1200;
   background:linear-gradient(90deg,var(--gold),var(--lake));box-shadow:0 0 12px rgba(227,167,46,.5)}
 
-/* ===================== CUSTOM CURSOR ===================== */
-.cursor,.cursor-dot{position:fixed;top:0;left:0;z-index:1300;pointer-events:none;border-radius:50%;
-  mix-blend-mode:normal;translate:-50% -50%;will-change:transform}
-.cursor{width:38px;height:38px;border:1.5px solid var(--accent);opacity:0;
-  transition:width .25s var(--ease),height .25s var(--ease),opacity .3s,background .25s,border-color .25s}
-.cursor-dot{width:6px;height:6px;background:var(--accent);opacity:0;transition:opacity .3s}
-.cursor.grow{width:66px;height:66px;background:rgba(227,167,46,.12);border-color:transparent}
-body.cursor-on .cursor,body.cursor-on .cursor-dot{opacity:1}
-@media (hover:none){.cursor,.cursor-dot{display:none}}
 
 /* ===================== NAV ===================== */
 .nav{position:fixed;inset:0 0 auto 0;z-index:1000;padding-block:1.1rem;
@@ -609,8 +600,6 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 
 <!-- ===================== CHROME ===================== -->
 <div id="progress"></div>
-<div class="cursor" aria-hidden="true"></div>
-<div class="cursor-dot" aria-hidden="true"></div>
 <a href="#hem" class="skip-link" style="position:absolute;left:-999px;top:0;z-index:2000;background:var(--gold);color:#2c2005;padding:.6rem 1rem;border-radius:0 0 8px 0">Hoppa till innehåll</a>
 
 <!-- ===================== NAV ===================== -->
@@ -1279,26 +1268,6 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 
   if(reduce) return; // skip pointer-based flourishes
 
-  /* ---------- custom cursor ---------- */
-  var cur = $(".cursor"), dot = $(".cursor-dot");
-  var cx=0, cy=0, tx=0, ty=0;
-  if(window.matchMedia("(hover:hover)").matches){
-    document.addEventListener("mousemove", function(e){
-      tx = e.clientX; ty = e.clientY;
-      dot.style.transform = "translate("+tx+"px,"+ty+"px)";
-      document.body.classList.add("cursor-on");
-    });
-    (function ren(){
-      cx += (tx-cx)*0.18; cy += (ty-cy)*0.18;
-      cur.style.transform = "translate("+cx+"px,"+cy+"px)";
-      requestAnimationFrame(ren);
-    })();
-    $$("a, button, [data-tilt], .chip, input, textarea").forEach(function(el){
-      el.addEventListener("mouseenter", function(){ cur.classList.add("grow"); });
-      el.addEventListener("mouseleave", function(){ cur.classList.remove("grow"); });
-    });
-    document.addEventListener("mouseleave", function(){ document.body.classList.remove("cursor-on"); });
-  }
 
   /* ---------- magnetic buttons ---------- */
   $$("[data-magnetic]").forEach(function(el){

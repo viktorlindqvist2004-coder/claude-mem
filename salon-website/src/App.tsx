@@ -113,7 +113,7 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [heroScale, setHeroScale] = useState(3.5)
+  const [heroScale, setHeroScale] = useState(1.8)
   const [heroDetailsOpacity, setHeroDetailsOpacity] = useState(0)
   const heroWrapRef = useRef<HTMLDivElement>(null)
 
@@ -131,7 +131,7 @@ function App() {
         const wrapRect = wrap.getBoundingClientRect()
         const scrollableHeight = wrap.offsetHeight - window.innerHeight
         const rawProgress = Math.max(0, Math.min(1, -wrapRect.top / scrollableHeight))
-        const scale = 3.5 - rawProgress * 2.5
+        const scale = 1.8 - rawProgress * 0.8
         setHeroScale(scale)
         const detailsFade = Math.max(0, Math.min(1, (rawProgress - 0.7) / 0.3))
         setHeroDetailsOpacity(detailsFade)
@@ -216,7 +216,7 @@ function App() {
       </div>
 
       {/* ═══ HERO — scroll-shrink ═══ */}
-      <div ref={heroWrapRef} style={{ height: '250vh' }}>
+      <div ref={heroWrapRef} style={{ height: '180vh' }}>
         <section id="hero" className="sticky top-0 h-screen overflow-hidden">
           <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
             style={{ backgroundImage: `url(${IMAGES.hero})` }} />

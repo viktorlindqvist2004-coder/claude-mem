@@ -354,7 +354,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
 .landsbygd__bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .landsbygd__overlay{position:absolute;inset:0;z-index:-1;
   background:linear-gradient(180deg,rgba(22,54,44,.55) 0%,rgba(14,36,29,.72) 100%)}
-.landsbygd__content{position:relative;text-align:center;color:#fff;max-width:38ch;padding-block:clamp(5rem,10vw,9rem)}
+.landsbygd__content{position:relative;z-index:1;text-align:center;color:#fff;max-width:38ch;padding-block:clamp(5rem,10vw,9rem)}
 .landsbygd__content .eyebrow{color:rgba(255,255,255,.6);justify-content:center}
 .landsbygd__content .eyebrow::before{background:var(--gold-soft)}
 .landsbygd__content h2{font-size:var(--step-4);margin-top:1.2rem;line-height:1.05}
@@ -1255,6 +1255,11 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   }, {rootMargin:"0px 0px -12% 0px", threshold:0.12});
   $$(".reveal-up,.reveal-left,.reveal-right,.reveal-scale,.reveal-clip,.reveal-rotate,.reveal-flip,[data-stagger]").forEach(function(el){ revObserver.observe(el); });
   $$(".tl__item").forEach(function(el){ revObserver.observe(el); });
+  setTimeout(function(){
+    $$(".reveal-up,.reveal-left,.reveal-right,.reveal-scale,.reveal-clip,.reveal-rotate,.reveal-flip").forEach(function(el){
+      if(!el.classList.contains("in-view")) el.classList.add("in-view");
+    });
+  }, 4000);
 
 
   /* ---------- counters ---------- */

@@ -1,27 +1,74 @@
-import { StrictMode, useState, useEffect, useCallback } from 'react'
+import { StrictMode, useState, useEffect, useCallback, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import BookingCalendar from './BookingCalendar'
 import AdminPanel from './AdminPanel'
 import './index.css'
 
 const ADMIN_PIN = '2004'
+const PIN_LENGTH = 4
 
 function PinGate({ onUnlock }: { onUnlock: () => void }) {
-  const [pin, setPin] = useState('')
+  const [digits, setDigits] = useState<string[]>(Array(PIN_LENGTH).fill(''))
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const submit = useCallback(() => {
-    if (pin === ADMIN_PIN) {
-      sessionStorage.setItem('admin_unlocked', '1')
-      onUnlock()
-    } else {
-      setError(true)
-      setShake(true)
-      setTimeout(() => setShake(false), 500)
-      setPin('')
+  const checkPin = useCallback((newDigits: string[]) => {
+    const code = newDigits.join('')
+    if (code.length === PIN_LENGTH) {
+      if (code === ADMIN_PIN) {
+        sessionStorage.setItem('admin_unlocked', '1')
+        onUnlock()
+      } else {
+        setError(true)
+        setShake(true)
+        setTimeout(() => {
+          setShake(false)
+          setDigits(Array(PIN_LENGTH).fill(''))
+          inputRefs.current[0]?.focus()
+        }, 500)
+      }
     }
-  }, [pin, onUnlock])
+  }, [onUnlock])
+
+  const handleChange = useCallback((index: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1)
+    setError(false)
+    const newDigits = [...digits]
+    newDigits[index] = digit
+    setDigits(newDigits)
+
+    if (digit && index < PIN_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus()
+    }
+
+    checkPin(newDigits)
+  }, [digits, checkPin])
+
+  const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      const newDigits = [...digits]
+      newDigits[index - 1] = ''
+      setDigits(newDigits)
+      inputRefs.current[index - 1]?.focus()
+    }
+  }, [digits])
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, PIN_LENGTH)
+    if (!pasted) return
+    const newDigits = Array(PIN_LENGTH).fill('')
+    for (let i = 0; i < pasted.length; i++) newDigits[i] = pasted[i]
+    setDigits(newDigits)
+    const focusIdx = Math.min(pasted.length, PIN_LENGTH - 1)
+    inputRefs.current[focusIdx]?.focus()
+    checkPin(newDigits)
+  }, [checkPin])
+
+  useEffect(() => {
+    setTimeout(() => inputRefs.current[0]?.focus(), 100)
+  }, [])
 
   return (
     <div style={{
@@ -49,55 +96,49 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 6px', color: 'var(--text)' }}>
           Adminpanel
         </h2>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', margin: '0 0 24px' }}>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', margin: '0 0 28px' }}>
           Ange PIN-kod för att fortsätta
         </p>
 
-        <div style={{ animation: shake ? 'shake 0.4s ease-in-out' : 'none' }}>
-          <input
-            type="password"
-            inputMode="numeric"
-            maxLength={4}
-            value={pin}
-            onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setError(false) }}
-            onKeyDown={e => { if (e.key === 'Enter' && pin.length === 4) submit() }}
-            placeholder="••••"
-            autoFocus
-            style={{
-              width: '100%', padding: '14px 16px',
-              border: `1.5px solid ${error ? 'var(--danger)' : 'var(--border-strong)'}`,
-              borderRadius: 'var(--radius-xs)', background: 'var(--bg)',
-              fontSize: '1.5rem', fontWeight: 700, textAlign: 'center',
-              letterSpacing: '0.3em', color: 'var(--text)',
-              transition: 'border-color 0.2s',
-              outline: 'none',
-            }}
-          />
+        <div style={{
+          display: 'flex', gap: 12, justifyContent: 'center',
+          animation: shake ? 'shake 0.4s ease-in-out' : 'none',
+        }}>
+          {digits.map((digit, i) => (
+            <input
+              key={i}
+              ref={el => { inputRefs.current[i] = el }}
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={1}
+              value={digit}
+              onChange={e => handleChange(i, e.target.value)}
+              onKeyDown={e => handleKeyDown(i, e)}
+              onPaste={i === 0 ? handlePaste : undefined}
+              style={{
+                width: 56, height: 64,
+                border: `2px solid ${error ? 'var(--danger)' : digit ? 'var(--accent)' : 'var(--border-strong)'}`,
+                borderRadius: 'var(--radius-xs)', background: 'var(--bg)',
+                fontSize: '1.5rem', fontWeight: 700, textAlign: 'center',
+                color: 'var(--text)',
+                transition: 'border-color 0.2s',
+                outline: 'none',
+                caretColor: 'var(--accent)',
+              }}
+              onFocus={e => e.target.select()}
+            />
+          ))}
         </div>
 
         {error && (
-          <p style={{ fontSize: '0.8125rem', color: 'var(--danger)', margin: '10px 0 0', fontWeight: 500 }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--danger)', margin: '14px 0 0', fontWeight: 500 }}>
             Fel PIN-kod, försök igen
           </p>
         )}
 
-        <button
-          onClick={submit}
-          disabled={pin.length !== 4}
-          style={{
-            width: '100%', marginTop: 16, padding: '13px',
-            border: 'none', borderRadius: 'var(--radius-xs)',
-            background: pin.length === 4 ? 'var(--accent)' : 'var(--bg-muted)',
-            color: pin.length === 4 ? '#fff' : 'var(--text-tertiary)',
-            fontSize: '0.9375rem', fontWeight: 600, cursor: pin.length === 4 ? 'pointer' : 'default',
-            transition: 'all 0.2s',
-          }}
-        >
-          Lås upp
-        </button>
-
-        <a href="#" style={{
-          display: 'inline-block', marginTop: 20, fontSize: '0.8125rem',
+        <a href="#" onClick={e => { e.preventDefault(); window.location.hash = '' }} style={{
+          display: 'inline-block', marginTop: 24, fontSize: '0.8125rem',
           color: 'var(--text-tertiary)', textDecoration: 'none',
         }}>
           Tillbaka till bokning

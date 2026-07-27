@@ -39,7 +39,16 @@ function saveBookings(bookings: Booking[]) {
 function loadCancellations(): Cancellation[] {
   try {
     const raw = localStorage.getItem('cancellations_data')
-    return raw ? JSON.parse(raw) : []
+    if (!raw) return []
+    const all: Cancellation[] = JSON.parse(raw)
+    const now = Date.now()
+    const active = all.filter(c => {
+      const [y, mo, d] = c.booking.date.split('-').map(Number)
+      const [h, m] = c.booking.time.split(':').map(Number)
+      return new Date(y, mo - 1, d, h, m).getTime() + 24 * 3600000 > now
+    })
+    if (active.length !== all.length) localStorage.setItem('cancellations_data', JSON.stringify(active))
+    return active
   } catch { return [] }
 }
 

@@ -56,4 +56,4 @@ Emblemet är egenritat (den riktiga loggan gick inte att hämta i den här milj�
 Vill ni använda partiets befintliga logga: lägg bildfilen bredvid `index.html` och
 byt ut `<svg class="emblem" ...><use href="#emblem-src"/></svg>` (samt övriga
 `<use href="#emblem-src"/>`) mot en `<img src="logga.svg" alt="Sunt Förnuft">`.
-Vill ni behålla animationerna räcker det att ersätta formerna inuti `#emblem-src`. 
+Vill ni behålla animationerna räcker det att ersätta formerna inuti `#emblem-src`.  

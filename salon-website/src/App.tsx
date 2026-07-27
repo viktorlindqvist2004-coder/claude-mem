@@ -1,18 +1,11 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Scissors, Star, Phone, Menu, X, ChevronDown } from 'lucide-react'
-import './App.css'
 
 /* ═══ Icons ═══ */
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-  </svg>
-)
-
-const InstagramIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><circle cx="12" cy="12" r="5"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.51"/>
   </svg>
 )
 
@@ -155,7 +148,7 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen rich-bg grain-overlay" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen rich-bg grain-overlay" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" }}>
 
       {/* Progress bar */}
       <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] z-[200]"
@@ -530,9 +523,6 @@ function App() {
                       className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
                       <FacebookIcon className="w-4 h-4" />
                     </a>
-                    <a href="#" className="w-9 h-9 border border-white/[0.08] flex items-center justify-center hover:border-[#d4af37]/40 hover:text-[#d4af37] transition-all duration-500 text-white/30 hover:bg-[#d4af37]/5">
-                      <InstagramIcon className="w-4 h-4" />
-                    </a>
                   </div>
                 </div>
                 <a href="tel:+46762149929"
@@ -546,7 +536,7 @@ function App() {
               <div className="w-full h-full min-h-[400px] bg-[#0c0c0c] border border-white/[0.06] overflow-hidden relative">
                 <iframe
                   title="Karta"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2126.5!2d12.3233!3d58.3808!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTjCsDIyJzUxLjAiTiAxMsKwMTknMjQuMCJF!5e0!3m2!1ssv!2sse!4v1"
+                  src="https://maps.google.com/maps?q=Edsgatan+23,+462+33+V%C3%A4nersborg&t=&z=16&ie=UTF8&iwloc=&output=embed"
                   className="w-full h-full min-h-[400px] border-0 grayscale invert opacity-70"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -571,9 +561,6 @@ function App() {
               <a href="https://www.facebook.com/p/Gentlemens-Barbershop-100063546855196/" target="_blank" rel="noopener noreferrer"
                 className="text-white/15 hover:text-[#d4af37] transition-colors duration-500">
                 <FacebookIcon className="w-3.5 h-3.5" />
-              </a>
-              <a href="#" className="text-white/15 hover:text-[#d4af37] transition-colors duration-500">
-                <InstagramIcon className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>

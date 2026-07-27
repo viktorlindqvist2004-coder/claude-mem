@@ -301,9 +301,10 @@ function CalendarGrid({ weekStart, bookings, service, onSlot }: {
           {Array.from({ length: 7 }, (_, i) => {
             const d = addDays(weekStart, i)
             const isToday = fmt(d) === today
+            const dayPassed = fmt(d) < today
             const closed = !OPENING_HOURS[d.getDay()]
             return (
-              <div key={i} style={{ textAlign: 'center', padding: '12px 4px 10px', borderLeft: '1px solid var(--border)', position: 'relative' }}>
+              <div key={i} style={{ textAlign: 'center', padding: '12px 4px 10px', borderLeft: '1px solid var(--border)', position: 'relative', opacity: dayPassed ? 0.4 : 1 }}>
                 {isToday && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'var(--accent)', borderRadius: '0 0 2px 2px' }} />}
                 <div style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: isToday ? 'var(--accent)' : 'var(--text-tertiary)', marginBottom: 2 }}>{DAY_NAMES[i]}</div>
                 <div style={{ fontSize: '1.125rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: isToday ? 'var(--accent)' : 'var(--text)' }}>{d.getDate()}</div>
@@ -324,9 +325,23 @@ function CalendarGrid({ weekStart, bookings, service, onSlot }: {
                 const d = addDays(weekStart, i)
                 const ds = fmt(d)
                 const dow = d.getDay()
+                const dayPassed = ds < today
 
                 if (!timeSlots(dow).includes(time)) {
                   return <div key={i} style={{ height: 44, borderLeft: '1px solid var(--border)', background: 'var(--bg-muted)', opacity: 0.5 }} />
+                }
+
+                if (dayPassed) {
+                  return (
+                    <div key={i} style={{
+                      height: 44, borderLeft: '1px solid var(--border)',
+                      background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-tertiary)', opacity: 0.5,
+                      textTransform: 'uppercase', letterSpacing: '0.04em',
+                    }}>
+                      —
+                    </div>
+                  )
                 }
 
                 const existing = bookingAt(bookings, ds, time)

@@ -555,6 +555,7 @@ function CancelModal({ bookings, onCancel, onClose }: {
     if (!found) { setError('Ingen bokning hittades med dessa uppgifter'); return }
     const dt = new Date(found.date); const [h, m] = found.time.split(':').map(Number); dt.setHours(h, m)
     if (dt <= new Date()) { setError('Denna bokning har redan passerat'); return }
+    if (dt.getTime() - Date.now() < 24 * 3600000) { setError('Avbokning måste ske senast 24 timmar innan bokad tid'); return }
     setLoading(true)
     await sendCancellationEmails({ ...found, endTime: toTime(toMin(found.time) + found.duration), dayName: getDayName(found.date) })
     setLoading(false)
@@ -608,8 +609,11 @@ function CancelModal({ bookings, onCancel, onClose }: {
             <IconX />
           </button>
         </div>
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 20px' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
           Ange ditt boknings-ID och e-postadressen du bokade med.
+        </p>
+        <p style={{ fontSize: '0.75rem', color: 'var(--warn-text)', background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', borderRadius: 'var(--radius-xs)', padding: '8px 12px', margin: '0 0 20px' }}>
+          Avbokning måste ske senast 24 timmar innan bokad tid.
         </p>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -675,6 +679,9 @@ export default function BookingCalendar() {
   }, [pending, service, bookings])
 
   const handleCancel = useCallback((b: Booking) => {
+    const cancellations = JSON.parse(localStorage.getItem('cancellations_data') || '[]')
+    cancellations.unshift({ booking: b, cancelledAt: new Date().toISOString(), cancelledBy: 'customer' })
+    localStorage.setItem('cancellations_data', JSON.stringify(cancellations))
     const updated = bookings.filter(x => x.id !== b.id)
     setBookings(updated); saveBookings(updated)
   }, [bookings])

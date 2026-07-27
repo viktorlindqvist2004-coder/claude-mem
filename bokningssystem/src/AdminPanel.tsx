@@ -14,6 +14,12 @@ interface Booking {
   createdAt: string
 }
 
+interface Cancellation {
+  booking: Booking
+  cancelledAt: string
+  cancelledBy: 'admin' | 'customer'
+}
+
 function toTime(m: number): string {
   return `${Math.floor(m / 60).toString().padStart(2, '0')}:${(m % 60).toString().padStart(2, '0')}`
 }
@@ -30,6 +36,19 @@ function saveBookings(bookings: Booking[]) {
   localStorage.setItem('bookings_data', JSON.stringify(bookings))
 }
 
+function loadCancellations(): Cancellation[] {
+  try {
+    const raw = localStorage.getItem('cancellations_data')
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveCancellation(c: Cancellation) {
+  const all = loadCancellations()
+  all.unshift(c)
+  localStorage.setItem('cancellations_data', JSON.stringify(all))
+}
+
 function fmtDate(date: string): string {
   const [, m, d] = date.split('-')
   return `${d}/${m}`
@@ -39,6 +58,11 @@ function fmtDateFull(date: string): string {
   const days = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag']
   const dt = new Date(date + 'T12:00:00')
   return `${days[dt.getDay()]} ${fmtDate(date)}`
+}
+
+function fmtDateTime(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getDate()}/${d.getMonth() + 1} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
 function today(): string {
@@ -57,7 +81,7 @@ function isPast(b: Booking): boolean { return !isUpcoming(b) }
 
 /* ═══ Stat Card ═══ */
 
-function StatCard({ label, value, sub }: { label: string; value: number; sub?: string }) {
+function StatCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
   return (
     <div style={{
       background: 'var(--bg-card)', border: '1px solid var(--border)',
@@ -114,12 +138,63 @@ function BookingRow({ booking, showDate, onCancel }: { booking: Booking; showDat
   )
 }
 
+/* ═══ Cancellation Row ═══ */
+
+function CancellationRow({ cancellation }: { cancellation: Cancellation }) {
+  const b = cancellation.booking
+  const end = toTime(toMin(b.time) + b.duration)
+
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: '100px 1fr 1fr 1fr auto',
+      alignItems: 'center', gap: 12, padding: '14px 20px',
+      borderBottom: '1px solid var(--border)', fontSize: '0.875rem',
+      opacity: 0.7,
+    }}>
+      <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--text)' }}>
+        {fmtDate(b.date)} {b.time}
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 400 }}>– {end}</div>
+      </div>
+      <div>
+        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{b.name}</div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{b.phone}</div>
+      </div>
+      <div>
+        <div style={{ color: 'var(--text-secondary)' }}>{b.service}</div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}>{b.price}</div>
+      </div>
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+        <div>{b.email}</div>
+        <div style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em', marginTop: 2 }}>ID: {b.id}</div>
+      </div>
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2,
+      }}>
+        <span style={{
+          fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase',
+          padding: '3px 8px', borderRadius: 4,
+          background: cancellation.cancelledBy === 'admin' ? 'var(--accent-soft)' : 'var(--danger-soft)',
+          color: cancellation.cancelledBy === 'admin' ? 'var(--accent)' : 'var(--danger)',
+          letterSpacing: '0.03em',
+        }}>
+          {cancellation.cancelledBy === 'admin' ? 'Admin' : 'Kund'}
+        </span>
+        <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
+          {fmtDateTime(cancellation.cancelledAt)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 /* ═══ Main ═══ */
 
 export default function AdminPanel() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings())
-  const [tab, setTab] = useState<'today' | 'upcoming' | 'past'>('today')
+  const [cancellations] = useState<Cancellation[]>(() => loadCancellations())
+  const [tab, setTab] = useState<'today' | 'upcoming' | 'past' | 'cancelled'>('today')
   const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null)
+  const [cancelDone, setCancelDone] = useState<Booking | null>(null)
 
   const todayStr = useMemo(() => today(), [])
 
@@ -164,13 +239,19 @@ export default function AdminPanel() {
 
   const doCancel = useCallback(() => {
     if (!confirmCancel) return
+    saveCancellation({
+      booking: confirmCancel,
+      cancelledAt: new Date().toISOString(),
+      cancelledBy: 'admin',
+    })
     const updated = bookings.filter(x => x.id !== confirmCancel.id)
     setBookings(updated)
     saveBookings(updated)
+    setCancelDone(confirmCancel)
     setConfirmCancel(null)
   }, [confirmCancel, bookings])
 
-  const currentList = tab === 'today' ? todayBookings : tab === 'upcoming' ? upcomingBookings : pastBookings
+  const currentList = tab === 'today' ? todayBookings : tab === 'upcoming' ? upcomingBookings : tab === 'past' ? pastBookings : []
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     padding: '10px 20px', border: 'none', borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
@@ -198,10 +279,11 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 32 }}>
           <StatCard label="Idag" value={todayBookings.length} sub={todayBookings.length > 0 ? `${todayRevenue} kr intäkt` : 'Inga bokningar'} />
           <StatCard label="Denna vecka" value={weekBookings.length} />
           <StatCard label="Kommande" value={upcomingBookings.length + todayBookings.filter(isUpcoming).length} />
+          <StatCard label="Avbokade" value={cancellations.length} />
           <StatCard label="Totalt" value={bookings.length} />
         </div>
 
@@ -234,7 +316,7 @@ export default function AdminPanel() {
           borderRadius: 'var(--radius-sm)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)',
         }}>
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)', flexWrap: 'wrap' }}>
             <button onClick={() => setTab('today')} style={tabStyle(tab === 'today')}>
               Idag ({todayBookings.length})
             </button>
@@ -244,50 +326,81 @@ export default function AdminPanel() {
             <button onClick={() => setTab('past')} style={tabStyle(tab === 'past')}>
               Historik ({pastBookings.length})
             </button>
+            <button onClick={() => setTab('cancelled')} style={tabStyle(tab === 'cancelled')}>
+              Avbokade ({cancellations.length})
+            </button>
           </div>
 
-          {/* Table header */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: tab !== 'today' ? '100px 1fr 1fr 1fr auto' : '80px 1fr 1fr 1fr auto',
-            gap: 12, padding: '10px 20px', fontSize: '0.6875rem', fontWeight: 600,
-            color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em',
-            borderBottom: '1px solid var(--border)',
-          }}>
-            <div>Tid</div>
-            <div>Kund</div>
-            <div>Tjänst</div>
-            <div>Kontakt</div>
-            <div />
-          </div>
+          {tab !== 'cancelled' ? (
+            <>
+              {/* Table header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: tab !== 'today' ? '100px 1fr 1fr 1fr auto' : '80px 1fr 1fr 1fr auto',
+                gap: 12, padding: '10px 20px', fontSize: '0.6875rem', fontWeight: 600,
+                color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                borderBottom: '1px solid var(--border)',
+              }}>
+                <div>Tid</div>
+                <div>Kund</div>
+                <div>Tjänst</div>
+                <div>Kontakt</div>
+                <div />
+              </div>
 
-          {/* Rows */}
-          {currentList.length === 0 ? (
-            <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
-              {tab === 'today' ? 'Inga bokningar idag' : tab === 'upcoming' ? 'Inga kommande bokningar' : 'Ingen historik'}
-            </div>
+              {/* Rows */}
+              {currentList.length === 0 ? (
+                <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
+                  {tab === 'today' ? 'Inga bokningar idag' : tab === 'upcoming' ? 'Inga kommande bokningar' : 'Ingen historik'}
+                </div>
+              ) : (
+                <>
+                  {tab !== 'today' ? (
+                    (() => {
+                      const groups: Record<string, Booking[]> = {}
+                      currentList.forEach(b => { (groups[b.date] ??= []).push(b) })
+                      return Object.entries(groups).map(([date, bks]) => (
+                        <div key={date}>
+                          <div style={{
+                            padding: '8px 20px', fontSize: '0.75rem', fontWeight: 600,
+                            color: 'var(--text-tertiary)', background: 'var(--bg-muted)',
+                            borderBottom: '1px solid var(--border)',
+                          }}>
+                            {fmtDateFull(date)}
+                          </div>
+                          {bks.map(b => <BookingRow key={b.id} booking={b} showDate={false} onCancel={tab === 'upcoming' ? handleCancel : undefined} />)}
+                        </div>
+                      ))
+                    })()
+                  ) : (
+                    currentList.map(b => <BookingRow key={b.id} booking={b} onCancel={handleCancel} />)
+                  )}
+                </>
+              )}
+            </>
           ) : (
             <>
-              {tab !== 'today' ? (
-                // Group by date
-                (() => {
-                  const groups: Record<string, Booking[]> = {}
-                  currentList.forEach(b => { (groups[b.date] ??= []).push(b) })
-                  return Object.entries(groups).map(([date, bks]) => (
-                    <div key={date}>
-                      <div style={{
-                        padding: '8px 20px', fontSize: '0.75rem', fontWeight: 600,
-                        color: 'var(--text-tertiary)', background: 'var(--bg-muted)',
-                        borderBottom: '1px solid var(--border)',
-                      }}>
-                        {fmtDateFull(date)}
-                      </div>
-                      {bks.map(b => <BookingRow key={b.id} booking={b} showDate={false} onCancel={tab === 'upcoming' ? handleCancel : undefined} />)}
-                    </div>
-                  ))
-                })()
+              {/* Cancellations header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '100px 1fr 1fr 1fr auto',
+                gap: 12, padding: '10px 20px', fontSize: '0.6875rem', fontWeight: 600,
+                color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                borderBottom: '1px solid var(--border)',
+              }}>
+                <div>Bokad tid</div>
+                <div>Kund</div>
+                <div>Tjänst</div>
+                <div>Kontakt</div>
+                <div>Avbokad</div>
+              </div>
+
+              {cancellations.length === 0 ? (
+                <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
+                  Inga avbokningar
+                </div>
               ) : (
-                currentList.map(b => <BookingRow key={b.id} booking={b} onCancel={handleCancel} />)
+                cancellations.map((c, i) => <CancellationRow key={`${c.booking.id}-${i}`} cancellation={c} />)
               )}
             </>
           )}
@@ -322,6 +435,41 @@ export default function AdminPanel() {
                 Avboka
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel done confirmation */}
+      {cancelDone && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={() => setCancelDone(null)}>
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', animation: 'overlay-in 0.2s ease-out' }} />
+          <div className="relative w-full max-w-sm" onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', animation: 'modal-in 0.25s ease-out', padding: '28px', textAlign: 'center' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%', background: 'var(--success-soft)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 16px', animation: 'check-pop 0.4s ease-out',
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: '0 0 6px' }}>Bokning avbokad</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 4px' }}>
+              <strong>{cancelDone.name}</strong>s bokning har avbokats.
+            </p>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', margin: '0 0 4px' }}>
+              {cancelDone.service} &middot; {fmtDateFull(cancelDone.date)} kl {cancelDone.time}
+            </p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: '0 0 20px' }}>
+              Avbokningen har sparats i historiken.
+            </p>
+            <button onClick={() => setCancelDone(null)} style={{
+              padding: '11px 32px', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
+              background: 'var(--bg-card)', color: 'var(--text)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
+            }}>
+              Stäng
+            </button>
           </div>
         </div>
       )}

@@ -102,7 +102,7 @@ export default function Hero() {
         >
           <p className="max-w-md text-[0.95rem] leading-relaxed text-bone-dim">
             Tatueringsstudio mitt i Trollhättan. Custom design, fineline, blackwork
-            och cover-up — utfört av två tatuerare med lång erfarenhet av alla
+            och cover-up — ritat och utfört för hand, med lång erfarenhet av alla
             stilar och motiv.
           </p>
 

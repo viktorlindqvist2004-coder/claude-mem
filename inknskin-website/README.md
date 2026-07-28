@@ -30,7 +30,7 @@ påstår aldrig något om betyg som inte är verifierat.
 ### 2. Bilderna och filmerna är AI-genererat stämningsmaterial
 
 Allt media är genererat, inte fotograferat i studion. Det föreställer ingen
-verklig person och inga verkliga tatueringar gjorda av William eller Arash.
+verklig person och inga verkliga tatueringar gjorda av studion.
 Byt ut mot studions egna bilder så fort de finns — behåll filnamnen i
 `local`-fälten i `lib/media.ts` så behöver inget annat ändras.
 
@@ -98,7 +98,7 @@ automatiskt i kontaktsektionen och i den strukturerade datan.
 | Studion            | Text som tänds ord för ord i takt med scrollen + siffror som räknar upp      |
 | Arbetet            | Radhover med ember-svep och förhandsbild som följer muspekaren               |
 | Portfolio          | Tre kolumner i olika parallaxhastighet, bilder som öppnas med clip-path      |
-| Tatuerare          | Gråskala → färg, namn som breddas via Archivos width-axel                    |
+| Tatueraren         | Gråskala → färg, namn som breddas via Archivos width-axel                    |
 | Omdömen            | Två marquee-rader åt olika håll, betyg som räknas upp                        |
 | Process            | Sticky kolumn med skena som fylls i takt med scrollen                        |
 | FAQ                | Höjdanimerad dragspelsöppning                                                |

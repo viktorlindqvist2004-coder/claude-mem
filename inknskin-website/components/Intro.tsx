@@ -88,7 +88,7 @@ export default function Intro() {
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-10">
-          <Stat value={<Counter to={2} />} label="Tatuerare i studion" />
+          <Stat value={<Counter to={1} />} label="Tatuerare — samma hand hela vägen" />
           <Stat value={<Counter to={16} suffix="B" />} label="Kungsgatan, Trollhättan" />
           <Stat value={<Counter to={5} suffix=" min" />} label="Från Trollhättan C" />
           <Stat value={<Counter to={100} suffix="%" />} label="Steril engångsutrustning" />

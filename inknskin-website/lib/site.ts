@@ -12,7 +12,7 @@ export const site = {
   city: "Trollhättan",
   url: "https://inknskintattoo.se",
   description:
-    "Ink N Skin är en tatueringsstudio mitt i Trollhättan. Custom design, fineline, blackwork och cover-up av William och Arash — två tatuerare med lång erfarenhet av alla stilar och motiv.",
+    "Ink N Skin är en tatueringsstudio mitt i Trollhättan. Custom design, fineline, blackwork och cover-up av Arash — tatuerare med lång erfarenhet av alla stilar och motiv.",
 } as const;
 
 type Contact = {
@@ -59,21 +59,18 @@ export const hours = {
   note: "Tider utanför bemannad öppettid bokas via DM eller direkt i studion.",
 } as const;
 
+/**
+ * Lägg till fler objekt här om studion växer — sektionen byter automatiskt
+ * från porträttlayout till rutnät när det finns mer än en tatuerare.
+ */
 export const artists = [
-  {
-    name: "William",
-    role: "Tatuerare",
-    handle: "",
-    bio: "Bygger stora, läsbara motiv som håller i decennier. Blackwork, ornamentik och svartgrå realism — alltid med komposition efter kroppens form.",
-    focus: ["Blackwork", "Ornamental", "Svartgrått"],
-  },
   {
     name: "Arash",
     role: "Tatuerare & grundare",
     handle: "@arash_tattooer",
     handleUrl: "https://www.instagram.com/arash_tattooer/",
-    bio: "Startade Ink N Skin på Kungsgatan. Jobbar brett — från millimeterprecis fineline och lettering till täckande cover-ups som ska bära ett helt liv.",
-    focus: ["Fineline", "Lettering", "Cover-up"],
+    bio: "Startade Ink N Skin på Kungsgatan och tatuerar allt som går in genom dörren. Från millimeterprecis fineline och lettering till massiv blackwork och täckande cover-ups som ska bära ett helt liv.",
+    focus: ["Fineline", "Blackwork", "Lettering", "Cover-up", "Ornamental"],
   },
 ] as const;
 

@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@import "@fontsource-variable/archivo/standard.css";
+@import "@fontsource-variable/inter/index.css";
+
+@theme {
+  --color-ink: #060506;
+  --color-ink-2: #0b0a0b;
+  --color-ink-3: #131113;
+  --color-bone: #ece7e0;
+  --color-bone-dim: #a49c93;
+  --color-muted: #6f6862;
+  --color-ember: #ff3b1f;
+  --color-ember-deep: #b81f0c;
+
+  --font-display: "Archivo Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@layer base {
+  * {
+    border-color: color-mix(in oklab, var(--color-bone) 12%, transparent);
+  }
+
+  html {
+    background-color: var(--color-ink);
+    color: var(--color-bone);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: auto;
+    /* Parallax layers overshoot their frames by design — never let that turn
+       into a horizontal scrollbar. */
+    overflow-x: clip;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    overflow-x: clip;
+  }
+
+  /* Lenis owns the scroll; keep native scroll chaining sane. */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  ::selection {
+    background: var(--color-ember);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ember);
+    outline-offset: 3px;
+  }
+}
+
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.86;
+  text-transform: uppercase;
+  font-variation-settings: "wdth" 100;
+}
+
+/* Fluid display scale — every heading breathes with the viewport. */
+@utility t-mega {
+  font-size: clamp(3.4rem, 15.5vw, 17rem);
+}
+@utility t-xl {
+  font-size: clamp(2.6rem, 8.5vw, 8.5rem);
+}
+@utility t-lg {
+  font-size: clamp(2rem, 5.2vw, 4.6rem);
+}
+@utility t-md {
+  font-size: clamp(1.5rem, 3vw, 2.6rem);
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-bone-dim);
+}
+
+@utility edge {
+  padding-inline: clamp(1.25rem, 5vw, 5.5rem);
+}
+
+@utility hairline {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-bone) 22%, transparent) 22%,
+    color-mix(in oklab, var(--color-bone) 22%, transparent) 78%,
+    transparent
+  );
+}
+
+/* ---- Film grain: a single animated SVG-noise layer over the whole page ---- */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: -150%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.048;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 0.6s steps(3) infinite;
+  will-change: transform;
+}
+
+@keyframes grain-shift {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-3%, 2%); }
+  66% { transform: translate(2%, -3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Scanline / vignette wash that sits under content but over media */
+.vignette::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 35%,
+    color-mix(in oklab, var(--color-ink) 85%, transparent) 100%
+  );
+}
+
+/* Character/word masks used by the split-text reveals */
+.mask-line {
+  display: block;
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain::after {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

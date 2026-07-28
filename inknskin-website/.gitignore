@@ -1,0 +1,14 @@
+# Repots rot-.gitignore utesluter package-lock.json — men den här sidan
+# deployas till Vercel och behöver en låst dependency-graf för reproducerbara
+# byggen, så den återinkluderas här.
+!package-lock.json
+
+node_modules/
+.next/
+out/
+build/
+.vercel
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store

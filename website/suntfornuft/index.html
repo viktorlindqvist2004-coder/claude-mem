@@ -1460,6 +1460,31 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   }
   requestAnimationFrame(loop);
 })();
+
+(function(){
+  if(document.referrer&&document.referrer.indexOf("orter.html")!==-1){
+    var ov=document.createElement("div");
+    ov.style.cssText="position:fixed;inset:0;z-index:9999;background:#0a1528;transform:translateX(0);transition:transform .45s cubic-bezier(.4,0,.2,1)";
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      ov.style.transform="translateX(-100%)";
+    })});
+    setTimeout(function(){ov.remove()},500);
+  }
+
+  document.querySelectorAll('a[href="orter.html"]').forEach(function(a){
+    a.addEventListener("click",function(e){
+      e.preventDefault();
+      var overlay=document.createElement("div");
+      overlay.style.cssText="position:fixed;inset:0;z-index:9999;background:#0a1528;transform:translateX(100%);transition:transform .45s cubic-bezier(.4,0,.2,1)";
+      document.body.appendChild(overlay);
+      requestAnimationFrame(function(){requestAnimationFrame(function(){
+        overlay.style.transform="translateX(0)";
+      })});
+      setTimeout(function(){window.location.href="orter.html"},460);
+    });
+  });
+})();
 </script>
 </body>
 </html>

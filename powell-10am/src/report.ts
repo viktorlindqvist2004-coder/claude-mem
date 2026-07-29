@@ -10,6 +10,7 @@ import type { DayResult, Po3Read, Trade } from "./types.js";
 import type { Setup } from "./model.js";
 import type { Stats } from "./backtest.js";
 import type { Ablation, Candidate, WalkForwardResult } from "./learn.js";
+import type { ChartObservation, Verdict } from "./verdict.js";
 import { RULE_NOTES, type ModelConfig } from "./spec.js";
 import { toEt } from "./time.js";
 
@@ -114,6 +115,88 @@ export function explainDay(read: Po3Read, setup: Setup | null, trade: Trade | nu
     }
   }
 
+  return lines.join("\n");
+}
+
+/**
+ * The verdict card — what a user gets back after sending a screenshot.
+ *
+ * Ordered so the answer comes first and the justification follows: someone
+ * looking at a live chart needs the call, then the reason, then the detail.
+ */
+export function renderVerdict(verdict: Verdict, observation?: ChartObservation): string {
+  const lines: string[] = [];
+  const badge = {
+    valid: "✓ VALID",
+    invalid: "✗ INVALID",
+    forming: "◷ FORMING",
+    uncertain: "? UNCERTAIN",
+  }[verdict.status];
+
+  const header = observation?.instrument
+    ? `${observation.instrument}${observation.timeframe ? ` ${observation.timeframe}` : ""}${observation.date ? ` · ${observation.date}` : ""}`
+    : "10am Key Open";
+  lines.push(`── ${header} ${"─".repeat(Math.max(0, 44 - header.length))}`);
+  lines.push(``);
+  lines.push(`  ${badge}`);
+  lines.push(`  ${verdict.action}`);
+
+  if (verdict.reasoning.length > 0) {
+    lines.push(``);
+    lines.push(`  Why`);
+    for (const reason of verdict.reasoning) {
+      lines.push(wrap(reason, "    "));
+    }
+  }
+
+  if (verdict.plan) {
+    const plan = verdict.plan;
+    lines.push(``);
+    lines.push(`  Plan`);
+    lines.push(`    Direction   ${plan.direction}`);
+    lines.push(`    Entry       ${plan.entryPrice.toFixed(2)}  (${plan.entryLabel})`);
+    lines.push(`    Stop        ${plan.stopPrice.toFixed(2)}  beyond the raid extreme`);
+    lines.push(`    Target      ${plan.targetPrice.toFixed(2)}  (${plan.targetLabel})`);
+    lines.push(`    Planned     ${plan.plannedR.toFixed(2)}R`);
+    if (plan.stillAvailable !== null) {
+      lines.push(`    Available   ${plan.stillAvailable ? "yes — price has not reached the entry" : "no — price has already passed it"}`);
+    }
+  }
+
+  lines.push(``);
+  lines.push(`  Gates`);
+  const mark = { pass: "✓", fail: "✗", unknown: "?", pending: "◷" };
+  for (const gate of verdict.gates) {
+    lines.push(`    ${mark[gate.status]} ${gate.name}`);
+    lines.push(`        ${gate.evidence}`);
+  }
+
+  if (verdict.missing.length > 0) {
+    lines.push(``);
+    lines.push(`  To decide this firmly, supply:`);
+    for (const item of verdict.missing) {
+      lines.push(`    · ${item}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/** Soft-wrap a sentence to the terminal, preserving an indent. */
+function wrap(text: string, indent: string, width = 76): string {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = indent;
+
+  for (const word of words) {
+    if (current.length + word.length + 1 > width && current.trim().length > 0) {
+      lines.push(current);
+      current = `${indent}${word}`;
+    } else {
+      current = current.trim().length === 0 ? `${indent}${word}` : `${current} ${word}`;
+    }
+  }
+  if (current.trim().length > 0) lines.push(current);
   return lines.join("\n");
 }
 

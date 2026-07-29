@@ -8,6 +8,7 @@
  *   bun run src/cli.ts backtest  <csv> [--correlated es.csv] [--cost 0.05]
  *   bun run src/cli.ts learn     <csv> [--folds 4]
  *   bun run src/cli.ts ablate    <csv>
+ *   bun run src/cli.ts verdict   <observation.json>   # judge a chart reading
  *
  * Every command that reads market data takes a CSV with a header row naming
  * time/open/high/low/close columns. See `docs/09-data.md`.
@@ -24,8 +25,10 @@ import {
   renderCandidates,
   renderSpec,
   renderStats,
+  renderVerdict,
   renderWalkForward,
 } from "./report.js";
+import { evaluate, type ChartObservation } from "./verdict.js";
 import { buildLevels } from "./levels.js";
 import { DEFAULT_CONFIG, makeConfig, type ModelConfig } from "./spec.js";
 import { groupByEtDate } from "./time.js";
@@ -38,6 +41,40 @@ const DEFAULT_GRID: ParameterGrid = {
   entryMode: ["fvg-proximal", "fvg-ce", "ote-sweet", "confluence"],
   targetMode: ["opposing-liquidity", "std-dev", "fixed-r"],
   stopBufferAtr: [0.1, 0.25, 0.5],
+};
+
+/**
+ * A blank observation, printed by `verdict --template`.
+ *
+ * Every field that vision cannot reliably establish is `null` rather than a
+ * plausible-looking default, because a wrong default here produces a confident
+ * wrong verdict — the one output this whole feature must not produce.
+ */
+const OBSERVATION_TEMPLATE: ChartObservation = {
+  instrument: "NQ",
+  timeframe: "1m",
+  date: "2026-03-10",
+  keyOpenPrice: null,
+  accumulationHigh: null,
+  accumulationLow: null,
+  sweep: {
+    side: "low",
+    level: 0,
+    levelSource: "opening range low",
+    extreme: 0,
+    closedBackInside: null,
+  },
+  displacement: {
+    direction: "long",
+    closedThroughKeyOpen: null,
+    leftFvg: null,
+    extreme: 0,
+    bodyToAtr: null,
+  },
+  targetCandidates: [],
+  atr: null,
+  smt: null,
+  uncertain: [],
 };
 
 async function main(): Promise<number> {
@@ -111,6 +148,23 @@ async function main(): Promise<number> {
       return 0;
     }
 
+    case "verdict": {
+      // Judges a chart reading rather than a dataset: the observation JSON is
+      // what a pair of eyes (or a vision model) extracted from a screenshot.
+      if (flags.template) {
+        console.log(JSON.stringify(OBSERVATION_TEMPLATE, null, 2));
+        return 0;
+      }
+      const path = positional[0];
+      if (!path) {
+        console.error("Usage: verdict <observation.json>   (or --template to print a blank one)");
+        return 1;
+      }
+      const observation = (await Bun.file(path).json()) as ChartObservation;
+      console.log(renderVerdict(evaluate(observation, config), observation));
+      return 0;
+    }
+
     case "ablate": {
       const candles = await requireCsv(positional[0]);
       const { baseline, ablations } = ablate(candles, config);
@@ -134,6 +188,7 @@ function usage(): string {
     "  backtest  <csv> [--cost R]    run the model and report statistics",
     "  learn     <csv> [--folds N]   grid search plus walk-forward validation",
     "  ablate    <csv>               measure what each rule contributes",
+    "  verdict   <json>              judge a chart reading (--template for a blank one)",
     "",
     "  Config overrides: --entryMode ote-sweet --targetMode std-dev --minPlannedR 3 ...",
   ].join("\n");

@@ -35,6 +35,9 @@ bun run src/cli.ts levels   fixtures/sample-1m.csv --date 2026-03-10
 bun run src/cli.ts backtest fixtures/sample-1m.csv
 bun run src/cli.ts ablate   fixtures/sample-1m.csv          # what each rule earns
 bun run src/cli.ts learn    fixtures/sample-1m.csv          # search + walk-forward
+
+bun run src/cli.ts verdict  --template > today.json         # judge a chart reading
+bun run src/cli.ts verdict  today.json
 ```
 
 That fixture is **synthetic** — it is generated with a fixed seed so the CLI
@@ -55,12 +58,13 @@ bun run typecheck
 docs/            The model in prose, foundations → execution → curriculum
 src/spec.ts      The same model as executable config, with provenance per rule
 src/model.ts     The detector: accumulation → raid → displacement → entry → risk
+src/verdict.ts   Judges a chart reading through the same gates, for screenshots
 src/primitives/  fvg · swing · sweep · displacement · structure · liquidity · fib · smt · atr
 src/levels.ts    Key opens, NDOG/NWOG, prior day, session ranges
 src/trade.ts     Fill and exit simulation
 src/backtest.ts  Statistics, with costs and rejection accounting
 src/learn.ts     Grid search, walk-forward validation, rule ablation
-skills/          A Claude Code skill for reading days and answering questions
+skills/          Claude Code skills: model Q&A, and judging chart screenshots
 ```
 
 **If `docs/` and `src/spec.ts` disagree, the spec is right and the docs are the
@@ -85,6 +89,7 @@ moment nothing forces it to stay executable.
 | [09 — Data](docs/09-data.md) | CSV format and where to get candles |
 | [10 — Curriculum](docs/10-curriculum.md) | How to actually learn it |
 | [11 — Glossary](docs/11-glossary.md) | Every term, defined once |
+| [12 — Reading a screenshot](docs/12-chart-reading.md) | Judging a TradingView chart against the model |
 
 ---
 

@@ -1,0 +1,19 @@
+{
+  "name": "powell-10am",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A learning system for the Powell 10am Key Open trading model: encoded rule spec, detection engine, backtester and parameter search.",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "cli": "bun run src/cli.ts"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^7.0.2"
+  }
+}

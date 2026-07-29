@@ -1,0 +1,210 @@
+#!/usr/bin/env bun
+/**
+ * Command line entry point.
+ *
+ *   bun run src/cli.ts spec
+ *   bun run src/cli.ts levels    <csv> --date 2026-03-10
+ *   bun run src/cli.ts explain   <csv> [--date 2026-03-10]
+ *   bun run src/cli.ts backtest  <csv> [--correlated es.csv] [--cost 0.05]
+ *   bun run src/cli.ts learn     <csv> [--folds 4]
+ *   bun run src/cli.ts ablate    <csv>
+ *
+ * Every command that reads market data takes a CSV with a header row naming
+ * time/open/high/low/close columns. See `docs/09-data.md`.
+ */
+
+import { loadCsvFile } from "./csv.js";
+import { readDay } from "./model.js";
+import { simulate } from "./trade.js";
+import { backtest } from "./backtest.js";
+import { ablate, gridSearch, walkForward, type ParameterGrid } from "./learn.js";
+import {
+  explainDay,
+  renderAblation,
+  renderCandidates,
+  renderSpec,
+  renderStats,
+  renderWalkForward,
+} from "./report.js";
+import { buildLevels } from "./levels.js";
+import { DEFAULT_CONFIG, makeConfig, type ModelConfig } from "./spec.js";
+import { groupByEtDate } from "./time.js";
+import type { Candle } from "./types.js";
+
+/** The search space used by `learn`. Kept small enough to run in seconds. */
+const DEFAULT_GRID: ParameterGrid = {
+  manipulationEnd: ["10:15", "10:30", "11:00"],
+  minDisplacementAtr: [1.0, 1.5, 2.0],
+  entryMode: ["fvg-proximal", "fvg-ce", "ote-sweet", "confluence"],
+  targetMode: ["opposing-liquidity", "std-dev", "fixed-r"],
+  stopBufferAtr: [0.1, 0.25, 0.5],
+};
+
+async function main(): Promise<number> {
+  const [command, ...rest] = process.argv.slice(2);
+  const flags = parseFlags(rest);
+  const positional = rest.filter((arg) => !arg.startsWith("--") && !isFlagValue(rest, arg));
+
+  const config = configFromFlags(flags);
+
+  switch (command) {
+    case "spec":
+      console.log(renderSpec(config));
+      return 0;
+
+    case "levels": {
+      const candles = await requireCsv(positional[0]);
+      const date = (flags.date as string) ?? lastDate(candles);
+      const levels = buildLevels(candles, date);
+      console.log(`── Key levels for ${date} ${"─".repeat(28)}`);
+      if (levels.length === 0) {
+        console.log("  none — the dataset does not cover the prior session");
+        return 0;
+      }
+      for (const level of levels) {
+        console.log(
+          `  ${"★".repeat(level.weight).padEnd(5)} ${level.price.toFixed(2).padStart(10)}  ${level.label}`,
+        );
+      }
+      return 0;
+    }
+
+    case "explain": {
+      const candles = await requireCsv(positional[0]);
+      const dates = flags.date ? [flags.date as string] : [...groupByEtDate(candles).keys()].sort();
+      for (const date of dates) {
+        const { read, setup } = readDay(candles, date, config);
+        const trade = setup ? simulate(candles, setup, config) : null;
+        console.log(explainDay(read, setup, trade));
+        console.log("");
+      }
+      return 0;
+    }
+
+    case "backtest": {
+      const candles = await requireCsv(positional[0]);
+      const correlated = flags.correlated
+        ? (await loadCsvFile(flags.correlated as string)).candles
+        : undefined;
+      const result = backtest(candles, config, {
+        costR: flags.cost === undefined ? undefined : Number(flags.cost),
+        ...(correlated ? { correlated } : {}),
+      });
+      console.log(renderStats(result.stats));
+      return 0;
+    }
+
+    case "learn": {
+      const candles = await requireCsv(positional[0]);
+      const folds = flags.folds === undefined ? 4 : Number(flags.folds);
+
+      const ranked = gridSearch(candles, DEFAULT_GRID, { minTrades: 10 });
+      console.log(renderCandidates(ranked));
+      console.log("");
+
+      try {
+        const result = walkForward(candles, DEFAULT_GRID, { folds, minTrades: 10 });
+        console.log(renderWalkForward(result));
+      } catch (error) {
+        console.log(`── Walk-forward skipped: ${(error as Error).message}`);
+      }
+      return 0;
+    }
+
+    case "ablate": {
+      const candles = await requireCsv(positional[0]);
+      const { baseline, ablations } = ablate(candles, config);
+      console.log(renderAblation(baseline, ablations));
+      return 0;
+    }
+
+    default:
+      console.log(usage());
+      return command ? 1 : 0;
+  }
+}
+
+function usage(): string {
+  return [
+    "powell-10am — a learning system for the 10am Key Open model",
+    "",
+    "  spec                          print the encoded rules with provenance",
+    "  levels    <csv> --date D      key levels in force on a date",
+    "  explain   <csv> [--date D]    narrate the model's read, day by day",
+    "  backtest  <csv> [--cost R]    run the model and report statistics",
+    "  learn     <csv> [--folds N]   grid search plus walk-forward validation",
+    "  ablate    <csv>               measure what each rule contributes",
+    "",
+    "  Config overrides: --entryMode ote-sweet --targetMode std-dev --minPlannedR 3 ...",
+  ].join("\n");
+}
+
+async function requireCsv(path: string | undefined): Promise<Candle[]> {
+  if (!path) {
+    console.error("A CSV path is required. See `bun run src/cli.ts` for usage.");
+    process.exit(1);
+  }
+  const { candles, errors } = await loadCsvFile(path);
+  if (errors.length > 0) {
+    console.error(`⚠ ${errors.length} row(s) could not be parsed:`);
+    for (const error of errors.slice(0, 5)) {
+      console.error(`    line ${error.line}: ${error.reason}`);
+    }
+    if (errors.length > 5) console.error(`    … and ${errors.length - 5} more`);
+  }
+  if (candles.length === 0) {
+    console.error("No usable candles were loaded.");
+    process.exit(1);
+  }
+  return candles;
+}
+
+/** Any `--key value` pair naming a real config field becomes an override. */
+function configFromFlags(flags: Record<string, string | boolean>): ModelConfig {
+  const overrides: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(flags)) {
+    if (!(key in DEFAULT_CONFIG)) continue;
+    const current = (DEFAULT_CONFIG as unknown as Record<string, unknown>)[key];
+    if (typeof current === "number") overrides[key] = Number(raw);
+    else if (typeof current === "boolean") overrides[key] = raw === true || raw === "true";
+    else overrides[key] = raw;
+  }
+  return makeConfig(overrides as Partial<ModelConfig>);
+}
+
+function parseFlags(args: string[]): Record<string, string | boolean> {
+  const flags: Record<string, string | boolean> = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg || !arg.startsWith("--")) continue;
+    const key = arg.slice(2);
+    const next = args[i + 1];
+    if (next !== undefined && !next.startsWith("--")) {
+      flags[key] = next;
+      i++;
+    } else {
+      flags[key] = true;
+    }
+  }
+  return flags;
+}
+
+/** True when `arg` is consumed as the value of a preceding `--flag`. */
+function isFlagValue(args: string[], arg: string): boolean {
+  const index = args.indexOf(arg);
+  if (index <= 0) return false;
+  const previous = args[index - 1];
+  return previous !== undefined && previous.startsWith("--");
+}
+
+function lastDate(candles: Candle[]): string {
+  const dates = [...groupByEtDate(candles).keys()].sort();
+  return dates[dates.length - 1] as string;
+}
+
+main()
+  .then((code) => process.exit(code))
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });

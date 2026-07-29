@@ -1,0 +1,5 @@
+# Self-contained test config for the powell-10am subproject.
+# Deliberately does NOT inherit the repository root's telemetry preload —
+# this project has no dependency on claude-mem's runtime.
+[test]
+root = "./tests"

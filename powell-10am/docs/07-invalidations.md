@@ -59,9 +59,11 @@ that range, so a 3-point range makes the raid threshold trivially small and
 noise will trip it. Consider raising `minSweepPenetration` on quiet mornings.
 
 **Scheduled news inside the window.** 10:00 ET is exactly when a large block of
-US data releases. A raid driven by a data print is a different animal from a
-liquidity raid, and the model has no way to tell them apart. This is a genuine
-limitation, not a solved problem — check the calendar.
+US data releases. This is now handled explicitly rather than left as a warning —
+see [13 — News](13-news.md). The short version: an ordinary high-impact release
+*delivers* the raid and the model still applies, but the rejection test is
+unreliable until the release candle closes; a tier-one event (FOMC, CPI, NFP)
+replaces the model's premise rather than fuelling it.
 
 **Both sides swept.** Price took the highs *and* the lows before displacing.
 Direction is genuinely ambiguous; the engine picks the larger excursion, which

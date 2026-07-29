@@ -1,6 +1,6 @@
 ---
 name: powell-10am-chart
-description: Judge a TradingView screenshot against the Powell 10am Key Open model — is the setup valid, why or why not, and what to do. Use whenever the user sends a chart image and asks about a 10am setup, the 10:00 key level, whether a setup is valid, whether to take a trade, or what to do at the New York AM open. Also use for screenshots showing a liquidity sweep, displacement, FVG, or PO3 at 10:00 ET on NQ/ES. Produces a gate-by-gate verdict with entry, stop, target and reasoning drawn from the encoded model rather than improvised.
+description: Judge a TradingView screenshot against the Powell 10am Key Open model, with the economic calendar factored in — is the setup valid, why or why not, and what to do. Use whenever the user sends a chart image and asks about a 10am setup, the 10:00 key level, whether a setup is valid, whether to take a trade, or what to do at the New York AM open. Also use for screenshots showing a liquidity sweep, displacement, FVG, or PO3 at 10:00 ET on NQ/ES, or a ForexFactory calendar alongside a chart. Produces a gate-by-gate verdict with entry, stop, target, news context and reasoning drawn from the encoded model rather than improvised.
 ---
 
 # Judging a 10am chart screenshot
@@ -50,21 +50,44 @@ expansion, which is the difference between the trade and its opposite. On a
 zoomed-out chart it is frequently indeterminate — set it to `null` and ask the
 user to zoom in on that one candle rather than inferring it from the wick.
 
-### 3. Run the evaluation
+### 3. Get the calendar in
+
+10:00 ET is one of the busiest US release slots — ISM, JOLTS and consumer
+confidence all land on it. Always establish the calendar, in this order:
+
+1. A calendar screenshot or pasted rows, if the user sent them → save as text
+   and pass `--paste`.
+2. `bun run src/cli.ts news --fetch`, if the network allows.
+3. Neither → proceed, but the verdict will carry "Calendar not checked" and you
+   should say so rather than let it pass unnoticed.
+
+**News never supplies direction.** A release is the vehicle that delivers the
+manipulation leg, not a signal. Never say "the number was strong, so go long".
+See `docs/13-news.md`.
+
+The one distinction that changes the answer: a **tier-one** release (FOMC, CPI,
+NFP, Fed chair speaking) on the raid window replaces the model's premise rather
+than fuelling it — the market is discovering a price, not filling orders.
+Ordinary high-impact releases (ISM, JOLTS) deliver raids and the model still
+applies, with the caveat that the rejection test is unreliable until the release
+candle closes.
+
+### 4. Run the evaluation
 
 ```bash
 cd powell-10am
-bun run src/cli.ts verdict observation.json
+bun run src/cli.ts verdict observation.json --paste calendar.txt
 ```
 
 Write the observation to a temp file. Pass any config the user has asked for as
-flags (`--entryMode confluence`, `--targetMode std-dev`, `--minPlannedR 3`).
+flags (`--entryMode confluence`, `--targetMode std-dev`, `--minPlannedR 3`,
+`--newsPolicy stand-aside`).
 
 If running it is not practical, apply `evaluate()`'s gates by hand **in order**
 and in full — never a subset, and never with a gate softened because the setup
 otherwise looks good.
 
-### 4. Report
+### 5. Report
 
 Lead with the verdict and the action, then the reasoning, then the gate table.
 Keep the engine's wording for the gates; it is precise on purpose.
@@ -103,6 +126,10 @@ exist as a configuration decision to make *before* the session, not while
 looking at a setup they want to take.
 
 **Never invent prices.** If the axis is unreadable, say so.
+
+**Never trade the number.** A beat or a miss powers the move through the level;
+it does not tell you which way the day resolves. The model still waits for the
+rejection and the displacement.
 
 ## Scope
 

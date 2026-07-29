@@ -39,7 +39,10 @@ describe("valid setups", () => {
     expect(verdict.status).toBe("valid");
     expect(verdict.plan).not.toBeNull();
     expect(verdict.plan!.direction).toBe("long");
-    expect(verdict.gates.every((gate) => gate.status === "pass")).toBe(true);
+    // The news gate is `unknown` without a calendar; every structural gate passes.
+    expect(
+      verdict.gates.filter((gate) => gate.id !== "news").every((gate) => gate.status === "pass"),
+    ).toBe(true);
   });
 
   test("the stop sits beyond the raid extreme, not the entry candle", () => {

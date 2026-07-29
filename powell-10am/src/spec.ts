@@ -150,6 +150,20 @@ export interface ModelConfig {
    */
   requireSmt: boolean;
 
+  // ---- News ------------------------------------------------------------
+  /**
+   * How a high-impact release on the raid window is handled.
+   *   `ignore`       — news is not consulted.
+   *   `caution`      — advisories are raised; the setup can still be valid.
+   *   `stand-aside`  — a tier-one release (FOMC/CPI/NFP/Fed chair) on the
+   *                    window makes the day a no-trade.
+   */
+  newsPolicy: "ignore" | "caution" | "stand-aside";
+  /** Minutes either side of the key open counted as "on" the release. */
+  newsBlackoutMinutes: number;
+  /** Currencies whose releases can move the instrument being traded. */
+  newsCurrencies: string[];
+
   // ---- Filters ---------------------------------------------------------
   /** ET weekdays the model trades. 1 = Monday. */
   tradingDays: number[];
@@ -196,6 +210,10 @@ export const DEFAULT_CONFIG: ModelConfig = {
   biasSource: "sweep-only",
   enforceBias: false,
   requireSmt: false,
+
+  newsPolicy: "caution",
+  newsBlackoutMinutes: 5,
+  newsCurrencies: ["USD"],
 
   tradingDays: [1, 2, 3, 4, 5],
 };
@@ -369,6 +387,21 @@ export const RULE_NOTES: RuleNote[] = [
     id: "requireSmt",
     confidence: "sourced",
     note: "SMT divergence between NQ and ES at the swept level is a described confirmation, but needs a second data series.",
+  },
+  {
+    id: "newsPolicy",
+    confidence: "inferred",
+    note: "News handling is an addition, not something any reachable description of Powell's model covers. The reasoning is ICT's: a release is the vehicle that delivers the raid, not a direction signal — but a repricing event replaces the model's premise rather than fuelling it.",
+  },
+  {
+    id: "newsBlackoutMinutes",
+    confidence: "tunable",
+    note: "How wide a window around the key open counts as 'on the release'. Five minutes covers the candle that prints both sides before settling.",
+  },
+  {
+    id: "newsCurrencies",
+    confidence: "inferred",
+    note: "Only releases in the instrument's own currency are treated as relevant; USD for the index futures this model is written for.",
   },
   {
     id: "tradingDays",

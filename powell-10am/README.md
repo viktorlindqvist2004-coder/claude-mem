@@ -37,7 +37,8 @@ bun run src/cli.ts ablate   fixtures/sample-1m.csv          # what each rule ear
 bun run src/cli.ts learn    fixtures/sample-1m.csv          # search + walk-forward
 
 bun run src/cli.ts verdict  --template > today.json         # judge a chart reading
-bun run src/cli.ts verdict  today.json
+bun run src/cli.ts verdict  today.json --paste calendar.txt
+bun run src/cli.ts news     --paste calendar.txt            # what the calendar means
 ```
 
 That fixture is **synthetic** — it is generated with a fixed seed so the CLI
@@ -46,7 +47,7 @@ Point the CLI at real 1-minute data before concluding anything — see
 [`docs/09-data.md`](docs/09-data.md).
 
 ```bash
-bun test          # 93 tests
+bun test          # 144 tests
 bun run typecheck
 ```
 
@@ -55,10 +56,11 @@ bun run typecheck
 ## Layout
 
 ```
-docs/            The model in prose, foundations → execution → curriculum
+docs/            The model in prose, foundations → execution → news → curriculum
 src/spec.ts      The same model as executable config, with provenance per rule
 src/model.ts     The detector: accumulation → raid → displacement → entry → risk
 src/verdict.ts   Judges a chart reading through the same gates, for screenshots
+src/news.ts      ForexFactory calendar: phases, regime, and what each implies
 src/primitives/  fvg · swing · sweep · displacement · structure · liquidity · fib · smt · atr
 src/levels.ts    Key opens, NDOG/NWOG, prior day, session ranges
 src/trade.ts     Fill and exit simulation
@@ -90,6 +92,7 @@ moment nothing forces it to stay executable.
 | [10 — Curriculum](docs/10-curriculum.md) | How to actually learn it |
 | [11 — Glossary](docs/11-glossary.md) | Every term, defined once |
 | [12 — Reading a screenshot](docs/12-chart-reading.md) | Judging a TradingView chart against the model |
+| [13 — News](docs/13-news.md) | Factoring the ForexFactory calendar into the read |
 
 ---
 

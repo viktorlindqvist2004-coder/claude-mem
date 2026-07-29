@@ -50,6 +50,8 @@ nothing forces it to stay executable.
 11. **[11 — Glossary](11-glossary.md)** — every term, defined once.
 12. **[12 — Reading a screenshot](12-chart-reading.md)** — sending a TradingView
     chart and getting a gate-by-gate verdict back.
+13. **[13 — News](13-news.md)** — factoring the ForexFactory calendar into the
+    read, and why a release is a delivery mechanism rather than a signal.
 
 ## Running it
 
@@ -63,7 +65,8 @@ bun run src/cli.ts levels   data.csv --date 2026-03-10     # key levels in force
 bun run src/cli.ts backtest data.csv                       # statistics
 bun run src/cli.ts ablate   data.csv                       # what each rule earns
 bun run src/cli.ts learn    data.csv                       # search + walk-forward
-bun run src/cli.ts verdict  today.json                     # judge a chart reading
+bun run src/cli.ts verdict  today.json --paste calendar.txt # judge a chart reading
+bun run src/cli.ts news     --paste calendar.txt            # what the calendar means
 ```
 
 `scripts/make-fixture.ts` writes a synthetic dataset to `fixtures/sample-1m.csv`

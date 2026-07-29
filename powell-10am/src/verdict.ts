@@ -23,6 +23,7 @@ import type { Direction } from "./types.js";
 import type { ModelConfig } from "./spec.js";
 import { DEFAULT_CONFIG } from "./spec.js";
 import { fibPrice, oteZone, premiumDiscount, type DealingRange } from "./primitives/fib.js";
+import type { NewsContext } from "./news.js";
 
 // ---------------------------------------------------------------------
 // what the eye can extract
@@ -144,6 +145,8 @@ export interface Verdict {
   plan: TradePlan | null;
   /** What to supply to turn an `uncertain` into a firm answer. */
   missing: string[];
+  /** News context, when a calendar was supplied. */
+  news: NewsContext | null;
 }
 
 // ---------------------------------------------------------------------
@@ -157,11 +160,46 @@ export interface Verdict {
 export function evaluate(
   observation: ChartObservation,
   config: ModelConfig = DEFAULT_CONFIG,
+  news: NewsContext | null = null,
 ): Verdict {
   const gates: GateResult[] = [];
   const missing: string[] = [...(observation.uncertain ?? [])];
 
-  // ---- Gate 0: the axis ------------------------------------------------
+  // ---- Gate 0: the calendar -------------------------------------------
+  //
+  // First, because it colours how much the later gates can be trusted. A raid
+  // delivered by a release is still a raid; a raid that is actually the market
+  // repricing is not, and no amount of chart reading separates them.
+  if (config.newsPolicy !== "ignore") {
+    if (news === null) {
+      gates.push({
+        id: "news",
+        name: "Calendar checked",
+        status: "unknown",
+        evidence: "no economic calendar was supplied",
+        rationale:
+          "10:00 ET is a common US release slot. An unchecked calendar is a real risk, not a neutral default.",
+      });
+      missing.push("the ForexFactory calendar for this date (paste it, or send a screenshot)");
+    } else {
+      const blocking = news.advisories.filter((advisory) => advisory.severity === "block");
+      gates.push({
+        id: "news",
+        name: "Calendar clear enough to trade",
+        status: blocking.length > 0 ? "fail" : "pass",
+        evidence:
+          news.regime === "clear"
+            ? "no high-impact releases touch the model's windows"
+            : news.regime === "elevated"
+              ? `elevated: ${describeRelevant(news)}`
+              : `blackout: ${describeRelevant(news)}`,
+        rationale:
+          "A release is the vehicle that delivers the manipulation leg, not a direction signal — but a repricing event replaces the model's premise instead of fuelling it.",
+      });
+    }
+  }
+
+  // ---- Gate 1: the axis ------------------------------------------------
   const hasAxis = observation.keyOpenPrice !== null;
   gates.push({
     id: "key-open",
@@ -203,7 +241,7 @@ export function evaluate(
       rationale:
         "The model has no direction until one side is taken. Without a raid there is nothing to trade away from.",
     });
-    return assemble(gates, null, missing, observation, config);
+    return assemble(gates, null, missing, observation, config, news);
   }
 
   const penetration = sweep.side === "high" ? sweep.extreme - sweep.level : sweep.level - sweep.extreme;
@@ -243,7 +281,7 @@ export function evaluate(
   const direction: Direction = sweep.side === "low" ? "long" : "short";
 
   if (sweep.closedBackInside === false) {
-    return assemble(gates, null, missing, observation, config);
+    return assemble(gates, null, missing, observation, config, news);
   }
 
   // ---- Gate 3: distribution -------------------------------------------
@@ -257,7 +295,7 @@ export function evaluate(
       rationale:
         "The raid alone is not a signal. Displacement is the evidence that the reversal is real rather than a drift.",
     });
-    return assemble(gates, null, missing, observation, config, direction);
+    return assemble(gates, null, missing, observation, config, news, direction);
   }
 
   const directionOk = displacement.direction === direction;
@@ -355,7 +393,7 @@ export function evaluate(
       "This filter removes the deep-raid, close-draw days, which are systematically the poor instances.",
   });
 
-  return assemble(gates, plan, missing, observation, config, direction);
+  return assemble(gates, plan, missing, observation, config, news, direction);
 }
 
 // ---------------------------------------------------------------------
@@ -533,10 +571,14 @@ function assemble(
   missing: string[],
   observation: ChartObservation,
   config: ModelConfig,
+  news: NewsContext | null,
   direction?: Direction,
 ): Verdict {
   const failed = gates.filter((gate) => gate.status === "fail");
-  const unknown = gates.filter((gate) => gate.status === "unknown");
+  // An unchecked calendar qualifies the answer rather than blocking it. The
+  // structural read is complete either way, and downgrading every chart-only
+  // verdict to "uncertain" would make the common case useless.
+  const unknown = gates.filter((gate) => gate.status === "unknown" && gate.id !== "news");
   const pending = gates.filter((gate) => gate.status === "pending");
 
   const reasoning: string[] = [];
@@ -590,6 +632,11 @@ function assemble(
       action = plan
         ? `Valid ${plan.direction}. Work a limit at ${fmt(plan.entryPrice)} (${plan.entryLabel}), stop ${fmt(plan.stopPrice)}, target ${fmt(plan.targetPrice)} (${plan.targetLabel}) — ${plan.plannedR.toFixed(2)}R.`
         : "Valid setup.";
+      // A structurally valid setup delivered by a release is still valid, but
+      // saying so without the qualifier would be the wrong headline.
+      if (news?.regime === "blackout") {
+        action += " Structurally valid, but it is a news-driven raid — size accordingly and wait for the release candle to close before acting.";
+      }
       reasoning.push(
         `Every gate passed: the ${observation.sweep?.side === "low" ? "lows" : "highs"} were raided and rejected, and price displaced back through the 10:00 open leaving an imbalance to enter on.`,
       );
@@ -605,6 +652,20 @@ function assemble(
     }
   }
 
+  // News advisories go last so the chart reasoning stands on its own first,
+  // then gets qualified. A blocking advisory has already failed the gate above,
+  // so this only adds the explanation.
+  if (news) {
+    for (const advisory of news.advisories) {
+      reasoning.push(advisory.severity === "note" ? advisory.message : `⚠ ${advisory.message}`);
+    }
+  } else if (config.newsPolicy !== "ignore" && status !== "invalid") {
+    action += " Calendar not checked — confirm before acting.";
+    reasoning.push(
+      "⚠ No economic calendar was supplied. 10:00 ET is a common US release slot, and a raid delivered by a release needs the release candle to close before the rejection test means anything. Send the ForexFactory calendar for this date if it matters.",
+    );
+  }
+
   return {
     status,
     action,
@@ -612,7 +673,20 @@ function assemble(
     gates,
     plan,
     missing: [...new Set(missing)],
+    news,
   };
+}
+
+/** One line naming the releases that matter, for the gate's evidence field. */
+function describeRelevant(news: NewsContext): string {
+  const notable = news.relevant.filter(
+    (event) => event.impact === "high" || event.impact === "holiday",
+  );
+  if (notable.length === 0) return "no relevant high-impact releases";
+  return notable
+    .slice(0, 4)
+    .map((event) => `${event.timeEt ?? "all day"} ${event.title}`)
+    .join(", ");
 }
 
 function waitingFor(gateId: string, direction?: Direction): string {

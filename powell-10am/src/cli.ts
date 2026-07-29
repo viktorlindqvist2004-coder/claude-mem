@@ -8,7 +8,8 @@
  *   bun run src/cli.ts backtest  <csv> [--correlated es.csv] [--cost 0.05]
  *   bun run src/cli.ts learn     <csv> [--folds 4]
  *   bun run src/cli.ts ablate    <csv>
- *   bun run src/cli.ts verdict   <observation.json>   # judge a chart reading
+ *   bun run src/cli.ts verdict   <observation.json> [--paste calendar.txt]
+ *   bun run src/cli.ts news      --paste calendar.txt   # what the calendar means
  *
  * Every command that reads market data takes a CSV with a header row naming
  * time/open/high/low/close columns. See `docs/09-data.md`.
@@ -24,11 +25,19 @@ import {
   renderAblation,
   renderCandidates,
   renderSpec,
+  renderNews,
   renderStats,
   renderVerdict,
   renderWalkForward,
 } from "./report.js";
 import { evaluate, type ChartObservation } from "./verdict.js";
+import {
+  buildNewsContext,
+  fetchForexFactoryWeek,
+  parseCalendarText,
+  parseForexFactoryJson,
+  type NewsContext,
+} from "./news.js";
 import { buildLevels } from "./levels.js";
 import { DEFAULT_CONFIG, makeConfig, type ModelConfig } from "./spec.js";
 import { groupByEtDate } from "./time.js";
@@ -161,7 +170,18 @@ async function main(): Promise<number> {
         return 1;
       }
       const observation = (await Bun.file(path).json()) as ChartObservation;
-      console.log(renderVerdict(evaluate(observation, config), observation));
+      const news = await loadNews(flags, config);
+      console.log(renderVerdict(evaluate(observation, config, news), observation));
+      return 0;
+    }
+
+    case "news": {
+      const news = await loadNews(flags, config, { fetchWhenAbsent: true });
+      if (!news) {
+        console.error("Supply --calendar <file>, --paste <file>, or allow --fetch.");
+        return 1;
+      }
+      console.log(renderNews(news));
       return 0;
     }
 
@@ -189,9 +209,49 @@ function usage(): string {
     "  learn     <csv> [--folds N]   grid search plus walk-forward validation",
     "  ablate    <csv>               measure what each rule contributes",
     "  verdict   <json>              judge a chart reading (--template for a blank one)",
+    "  news                          read the calendar (--calendar f | --paste f | --fetch)",
     "",
     "  Config overrides: --entryMode ote-sweet --targetMode std-dev --minPlannedR 3 ...",
   ].join("\n");
+}
+
+/**
+ * Resolve a calendar from whichever source is available.
+ *
+ * Order matters: an explicitly supplied file always beats the network, because
+ * the feed is frequently unreachable and a silent fall-through to "no news" is
+ * exactly the failure this layer exists to prevent.
+ *
+ *   --calendar <file>  ForexFactory JSON (the weekly feed, saved locally)
+ *   --paste    <file>  calendar rows copied as text, or read off a screenshot
+ *   --fetch            try the live feed
+ */
+async function loadNews(
+  flags: Record<string, string | boolean>,
+  config: ModelConfig,
+  options: { fetchWhenAbsent?: boolean } = {},
+): Promise<NewsContext | null> {
+  const date = typeof flags.date === "string" ? flags.date : undefined;
+
+  if (typeof flags.calendar === "string") {
+    const raw = await Bun.file(flags.calendar).json();
+    return buildNewsContext(parseForexFactoryJson(raw, date), config);
+  }
+
+  if (typeof flags.paste === "string") {
+    const text = await Bun.file(flags.paste).text();
+    return buildNewsContext(parseCalendarText(text), config);
+  }
+
+  if (flags.fetch === true || options.fetchWhenAbsent) {
+    const { events, error } = await fetchForexFactoryWeek();
+    const filtered = date
+      ? events.filter((event) => event.timeEt !== null || event.impact === "holiday")
+      : events;
+    return buildNewsContext(filtered, config, error ? { unavailable: error } : {});
+  }
+
+  return null;
 }
 
 async function requireCsv(path: string | undefined): Promise<Candle[]> {
@@ -220,9 +280,24 @@ function configFromFlags(flags: Record<string, string | boolean>): ModelConfig {
   for (const [key, raw] of Object.entries(flags)) {
     if (!(key in DEFAULT_CONFIG)) continue;
     const current = (DEFAULT_CONFIG as unknown as Record<string, unknown>)[key];
-    if (typeof current === "number") overrides[key] = Number(raw);
-    else if (typeof current === "boolean") overrides[key] = raw === true || raw === "true";
-    else overrides[key] = raw;
+
+    if (typeof current === "number") {
+      overrides[key] = Number(raw);
+    } else if (typeof current === "boolean") {
+      overrides[key] = raw === true || raw === "true";
+    } else if (Array.isArray(current)) {
+      // Comma-separated, so `--newsCurrencies USD,EUR` stays an array rather
+      // than becoming a string that silently breaks every `.includes` on it.
+      const items = String(raw).split(",").map((item) => item.trim()).filter(Boolean);
+      overrides[key] = current.every((item) => typeof item === "number")
+        ? items.map(Number)
+        : items;
+    } else if (typeof current === "object" && current !== null) {
+      // Nested objects (contextOpens) have no sensible flag form; ignore.
+      continue;
+    } else {
+      overrides[key] = raw;
+    }
   }
   return makeConfig(overrides as Partial<ModelConfig>);
 }

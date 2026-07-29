@@ -11,6 +11,7 @@ import type { Setup } from "./model.js";
 import type { Stats } from "./backtest.js";
 import type { Ablation, Candidate, WalkForwardResult } from "./learn.js";
 import type { ChartObservation, Verdict } from "./verdict.js";
+import type { NewsContext } from "./news.js";
 import { RULE_NOTES, type ModelConfig } from "./spec.js";
 import { toEt } from "./time.js";
 
@@ -171,11 +172,68 @@ export function renderVerdict(verdict: Verdict, observation?: ChartObservation):
     lines.push(`        ${gate.evidence}`);
   }
 
+  if (verdict.news) {
+    lines.push(``);
+    lines.push(`  News  (${verdict.news.regime})`);
+    const notable = verdict.news.relevant.filter(
+      (event) => event.impact === "high" || event.impact === "holiday",
+    );
+    if (notable.length === 0) {
+      lines.push(`    nothing high-impact touches the model's windows`);
+    } else {
+      for (const event of notable) {
+        lines.push(
+          `    ${(event.timeEt ?? "all day").padEnd(7)} ${event.currency}  ${event.title}` +
+            `  [${event.phase}]${event.impactInferred ? " (impact inferred)" : ""}`,
+        );
+      }
+    }
+  }
+
   if (verdict.missing.length > 0) {
     lines.push(``);
     lines.push(`  To decide this firmly, supply:`);
     for (const item of verdict.missing) {
       lines.push(`    · ${item}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/** Standalone calendar reading, for `cli.ts news`. */
+export function renderNews(news: NewsContext): string {
+  const lines = [`── Calendar · ${news.regime} ${"─".repeat(30)}`];
+
+  if (news.unavailable) {
+    lines.push(`  ⚠ ${news.unavailable}`);
+  }
+
+  const notable = news.relevant.filter(
+    (event) => event.impact === "high" || event.impact === "holiday",
+  );
+  lines.push(``);
+  if (notable.length === 0) {
+    lines.push(`  No high-impact releases in the model's currencies today.`);
+  } else {
+    for (const event of notable) {
+      lines.push(
+        `  ${(event.timeEt ?? "all day").padEnd(7)} ${event.currency}  ${event.title.padEnd(38)} ${event.phase}`,
+      );
+      if (event.actual || event.forecast) {
+        lines.push(
+          `          actual ${event.actual ?? "—"}   forecast ${event.forecast ?? "—"}   previous ${event.previous ?? "—"}`,
+        );
+      }
+    }
+  }
+
+  if (news.advisories.length > 0) {
+    lines.push(``);
+    lines.push(`  What it means for the 10am model`);
+    for (const advisory of news.advisories) {
+      const mark = { note: "·", warn: "⚠", block: "✗" }[advisory.severity];
+      lines.push(wrap(`${mark} ${advisory.message}`, "    "));
     }
   }
 

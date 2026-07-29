@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv">
+<html lang="sv" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -18,9 +18,9 @@
   --pine:#142a4a;--pine-deep:#0a1528;--pine-mid:#1c3560;
   --gold:#e3a72e;--gold-soft:#f0c860;--gold-deep:#c78a17;
   --lake:#3c6e8f;--lake-soft:#79a6c1;
-  --bg:var(--paper);--bg-elev:#f4f5ef;--bg-sunk:var(--paper-2);
-  --text:var(--ink);--text-dim:var(--ink-soft);--text-faint:var(--ink-faint);
-  --border:var(--line);--accent:var(--gold);
+  --bg:#0a1528;--bg-elev:#111e38;--bg-sunk:#070f1e;
+  --text:#e5eaf5;--text-dim:#a0aec4;--text-faint:#6b7d99;
+  --border:rgba(229,234,245,.13);--border-strong:rgba(229,234,245,.24);--accent:#f0be4a;
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,ui-serif,"Times New Roman",serif;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
   --mono:"SF Mono",ui-monospace,"Cascadia Code","Fira Code",Menlo,Consolas,monospace;
@@ -42,7 +42,7 @@ a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 
 /* Header */
-.header{position:sticky;top:0;z-index:100;background:rgba(232,236,242,.85);backdrop-filter:blur(14px) saturate(1.6);border-bottom:1px solid var(--border);padding:.8rem 2rem}
+.header{position:sticky;top:0;z-index:100;background:rgba(10,21,40,.85);backdrop-filter:blur(14px) saturate(1.6);border-bottom:1px solid var(--border);padding:.8rem 2rem}
 .header__inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:.7rem;font-family:var(--serif);font-weight:600;font-size:1.18rem}
 .brand .brand-mark{width:42px;height:42px;flex:none;border-radius:50%;background:var(--pine);padding:3px;box-sizing:border-box}
@@ -60,17 +60,17 @@ img{max-width:100%;display:block}
 /* Ort grid */
 .orter{max-width:1200px;margin:0 auto;padding:clamp(3rem,6vw,5rem) 2rem}
 .ort-card{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-lg);padding:clamp(1.5rem,3vw,2.5rem);margin-bottom:2rem;transition:box-shadow .3s var(--ease)}
-.ort-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.06)}
+.ort-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.35)}
 .ort-card__header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid var(--gold)}
 .ort-card__icon{width:48px;height:48px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .ort-card__icon svg{width:24px;height:24px}
-.ort-card__name{font-family:var(--serif);font-size:var(--step-2);font-weight:700;color:var(--pine)}
+.ort-card__name{font-family:var(--serif);font-size:var(--step-2);font-weight:700;color:var(--text)}
 .ort-card__subtitle{font-size:var(--step--1);color:var(--text-dim);margin-top:.15rem}
 .ort-card__list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem}
 .ort-card__list li{display:flex;align-items:flex-start;gap:.7rem;padding:.8rem 1rem;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);font-size:var(--step--1);line-height:1.5;transition:border-color .25s}
 .ort-card__list li:hover{border-color:var(--gold)}
 .ort-card__list li svg{width:18px;height:18px;flex:none;color:var(--gold);margin-top:2px}
-.ort-card__list li.strong-stance{border-color:var(--gold-deep);background:rgba(227,167,46,.06);font-weight:600;color:var(--pine)}
+.ort-card__list li.strong-stance{border-color:var(--gold-deep);background:rgba(227,167,46,.1);font-weight:600;color:var(--gold-soft)}
 
 /* Footer */
 .footer{background:var(--pine-deep);color:var(--band-text);text-align:center;padding:2.5rem 2rem}

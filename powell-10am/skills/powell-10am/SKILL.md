@@ -49,6 +49,7 @@ The two distinctions that matter most, and that users most often have wrong:
 Run from `powell-10am/`:
 
 ```bash
+bun run src/cli.ts journal                              # the running record — read this first
 bun run src/cli.ts spec                                 # rules + provenance markers
 bun run src/cli.ts explain  <csv> [--date YYYY-MM-DD]   # narrate the model's read
 bun run src/cli.ts levels   <csv> --date YYYY-MM-DD     # key levels in force

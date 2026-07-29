@@ -12,6 +12,7 @@ import type { Stats } from "./backtest.js";
 import type { Ablation, Candidate, WalkForwardResult } from "./learn.js";
 import type { ChartObservation, Verdict } from "./verdict.js";
 import type { NewsContext } from "./news.js";
+import type { JournalEntry, JournalStats } from "./journal.js";
 import { RULE_NOTES, type ModelConfig } from "./spec.js";
 import { toEt } from "./time.js";
 
@@ -255,6 +256,53 @@ function wrap(text: string, indent: string, width = 76): string {
     }
   }
   if (current.trim().length > 0) lines.push(current);
+  return lines.join("\n");
+}
+
+/**
+ * The journal, with the denominator and the caveat impossible to miss.
+ *
+ * Ordered sample-size-first on purpose: a journal is exactly where a five-day
+ * run gets read as an edge.
+ */
+export function renderJournal(entries: JournalEntry[], stats: JournalStats): string {
+  const lines = [`── Journal ${"─".repeat(39)}`];
+
+  lines.push(``);
+  lines.push(wrap(stats.confidence, "  "));
+  lines.push(``);
+  lines.push(`  Days reviewed       ${stats.daysReviewed}`);
+  lines.push(`  Valid setups        ${stats.setups}  (${(stats.setupRate * 100).toFixed(1)}% of days)`);
+  lines.push(`  Trades taken        ${stats.taken}   ${stats.wins}W / ${stats.losses}L / ${stats.scratches}S`);
+  lines.push(`  Total               ${signed(stats.totalR)}R`);
+  lines.push(`  Expectancy          ${signed(stats.expectancy)}R per trade`);
+
+  if (stats.rejections.length > 0) {
+    lines.push(``);
+    lines.push(`  Declined by gate:`);
+    for (const rejection of stats.rejections) {
+      lines.push(`    ${String(rejection.count).padStart(3)}  ${rejection.gate}`);
+    }
+  }
+
+  lines.push(``);
+  lines.push(`  Reading source:`);
+  for (const entry of stats.sourceMix) {
+    const note = entry.source === "screenshot" ? "  ← axis-read, approximate" : "";
+    lines.push(`    ${String(entry.count).padStart(3)}  ${entry.source}${note}`);
+  }
+
+  lines.push(``);
+  lines.push(`  ${"date".padEnd(12)}${"verdict".padEnd(11)}${"R".padStart(7)}   why`);
+  for (const entry of entries) {
+    const mark = { valid: "✓", invalid: "✗", forming: "◷", uncertain: "?" }[entry.status];
+    const r = entry.outcome?.r;
+    lines.push(
+      `  ${entry.date.padEnd(12)}${(mark + " " + entry.status).padEnd(11)}` +
+        `${(r === undefined ? "—" : signed(r)).padStart(7)}   ${entry.failedGate ?? entry.outcome?.result ?? ""}`,
+    );
+  }
+
   return lines.join("\n");
 }
 

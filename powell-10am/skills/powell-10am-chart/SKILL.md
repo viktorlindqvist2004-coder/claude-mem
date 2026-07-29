@@ -14,6 +14,19 @@ Read `powell-10am/docs/12-chart-reading.md` for the full protocol.
 
 ## Procedure
 
+### 0. Read the journal FIRST — this is not optional
+
+```bash
+cd powell-10am
+bun run src/cli.ts journal          # the running record and its stats
+cat journal/OBSERVATIONS.md         # candidate improvements and their status
+```
+
+You have no memory of previous sessions. The journal is the only thing that
+carries over, so a session that skips it repeats work already done and re-raises
+observations already tested. Check in particular whether the day in front of you
+resembles a pattern already recorded.
+
 ### 1. Check the chart is usable before reading anything
 
 - **Is the chart in New York time?** TradingView shows the timezone at the
@@ -95,6 +108,33 @@ Keep the engine's wording for the gates; it is precise on purpose.
 Always state the reading uncertainty: prices read off an axis are approximate,
 so an R figure is "about 3R", not 3.00R. If the verdict is `UNCERTAIN`, the
 answer is the list of what to send — not a hedged guess.
+
+### 6. Append to the journal — also not optional
+
+Every day reviewed gets a line, whether it traded or not. The no-trades are the
+denominator, and without them the record flatters the model.
+
+```bash
+cat > /tmp/entry.json <<'JSON'
+{ "date": "2026-07-24", "instrument": "NAS100", "status": "valid",
+  "keyOpen": 28180, "range": { "high": 28460, "low": 28170 },
+  "plan": { "direction": "long", "entry": 28215, "stop": 28142.2,
+            "target": 28459, "plannedR": 3.35 },
+  "source": "screenshot", "reviewedAt": "2026-07-29T23:00:00Z",
+  "notes": ["..."] }
+JSON
+bun run src/cli.ts journal --add /tmp/entry.json
+```
+
+Set `failedGate` and `reason` on a rejection. Set `source` honestly —
+`screenshot` means prices were read off an axis, `hover` means they came from the
+OHLC readout, and the stats report the mix because it bounds what the record is
+worth.
+
+If the review surfaced something that might improve the model, add it to
+`journal/OBSERVATIONS.md` with its **evidence** and status `open`. An observation
+is not a rule change: adopting filters one loss at a time is curve fitting with
+extra steps. It becomes `adopted` only after a backtest and a walk-forward.
 
 ## The four verdicts
 

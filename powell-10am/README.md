@@ -39,6 +39,7 @@ bun run src/cli.ts learn    fixtures/sample-1m.csv          # search + walk-forw
 bun run src/cli.ts verdict  --template > today.json         # judge a chart reading
 bun run src/cli.ts verdict  today.json --paste calendar.txt
 bun run src/cli.ts news     --paste calendar.txt            # what the calendar means
+bun run src/cli.ts journal                                  # the running record
 ```
 
 That fixture is **synthetic** — it is generated with a fixed seed so the CLI
@@ -47,7 +48,7 @@ Point the CLI at real 1-minute data before concluding anything — see
 [`docs/09-data.md`](docs/09-data.md).
 
 ```bash
-bun test          # 144 tests
+bun test          # 157 tests
 bun run typecheck
 ```
 
@@ -61,6 +62,8 @@ src/spec.ts      The same model as executable config, with provenance per rule
 src/model.ts     The detector: accumulation → raid → displacement → entry → risk
 src/verdict.ts   Judges a chart reading through the same gates, for screenshots
 src/news.ts      ForexFactory calendar: phases, regime, and what each implies
+src/journal.ts   The running record — the only thing that persists between sessions
+journal/         entries.jsonl + OBSERVATIONS.md
 src/primitives/  fvg · swing · sweep · displacement · structure · liquidity · fib · smt · atr
 src/levels.ts    Key opens, NDOG/NWOG, prior day, session ranges
 src/trade.ts     Fill and exit simulation

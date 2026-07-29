@@ -25,12 +25,19 @@ import {
   renderAblation,
   renderCandidates,
   renderSpec,
+  renderJournal,
   renderNews,
   renderStats,
   renderVerdict,
   renderWalkForward,
 } from "./report.js";
 import { evaluate, type ChartObservation } from "./verdict.js";
+import {
+  parseJournal,
+  serialiseEntry,
+  summariseJournal,
+  type JournalEntry,
+} from "./journal.js";
 import {
   buildNewsContext,
   fetchForexFactoryWeek,
@@ -185,6 +192,27 @@ async function main(): Promise<number> {
       return 0;
     }
 
+    case "journal": {
+      // The project's memory. A review session reads this first and appends to
+      // it last; nothing else carries over between sessions.
+      const path = (flags.file as string) ?? "journal/entries.jsonl";
+      const file = Bun.file(path);
+      const text = (await file.exists()) ? await file.text() : "";
+      const entries = parseJournal(text);
+
+      if (typeof flags.add === "string") {
+        const entry = (await Bun.file(flags.add).json()) as JournalEntry;
+        // Append-only: an outcome must never be able to rewrite the read that
+        // preceded it.
+        await Bun.write(path, `${text}${text.endsWith("\n") || text === "" ? "" : "\n"}${serialiseEntry(entry)}\n`);
+        console.log(`Appended ${entry.date} (${entry.status}) to ${path}`);
+        return 0;
+      }
+
+      console.log(renderJournal(entries, summariseJournal(entries)));
+      return 0;
+    }
+
     case "ablate": {
       const candles = await requireCsv(positional[0]);
       const { baseline, ablations } = ablate(candles, config);
@@ -210,6 +238,7 @@ function usage(): string {
     "  ablate    <csv>               measure what each rule contributes",
     "  verdict   <json>              judge a chart reading (--template for a blank one)",
     "  news                          read the calendar (--calendar f | --paste f | --fetch)",
+    "  journal   [--add entry.json]  the running record + running stats",
     "",
     "  Config overrides: --entryMode ote-sweet --targetMode std-dev --minPlannedR 3 ...",
   ].join("\n");

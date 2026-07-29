@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10am Key Open</title>
+<meta name="description" content="Judge a 10am Key Open setup against the encoded rules: valid or not, and why.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#08090A">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308090A'/%3E%3Crect x='5' y='15' width='22' height='2' fill='%23C8352B'/%3E%3C/svg%3E">
+<style>
+  /* Minimal reset — the artifact host provides one, a static deploy does not. */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; }
+  img, canvas { display: block; max-width: 100%; }
+  button, input { font: inherit; color: inherit; }
+</style>
+</head>
+<body>
+<style>
+  :root {
+    --void:      #08090A;
+    --carbon:    #0F1113;
+    --graphite:  #16191C;
+    --raised:    #1C2024;
+    --hairline:  #262A2F;
+    --hairline-2:#343A40;
+
+    --chalk:     #E9EBED;
+    --grey:      #949CA5;
+    --grey-dim:  #6A727B;
+
+    --rosso:     #C8352B;
+    --rosso-dim: #7E2620;
+
+    --jade:      #4E9C86;
+    --flare:     #E0604F;
+    --slate:     #737D89;
+    --amber:     #B08B4A;
+
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* Committed single dark world — the toggle keeps the same instrument look. */
+  :root[data-theme="light"], :root[data-theme="dark"] { color-scheme: dark; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--void);
+    color: var(--chalk);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  #ambient { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .vignette {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(115% 75% at 50% 0%, transparent 0%, rgba(8,9,10,0.6) 68%, rgba(8,9,10,0.94) 100%);
+  }
+
+  .shell {
+    position: relative; z-index: 2;
+    max-width: 74rem;
+    margin: 0 auto;
+    padding: clamp(1.75rem, 4vw, 3rem) clamp(1.1rem, 3vw, 2.5rem) 5rem;
+    display: flex; flex-direction: column;
+    gap: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  /* ── header ─────────────────────────────────────────────────── */
+  .top { display: flex; align-items: baseline; gap: 0.85rem; }
+  .top .name {
+    font-family: var(--mono); font-size: 0.75rem;
+    letter-spacing: 0.22em; text-transform: uppercase;
+  }
+  .top .rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--rosso), transparent); }
+  .top .hint { font-family: var(--mono); font-size: 0.6875rem; color: var(--grey-dim); letter-spacing: 0.08em; }
+
+  /* ── layout ─────────────────────────────────────────────────── */
+  .grid { display: grid; gap: 1.25rem; }
+  @media (min-width: 62rem) { .grid { grid-template-columns: 1.15fr 1fr; align-items: start; } }
+
+  .col { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+
+  /* ── drop zone ──────────────────────────────────────────────── */
+  .drop {
+    position: relative;
+    border: 1px dashed var(--hairline-2);
+    background: var(--carbon);
+    min-height: 15rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: border-color 120ms, background 120ms;
+  }
+  .drop:hover, .drop.over { border-color: var(--rosso); background: var(--graphite); }
+  .drop.filled { border-style: solid; border-color: var(--hairline); cursor: default; min-height: 0; }
+
+  .drop-inner { text-align: center; padding: 2.5rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .drop-inner .big { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; }
+  .drop-inner .small { font-family: var(--mono); font-size: 0.6875rem; color: var(--grey-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* Kept out of flow until there is an image: as a flex child an empty
+     <img> still claims space and pushes the prompt off centre. */
+  .drop img { display: none; }
+  .drop.filled img { display: block; width: 100%; height: auto; }
+  .drop.filled .drop-inner { display: none; }
+
+  .clear {
+    position: absolute; top: 0.55rem; right: 0.55rem;
+    font-family: var(--mono); font-size: 0.625rem; letter-spacing: 0.12em; text-transform: uppercase;
+    background: rgba(8,9,10,0.82); color: var(--grey);
+    border: 1px solid var(--hairline-2); padding: 0.3rem 0.55rem;
+    cursor: pointer; display: none;
+  }
+  .drop.filled .clear { display: block; }
+  .clear:hover { color: var(--chalk); border-color: var(--rosso); }
+
+  /* ── panels ─────────────────────────────────────────────────── */
+  .panel { border: 1px solid var(--hairline); background: var(--carbon); }
+  .panel-bar {
+    padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--hairline); background: var(--graphite);
+    font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--grey-dim);
+  }
+  .panel-body { padding: 1rem 0.9rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ── inputs ─────────────────────────────────────────────────── */
+  .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+  @media (min-width: 30rem) { .fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .f { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .f label {
+    font-family: var(--mono); font-size: 0.625rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--grey-dim);
+  }
+  .f input {
+    font-family: var(--mono); font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+    background: var(--raised); color: var(--chalk);
+    border: 1px solid var(--hairline); padding: 0.45rem 0.55rem;
+    width: 100%; min-width: 0;
+  }
+  .f input:focus { outline: none; border-color: var(--rosso); }
+  .f input::placeholder { color: #4A5057; }
+  .f.opt label::after { content: " · opt"; color: var(--rosso-dim); }
+
+  .toggles { display: flex; flex-direction: column; gap: 0.6rem; }
+  .tg { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+  .tg .q { font-size: 0.875rem; color: var(--grey); }
+  .seg { display: flex; border: 1px solid var(--hairline); flex: none; }
+  .seg button {
+    font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--raised); color: var(--grey-dim);
+    border: 0; border-right: 1px solid var(--hairline);
+    padding: 0.4rem 0.6rem; cursor: pointer;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { color: var(--chalk); }
+  .seg button[aria-pressed="true"] { background: var(--rosso); color: #fff; }
+
+  /* ── conclusion ─────────────────────────────────────────────── */
+  .verdict { border: 1px solid var(--hairline); background: var(--carbon); }
+  .verdict-head {
+    padding: 1.1rem 1rem; border-bottom: 1px solid var(--hairline);
+    display: flex; flex-direction: column; gap: 0.7rem;
+  }
+  .verdict-head.valid     { box-shadow: inset 0 2px 0 var(--jade); }
+  .verdict-head.invalid   { box-shadow: inset 0 2px 0 var(--flare); }
+  .verdict-head.forming   { box-shadow: inset 0 2px 0 var(--amber); }
+  .verdict-head.uncertain { box-shadow: inset 0 2px 0 var(--slate); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start;
+    font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+  .valid   .badge { color: var(--jade); }   .valid   .badge::before { background: var(--jade); }
+  .invalid .badge { color: var(--flare); }  .invalid .badge::before { background: var(--flare); }
+  .forming .badge { color: var(--amber); }  .forming .badge::before { background: var(--amber); }
+  .uncertain .badge { color: var(--slate); } .uncertain .badge::before { background: var(--slate); }
+
+  .action { font-size: 1rem; font-weight: 600; letter-spacing: -0.012em; line-height: 1.4; text-wrap: balance; }
+
+  .why { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.55rem; border-bottom: 1px solid var(--hairline); }
+  .why p { margin: 0; font-size: 0.875rem; color: var(--grey); max-width: 62ch; }
+  .why p.warn { color: var(--amber); }
+
+  .plan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--hairline); border-bottom: 1px solid var(--hairline); }
+  @media (min-width: 26rem) { .plan { grid-template-columns: repeat(4, 1fr); } }
+  .plan div { background: var(--carbon); padding: 0.8rem 0.9rem; display: flex; flex-direction: column; gap: 0.25rem; }
+  .plan .lab { font-family: var(--mono); font-size: 0.5625rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey-dim); }
+  .plan .fig { font-family: var(--mono); font-size: 1.0625rem; letter-spacing: -0.02em; color: var(--chalk); font-variant-numeric: tabular-nums; }
+  .plan .sub { font-size: 0.6875rem; color: var(--grey-dim); }
+
+  .gates { padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+  .gate { display: flex; gap: 0.6rem; align-items: baseline; font-size: 0.8125rem; }
+  .gate .m { font-family: var(--mono); flex: none; width: 0.9rem; }
+  .gate.pass .m { color: var(--jade); }
+  .gate.fail .m { color: var(--flare); }
+  .gate.unknown .m { color: var(--slate); }
+  .gate.pending .m { color: var(--amber); }
+  .gate .n { color: var(--grey); }
+  .gate.fail .n, .gate.pending .n { color: var(--chalk); }
+  .gate .e { color: var(--grey-dim); font-family: var(--mono); font-size: 0.75rem; }
+
+  /* `display: flex` / `grid` outrank the UA's [hidden] rule, so an empty
+     section would otherwise still draw its padding and border. */
+  .why[hidden], .plan[hidden] { display: none; }
+
+  .foot { font-size: 0.75rem; color: var(--grey-dim); max-width: 66ch; }
+  .foot b { color: var(--grey); font-weight: 500; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<canvas id="ambient" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="shell">
+
+  <div class="top">
+    <span class="name">10am Key Open</span>
+    <span class="rule"></span>
+    <span class="hint">paste · drop · click</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- ── left: chart + reading ──────────────────────────────── -->
+    <div class="col">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add a chart screenshot">
+        <button class="clear" id="clear" type="button">clear</button>
+        <img id="shot" alt="" hidden>
+        <div class="drop-inner">
+          <span class="big">Drop your chart here</span>
+          <span class="small">1m or 5m · New York time · 09:30 visible</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-bar">What the chart shows</div>
+        <div class="panel-body">
+          <div class="fields">
+            <div class="f">
+              <label for="keyOpen">10:00 open</label>
+              <input id="keyOpen" type="number" step="any" inputmode="decimal" placeholder="20102">
+            </div>
+            <div class="f">
+              <label for="rangeHigh">09:30–10:00 high</label>
+              <input id="rangeHigh" type="number" step="any" inputmode="decimal" placeholder="20124">
+            </div>
+            <div class="f">
+              <label for="rangeLow">09:30–10:00 low</label>
+              <input id="rangeLow" type="number" step="any" inputmode="decimal" placeholder="20080">
+            </div>
+            <div class="f">
+              <label for="raidExtreme">Raid extreme</label>
+              <input id="raidExtreme" type="number" step="any" inputmode="decimal" placeholder="20071.5">
+            </div>
+            <div class="f">
+              <label for="dispExtreme">Displacement extreme</label>
+              <input id="dispExtreme" type="number" step="any" inputmode="decimal" placeholder="20131">
+            </div>
+            <div class="f opt">
+              <label for="target">Target level</label>
+              <input id="target" type="number" step="any" inputmode="decimal" placeholder="20166">
+            </div>
+            <div class="f opt">
+              <label for="gapNear">Gap near edge</label>
+              <input id="gapNear" type="number" step="any" inputmode="decimal" placeholder="20094">
+            </div>
+            <div class="f opt">
+              <label for="gapFar">Gap far edge</label>
+              <input id="gapFar" type="number" step="any" inputmode="decimal" placeholder="20088.5">
+            </div>
+          </div>
+
+          <div class="toggles" id="toggles">
+            <div class="tg">
+              <span class="q">Which side was raided?</span>
+              <span class="seg" data-key="side">
+                <button type="button" data-val="low">Lows</button>
+                <button type="button" data-val="high">Highs</button>
+              </span>
+            </div>
+            <div class="tg">
+              <span class="q">Did the sweeping candle close back <em>inside</em>?</span>
+              <span class="seg" data-key="rejected">
+                <button type="button" data-val="yes">Yes</button>
+                <button type="button" data-val="no">No</button>
+                <button type="button" data-val="unsure">Unsure</button>
+              </span>
+            </div>
+            <div class="tg">
+              <span class="q">Did it close back through the 10:00 open?</span>
+              <span class="seg" data-key="reclaim">
+                <button type="button" data-val="yes">Yes</button>
+                <button type="button" data-val="no">No</button>
+                <button type="button" data-val="unsure">Unsure</button>
+              </span>
+            </div>
+            <div class="tg">
+              <span class="q">Did it leave a fair value gap?</span>
+              <span class="seg" data-key="gap">
+                <button type="button" data-val="yes">Yes</button>
+                <button type="button" data-val="no">No</button>
+                <button type="button" data-val="unsure">Unsure</button>
+              </span>
+            </div>
+            <div class="tg">
+              <span class="q">Was the move fast and bodied?</span>
+              <span class="seg" data-key="energy">
+                <button type="button" data-val="yes">Yes</button>
+                <button type="button" data-val="no">No</button>
+                <button type="button" data-val="unsure">Unsure</button>
+              </span>
+            </div>
+            <div class="tg">
+              <span class="q">High-impact news at 10:00?</span>
+              <span class="seg" data-key="news">
+                <button type="button" data-val="none">None</button>
+                <button type="button" data-val="high">Release</button>
+                <button type="button" data-val="tier1">FOMC/CPI/NFP</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── right: conclusion ──────────────────────────────────── -->
+    <div class="col">
+      <div class="verdict" id="verdict">
+        <div class="verdict-head forming" id="vhead">
+          <span class="badge" id="vbadge">Forming</span>
+          <span class="action" id="vaction">Add the 10:00 open and the 09:30–10:00 range to begin.</span>
+        </div>
+        <div class="why" id="vwhy"></div>
+        <div class="plan" id="vplan" hidden></div>
+        <div class="gates" id="vgates"></div>
+      </div>
+
+      <p class="foot">
+        <b>This page applies the rules; it cannot see your screenshot.</b>
+        The chart sits here so you can read it while you answer — the conclusion is
+        computed from the same six gates the backtest engine runs, so the same reading
+        always gives the same answer. For the image itself to be read, send it in chat.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ────────────────────────────────────────────────────────────────
+   A faithful port of src/verdict.ts — the same gates, in the same
+   order, with the same refusal to guess. Anything the reader marks
+   "unsure" comes back `unknown` rather than being assumed, because a
+   confident wrong verdict is the one output this must never produce.
+   ──────────────────────────────────────────────────────────────── */
+
+const MIN_PENETRATION = 0.02;   /* fraction of the 09:30–10:00 range */
+const MIN_PLANNED_R   = 2;
+const STOP_BUFFER     = 0.02;   /* fraction of the range, in place of ATR */
+const OTE_SWEET       = 0.705;
+const STD_DEV_TARGET  = -2;
+
+const state = { side: "low", rejected: null, reclaim: null, gap: null, energy: null, news: "none" };
+
+const num = (id) => {
+  const raw = document.getElementById(id).value.trim();
+  if (raw === "") return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+};
+
+const three = (v) => (v === "yes" ? true : v === "no" ? false : null);
+
+function fibPrice(from, to, ratio) { return to + (from - to) * ratio; }
+
+function evaluate() {
+  const gates = [];
+  const reasons = [];
+  const keyOpen = num("keyOpen");
+  const high = num("rangeHigh");
+  const low = num("rangeLow");
+  const raidExtreme = num("raidExtreme");
+  const dispExtreme = num("dispExtreme");
+  const target = num("target");
+  const gapNear = num("gapNear");
+  const gapFar = num("gapFar");
+
+  /* ── news, first, because it colours what follows ─────────── */
+  if (state.news !== "none") {
+    const tier1 = state.news === "tier1";
+    gates.push({
+      s: tier1 ? "fail" : "pass",
+      n: "Calendar clear enough to trade",
+      e: tier1 ? "tier-one release on the raid window" : "high-impact release on the raid window",
+    });
+    if (tier1) {
+      reasons.push({
+        warn: true,
+        t: "A tier-one release is a repricing event, not a liquidity event. The premise — that the move past the level exists to fill orders — does not hold when the market is discovering a new price.",
+      });
+    } else {
+      reasons.push({
+        warn: true,
+        t: "A release delivers the raid; it never picks the side. But the rejection test is unreliable inside the release candle, because the first minute prints both sides before settling — wait for it to close.",
+      });
+    }
+  }
+
+  /* ── the axis ─────────────────────────────────────────────── */
+  gates.push({
+    s: keyOpen === null ? "unknown" : "pass",
+    n: "10:00 key open identified",
+    e: keyOpen === null ? "not entered" : fmt(keyOpen),
+  });
+
+  /* ── accumulation ─────────────────────────────────────────── */
+  const hasRange = high !== null && low !== null && high > low;
+  const range = hasRange ? high - low : null;
+  gates.push({
+    s: hasRange ? "pass" : "unknown",
+    n: "09:30–10:00 range established",
+    e: hasRange ? fmt(low) + " – " + fmt(high) + "  (" + fmt(range) + " wide)" : "not entered",
+  });
+
+  /* ── manipulation ─────────────────────────────────────────── */
+  if (raidExtreme === null) {
+    gates.push({ s: "pending", n: "Liquidity raid", e: "no raid entered yet" });
+    return assemble(gates, reasons, null, "forming",
+      "Wait. Mark the 09:30–10:00 high and low and the 10:00 open, then wait for price to take one of them and reject.");
+  }
+
+  const level = state.side === "low" ? low : high;
+  const penetration = level === null ? null
+    : state.side === "high" ? raidExtreme - level : level - raidExtreme;
+  const required = range === null ? null : range * MIN_PENETRATION;
+
+  gates.push({
+    s: penetration === null || required === null ? "unknown"
+      : penetration >= required ? "pass" : "fail",
+    n: "Raid cleared the level meaningfully",
+    e: penetration === null || required === null
+      ? "needs the range to scale against"
+      : "cleared by " + fmt(penetration) + " — threshold " + fmt(required),
+  });
+
+  const rejected = three(state.rejected);
+  gates.push({
+    s: rejected === null ? "unknown" : rejected ? "pass" : "fail",
+    n: "Raid was rejected, not continued",
+    e: rejected === null ? "not answered"
+      : rejected ? "closed back inside — orders filled and price rejected"
+                 : "closed through the level — this is expansion, not a raid",
+  });
+
+  const direction = state.side === "low" ? "long" : "short";
+
+  if (rejected === false) {
+    reasons.push({
+      t: "This is the distinction the whole model rests on. Closing through the level means whoever fades it is on the wrong side.",
+    });
+    reasons.push({
+      warn: true,
+      t: "Treat it as a warning in the opposite direction rather than a missed opportunity — fading expansion is the most expensive mistake available in this model.",
+    });
+    return assemble(gates, reasons, null, "invalid", "No trade.");
+  }
+
+  /* ── distribution ─────────────────────────────────────────── */
+  if (dispExtreme === null) {
+    gates.push({
+      s: "pending",
+      n: "Displacement back through the key open",
+      e: "raid is in, displacement not entered",
+    });
+    return assemble(gates, reasons, null, "forming",
+      "Wait. Direction is already fixed — " + direction + ". Now wait for an energetic move that closes back through the 10:00 open and leaves a gap.");
+  }
+
+  const reclaim = three(state.reclaim);
+  gates.push({
+    s: reclaim === null ? "unknown" : reclaim ? "pass" : "fail",
+    n: "Closed back through the 10:00 open",
+    e: reclaim === null ? "not answered"
+      : reclaim ? "displacement closed through the key open price"
+                : "stalled without closing through the key open",
+  });
+
+  const gap = three(state.gap);
+  gates.push({
+    s: gap === null ? "unknown" : gap ? "pass" : "fail",
+    n: "Displacement left a fair value gap",
+    e: gap === null ? "not answered"
+      : gap ? (gapNear !== null && gapFar !== null ? "gap " + fmt(gapFar) + " – " + fmt(gapNear) : "gap visible, edges not entered")
+            : "no gap — the move overlapped its own candles",
+  });
+
+  const energy = three(state.energy);
+  gates.push({
+    s: energy === null ? "unknown" : energy ? "pass" : "fail",
+    n: "Displacement was energetic",
+    e: energy === null ? "not answered"
+      : energy ? "fast, bodied move" : "a slow crawl back over the line is not a reclaim",
+  });
+
+  /* ── the plan ─────────────────────────────────────────────── */
+  let plan = null;
+  if (hasRange) {
+    let entry, entryLabel;
+    if (gapNear !== null && gapFar !== null) {
+      entry = gapNear;
+      entryLabel = "FVG proximal";
+    } else {
+      entry = fibPrice(raidExtreme, dispExtreme, OTE_SWEET);
+      entryLabel = "OTE 70.5%";
+    }
+
+    const buffer = range * STOP_BUFFER;
+    const stop = direction === "long" ? raidExtreme - buffer : raidExtreme + buffer;
+    const risk = Math.abs(entry - stop);
+
+    if (risk > 0) {
+      let tgt, tgtLabel;
+      const correctSide = target !== null && (direction === "long" ? target > entry : target < entry);
+      if (correctSide) {
+        tgt = target;
+        tgtLabel = "level you marked";
+      } else {
+        tgt = fibPrice(raidExtreme, dispExtreme, STD_DEV_TARGET);
+        tgtLabel = "−2σ projection";
+      }
+      const plannedR = Math.abs(tgt - entry) / risk;
+      plan = { direction, entry, entryLabel, stop, target: tgt, targetLabel: tgtLabel, plannedR };
+    }
+  }
+
+  gates.push({
+    s: plan === null ? "unknown" : plan.plannedR >= MIN_PLANNED_R ? "pass" : "fail",
+    n: "Reward:risk clears the " + MIN_PLANNED_R + "R floor",
+    e: plan === null ? "needs the range and both extremes" : plan.plannedR.toFixed(2) + "R planned",
+  });
+
+  /* ── resolve ──────────────────────────────────────────────── */
+  const failed = gates.filter((g) => g.s === "fail");
+  const unknown = gates.filter((g) => g.s === "unknown");
+
+  if (failed.length > 0) {
+    const first = failed[0];
+    reasons.unshift({ t: first.n + " failed: " + first.e + "." });
+    if (first.n.indexOf("Reward:risk") === 0) {
+      reasons.push({ t: "Deep raid, close draw. Declining these is the filter doing its job, not a reason to lower the floor." });
+    }
+    return assemble(gates, reasons, plan, "invalid", "No trade.");
+  }
+
+  if (unknown.length > 0) {
+    return assemble(gates, reasons, plan, "uncertain",
+      "Cannot call it yet — " + unknown.length + (unknown.length === 1 ? " condition is" : " conditions are") + " still open.");
+  }
+
+  reasons.unshift({
+    t: "Every gate passed: the " + (state.side === "low" ? "lows" : "highs") +
+       " were raided and rejected, and price displaced back through the 10:00 open leaving an imbalance to enter on.",
+  });
+  reasons.push({
+    t: "The stop sits beyond the raid extreme because that price is the premise. If it trades through, the idea that the raid was a liquidity grab is false and there is nothing left to be in the trade for.",
+  });
+
+  let action = "Valid " + plan.direction + ". Limit at " + fmt(plan.entry) + " (" + plan.entryLabel +
+               "), stop " + fmt(plan.stop) + ", target " + fmt(plan.target) + " — " + plan.plannedR.toFixed(2) + "R.";
+  if (state.news === "high") action += " News-driven raid — wait for the release candle to close.";
+
+  return assemble(gates, reasons, plan, "valid", action);
+}
+
+function assemble(gates, reasons, plan, status, action) {
+  return { gates: gates, reasons: reasons, plan: plan, status: status, action: action };
+}
+
+function fmt(v) {
+  if (v === null || v === undefined) return "—";
+  return Math.abs(v) >= 100 ? v.toFixed(2) : v.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+/* ── render ───────────────────────────────────────────────────── */
+
+const MARK = { pass: "✓", fail: "✗", unknown: "?", pending: "◷" };
+const LABEL = { valid: "Valid", invalid: "Invalid", forming: "Forming", uncertain: "Uncertain" };
+
+function render() {
+  const v = evaluate();
+
+  const head = document.getElementById("vhead");
+  head.className = "verdict-head " + v.status;
+  document.getElementById("vbadge").textContent = LABEL[v.status];
+  document.getElementById("vaction").textContent = v.action;
+
+  const why = document.getElementById("vwhy");
+  why.textContent = "";
+  v.reasons.forEach(function (r) {
+    const p = document.createElement("p");
+    if (r.warn) p.className = "warn";
+    p.textContent = r.t;
+    why.appendChild(p);
+  });
+  why.hidden = v.reasons.length === 0;
+
+  const planEl = document.getElementById("vplan");
+  planEl.textContent = "";
+  if (v.plan) {
+    [
+      ["Entry", fmt(v.plan.entry), v.plan.entryLabel],
+      ["Stop", fmt(v.plan.stop), "beyond the raid"],
+      ["Target", fmt(v.plan.target), v.plan.targetLabel],
+      ["Planned", v.plan.plannedR.toFixed(2) + "R", v.plan.direction],
+    ].forEach(function (row) {
+      const cell = document.createElement("div");
+      const lab = document.createElement("span"); lab.className = "lab"; lab.textContent = row[0];
+      const fig = document.createElement("span"); fig.className = "fig"; fig.textContent = row[1];
+      const sub = document.createElement("span"); sub.className = "sub"; sub.textContent = row[2];
+      cell.append(lab, fig, sub);
+      planEl.appendChild(cell);
+    });
+  }
+  planEl.hidden = !v.plan;
+
+  const gatesEl = document.getElementById("vgates");
+  gatesEl.textContent = "";
+  v.gates.forEach(function (g) {
+    const row = document.createElement("div");
+    row.className = "gate " + g.s;
+    const m = document.createElement("span"); m.className = "m"; m.textContent = MARK[g.s];
+    const n = document.createElement("span"); n.className = "n"; n.textContent = g.n;
+    const e = document.createElement("span"); e.className = "e"; e.textContent = "— " + g.e;
+    row.append(m, n, e);
+    gatesEl.appendChild(row);
+  });
+}
+
+/* ── wiring ───────────────────────────────────────────────────── */
+
+document.querySelectorAll(".seg").forEach(function (seg) {
+  const key = seg.dataset.key;
+  seg.querySelectorAll("button").forEach(function (btn) {
+    btn.setAttribute("aria-pressed", String(state[key] === btn.dataset.val));
+    btn.addEventListener("click", function () {
+      state[key] = btn.dataset.val;
+      seg.querySelectorAll("button").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b === btn));
+      });
+      render();
+    });
+  });
+});
+
+document.querySelectorAll(".f input").forEach(function (input) {
+  input.addEventListener("input", render);
+});
+
+/* ── screenshot ───────────────────────────────────────────────── */
+
+const drop = document.getElementById("drop");
+const shot = document.getElementById("shot");
+const picker = document.createElement("input");
+picker.type = "file";
+picker.accept = "image/*";
+picker.style.display = "none";
+document.body.appendChild(picker);
+
+function show(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  const reader = new FileReader();
+  reader.onload = function () {
+    shot.src = String(reader.result);
+    shot.hidden = false;
+    drop.classList.add("filled");
+  };
+  reader.readAsDataURL(file);
+}
+
+drop.addEventListener("click", function (event) {
+  if (event.target.id === "clear") return;
+  if (!drop.classList.contains("filled")) picker.click();
+});
+drop.addEventListener("keydown", function (event) {
+  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); picker.click(); }
+});
+picker.addEventListener("change", function () { show(picker.files && picker.files[0]); });
+
+["dragenter", "dragover"].forEach(function (type) {
+  drop.addEventListener(type, function (e) { e.preventDefault(); drop.classList.add("over"); });
+});
+["dragleave", "drop"].forEach(function (type) {
+  drop.addEventListener(type, function (e) { e.preventDefault(); drop.classList.remove("over"); });
+});
+drop.addEventListener("drop", function (e) {
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (files && files.length) show(files[0]);
+});
+
+/* Pasting a screenshot is the natural gesture, so it works anywhere. */
+window.addEventListener("paste", function (e) {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith("image/")) { show(items[i].getAsFile()); break; }
+  }
+});
+
+document.getElementById("clear").addEventListener("click", function () {
+  shot.removeAttribute("src");
+  shot.hidden = true;
+  drop.classList.remove("filled");
+});
+
+render();
+
+/* ── ambient silhouettes ──────────────────────────────────────
+   Hand-drawn low mid-engine profiles: the page runs under a strict CSP
+   with no external hosts, and shipping real marque photography would be
+   someone else's copyrighted material. Very dark on near-black, so they
+   read as texture rather than illustration.
+   ──────────────────────────────────────────────────────────── */
+(function () {
+  const canvas = document.getElementById("ambient");
+  const ctx = canvas && canvas.getContext("2d");
+  if (!ctx) return;
+
+  function profile(c) {
+    c.beginPath();
+    c.moveTo(40, 250);
+    c.bezierCurveTo(70, 205, 120, 190, 190, 186);
+    c.bezierCurveTo(250, 183, 290, 196, 320, 210);
+    c.bezierCurveTo(360, 175, 405, 140, 470, 128);
+    c.bezierCurveTo(545, 116, 610, 124, 660, 150);
+    c.bezierCurveTo(710, 176, 742, 196, 786, 205);
+    c.bezierCurveTo(846, 196, 900, 200, 940, 216);
+    c.bezierCurveTo(962, 226, 968, 242, 962, 256);
+    c.lineTo(40, 256);
+    c.closePath();
+  }
+
+  function arches(c) {
+    c.save();
+    c.globalCompositeOperation = "destination-out";
+    [[268, 62], [838, 66]].forEach(function (w) {
+      c.beginPath();
+      c.ellipse(w[0], 252, w[1], w[1] * 0.82, 0, Math.PI, 0);
+      c.fill();
+    });
+    c.restore();
+  }
+
+  /* Placed clear of the vignette's darkest band at the top, so they are
+     perceptible without ever competing with the type. */
+  const layout = [
+    { x: -0.14, y: 0.22, s: 1.5, a: 0.1, flip: false },
+    { x: 0.44, y: 0.68, s: 1.1, a: 0.075, flip: true },
+  ];
+
+  function draw() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (w < 620) return;
+
+    const base = Math.min(w / 1000, 1.5);
+    layout.forEach(function (car) {
+      const scale = base * car.s;
+      ctx.save();
+      ctx.translate(car.x * w, car.y * h);
+      if (car.flip) { ctx.translate(1000 * scale, 0); ctx.scale(-scale, scale); }
+      else { ctx.scale(scale, scale); }
+
+      const body = ctx.createLinearGradient(0, 110, 0, 260);
+      body.addColorStop(0, "rgba(148,156,165," + car.a * 3 + ")");
+      body.addColorStop(0.55, "rgba(90,96,103," + car.a * 1.6 + ")");
+      body.addColorStop(1, "rgba(38,42,47," + car.a + ")");
+
+      profile(ctx);
+      ctx.fillStyle = body;
+      ctx.fill();
+      arches(ctx);
+
+      profile(ctx);
+      ctx.strokeStyle = "rgba(200,53,43," + car.a * 2 + ")";
+      ctx.lineWidth = 1.1 / scale;
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  draw();
+  let frame = 0;
+  window.addEventListener("resize", function () {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(draw);
+  });
+})();
+</script>
+
+</body>
+</html>

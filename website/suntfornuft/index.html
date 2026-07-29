@@ -629,7 +629,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       <a href="#vagen">Vägen framåt</a>
       <a href="#anslagstavla">Facebook</a>
       <a href="#partilistan">Partilistan</a>
-      <a href="orter.html">Lokala löften</a>
+      <a href="#lokala-loften">Lokala löften</a>
       <a href="#stotta">Stötta oss</a>
       <a href="#engagera">Engagera dig</a>
     </nav>
@@ -648,7 +648,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   <a href="#vagen"><i>04</i> Vägen framåt</a>
   <a href="#anslagstavla"><i>05</i> Facebook</a>
   <a href="#partilistan"><i>06</i> Partilistan</a>
-  <a href="orter.html"><i>07</i> Lokala löften</a>
+  <a href="#lokala-loften"><i>07</i> Lokala löften</a>
   <a href="#stotta"><i>08</i> Stötta oss</a>
   <a href="#engagera"><i>09</i> Engagera dig</a>
   <div class="mm-foot">suntfornuft0521@gmail.com</div>
@@ -1092,6 +1092,16 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
   </div>
 </section>
 
+<!-- ===================== LOKALA LÖFTEN ===================== -->
+<section class="section lokala-loften" id="lokala-loften" style="background:var(--bg-elev);text-align:center">
+  <div class="wrap" style="max-width:680px">
+    <span class="eyebrow">Från ort till ort</span>
+    <h2 style="font-size:var(--step-3);margin-top:1rem">Lokala löften</h2>
+    <p style="color:var(--text-dim);margin-top:1.2rem;font-size:var(--step-1);line-height:1.65">Vi har besökt varje hörn av kommunen och lyssnat. Här kan du läsa våra konkreta löften för just din ort — från Vänersborg och Vargön till Brålanda, Frändefors, Vänersnäs och Våne-Ryr.</p>
+    <a href="orter.html" class="btn btn--primary" style="margin-top:2rem;display:inline-flex;align-items:center;gap:.6rem;font-size:var(--step-0)">Läs mer om våra lokala löften <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+  </div>
+</section>
+
 <!-- ===================== STÖTTA OSS ===================== -->
 <section class="section donate" id="stotta">
   <div class="wrap donate__grid">
@@ -1159,7 +1169,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
         <a href="#om-oss">Om oss</a>
         <a href="#fragor">Våra frågor</a>
         <a href="#vagen">Vägen framåt</a>
-        <a href="orter.html">Lokala löften</a>
+        <a href="#lokala-loften">Lokala löften</a>
         <a href="#anslagstavla">Facebook</a>
         <a href="#faq">Vanliga frågor</a>
       </div>
@@ -1265,7 +1275,7 @@ body.menu-open .mobile-menu a{opacity:1;transform:none}
       }
     });
   }, {rootMargin:"-45% 0px -50% 0px"});
-  ["vision","om-oss","fragor","vagen","anslagstavla","engagera","partilistan","stotta"].forEach(function(id){
+  ["vision","om-oss","fragor","vagen","anslagstavla","engagera","partilistan","lokala-loften","stotta"].forEach(function(id){
     var el = document.getElementById(id); if(el) secObserver.observe(el);
   });
 

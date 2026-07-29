@@ -91,6 +91,18 @@ export interface ChartObservation {
   /** SMT read against a correlated chart, when a second screenshot was given. */
   smt?: { present: boolean; detail?: string } | null;
 
+  /**
+   * True when the session's windows have already closed — i.e. this is a
+   * historical review rather than a live read.
+   *
+   * It changes the meaning of a missing phase completely. Live, no raid yet is
+   * `forming` and you wait. On a closed day, no raid is a **rejection**: the
+   * window came and went without one. Without this flag the tool labels every
+   * quiet day in the archive "FORMING", which is not merely imprecise — it
+   * invites you to go looking for the setup after the fact.
+   */
+  windowClosed?: boolean;
+
   /** Anything the reader could not determine, in plain words. */
   uncertain?: string[];
 }
@@ -236,8 +248,10 @@ export function evaluate(
     gates.push({
       id: "manipulation",
       name: "Liquidity raid",
-      status: "pending",
-      evidence: "no raid of either side visible yet",
+      status: observation.windowClosed ? "fail" : "pending",
+      evidence: observation.windowClosed
+        ? "the manipulation window closed without either side being raided"
+        : "no raid of either side visible yet",
       rationale:
         "The model has no direction until one side is taken. Without a raid there is nothing to trade away from.",
     });
@@ -290,8 +304,10 @@ export function evaluate(
     gates.push({
       id: "distribution",
       name: "Displacement back through the key open",
-      status: "pending",
-      evidence: `raid of the ${sweep.side}s is in, but price has not displaced back through the key open yet`,
+      status: observation.windowClosed ? "fail" : "pending",
+      evidence: observation.windowClosed
+        ? `the ${sweep.side}s were raided but no displacement back through the key open followed`
+        : `raid of the ${sweep.side}s is in, but price has not displaced back through the key open yet`,
       rationale:
         "The raid alone is not a signal. Displacement is the evidence that the reversal is real rather than a drift.",
     });

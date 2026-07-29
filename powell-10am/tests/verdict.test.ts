@@ -286,3 +286,32 @@ describe("alignment with the engine", () => {
     expect(verdict.plan!.targetPrice).toBeCloseTo(setup!.targetPrice, 6);
   });
 });
+
+describe("historical review", () => {
+  // Live, a missing phase means "wait". On a closed day it means the window
+  // came and went — and calling that "FORMING" invites hunting for a setup
+  // after the fact.
+  test("a closed day with no raid is a rejection, not 'forming'", () => {
+    const live = evaluate(validObservation({ sweep: null, displacement: null }));
+    expect(live.status).toBe("forming");
+
+    const closed = evaluate(
+      validObservation({ sweep: null, displacement: null, windowClosed: true }),
+    );
+    expect(closed.status).toBe("invalid");
+    expect(closed.action).toBe("No trade.");
+    expect(closed.reasoning.join(" ")).toContain("closed without either side being raided");
+  });
+
+  test("a closed day with a raid but no displacement is also a rejection", () => {
+    const closed = evaluate(validObservation({ displacement: null, windowClosed: true }));
+    expect(closed.status).toBe("invalid");
+    expect(closed.gates.find((gate) => gate.id === "distribution")?.status).toBe("fail");
+  });
+
+  test("the flag changes nothing once every phase is present", () => {
+    const withFlag = evaluate(validObservation({ windowClosed: true }));
+    const without = evaluate(validObservation());
+    expect(withFlag.status).toBe(without.status);
+  });
+});

@@ -197,3 +197,58 @@ actual content. `docs/08-sources.md` records that every rule here is
 reconstructed from secondary material because the source videos were
 unreachable. Primary-source material — what he says, not what a chart implies —
 is worth more than any further chart reading.
+
+---
+
+## 9 — Three candidate corrections from PO3 source material
+
+**Status:** `open` · **Evidence:** secondary descriptions of the PO3 model,
+surfaced while trying to reach a "10am PO3" document the user linked. The
+document itself was unreachable (Scribd returns 403), so this is *still*
+secondary material — but it is the first that describes the mechanics in enough
+detail to contradict the spec.
+
+### 9a — Accumulation may be defined by candle BODIES, not wicks
+
+`extremesOf()` in `model.ts` uses candle highs and lows. Published PO3
+descriptions define the accumulation zone by **bodies**, treating wicks as
+noise rather than as the boundary.
+
+This is not cosmetic. Concrete impact on days already reviewed:
+
+- The 5m-only day: the window high was the 09:30 candle's *upper wick* at
+  ~28,488. Body-defined it is ~28,401 — which would put the 10:00 open
+  (~28,475) **above** the window high rather than just below it. The whole read
+  changes.
+- 23 Jul: the window low was the 09:30 candle's lower wick at 28,495. Body-
+  defined it sits materially higher.
+
+**Test:** add a `rangeBasis: "wick" | "body"` option and compare. This is a
+one-line change to `extremesOf` and a genuine fork in how every day is read.
+
+### 9b — MSS may be required, not optional
+
+`requireMss` defaults to `false`. The descriptions place the entry *after* a
+market structure shift — a break of the most recent swing high or low — rather
+than after displacement alone.
+
+**Test:** `bun run src/cli.ts backtest data.csv --requireMss true`
+
+### 9c — The management scheme may be specified, not free
+
+`partialAtR` and `breakEvenAtR` are both `null` (off) and marked `tunable`. The
+descriptions suggest a concrete scheme: partial at the fib objective, move to
+break even there, and close the remainder at the −4σ projection.
+
+That is testable as-is: `--partialAtR`, `--breakEvenAtR`, `--stdDevTarget -4`.
+
+### What is already confirmed
+
+- Stops beyond the manipulation extreme or the prior swing. Matches the spec.
+- Targets at 2–4 standard deviations of the manipulation leg. Matches
+  `STD_DEV_PROJECTIONS` and the `-2.0` default.
+
+**Caveat that keeps this honest:** these descriptions are of the **4-hour** PO3,
+not specifically the 10am variant. Same family, different anchor. Do not promote
+any of them from `inferred` to `sourced` on this basis — it would be exactly the
+mistake `docs/08-sources.md` exists to prevent.

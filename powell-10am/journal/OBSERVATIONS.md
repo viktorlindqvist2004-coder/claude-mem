@@ -244,6 +244,43 @@ This is not cosmetic. Concrete impact on days already reviewed:
 **Test:** add a `rangeBasis: "wick" | "body"` option and compare. This is a
 one-line change to `extremesOf` and a genuine fork in how every day is read.
 
+**Measured evidence, 30 Jul 2026 — this is now the most consequential open
+question in the record.** Both days measured by pixel so far were rejected on
+the manipulation gate: the 10:00–10:30 window shut without either side being
+raided. Under a body-defined range, *both* become raids:
+
+| | wick range | verdict | body range | verdict |
+|---|---|---|---|---|
+| 8 Jul | 28,981.5–29,167.3 | highs short by 12.7 | 28,982.2–29,139.4 | **raid by 15.2** |
+| 10 Jul | 29,587.4–29,757.7 | highs short by 3.4 | 29,626.3–29,730.9 | **raid by 23.4** |
+
+So the choice of basis is the difference between **zero setups and two** on the
+only two days that have been measured rather than eyeballed. That is not a
+detail to settle later; it is the largest single lever found so far.
+
+**And it does not follow that bodies are right.** The two days behave very
+differently once you look past the raid gate:
+
+- **8 Jul is clean.** The 10:00 candle takes the 29,139.4 body high by 15.2 and
+  closes at 29,085.5 — far back inside, and below the 29,139.2 key open in the
+  same candle. Direction short, rejection unambiguous, the following three
+  candles all close inside.
+- **10 Jul is a mess.** The 10:00 candle "clears" the body high by 0.6 points,
+  which is one pixel — not a raid, an artefact of where the boundary landed.
+  Then 10:05 closes *through* at 29,751.4, which under the model's own rules is
+  expansion and a warning the other way. 10:10 closes back inside. A reader
+  following the rules literally would be flipped twice in ten minutes.
+
+One clean signal and one whipsaw is not a result. It does say the wick basis is
+not obviously the safer default, which is how it has been treated until now.
+
+**Revised test, now that measured data exists:** implement `rangeBasis` and run
+the full backtest both ways. Watch the *rejection mix* as much as expectancy — if
+bodies mainly convert `manipulation` rejections into losses, the wick basis was
+doing useful filtering rather than missing setups. Two 5-minute days measured
+off screenshots cannot answer that, and adopting on this evidence would be
+exactly the curve fitting these notes exist to prevent.
+
 ### 9b — MSS may be required, not optional
 
 `requireMss` defaults to `false`. The descriptions place the entry *after* a

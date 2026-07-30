@@ -41,31 +41,46 @@
  * Add `--csv day.csv --date 2026-07-10` to write candles the rest of the CLI can
  * read, at which point `explain` and `levels` work on a screenshot.
  *
- * ## Two traps this has already fallen into
+ * ## Traps this has already fallen into
  *
  * **Do not calibrate from the price tags.** Their borders are exact pixel rows
  * and their values are printed right there, which makes them look like the best
  * possible anchor. But TradingView pushes overlapping tags apart, and a stack of
  * four gave 2.108 px/point against the gridlines' true 1.75 — a 20% scale error.
  * Calibrate from gridline labels, which do not move, and prefer two that are far
- * apart.
+ * apart. `--calibrate` flags the tall blocks that are tags.
  *
- * **A horizontal drawn level is the same black as a wick.** Left in, it becomes
- * the low of every candle it crosses. `--exclude-level` removes it by fitting
- * the thin run that persists across columns where no candle sits.
+ * **Dark lines that cross the chart are the same ink as a wick** — a drawn level,
+ * or a moving average plotted in black. They are removed by tracing: a thin run
+ * belongs to a line if thin runs sit at a similar height eight columns either
+ * side, which a two-pixel-wide wick cannot manage. Pass `--keep-level` to
+ * disable. On the 8 July chart the black MA sat *above every candle*, so without
+ * this every column would have reported the same high.
+ *
+ * **Set the plot box explicitly.** A phone screenshot is full of dark chrome —
+ * floating toolbar, scroll-to-realtime button, watermark, an indicator pane. Any
+ * of it inside the box becomes a candle extreme; the toolbar once supplied the
+ * high for twenty consecutive candles. `--plot-top` / `--plot-bottom` /
+ * `--plot-right`, and the tool warns when ink touches an edge.
  *
  * ## The self-check that makes the output trustworthy
  *
- * Candle direction comes from the body's interior shade, and which shade means
- * "up" is decided by *chaining*: on a continuous intraday series each candle's
- * open equals the previous candle's close. The script tries both assignments and
- * keeps the one with the smaller chaining residual, then reports it. On the
- * 10 July chart the winning residual was well under a point per candle while the
- * loser was tens of points, so the assignment is not a guess.
+ * Direction comes from which of the two body fills covers more of a candle, and
+ * which fill means "up" is decided by *chaining*: on a continuous series each
+ * open equals the previous close. Both assignments are scored and the better one
+ * is reported along with the score it beat.
  *
- * **Read the residual before believing the numbers.** A large one means the
- * pitch or phase is wrong — usually `--time` off by one candle — and every OHLC
- * below it is then wrong in a way that looks perfectly plausible.
+ * **Read the residual before believing anything.** Around one pixel's worth of
+ * points is the floor and means the reading is as good as the image allows.
+ * Much more than that usually means `--time` names the wrong candle, `--minutes`
+ * disagrees with the chart's timeframe, or chrome is inside the box — and the
+ * prices will then be wrong in a way that still looks entirely plausible.
+ *
+ * A caveat on the residual, from 8 July: a real feed genuinely gaps between
+ * candles, and three gaps of 8–20 points there held the average at 11 px however
+ * correct the reading was. So judge it by the *separation* between the two
+ * assignments as well as its absolute size, and remember that gaps move opens
+ * and closes only — highs and lows come from wick extremes and are unaffected.
  *
  * ffmpeg supplies the pixels; resolution is the same as `video-frames.ts`.
  */
@@ -364,7 +379,8 @@ interface Measured {
   low: number;
   bodyTop: number;
   bodyBottom: number;
-  interior: number;
+  /** How many pixels of each dark shade the body contains. */
+  shades: Map<number, number>;
 }
 
 function measure(img: Image, args: Args): { candles: Measured[]; scale: number; residual: number; upIsBright: boolean } {
@@ -391,60 +407,99 @@ function measure(img: Image, args: Args): { candles: Measured[]; scale: number; 
   const bg = backgroundLum(img, Math.round(img.width * 0.2), Math.round(img.width * 0.6), Math.round(img.height * 0.4), Math.round(img.height * 0.7));
   const threshold = bg - 18;
 
-  // Fit the drawn horizontal level, if any: the thin run that appears at nearly
-  // the same y in columns with no candle. Left in, it becomes every candle's low.
-  let levelAt: ((x: number) => number) | null = null;
+  /**
+   * Identify pixels belonging to a dark line that runs *across* the chart —
+   * a drawn level, or a moving average plotted in black. Those are the same ink
+   * as a wick, so left in they become the high or low of every candle they pass.
+   *
+   * Traced rather than fitted. A straight-line fit handled a horizontal level
+   * but not a black moving average, which curves; and on the 8 July chart that
+   * MA sat above every candle, so failing to remove it would have handed every
+   * column the same high. The test is continuity instead: a thin run is part of
+   * a line if thin runs sit at a similar height eight columns to the left *and*
+   * eight to the right. A wick is only two or three columns wide, so it cannot.
+   */
+  const linePixels = new Set<number>();
   if (args.excludeLevel) {
-    const samples: { x: number; y: number }[] = [];
-    for (let x = 10; x < plotRight; x += 3) {
-      const thin = darkRuns(img, x, plotTop, plotBottom, threshold).filter(([a, b]) => b - a + 1 <= 5);
-      if (thin.length === 1) samples.push({ x, y: (thin[0]![0] + thin[0]![1]) / 2 });
+    const thinRuns = new Map<number, [number, number][]>();
+    for (let x = 0; x < plotRight; x++) {
+      thinRuns.set(
+        x,
+        darkRuns(img, x, plotTop, plotBottom, threshold).filter(([a, b]) => b - a + 1 <= 6),
+      );
     }
-    if (samples.length > 30) {
-      const n = samples.length;
-      const sx = samples.reduce((s, p) => s + p.x, 0) / n;
-      const sy = samples.reduce((s, p) => s + p.y, 0) / n;
-      const num = samples.reduce((s, p) => s + (p.x - sx) * (p.y - sy), 0);
-      const den = samples.reduce((s, p) => s + (p.x - sx) ** 2, 0);
-      const slope = den === 0 ? 0 : num / den;
-      const spread = Math.max(...samples.map((p) => Math.abs(p.y - (sy + slope * (p.x - sx)))));
-      if (spread < 8) levelAt = (x: number) => sy + slope * (x - sx);
+    const nearby = (x: number, y: number) =>
+      (thinRuns.get(x) ?? []).some(([a, b]) => Math.abs((a + b) / 2 - y) <= 4);
+    for (let x = 0; x < plotRight; x++) {
+      for (const [a, b] of thinRuns.get(x) ?? []) {
+        const y = (a + b) / 2;
+        const left = x - 8 < 0 || nearby(x - 8, y);
+        const right = x + 8 >= plotRight || nearby(x + 8, y);
+        if (left && right) for (let yy = a; yy <= b; yy++) linePixels.add(x * 10000 + yy);
+      }
     }
   }
+  const onLine = (x: number, a: number, b: number) => {
+    for (let y = a; y <= b; y++) if (!linePixels.has(x * 10000 + y)) return false;
+    return true;
+  };
 
   const from = args.from ?? t0.minutes;
   const to = args.to ?? t1.minutes;
   const half = Math.max(2, Math.floor(pitch / 2) - 3);
   const candles: Measured[] = [];
 
+  // A body is wide and a wick is narrow, so the body is found by counting how
+  // many columns carry ink at each height — not by how thick the vertical run
+  // is. Thickness was the first attempt and it fails on a doji: a body only a
+  // few pixels tall looks exactly like a wick, so the candle lost its body
+  // entirely and reported open = high, close = low.
+  const bodyWidthFloor = Math.max(5, Math.round(pitch * 0.4));
+  const clipped: string[] = [];
+
   for (let minutes = from; minutes <= to; minutes += args.minutes) {
     const centre = Math.round(xAt(minutes));
     if (centre - half < 0 || centre + half >= plotRight) continue;
-    let top = Infinity;
-    let bottom = -Infinity;
-    let bodyTop = Infinity;
-    let bodyBottom = -Infinity;
-    const interiors: number[] = [];
 
+    const inkCount = new Map<number, number>();
     for (let x = centre - half; x <= centre + half; x++) {
       for (const [a, b] of darkRuns(img, x, plotTop, plotBottom, threshold)) {
-        const thickness = b - a + 1;
-        if (levelAt && thickness <= 6 && Math.abs((a + b) / 2 - levelAt(x)) < 6) continue;
-        top = Math.min(top, a);
-        bottom = Math.max(bottom, b);
-        if (thickness > 6 && Math.abs(x - centre) >= 4) {
-          bodyTop = Math.min(bodyTop, a);
-          bodyBottom = Math.max(bodyBottom, b);
-          interiors.push(lum(img, x, Math.round((a + b) / 2)));
-        }
+        if (b - a + 1 <= 6 && onLine(x, a, b)) continue;
+        for (let y = a; y <= b; y++) inkCount.set(y, (inkCount.get(y) ?? 0) + 1);
       }
     }
-    if (top === Infinity) continue;
-    if (bodyTop === Infinity) {
-      bodyTop = top;
-      bodyBottom = bottom;
+    if (inkCount.size === 0) continue;
+
+    const ys = [...inkCount.keys()].sort((a, b) => a - b);
+    const bodyYs = ys.filter((y) => (inkCount.get(y) ?? 0) >= bodyWidthFloor);
+    const top = ys[0]!;
+    const bottom = ys[ys.length - 1]!;
+    const bodyTop = bodyYs[0] ?? top;
+    const bodyBottom = bodyYs[bodyYs.length - 1] ?? bottom;
+
+    // Ink touching the edge of the box means the box is wrong — a button, a
+    // toolbar, an indicator pane — not that the candle really reached there.
+    if (top <= plotTop + 1 || bottom >= plotBottom - 1) clipped.push(toClock(minutes));
+
+    // A histogram of the dark shades in the body, resolved into a direction
+    // after every candle has been read.
+    //
+    // Not a single sample and not this candle's mode. Sampling at a chosen
+    // offset landed on the body's outline, which is the same shade for up and
+    // down candles. The per-candle mode then failed differently: TradingView
+    // draws bodies in three shades — two fills and a darker outline — and on a
+    // near-doji the outline is most of the body's area, so it won the mode and
+    // that candle got sorted into a class of its own.
+    const shades = new Map<number, number>();
+    for (const y of bodyYs) {
+      for (let x = centre - half + 4; x <= centre + half - 4; x++) {
+        const value = lum(img, x, y);
+        if (value >= threshold) continue;
+        const key = Math.round(value);
+        shades.set(key, (shades.get(key) ?? 0) + 1);
+      }
     }
-    interiors.sort((a, b) => a - b);
+
     candles.push({
       minutes,
       x: centre,
@@ -452,33 +507,74 @@ function measure(img: Image, args: Args): { candles: Measured[]; scale: number; 
       low: price(bottom),
       bodyTop: price(bodyTop),
       bodyBottom: price(bodyBottom),
-      interior: interiors[Math.floor(interiors.length / 2)] ?? 0,
+      shades,
     });
   }
+  if (clipped.length > 0) {
+    console.log(
+      `  ⚠ ink reaches the edge of the plot box at ${clipped.join(", ")}.\n` +
+        `    Those candles are clipped, not real — narrow --plot-top/--plot-bottom\n` +
+        `    until this warning goes away.`,
+    );
+  }
 
-  // Which interior shade means "up"? Decide by chaining, not by assumption:
-  // on a continuous series each open equals the previous close.
-  const shades = [...new Set(candles.map((c) => Math.round(c.interior)))].sort((a, b) => a - b);
-  const split = shades.length > 1 ? (shades[0]! + shades[shades.length - 1]!) / 2 : Infinity;
-  const chainError = (upIsBright: boolean): number => {
+  const fills = dominantFills(candles);
+  const chainError = (upIsBrighter: boolean): number => {
     let total = 0;
     let count = 0;
     for (let i = 1; i < candles.length; i++) {
       const prev = candles[i - 1]!;
       const cur = candles[i]!;
-      const closeOf = (c: Measured) => (c.interior > split === upIsBright ? c.bodyTop : c.bodyBottom);
-      const openOf = (c: Measured) => (c.interior > split === upIsBright ? c.bodyBottom : c.bodyTop);
-      total += Math.abs(openOf(cur) - closeOf(prev));
+      total += Math.abs(openOf(cur, fills, upIsBrighter) - closeOf(prev, fills, upIsBrighter));
       count++;
     }
     return count === 0 ? 0 : total / count;
   };
-  const brightUp = chainError(true);
-  const brightDown = chainError(false);
-  const upIsBright = brightUp <= brightDown;
+  const brighterUp = chainError(true);
+  const brighterDown = chainError(false);
+  const upIsBrighter = brighterUp <= brighterDown;
 
-  return { candles, scale: 1 / ptPerPx, residual: Math.min(brightUp, brightDown), upIsBright };
+  return {
+    candles,
+    scale: 1 / ptPerPx,
+    residual: Math.min(brighterUp, brighterDown),
+    rejected: Math.max(brighterUp, brighterDown),
+    upIsBrighter,
+    fills,
+  };
 }
+
+/**
+ * The two fill shades used for up and down candles, as [darker, brighter].
+ *
+ * Chosen by total pixel area across every candle, which is what excludes the
+ * body outline: the outline is a third shade, and although it can dominate a
+ * single near-doji, it never outweighs either fill over a whole session.
+ */
+function dominantFills(candles: Measured[]): [number, number] {
+  const totals = new Map<number, number>();
+  for (const candle of candles) {
+    for (const [shade, count] of candle.shades) {
+      totals.set(shade, (totals.get(shade) ?? 0) + count);
+    }
+  }
+  const ranked = [...totals].sort((a, b) => b[1] - a[1]).map(([shade]) => shade);
+  const [first, second] = [ranked[0] ?? 0, ranked[1] ?? (ranked[0] ?? 0) + 1];
+  return first <= second ? [first, second] : [second, first];
+}
+
+/** Whether a candle closed up, by which of the two fills covers more of its body. */
+function isUpCandle(candle: Measured, fills: [number, number], upIsBrighter: boolean): boolean {
+  const [darker, brighter] = fills;
+  const brighterArea = candle.shades.get(brighter) ?? 0;
+  const darkerArea = candle.shades.get(darker) ?? 0;
+  return brighterArea >= darkerArea === upIsBrighter;
+}
+
+const openOf = (c: Measured, fills: [number, number], upIsBrighter: boolean) =>
+  isUpCandle(c, fills, upIsBrighter) ? c.bodyBottom : c.bodyTop;
+const closeOf = (c: Measured, fills: [number, number], upIsBrighter: boolean) =>
+  isUpCandle(c, fills, upIsBrighter) ? c.bodyTop : c.bodyBottom;
 
 // ---------------------------------------------------------------------
 
@@ -493,23 +589,33 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { candles, scale, residual, upIsBright } = measure(img, args);
-  const split = (() => {
-    const shades = [...new Set(candles.map((c) => Math.round(c.interior)))].sort((a, b) => a - b);
-    return shades.length > 1 ? (shades[0]! + shades[shades.length - 1]!) / 2 : Infinity;
-  })();
-  const isUp = (c: Measured) => c.interior > split === upIsBright;
+  const { candles, scale, residual, rejected, upIsBrighter, fills } = measure(img, args);
+  const isUp = (c: Measured) => isUpCandle(c, fills, upIsBrighter);
+  const pixelPoints = 1 / scale;
 
   console.log(`scale ${scale.toFixed(3)} px per point`);
   console.log(
-    `direction: ${upIsBright ? "brighter" : "darker"} body interior = up  ` +
-      `(open/close chaining residual ${residual.toFixed(2)} pts per candle)`,
+    `direction: ${upIsBrighter ? "brighter" : "darker"} of the two body fills ` +
+      `(${fills.join(" / ")}) = up`,
   );
-  if (residual > 3) {
+  console.log(
+    `chaining residual ${residual.toFixed(2)} pts per candle ` +
+      `(${(residual / pixelPoints).toFixed(1)} px); the rejected assignment scored ` +
+      `${rejected.toFixed(2)}`,
+  );
+  // One pixel is the floor: a body edge cannot be located more finely than that,
+  // so anything near it means the reading is as good as the image allows.
+  if (residual > Math.max(3, pixelPoints * 2)) {
     console.log(
-      `  ⚠ residual over 3 points. The candle pitch or phase is probably wrong —\n` +
-        `    check --time is naming the right candle. Every price below is then\n` +
-        `    wrong in a way that still looks plausible.`,
+      `  ⚠ residual is more than two pixels' worth. Something is wrong, and the\n` +
+        `    usual causes are --time naming the wrong candle, a --minutes that does\n` +
+        `    not match the chart's timeframe, or chrome inside the plot box. Every\n` +
+        `    price below is then wrong in a way that still looks plausible.`,
+    );
+  } else if (rejected < residual * 4) {
+    console.log(
+      `  ⚠ the two direction assignments score too similarly to choose between.\n` +
+        `    Treat every open and close as unreliable; the highs and lows are fine.`,
     );
   }
 
@@ -519,7 +625,8 @@ async function main(): Promise<void> {
     const open = isUp(c) ? c.bodyBottom : c.bodyTop;
     const close = isUp(c) ? c.bodyTop : c.bodyBottom;
     console.log(
-      `${toClock(c.minutes)}\t${open.toFixed(1)}\t${c.high.toFixed(1)}\t${c.low.toFixed(1)}\t${close.toFixed(1)}`,
+      `${toClock(c.minutes)}\t${open.toFixed(1)}\t${c.high.toFixed(1)}\t${c.low.toFixed(1)}\t${close.toFixed(1)}` +
+        (process.env.MEASURE_DEBUG ? `\t${[...c.shades].map(([s, n]) => `${s}x${n}`).join(" ")}` : ""),
     );
     if (args.csv && args.date) {
       const stamp = `${args.date}T${toClock(c.minutes)}:00${etOffset(args.date, c.minutes)}`;

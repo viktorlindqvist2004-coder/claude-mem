@@ -23,7 +23,7 @@ Status values:
 
 ## 1 — The key open printing at the window's extreme predicts failure
 
-**Status:** `open` · **Evidence:** 3 of 5 days (27, 28, 29 Jul 2026)
+**Status:** `open` · **Evidence:** 5 for, 1 against (see below)
 
 On 27, 28 and 29 July the 10:00 open printed at or within a few points of the
 09:30–10:00 **low**. All three failed — two as outright expansion, one as a raid
@@ -44,9 +44,27 @@ bun run src/cli.ts backtest data.csv          # baseline
 bun run src/cli.ts learn data.csv
 ```
 
-**Do not adopt on 3 observations.** This is the single most promising idea in the
-list and therefore the most dangerous one to accept on a handful of days. It
-needs a full backtest and a walk-forward before it goes near the spec.
+### Confirmed in the mirror
+
+The 5m-only day reviewed on 30 Jul had the key open print just below the window
+**high**, and the day expanded **upward** through it. Same mechanism, opposite
+side. That removes the obvious objection that the first three were an artefact
+of one falling week.
+
+### Counter-evidence — 15 Jul 2026
+
+The key open printed at 29,637, mid-window in a 29,554–29,777 range. Liquidity
+on both sides, the healthiest structure in the sample — and the day still failed,
+as expansion through the low.
+
+This matters for how the observation is stated. It claims **an extreme predicts
+failure**. It does *not* follow that **the middle predicts success**, and 15 July
+is the reminder. Whatever filter comes out of this can only ever remove bad days;
+it cannot manufacture good ones.
+
+**Do not adopt on a handful of days.** This is the single most promising idea in
+the list and therefore the most dangerous one to accept early. It needs a full
+backtest and a walk-forward before it goes near the spec.
 
 ---
 

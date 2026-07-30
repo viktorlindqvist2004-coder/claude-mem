@@ -64,6 +64,8 @@ export type BiasSource =
   /** No pre-bias; the sweep alone decides direction. */
   | "sweep-only";
 
+export type RangeBasis = "wick" | "body";
+
 export interface ModelConfig {
   // ---- Key opens -------------------------------------------------------
   /** ET wall-clock of the anchoring open. 10:00 opens the NY AM 4H candle. */
@@ -102,7 +104,16 @@ export interface ModelConfig {
    */
   minSweepPenetration: number;
   /** The sweeping candle must close back inside the range to count. */
+  /**
+   * Whether the accumulation range is bounded by wicks or by candle bodies.
+   */
+  rangeBasis: RangeBasis;
   requireCloseBackInside: boolean;
+  /**
+   * How many candles the reclaim may take, counted from the candle that
+   * penetrated the level. 1 means that candle must itself close back inside.
+   */
+  sweepReclaimBars: number;
 
   // ---- Displacement / structure ---------------------------------------
   /** Minimum move size in ATR units to count as energetic. */
@@ -186,7 +197,9 @@ export const DEFAULT_CONFIG: ModelConfig = {
   includeKeyLevelsAsPools: true,
 
   minSweepPenetration: 0.02,
+  rangeBasis: "wick",
   requireCloseBackInside: true,
+  sweepReclaimBars: 3,
 
   minDisplacementAtr: 1.5,
   atrPeriod: 14,
@@ -287,6 +300,34 @@ export const RULE_NOTES: RuleNote[] = [
     id: "minSweepPenetration",
     confidence: "tunable",
     note: "Separates a genuine raid from a one-tick graze of the level.",
+  },
+  {
+    id: "sweepReclaimBars",
+    confidence: "tunable",
+    note:
+      "How long the rejection is allowed to take. Was effectively hard-coded to 1 " +
+      "— the candle printing the extreme had to close back inside itself, the " +
+      "strictest reading available. Raised to 3 on the strength of the journal: " +
+      "four of eleven reviewed days were rejected with the identical reason " +
+      "'closed through the opening range low', and a real trader taking this " +
+      "setup several times a week cannot be seeing that much one-sided " +
+      "expansion. A raid commonly runs push / probe / reclaim across two or " +
+      "three candles. NOT measured — 3 is a judgement, and the backtest across " +
+      "1..5 is what should set it.",
+  },
+  {
+    id: "rangeBasis",
+    confidence: "inferred",
+    note:
+      "Wicks or bodies for the 09:30-10:00 range. Published PO3 descriptions " +
+      "define the zone by bodies and treat wicks as noise; this engine was " +
+      "built on wicks. The difference is the largest single lever found so far: " +
+      "on both days measured by pixel from screenshots the window raided nothing " +
+      "under wick and raided under body. Default stays 'wick' because that is " +
+      "what everything else was built and reviewed against, NOT because it has " +
+      "been shown to be right. Settle it with a backtest both ways, watching the " +
+      "rejection mix as much as expectancy — if bodies mainly convert " +
+      "'manipulation' rejections into losses, wicks were filtering usefully.",
   },
   {
     id: "requireCloseBackInside",

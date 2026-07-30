@@ -484,3 +484,87 @@ admits more setups, and the question is whether the marginal ones pay.
 **Related:** the key open sat at 73.5% of the window here — upper third, not at
 the extreme. Under observation 1 that is neither a confirming nor a
 contradicting instance, so 1 stays where it is at 5 for and 1 against.
+
+---
+
+## 14 — The model was only ever shown ONE liquidity level, and that is why it fires so rarely
+
+**Status:** `open` · **Evidence:** all eleven reviewed days, plus the level dump
+below · **This is the diagnosis for "one setup in eleven days".**
+
+The user pushed back with the strongest evidence available: the trader whose
+model this reconstructs takes the 10am setup *several times a week*, while this
+encoding found it once in eleven days. A 9% hit rate against a claimed ~50%+ is
+not a tuning difference. Something was wrong, and it was worth finding rather
+than defending.
+
+It is not a single over-tight parameter. Two were tested against real measured
+candles and neither explains it:
+
+- **`sweepReclaimBars`** — the rejection test used to demand that the candle
+  printing the extreme close back inside *itself*, the strictest reading
+  possible. Four of eleven days were rejected with the identical reason "closed
+  through the opening range low", which is a suspicious amount of one-sided
+  expansion for a fortnight. Now configurable, defaulted to 3. But the two days
+  with real candle data fail earlier, so this remains unmeasured.
+- **`rangeBasis`** — bodies instead of wicks does find a raid on both measured
+  days where wicks found none. It does not produce a setup on either: both then
+  fail the displacement gate, and on 10 July the geometry only pays 0.23R even
+  with every other gate switched off. The 2R floor is doing its job. Those two
+  days were correctly rejected.
+
+**The actual cause is the level map.** Ask the engine what liquidity existed on
+8 July:
+
+```
+── Key levels for 2026-07-08 ──
+  ★★★★★   29167.31  09:30–10:00 opening range high
+  ★★★★★   28981.49  09:30–10:00 opening range low
+  ★★★★★   29139.16  10:00 key open
+```
+
+Three levels, two of them the same range. No prior day high or low, no overnight
+extremes, no Asia or London range, no NDOG, no equal highs. The engine supports
+all of them — `includeKeyLevelsAsPools` is `true` by default — but they were
+absent because the CSV was measured off a screenshot covering two hours of one
+day, and the level builder omits what it cannot compute rather than guessing.
+
+The screenshot path is worse, and that is where **all eleven** journal days were
+judged. `evaluate()` takes `accumulationHigh` and `accumulationLow` and one
+`sweep`. The observation *can* name any level via `sweep.level` and
+`levelSource` — the type has always allowed it — but the extraction procedure in
+`skills/powell-10am-chart/SKILL.md` only ever asked for the 09:30–10:00 range.
+Eleven days, one candidate pool pair, every time.
+
+**Why that produces exactly the failure observed.** The 10am raid targets
+whichever pool is in reach. On a trending morning the opening range low is
+hundreds of points away and unreachable, so this encoding declares the day dead
+— while price may be raiding the overnight high or the prior day's high right in
+front of it. 30 July is the clean example: the opening range low sat 290 points
+below and was written off as impossible, and no one ever asked what was sitting
+*above* at 28,034, because the level map had nothing in it.
+
+A trader looking at a real chart sees a dozen pools. This system was shown one.
+
+**Fix, in order of leverage:**
+
+1. **Perception.** The chart procedure must inventory levels *before* judging:
+   prior day high/low, overnight high/low, Asia and London range extremes, the
+   midnight open, visible equal highs/lows — then ask which one the move
+   actually took. The opening range is one candidate among many, not the
+   universe.
+2. **Data.** A CSV covering the prior session makes the engine's level builder
+   work at all. Two hours of one day cannot produce a prior-day level.
+3. **Then** re-examine `sweepReclaimBars` and `rangeBasis` against a real
+   sample, where they can be measured instead of argued.
+
+**What this does not license.** Loosening parameters until the count matches
+expectation is curve fitting aimed at a desired answer, and it would be far more
+damaging than a model that fires too rarely. The count should rise because the
+model is finally being shown the whole chart — not because the gates were bent.
+
+**Also still open, and possibly additive:** observation 8 — the spec encodes only
+the reversal half of the playbook. If the same trader also takes continuation on
+trending days, then days like 30 July, which this model correctly refuses to
+fade, may be days he trades in the other direction entirely. That is a second
+model, not a looser version of this one.

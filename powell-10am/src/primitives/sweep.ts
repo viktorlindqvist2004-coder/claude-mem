@@ -8,9 +8,27 @@
  *   1. Penetration — it must clear the level by a meaningful amount, not graze
  *      it by a tick. Measured against the reference range so it scales with
  *      volatility instead of being a hard-coded number of points.
- *   2. Rejection — the candle must close back on the original side of the
- *      level. Trading through and *closing* through is expansion, and expansion
- *      is the one thing this model must not trade into.
+ *   2. Rejection — price must close back on the original side of the level.
+ *      Trading through and *closing* through is expansion, and expansion is the
+ *      one thing this model must not trade into.
+ *
+ * ## How long the rejection is allowed to take
+ *
+ * `reclaimBars` is the parameter that decides how strict test 2 is, and it was
+ * originally not a parameter at all: the candle that printed the extreme had to
+ * close back inside *itself*. That is the strictest reading available, and the
+ * journal suggests it is too strict — four of eleven reviewed days were rejected
+ * with the identical reason "closed through the opening range low", which is a
+ * suspicious amount of expansion for one direction in a fortnight.
+ *
+ * A raid frequently takes more than one candle: a push through the level, a
+ * further probe, then the reclaim. Someone watching that live calls it a raid.
+ * With `reclaimBars: 1` the engine calls it expansion and stands aside.
+ *
+ * So the window is configurable, the extreme is taken across the whole
+ * excursion rather than from the penetrating candle alone, and the sweep is
+ * reported as known at the *reclaim* bar — not the penetrating one — because
+ * that is the first moment the rejection is a fact rather than a hope.
  */
 
 import type { Candle, Sweep } from "../types.js";
@@ -19,8 +37,13 @@ import type { LiquidityPool } from "./liquidity.js";
 export interface SweepOptions {
   /** Minimum penetration as a fraction of `referenceRange`. */
   minPenetration: number;
-  /** Require the sweeping candle to close back inside. */
+  /** Require price to close back inside the level. */
   requireCloseBackInside: boolean;
+  /**
+   * How many candles the reclaim may take, counted from the penetrating one.
+   * 1 means the candle that printed the extreme must itself close back inside.
+   */
+  reclaimBars?: number;
   /** Range used to scale the penetration test (typically the accumulation range). */
   referenceRange: number;
 }
@@ -41,7 +64,36 @@ export function findSweep(
 ): Sweep | null {
   const minDistance = Math.max(options.referenceRange * options.minPenetration, 0);
 
-  for (let i = Math.max(0, from); i <= Math.min(to, candles.length - 1); i++) {
+  const reclaimBars = Math.max(1, options.reclaimBars ?? 1);
+  const lastIndex = candles.length - 1;
+
+  /**
+   * Where the reclaim completes, and how far price ran before it did.
+   *
+   * Returns null when price never closed back inside within the allowance —
+   * that is expansion. The lookahead may finish a few bars past `to`: the raid
+   * has to *start* inside the manipulation window, but forbidding its
+   * confirmation from spilling over would reject a raid on the window's last
+   * candle purely for arriving late.
+   */
+  const confirmReclaim = (
+    start: number,
+    price: number,
+    side: "high" | "low",
+  ): { index: number; extreme: number } | null => {
+    let extreme = side === "high" ? -Infinity : Infinity;
+    const limit = Math.min(start + reclaimBars - 1, lastIndex);
+    for (let j = start; j <= limit; j++) {
+      const bar = candles[j];
+      if (!bar) continue;
+      extreme = side === "high" ? Math.max(extreme, bar.high) : Math.min(extreme, bar.low);
+      const inside = side === "high" ? bar.close < price : bar.close > price;
+      if (inside) return { index: j, extreme };
+    }
+    return null;
+  };
+
+  for (let i = Math.max(0, from); i <= Math.min(to, lastIndex); i++) {
     const candle = candles[i];
     if (!candle) continue;
 
@@ -54,12 +106,19 @@ export function findSweep(
       if (pool.side === "high") {
         const penetration = candle.high - pool.price;
         if (penetration < minDistance || penetration <= 0) continue;
-        if (options.requireCloseBackInside && candle.close >= pool.price) continue;
+        let index = i;
+        let extreme = candle.high;
+        if (options.requireCloseBackInside) {
+          const reclaim = confirmReclaim(i, pool.price, "high");
+          if (!reclaim) continue;
+          index = reclaim.index;
+          extreme = reclaim.extreme;
+        }
         const sweep: Sweep = {
-          index: i,
+          index,
           time: candle.time,
           level: pool.price,
-          extreme: candle.high,
+          extreme,
           side: "high",
           source: pool.label,
         };
@@ -69,12 +128,19 @@ export function findSweep(
       } else {
         const penetration = pool.price - candle.low;
         if (penetration < minDistance || penetration <= 0) continue;
-        if (options.requireCloseBackInside && candle.close <= pool.price) continue;
+        let index = i;
+        let extreme = candle.low;
+        if (options.requireCloseBackInside) {
+          const reclaim = confirmReclaim(i, pool.price, "low");
+          if (!reclaim) continue;
+          index = reclaim.index;
+          extreme = reclaim.extreme;
+        }
         const sweep: Sweep = {
-          index: i,
+          index,
           time: candle.time,
           level: pool.price,
-          extreme: candle.low,
+          extreme,
           side: "low",
           source: pool.label,
         };

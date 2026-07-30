@@ -92,12 +92,27 @@ model's own order:
 
 1. **Key open** — the open price of the 10:00 ET candle.
 2. **Accumulation** — the 09:30–10:00 high and low.
-3. **Sweep** — which side was taken, which level (name it: opening range low,
-   prior day low, equal lows), the extreme reached, and **whether the sweeping
-   candle closed back inside**.
-4. **Displacement** — direction, whether it closed back through the key open,
+3. **Inventory the liquidity BEFORE deciding anything.** This step was missing
+   for the first eleven reviewed days and it is why the model fired once in
+   eleven — see observation 14. List every pool visible on the chart:
+
+   - prior day high and low
+   - overnight / pre-market high and low
+   - Asia and London session extremes
+   - the midnight open
+   - equal highs or equal lows
+   - the 09:30–10:00 range — **one candidate among these, not the universe**
+
+   If the chart does not show enough history for these, say so and ask the user
+   to zoom out or send a second screenshot. A raid targets whichever pool is in
+   reach; on a trending morning the opening range is the *least* likely one, and
+   judging the day on it alone produces a confident "no setup" while price raids
+   something you never looked at.
+4. **Sweep** — which side was taken, **which of the pools above** (name it), the
+   extreme reached, and **whether price closed back inside**.
+5. **Displacement** — direction, whether it closed back through the key open,
    whether it left a gap and where that gap's edges are, and the extreme.
-5. **Context** — current price, visible target candidates above/below, ATR if a
+6. **Context** — current price, visible target candidates above/below, ATR if a
    study is on the chart.
 
 **Use `null` for anything you cannot determine with confidence.** `null` is

@@ -46,7 +46,7 @@ import {
   projections,
   type DealingRange,
 } from "./primitives/fib.js";
-import type { ModelConfig } from "./spec.js";
+import type { ModelConfig, RangeBasis } from "./spec.js";
 import { DEFAULT_CONFIG } from "./spec.js";
 
 /** A complete, tradeable plan produced by the model. */
@@ -135,7 +135,7 @@ export function readDay(
     return { read, setup: null };
   }
   const accEnd = keyOpenIndex - 1;
-  const accumulation = extremesOf(candles, accStart, accEnd);
+  const accumulation = extremesOf(candles, accStart, accEnd, config.rangeBasis);
   if (!accumulation) {
     read.rejectedReason = "empty accumulation range";
     return { read, setup: null };
@@ -157,6 +157,7 @@ export function readDay(
   const sweep = findSweep(candles, pools, keyOpenIndex, manipulationEnd, {
     minPenetration: config.minSweepPenetration,
     requireCloseBackInside: config.requireCloseBackInside,
+    reclaimBars: config.sweepReclaimBars,
     referenceRange: accRange,
   });
 
@@ -495,7 +496,7 @@ function buildPools(
   const pools = findPools(candles, accStart, accEnd, config.swingStrength);
 
   // The opening range extremes themselves are the most-watched stops of all.
-  const extent = extremesOf(candles, accStart, accEnd);
+  const extent = extremesOf(candles, accStart, accEnd, config.rangeBasis);
   const lastAccCandle = candles[accEnd];
   if (extent && lastAccCandle) {
     pools.push({
@@ -574,14 +575,34 @@ export function indexBeforeEtTime(candles: Candle[], date: string, hhmm: string)
   return indexBeforeMinute(candles, date, minutesOf(hhmm));
 }
 
-function extremesOf(candles: Candle[], from: number, to: number): { high: number; low: number } | null {
+/**
+ * The extremes of a span, by wick or by body.
+ *
+ * `body` treats wicks as noise and bounds the range by opens and closes. It is
+ * not a cosmetic choice: on both days measured pixel-by-pixel from screenshots,
+ * 8 and 10 July 2026, the manipulation window raided nothing under `wick` and
+ * raided the highs under `body` — by 15.2 and 23.4 points respectively. Zero
+ * setups against two, from one word.
+ *
+ * Which is correct is unmeasured. `wick` remains the default because it is what
+ * the model was built on, not because it has been shown to be better. See
+ * observation 9a in journal/OBSERVATIONS.md.
+ */
+function extremesOf(
+  candles: Candle[],
+  from: number,
+  to: number,
+  basis: RangeBasis = "wick",
+): { high: number; low: number } | null {
   let high = -Infinity;
   let low = Infinity;
   for (let i = Math.max(0, from); i <= Math.min(to, candles.length - 1); i++) {
     const candle = candles[i];
     if (!candle) continue;
-    high = Math.max(high, candle.high);
-    low = Math.min(low, candle.low);
+    const top = basis === "body" ? Math.max(candle.open, candle.close) : candle.high;
+    const bottom = basis === "body" ? Math.min(candle.open, candle.close) : candle.low;
+    high = Math.max(high, top);
+    low = Math.min(low, bottom);
   }
   if (high === -Infinity || low === Infinity) return null;
   return { high, low };

@@ -359,7 +359,7 @@ measures.
 
 ## 12 — A gate can pass by less than the reading error, and the verdict does not say so
 
-**Status:** `open` · **Evidence:** 10 Jul 2026 (probable date), 1 instance
+**Status:** `open` · **Evidence:** 10 Jul 2026 (date confirmed), 1 instance
 
 Every structural gate passed on 10 July. One of them passed by 1.5 points:
 

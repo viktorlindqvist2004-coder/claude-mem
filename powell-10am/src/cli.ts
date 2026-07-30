@@ -106,7 +106,7 @@ async function main(): Promise<number> {
       return 0;
 
     case "levels": {
-      const candles = await requireCsv(positional[0]);
+      const candles = await requireCsv(positional[0], flags);
       const date = (flags.date as string) ?? lastDate(candles);
       const levels = buildLevels(candles, date);
       console.log(`── Key levels for ${date} ${"─".repeat(28)}`);
@@ -123,7 +123,7 @@ async function main(): Promise<number> {
     }
 
     case "explain": {
-      const candles = await requireCsv(positional[0]);
+      const candles = await requireCsv(positional[0], flags);
       const dates = flags.date ? [flags.date as string] : [...groupByEtDate(candles).keys()].sort();
       for (const date of dates) {
         const { read, setup } = readDay(candles, date, config);
@@ -135,9 +135,9 @@ async function main(): Promise<number> {
     }
 
     case "backtest": {
-      const candles = await requireCsv(positional[0]);
+      const candles = await requireCsv(positional[0], flags);
       const correlated = flags.correlated
-        ? (await loadCsvFile(flags.correlated as string)).candles
+        ? (await loadCsvFile(flags.correlated as string, flags.tz ? { assumeTimezone: String(flags.tz) } : {})).candles
         : undefined;
       const result = backtest(candles, config, {
         costR: flags.cost === undefined ? undefined : Number(flags.cost),
@@ -148,7 +148,7 @@ async function main(): Promise<number> {
     }
 
     case "learn": {
-      const candles = await requireCsv(positional[0]);
+      const candles = await requireCsv(positional[0], flags);
       const folds = flags.folds === undefined ? 4 : Number(flags.folds);
 
       const ranked = gridSearch(candles, DEFAULT_GRID, { minTrades: 10 });
@@ -214,7 +214,7 @@ async function main(): Promise<number> {
     }
 
     case "ablate": {
-      const candles = await requireCsv(positional[0]);
+      const candles = await requireCsv(positional[0], flags);
       const { baseline, ablations } = ablate(candles, config);
       console.log(renderAblation(baseline, ablations));
       return 0;
@@ -241,6 +241,11 @@ function usage(): string {
     "  journal   [--add entry.json]  the running record + running stats",
     "",
     "  Config overrides: --entryMode ote-sweet --targetMode std-dev --minPlannedR 3 ...",
+    "",
+    "  --tz <IANA zone>  read offset-less timestamps in this zone instead of UTC.",
+    "                    Needed when an export writes a local wall clock, e.g.",
+    "                    --tz America/New_York. TradingView's download says UTC in",
+    "                    the dialog, so it does not need this.",
   ].join("\n");
 }
 
@@ -283,12 +288,16 @@ async function loadNews(
   return null;
 }
 
-async function requireCsv(path: string | undefined): Promise<Candle[]> {
+async function requireCsv(
+  path: string | undefined,
+  flags: Record<string, unknown> = {},
+): Promise<Candle[]> {
   if (!path) {
     console.error("A CSV path is required. See `bun run src/cli.ts` for usage.");
     process.exit(1);
   }
-  const { candles, errors } = await loadCsvFile(path);
+  const assumeTimezone = flags.tz === undefined ? undefined : String(flags.tz);
+  const { candles, errors } = await loadCsvFile(path, { ...(assumeTimezone ? { assumeTimezone } : {}) });
   if (errors.length > 0) {
     console.error(`⚠ ${errors.length} row(s) could not be parsed:`);
     for (const error of errors.slice(0, 5)) {

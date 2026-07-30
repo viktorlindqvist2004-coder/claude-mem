@@ -120,3 +120,51 @@ describe("zone-less timestamps", () => {
     expect(new Date(candles[0]!.time).toISOString()).toBe("2026-07-08T13:30:00.000Z");
   });
 });
+
+describe("TradingView table-view exports", () => {
+  test("the on-screen date spelling parses", () => {
+    const { candles, errors } = parseCsv(
+      `Date,Open,High,Low,Close\n` +
+        `Thu 30 Jul '26 07:55,27739.50,27745.25,27728.50,27733.25\n` +
+        `Mon 13 Jul '26 15:45,29450.75,29465.00,29434.25,29455.00\n`,
+    );
+    expect(errors).toEqual([]);
+    expect(candles).toHaveLength(2);
+    // Sorted ascending, so the July 13 row comes first despite being written second.
+    expect(new Date(candles[0]!.time).toISOString()).toBe("2026-07-13T15:45:00.000Z");
+    expect(new Date(candles[1]!.time).toISOString()).toBe("2026-07-30T07:55:00.000Z");
+  });
+
+  test("thousands separators and a Unicode minus survive", () => {
+    const { candles, errors } = parseCsv(
+      `time,open,high,low,close,change\n` +
+        `2026-07-30T07:55:00Z,"27,739.50","27,745.25","27,728.50","27,733.25","−6.75 (−0.02%)"\n`,
+    );
+    expect(errors).toEqual([]);
+    expect(candles[0]).toMatchObject({
+      open: 27739.5, high: 27745.25, low: 27728.5, close: 27733.25,
+    });
+  });
+
+  test("a decimal comma is NOT mistaken for a thousands separator", () => {
+    // Stripping commas unconditionally would turn 27,5 into 275.
+    const { candles } = parseCsv(`time,open,high,low,close\n1767709800,27.5,28,27,"27,5"\n`);
+    expect(candles).toHaveLength(0);
+  });
+
+  test("assumeTimezone recovers a wall-clock export", () => {
+    // The same reading, taken as UTC and as New York summer time.
+    const row = `time,open,high,low,close\n2026-07-30 10:00:00,1,2,0.5,1.5\n`;
+    expect(new Date(parseCsv(row).candles[0]!.time).toISOString()).toBe("2026-07-30T10:00:00.000Z");
+    expect(
+      new Date(parseCsv(row, { assumeTimezone: "America/New_York" }).candles[0]!.time).toISOString(),
+    ).toBe("2026-07-30T14:00:00.000Z");
+  });
+
+  test("assumeTimezone is DST-correct across the boundary", () => {
+    const winter = parseCsv(`time,open,high,low,close\n2026-01-15 10:00:00,1,2,0.5,1.5\n`, {
+      assumeTimezone: "America/New_York",
+    });
+    expect(new Date(winter.candles[0]!.time).toISOString()).toBe("2026-01-15T15:00:00.000Z");
+  });
+});

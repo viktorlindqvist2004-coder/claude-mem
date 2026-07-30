@@ -33,6 +33,49 @@ export interface EtParts {
 
 const cache = new Map<number, EtParts>();
 
+/**
+ * Turn a wall-clock reading in some IANA zone into a UTC epoch (ms).
+ *
+ * Needed because plenty of exports write the chart's local clock with no offset
+ * attached — TradingView's table download is one — and reading those as UTC puts
+ * every session four or five hours out of place. Given the zone the file was
+ * written in, this recovers the real instant.
+ *
+ * Two passes, because the offset depends on the instant you are trying to find:
+ * guess that the wall clock is UTC, measure how far off that lands in the target
+ * zone, correct, and repeat once to settle DST boundaries.
+ */
+export function fromZonedWallClock(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number,
+  timeZone: string,
+): number {
+  const target = Date.UTC(year, month - 1, day, hour, minute, second);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  });
+  let guess = target;
+  for (let pass = 0; pass < 2; pass++) {
+    const parts = formatter.formatToParts(new Date(guess));
+    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+    const renderedHour = get("hour") === 24 ? 0 : get("hour");
+    const rendered = Date.UTC(
+      get("year"), get("month") - 1, get("day"), renderedHour, get("minute"), get("second"),
+    );
+    const drift = target - rendered;
+    if (drift === 0) break;
+    guess += drift;
+  }
+  return guess;
+}
+
 /** Convert a UTC epoch (ms) into New York wall-clock parts. */
 export function toEt(epochMs: number): EtParts {
   const hit = cache.get(epochMs);

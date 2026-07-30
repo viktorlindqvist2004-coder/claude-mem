@@ -9,6 +9,34 @@
  */
 
 import type { Candle } from "./types.js";
+import { fromZonedWallClock } from "./time.js";
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+export interface ParseOptions {
+  /**
+   * IANA zone that a timestamp *without* an offset should be read in.
+   *
+   * Defaults to UTC, which is the safe reading when nothing is known. Set it
+   * when the export writes a local wall clock — TradingView's table download
+   * writes whatever the chart's clock was set to, so a New York chart yields
+   * `America/New_York` stamps that carry no offset and land four or five hours
+   * early if taken at face value. This is the single most common way to get an
+   * empty backtest out of a perfectly good file.
+   */
+  assumeTimezone?: string;
+}
+
+/** Resolve wall-clock components, honouring an assumed zone if one was given. */
+function wallClock(
+  year: number, month: number, day: number,
+  hour: number, minute: number, second: number,
+  zone: string | undefined,
+): number | null {
+  if (zone) return fromZonedWallClock(year, month, day, hour, minute, second, zone);
+  const utc = Date.UTC(year, month - 1, day, hour, minute, second);
+  return Number.isNaN(utc) ? null : utc;
+}
 
 export interface ParseResult {
   candles: Candle[];
@@ -30,7 +58,7 @@ const VOLUME_KEYS = ["volume", "v", "vol"];
  * ISO 8601, epoch seconds, epoch milliseconds, or epoch microseconds — the
  * magnitude decides, which is unambiguous for any date this century.
  */
-export function parseCsv(text: string): ParseResult {
+export function parseCsv(text: string, options: ParseOptions = {}): ParseResult {
   const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
   const errors: ParseResult["errors"] = [];
   if (lines.length === 0) return { candles: [], errors };
@@ -57,7 +85,7 @@ export function parseCsv(text: string): ParseResult {
   const candles: Candle[] = [];
   for (let i = 1; i < lines.length; i++) {
     const cells = splitRow(lines[i] as string);
-    const time = parseTime(cells[columns.time]);
+    const time = parseTime(cells[columns.time], options.assumeTimezone);
     if (time === null) {
       errors.push({ line: i + 1, reason: `unparseable timestamp: ${cells[columns.time] ?? "<empty>"}` });
       continue;
@@ -84,9 +112,9 @@ export function parseCsv(text: string): ParseResult {
   return { candles, errors };
 }
 
-export async function loadCsvFile(path: string): Promise<ParseResult> {
+export async function loadCsvFile(path: string, options: ParseOptions = {}): Promise<ParseResult> {
   const text = await Bun.file(path).text();
-  return parseCsv(text);
+  return parseCsv(text, options);
 }
 
 /** Serialise candles back to CSV — used for fixtures and for exporting slices. */
@@ -147,8 +175,17 @@ function findColumn(header: string[], candidates: string[]): number {
 
 function parseNumber(raw: string | undefined): number | null {
   if (raw === undefined) return null;
-  const trimmed = raw.trim().replace(/"/g, "");
+  let trimmed = raw.trim().replace(/"/g, "");
   if (trimmed === "") return null;
+
+  // Exports written for human eyes rather than for parsers: TradingView's table
+  // download shows `27,739.50` and a Unicode minus sign. Thousands separators
+  // are only stripped when they form proper three-digit groups, so a genuine
+  // decimal comma is not silently deleted.
+  trimmed = trimmed.replace(/[−–—]/g, "-");
+  if (/^[+-]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(trimmed)) trimmed = trimmed.replace(/,/g, "");
+  if (trimmed.startsWith("+")) trimmed = trimmed.slice(1);
+
   const value = Number(trimmed);
   return Number.isFinite(value) ? value : null;
 }
@@ -157,7 +194,7 @@ function parseNumber(raw: string | undefined): number | null {
  * Timestamps arrive in four shapes. Epoch magnitude disambiguates:
  * seconds ~1e9, milliseconds ~1e12, microseconds ~1e15.
  */
-function parseTime(raw: string | undefined): number | null {
+function parseTime(raw: string | undefined, zone?: string): number | null {
   if (raw === undefined) return null;
   const trimmed = raw.trim().replace(/"/g, "");
   if (trimmed === "") return null;
@@ -170,6 +207,29 @@ function parseTime(raw: string | undefined): number | null {
     return null;
   }
 
+  // TradingView's table download writes the row label as it appears on screen:
+  // `Thu 30 Jul '26 07:55`. Date.parse rejects the apostrophe year outright, so
+  // the whole file would otherwise come back as unparseable timestamps.
+  const tableView =
+    /^(?:\w{3},?\s+)?(\d{1,2})\s+(\w{3})\s+'?(\d{2}|\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(
+      trimmed,
+    );
+  if (tableView) {
+    const month = MONTHS.indexOf(tableView[2]!.toLowerCase().slice(0, 3));
+    if (month !== -1) {
+      const rawYear = Number(tableView[3]);
+      return wallClock(
+        rawYear < 100 ? 2000 + rawYear : rawYear,
+        month + 1,
+        Number(tableView[1]),
+        Number(tableView[4]),
+        Number(tableView[5]),
+        Number(tableView[6] ?? 0),
+        zone,
+      );
+    }
+  }
+
   // "2026-01-05 09:30:00" or "2026-01-05T09:30:00" with no zone.
   //
   // This has to be caught BEFORE Date.parse, not after it. Date.parse accepts
@@ -179,10 +239,14 @@ function parseTime(raw: string | undefined): number | null {
   // set to UTC. Everywhere else a TradingView export without an offset was
   // silently shifted by the local offset, which moves the 10:00 key open to
   // some other hour and produces either nothing or, worse, a plausible day.
-  const zoneless = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/.exec(trimmed);
+  const zoneless =
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/.exec(trimmed);
   if (zoneless) {
-    const utc = Date.parse(`${zoneless[1]}T${zoneless[2]}Z`);
-    return Number.isNaN(utc) ? null : utc;
+    return wallClock(
+      Number(zoneless[1]), Number(zoneless[2]), Number(zoneless[3]),
+      Number(zoneless[4]), Number(zoneless[5]), Number(zoneless[6] ?? 0),
+      zone,
+    );
   }
 
   const parsed = Date.parse(trimmed);

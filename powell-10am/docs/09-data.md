@@ -33,10 +33,14 @@ Four forms are accepted, disambiguated by magnitude:
 
 The timestamp marks the candle's **open**.
 
-**A timestamp with no zone is treated as UTC.** If your export is in New York
-local time without an offset, every session in it will be misaligned by four or
-five hours and the model will find nothing at the key open. Convert it or add
-the offset — this is the single most common way to get an empty backtest.
+A fifth shape is accepted: TradingView's on-screen date spelling,
+`Thu 30 Jul '26 07:55`.
+
+**A timestamp with no zone is treated as UTC.** If your export is New York local
+time without an offset, every session in it is misaligned by four or five hours
+and the model finds nothing at the key open — the single most common way to get
+an empty backtest. Pass `--tz America/New_York` and the loader converts it, DST
+included. See "When a file has no offset" below.
 
 ### Resolution
 
@@ -100,20 +104,37 @@ repeatedly, and none of it is discoverable from the mobile app.
    loaded in the chart, so scroll left until it stops loading more before you
    export. How far back that goes is a function of timeframe and plan — 1-minute
    history is the shallowest.
-3. **Right-click the chart → "Export chart data…"**, or find the same item under
-   the chart's `⋯` menu.
-4. **In the dialog, pick UNIX timestamps** if offered. This is the one setting
-   worth caring about: it is unambiguous, whereas the formatted option writes
-   the chart's *local* wall clock with no offset attached. If you must use the
-   formatted option, set the chart's timezone to UTC first (bottom-right clock
-   → UTC) so what comes out actually means what it says.
-5. Extra columns from indicators are harmless — the loader matches columns by
-   name and ignores the rest.
+3. **Right-click the chart → "Table view"**, then click **"Download data"** at
+   the top left of the table. The export is not a top-level right-click item —
+   it lives one level down inside Table view, which is why it looks missing.
+   Table view is also useful on its own: it shows OHLC as text you can copy.
+4. **The dialog is headed "Time format (UTC)"**, and offers ISO time or UNIX
+   timestamp. Both are therefore UTC and both load correctly. Pick **UNIX** —
+   nothing can misinterpret it.
+5. Extra columns from indicators are harmless. The loader matches columns by
+   name, so `SMMA`, `EMA` and a LuxAlgo `Plot` ride along unread.
 
-A zone-less stamp like `2026-07-08 09:30:00` is read as UTC, and there is a test
-pinning that under a non-UTC machine timezone. That is a guess on your behalf,
-not knowledge: if the file is really New York wall clock, every session in it is
-four or five hours out of place. Prefer UNIX, or an explicit offset.
+### When a file has no offset
+
+A stamp like `2026-07-08 09:30:00` carries no zone, and the loader reads it as
+UTC — pinned by tests that run under a non-UTC machine timezone, because
+`Date.parse` would otherwise resolve it against whatever clock the machine
+happens to be on.
+
+UTC is a guess on your behalf, not knowledge. If the file is really New York wall
+clock, every session in it sits four or five hours out of place, which is the
+single most common way to get an empty backtest from a perfectly good file. Say
+so explicitly and the loader will do the conversion, DST included:
+
+```bash
+bun run src/cli.ts backtest data.csv --tz America/New_York
+```
+
+The table download also writes its dates the way the screen shows them —
+`Thu 30 Jul '26 07:55`. That spelling is handled; `Date.parse` rejects the
+apostrophe year, so without special handling every row in the file would come
+back as an unparseable timestamp. Prices formatted for reading, `27,739.50` with
+a Unicode minus in the change column, are handled too.
 
 ### Getting the file into a review session
 

@@ -229,10 +229,16 @@ async function fetchDukascopy(args: Args): Promise<Candle[]> {
   if (!args.from) throw new Error("dukascopy needs --from YYYY-MM-DD (and optionally --to).");
   const to = args.to ?? new Date().toISOString().slice(0, 10);
 
-  console.log(`  running dukascopy-node via npx (first run downloads the package)…`);
+  // npx if Node is installed, bunx otherwise. Requiring both would mean two
+  // installations to fetch one file, and whoever needs the data least wants a
+  // toolchain.
+  const runner = Bun.spawnSync(["which", "npx"]).exitCode === 0
+    ? ["npx", "--yes"]
+    : ["bunx"];
+  console.log(`  running dukascopy-node via ${runner[0]} (first run downloads the package)…`);
   const proc = Bun.spawnSync(
     [
-      "npx", "--yes", "dukascopy-node",
+      ...runner, "dukascopy-node",
       "--instrument", args.symbol,
       "--from", args.from,
       "--to", to,
@@ -248,9 +254,9 @@ async function fetchDukascopy(args: Args): Promise<Candle[]> {
   if (proc.exitCode !== 0) {
     throw new Error(
       `dukascopy-node failed:\n${stderr.split("\n").slice(-8).join("\n")}\n\n` +
-        `If the instrument name was rejected, list the valid ones with:\n` +
-        `  npx --yes dukascopy-node --help\n` +
-        `The Nasdaq-100 CFD is usually 'usa100idxusd'.`,
+        `If the instrument name was rejected, the Nasdaq-100 CFD is usually\n` +
+        `'usa100idxusd'; the error above normally lists what it will accept.\n` +
+        `If ${runner[0]} itself was not found, install Node (nodejs.org) or Bun.`,
     );
   }
 

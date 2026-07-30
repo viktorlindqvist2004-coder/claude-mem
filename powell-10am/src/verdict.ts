@@ -50,8 +50,12 @@ export interface ObservedSweep {
 
 export interface ObservedDisplacement {
   direction: Direction;
-  /** Did it close back through the 10:00 open price? */
-  closedThroughKeyOpen: boolean | null;
+  /**
+   * Did a candle CLOSE beyond the open of the most recent opposing delivery
+   * leg? That is CISD, and it is the source's actual trigger — a wick through
+   * a swing point does not count.
+   */
+  cisdConfirmed: boolean | null;
   /** Did it leave a fair value gap? */
   leftFvg: boolean | null;
   /** Near and far edges of that gap, if readable. */
@@ -327,27 +331,27 @@ export function evaluate(
   });
 
   gates.push({
-    id: "reclaim",
-    name: "Closed back through the 10:00 open",
+    id: "cisd",
+    name: "CISD — delivery actually flipped",
     status:
-      !config.requireKeyOpenReclaim
+      !config.requireCisd
         ? "pass"
-        : displacement.closedThroughKeyOpen === null
+        : displacement.cisdConfirmed === null
           ? "unknown"
-          : displacement.closedThroughKeyOpen
+          : displacement.cisdConfirmed
             ? "pass"
             : "fail",
     evidence:
-      displacement.closedThroughKeyOpen === null
-        ? "cannot tell whether the displacement closed through the key open"
-        : displacement.closedThroughKeyOpen
-          ? "displacement closed back through the key open price"
-          : "displacement stalled without closing through the key open",
+      displacement.cisdConfirmed === null
+        ? "cannot tell whether a candle closed through the opposing leg's open"
+        : displacement.cisdConfirmed
+          ? "a candle closed beyond the opposing leg's open — delivery flipped"
+          : "nothing closed through the opposing leg's open; delivery has not flipped",
     rationale:
-      "This is what makes it the 10am model rather than a generic reversal: the raid on one side of the axis, the trade on the other.",
+      "This is the trigger. A wick through a swing point is not a CISD — the source is explicit that it takes a close beyond the open of the most recent opposing delivery leg.",
   });
-  if (config.requireKeyOpenReclaim && displacement.closedThroughKeyOpen === null) {
-    missing.push("whether the displacement candle closed beyond the 10:00 open price");
+  if (config.requireCisd && displacement.cisdConfirmed === null) {
+    missing.push("whether a candle CLOSED beyond the open of the opposing leg (CISD)");
   }
 
   gates.push({

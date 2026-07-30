@@ -53,11 +53,14 @@ import type { Candle } from "./types.js";
 
 /** The search space used by `learn`. Kept small enough to run in seconds. */
 const DEFAULT_GRID: ParameterGrid = {
-  manipulationEnd: ["10:15", "10:30", "11:00"],
-  minDisplacementAtr: [1.0, 1.5, 2.0],
-  entryMode: ["fvg-proximal", "fvg-ce", "ote-sweet", "confluence"],
+  // Centred on the source's values rather than the engine's old invented ones:
+  // manipulation ends at the 10:00 open, entries sit at the CE or the OTE, and
+  // stops hug the wick.
+  manipulationEnd: ["09:30", "10:00", "10:30"],
+  minDisplacementAtr: [0.5, 1.0, 1.5],
+  entryMode: ["fvg-ce", "ote-sweet", "fvg-proximal", "confluence"],
   targetMode: ["opposing-liquidity", "std-dev", "fixed-r"],
-  stopBufferAtr: [0.1, 0.25, 0.5],
+  stopBufferAtr: [0.02, 0.05, 0.15],
 };
 
 /**
@@ -83,7 +86,7 @@ const OBSERVATION_TEMPLATE: ChartObservation = {
   },
   displacement: {
     direction: "long",
-    closedThroughKeyOpen: null,
+    cisdConfirmed: null,
     leftFvg: null,
     extreme: 0,
     bodyToAtr: null,

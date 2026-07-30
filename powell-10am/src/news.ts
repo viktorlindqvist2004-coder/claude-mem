@@ -45,7 +45,7 @@ export type NewsPhase =
   /** Before the cash open — shapes the range the raid will target. */
   | "pre-open"
   /** Inside 09:30–10:00 — the accumulation range itself is news-distorted. */
-  | "opening-range"
+  | "accumulation"
   /** At or within the blackout of 10:00 — the key open is a news candle. */
   | "at-key-open"
   /** Inside the manipulation window. */
@@ -330,7 +330,7 @@ export function buildNewsContext(
 
   // ---- Elevated: the range was built on news ---------------------------
   const preOpen = relevant.filter(
-    (event) => (event.phase === "pre-open" || event.phase === "opening-range") && event.impact === "high",
+    (event) => (event.phase === "pre-open" || event.phase === "accumulation") && event.impact === "high",
   );
   if (preOpen.length > 0) {
     if (regime === "clear") regime = "elevated";
@@ -419,13 +419,17 @@ function classify(event: NewsEvent, config: ModelConfig): ClassifiedEvent {
   const delta = minute - keyOpen;
   let phase: NewsPhase;
 
+  // The session wraps midnight, so these cannot be ordered as a simple
+  // ascending ladder any more: accumulation starts at 18:00 and runs into the
+  // next calendar day, which puts accStart NUMERICALLY AFTER keyOpen. Testing
+  // "minute < accStart" — as this did — sent every afternoon release to
+  // "pre-open".
   if (Math.abs(delta) <= config.newsBlackoutMinutes) phase = "at-key-open";
-  else if (minute < accStart) phase = "pre-open";
-  else if (minute < keyOpen) phase = "opening-range";
-  else if (minute < manipulationEnd) phase = "manipulation";
+  else if (minute >= accStart) phase = "accumulation";      // 18:00 → midnight
+  else if (minute < keyOpen) phase = "manipulation";        // midnight → 10:00
   else if (minute < displacementEnd) phase = "distribution";
-  else if (minute < flatten) phase = entryCutoff <= minute ? "holding" : "holding";
-  else phase = "outside";
+  else if (minute < flatten) phase = "holding";
+  else phase = "outside";                                   // flat → 18:00
 
   return { ...event, phase, minutesFromKeyOpen: delta, relevant };
 }

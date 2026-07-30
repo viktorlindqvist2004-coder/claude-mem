@@ -21,7 +21,7 @@ function validObservation(overrides: Partial<ChartObservation> = {}): ChartObser
     },
     displacement: {
       direction: "long",
-      closedThroughKeyOpen: true,
+      cisdConfirmed: true,
       leftFvg: true,
       fvgProximal: 100.8,
       fvgDistal: 100.35,
@@ -62,7 +62,7 @@ describe("valid setups", () => {
         },
         displacement: {
           direction: "short",
-          closedThroughKeyOpen: true,
+          cisdConfirmed: true,
           leftFvg: true,
           fvgProximal: 103.2,
           fvgDistal: 103.6,
@@ -136,7 +136,7 @@ describe("invalid setups", () => {
       validObservation({
         displacement: {
           direction: "long",
-          closedThroughKeyOpen: false,
+          cisdConfirmed: false,
           leftFvg: true,
           fvgProximal: 100.8,
           fvgDistal: 100.35,
@@ -146,7 +146,7 @@ describe("invalid setups", () => {
       }),
     );
     expect(verdict.status).toBe("invalid");
-    expect(verdict.gates.find((gate) => gate.id === "reclaim")?.status).toBe("fail");
+    expect(verdict.gates.find((gate) => gate.id === "cisd")?.status).toBe("fail");
   });
 
   test("displacement running the same way as the raid is rejected", () => {
@@ -154,7 +154,7 @@ describe("invalid setups", () => {
       validObservation({
         displacement: {
           direction: "short",
-          closedThroughKeyOpen: true,
+          cisdConfirmed: true,
           leftFvg: true,
           extreme: 98.0,
           bodyToAtr: 2.0,
@@ -228,7 +228,7 @@ describe("unreadable charts", () => {
       validObservation({
         displacement: {
           direction: "long",
-          closedThroughKeyOpen: true,
+          cisdConfirmed: true,
           leftFvg: true,
           extreme: 102.4,
           bodyToAtr: 2.3,
@@ -269,7 +269,7 @@ describe("alignment with the engine", () => {
         },
         displacement: {
           direction: read.distribution!.direction,
-          closedThroughKeyOpen: true,
+          cisdConfirmed: true,
           leftFvg: true,
           fvgProximal: read.distribution!.fvg!.proximal,
           fvgDistal: read.distribution!.fvg!.distal,

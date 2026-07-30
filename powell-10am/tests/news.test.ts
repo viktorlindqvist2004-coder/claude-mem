@@ -152,11 +152,16 @@ describe("classification and regime", () => {
     expect(news.advisories.map((a) => a.id)).toContain("wait-for-close");
   });
 
-  test("an 08:30 release only elevates — it shaped the range", () => {
+  test("an 08:30 release lands inside the manipulation window", () => {
+    // Under the source's clock, manipulation runs midnight to 10:00 — so the
+    // 08:30 slot is not "before the day starts", it is the fuel that most
+    // often delivers the sweep.
     const news = buildNewsContext([event({ timeEt: "08:30", title: "Core CPI m/m" })], config);
-    expect(news.regime).toBe("elevated");
-    expect(news.relevant[0]!.phase).toBe("pre-open");
-    expect(news.advisories.map((a) => a.id)).toContain("range-inflated");
+    expect(news.relevant[0]!.phase).toBe("manipulation");
+    // A tier-one release inside the raid window replaces the model's premise
+    // rather than fuelling it, so the regime is blackout, not merely elevated.
+    expect(news.regime).toBe("blackout");
+    expect(news.advisories.map((a) => a.id)).toContain("tier-one");
   });
 
   test("a release during the holding period warns about being flat first", () => {
@@ -218,7 +223,7 @@ function validObservation(): ChartObservation {
     },
     displacement: {
       direction: "long",
-      closedThroughKeyOpen: true,
+      cisdConfirmed: true,
       leftFvg: true,
       fvgProximal: 100.8,
       fvgDistal: 100.35,
@@ -282,6 +287,6 @@ describe("news in the verdict", () => {
   test("advisories are carried into the reasoning", () => {
     const news = buildNewsContext([event({ timeEt: "08:30", title: "Core CPI m/m" })], config);
     const verdict = evaluate(validObservation(), config, news);
-    expect(verdict.reasoning.join(" ")).toContain("wider");
+    expect(verdict.reasoning.join(" ")).toContain("vehicle that delivers the manipulation leg");
   });
 });

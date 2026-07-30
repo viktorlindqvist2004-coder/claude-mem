@@ -3,6 +3,7 @@ import { readDay } from "../src/model.js";
 import { simulate } from "../src/trade.js";
 import { makeConfig } from "../src/spec.js";
 import { buildLevels, findLevel } from "../src/levels.js";
+import { toEt } from "../src/time.js";
 import { TEST_DATE, bullishSetupDay, quietDay } from "./helpers/series.js";
 
 /**
@@ -19,11 +20,13 @@ describe("readDay — the canonical bullish setup", () => {
 
   test("anchors on the 10:00 key open", () => {
     const { read } = readDay(candles, TEST_DATE, stdDevConfig);
-    expect(read.keyOpen.price).toBeCloseTo(102.0, 6);
     expect(read.keyOpen.hour).toBe(10);
+    // 10:00 is the true day open — where distribution starts, long after the
+    // sweep. The price there is whatever the move has already reached.
+    expect(read.keyOpen.price).toBeCloseTo(108.0, 1);
   });
 
-  test("measures the 09:30–10:00 accumulation range", () => {
+  test("measures the 18:00–00:00 accumulation range", () => {
     const { read } = readDay(candles, TEST_DATE, stdDevConfig);
     expect(read.accumulation).not.toBeNull();
     expect(read.accumulation!.high).toBeCloseTo(104.05, 1);
@@ -158,16 +161,26 @@ describe("levels", () => {
     expect(priorHigh!.price).toBeGreaterThan(priorLow!.price);
   });
 
-  test("captures the 09:30–10:00 opening range", () => {
+  test("captures the 09:30–10:00 cash opening range as its own pool", () => {
+    // Still built, and deliberately separate from the accumulation window now
+    // that accumulation runs 18:00–00:00. Both are real liquidity.
     const levels = buildLevels(bullishSetupDay(), TEST_DATE);
-    expect(findLevel(levels, "opening-range-high")?.price).toBeCloseTo(104.05, 1);
-    expect(findLevel(levels, "opening-range-low")?.price).toBeCloseTo(99.95, 1);
+    expect(findLevel(levels, "opening-range-high")?.price).toBeCloseTo(109.05, 1);
+    expect(findLevel(levels, "opening-range-low")?.price).toBeCloseTo(107.95, 1);
+  });
+
+  test("finds the midnight open once the series covers the overnight session", () => {
+    const levels = buildLevels(bullishSetupDay(), TEST_DATE);
+    expect(findLevel(levels, "midnight-open")?.price).toBeCloseTo(102.0, 1);
   });
 
   test("omits levels the data cannot support rather than guessing", () => {
-    // No overnight session in the fixture, so there is no midnight open.
-    const levels = buildLevels(bullishSetupDay(), TEST_DATE);
-    expect(findLevel(levels, "midnight-open")).toBeNull();
+    // Cash hours only: no overnight session, so no midnight open to compute.
+    const rthOnly = bullishSetupDay().filter((candle) => {
+      const minute = toEt(candle.time).minuteOfDay;
+      return minute >= 570 && minute < 960;
+    });
+    expect(findLevel(buildLevels(rthOnly, TEST_DATE), "midnight-open")).toBeNull();
   });
 });
 

@@ -227,9 +227,9 @@ export function ablate(
       overrides: { requireFvg: false },
     },
     {
-      rule: "requireKeyOpenReclaim",
-      description: "drop the requirement to displace back through 10:00",
-      overrides: { requireKeyOpenReclaim: false },
+      rule: "requireCisd",
+      description: "drop the CISD confirmation requirement",
+      overrides: { requireCisd: false },
     },
     {
       rule: "minDisplacementAtr",

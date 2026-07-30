@@ -25,13 +25,17 @@ describe("rule spec", () => {
 
   test("the defining rules are marked sourced, not invented", () => {
     expect(noteFor("keyOpen")?.confidence).toBe("sourced");
-    expect(noteFor("requireKeyOpenReclaim")?.confidence).toBe("sourced");
+    expect(noteFor("requireCisd")?.confidence).toBe("sourced");
     expect(noteFor("requireCloseBackInside")?.confidence).toBe("sourced");
   });
 
-  test("timing windows are honestly marked tunable", () => {
+  test("the session clock is sourced, not tunable", () => {
     // These are conventions, not published numbers, and the docs say so.
-    expect(noteFor("manipulationEnd")?.confidence).toBe("tunable");
+    // These were "tunable" — invented windows nobody had a source for. The
+    // transcripts settle them, and mismarking them would invite the next
+    // session to "improve" the one thing that is now actually known.
+    expect(noteFor("manipulationEnd")?.confidence).toBe("sourced");
+    expect(noteFor("accumulationStart")?.confidence).toBe("sourced");
     expect(noteFor("displacementEnd")?.confidence).toBe("tunable");
   });
 });
@@ -46,7 +50,7 @@ describe("makeConfig", () => {
 
   test("returns a fresh object rather than mutating the defaults", () => {
     const config = makeConfig({ minPlannedR: 99 });
-    expect(DEFAULT_CONFIG.minPlannedR).toBe(2);
+    expect(DEFAULT_CONFIG.minPlannedR).toBe(3);
     expect(config).not.toBe(DEFAULT_CONFIG);
   });
 });

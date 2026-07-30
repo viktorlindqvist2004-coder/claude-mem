@@ -123,7 +123,18 @@ export interface ModelConfig {
   /** Displacement must leave a fair value gap. */
   requireFvg: boolean;
   /** Displacement must close back through the key open price. */
-  requireKeyOpenReclaim: boolean;
+  /**
+   * Require a CISD - a candle closing beyond the open of the most recent
+   * opposing delivery leg - before the setup is valid.
+   */
+  requireCisd: boolean;
+  /**
+   * What the stop is measured from.
+   *
+   * `entry-structure` puts it just beyond the wick of the candles that formed
+   * the entry array; `raid-extreme` puts it beyond the original sweep.
+   */
+  stopAnchor: "entry-structure" | "raid-extreme";
   /** Displacement must also register as a market structure shift. */
   requireMss: boolean;
   /** Longest run of candles that may be treated as one displacement leg. */
@@ -184,9 +195,9 @@ export const DEFAULT_CONFIG: ModelConfig = {
   keyOpen: "10:00",
   contextOpens: { asia: "18:00", midnight: "00:00" },
 
-  accumulationStart: "09:30",
-  accumulationEnd: "10:00",
-  manipulationEnd: "10:30",
+  accumulationStart: "18:00",
+  accumulationEnd: "00:00",
+  manipulationEnd: "10:00",
   displacementEnd: "11:30",
   entryCutoff: "12:00",
   flattenAt: "16:00",
@@ -204,19 +215,20 @@ export const DEFAULT_CONFIG: ModelConfig = {
   minDisplacementAtr: 1.5,
   atrPeriod: 14,
   requireFvg: true,
-  requireKeyOpenReclaim: true,
+  requireCisd: true,
+  stopAnchor: "entry-structure",
   requireMss: false,
   maxDisplacementCandles: 3,
 
-  entryMode: "fvg-proximal",
+  entryMode: "fvg-ce",
   allowInverseFvg: true,
   requirePremiumDiscount: false,
 
-  stopBufferAtr: 0.25,
+  stopBufferAtr: 0.05,
   targetMode: "opposing-liquidity",
   stdDevTarget: -2.0,
   fixedR: 2,
-  minPlannedR: 2,
+  minPlannedR: 3,
   partialAtR: null,
   breakEvenAtR: null,
 
@@ -248,18 +260,21 @@ export const RULE_NOTES: RuleNote[] = [
   },
   {
     id: "accumulationStart",
-    confidence: "inferred",
-    note: "The 09:30 cash open starts the range the 10am leg raids. Not stated explicitly in public material.",
+    confidence: "sourced",
+    note:
+      "Accumulation runs 18:00-00:00 ET - the futures reopen building a tight range. Was 09:30, which is not in the source at all: 09:30-10:00 sits inside the source's DISTRIBUTION phase. This single value being wrong is why the engine found almost nothing. See docs/15-source-model.md.",
   },
   {
     id: "accumulationEnd",
-    confidence: "inferred",
-    note: "Accumulation closes at the key open itself, by construction of PO3.",
+    confidence: "sourced",
+    note:
+      "The midnight open closes accumulation and opens manipulation. It also doubles as the day's premium/discount divider.",
   },
   {
     id: "manipulationEnd",
-    confidence: "tunable",
-    note: "A 30-minute manipulation window is convention, not a published number. Prime candidate for the parameter search.",
+    confidence: "sourced",
+    note:
+      "Manipulation runs 00:00-10:00 ET, covering Asia, London and the NY pre-market. Was 10:30 - the engine scanned the half hour AFTER the key open, which the source calls the true day open, where distribution begins.",
   },
   {
     id: "displacementEnd",
@@ -350,9 +365,23 @@ export const RULE_NOTES: RuleNote[] = [
     note: "Displacement that leaves a fair value gap supplies the entry. Without a gap there is nothing to retrace into.",
   },
   {
-    id: "requireKeyOpenReclaim",
+    id: "stopAnchor",
     confidence: "sourced",
-    note: "Distribution is confirmed by displacing back through the key open — the sweep on one side, the trade on the other.",
+    note:
+      "The stop sits 'pretty much below the wick' of the structure being entered, not "
+      + "beyond a raid that may have happened hours earlier. In the narrated day-low "
+      + "trade the sweep was the previous day's high and the stop was FIVE POINTS, "
+      + "anchored to the 15-minute level being entered. Anchoring to the raid extreme "
+      + "made risk enormous once the manipulation window widened to 00:00-10:00, and "
+      + "planned R collapsed to 0.01-0.55 across the measured sessions. When even the "
+      + "structural stop is too wide the source drops a timeframe to find a smaller "
+      + "rejection block rather than widening the target.",
+  },
+  {
+    id: "requireCisd",
+    confidence: "sourced",
+    note:
+      "CISD is confirmed the moment a candle CLOSES beyond the open of the most recent opposing delivery leg, not when a wick pokes through a swing point. Replaces requireKeyOpenReclaim, which was inferred, appears nowhere in the source, and rejected 26 of 50 measured sessions.",
   },
   {
     id: "requireMss",
@@ -366,8 +395,9 @@ export const RULE_NOTES: RuleNote[] = [
   },
   {
     id: "entryMode",
-    confidence: "tunable",
-    note: "Genuine fill-rate/risk trade-off: proximal fills most, distal and OTE risk least. 'confluence' demands gap and OTE overlap.",
+    confidence: "sourced",
+    note:
+      "The CE - 50% of the imbalance - is the stated default: 'I like to use the 50% mark of every imbalance, just so that my risk is better.' 0.705 is his favourite fib entry, 0.79 the stop reference. Was fvg-proximal, the zone edge, which is not in the source and produced no-fills on both measured setups.",
   },
   {
     id: "allowInverseFvg",
@@ -381,8 +411,9 @@ export const RULE_NOTES: RuleNote[] = [
   },
   {
     id: "stopBufferAtr",
-    confidence: "tunable",
-    note: "Stops sit beyond the manipulation extreme; the buffer keeps them off the exact tick.",
+    confidence: "sourced",
+    note:
+      "The stop sits 'pretty much below the wick' - structural, not a volatility band. Observed NQ stops are 5-20 points. Was 0.25 ATR, far too wide, which is why the engine could not clear even a 2R floor while the source reaches 1:8 and 1:17. A small buffer is kept rather than none because a stop exactly on the wick is taken by one tick of noise.",
   },
   {
     id: "targetMode",
@@ -402,7 +433,8 @@ export const RULE_NOTES: RuleNote[] = [
   {
     id: "minPlannedR",
     confidence: "sourced",
-    note: "A 1:2 minimum reward:risk filter is the standard floor for this family of models.",
+    note:
+      "'Do good RR - 1 to 3 minimum, preferably 1 to 4.' HIGHER than the 2 this engine used. The engine found nothing not because its floor was strict but because its stops were wide; a tight structural stop is what makes 3R ordinary.",
   },
   {
     id: "partialAtR",

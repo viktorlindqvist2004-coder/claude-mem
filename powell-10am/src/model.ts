@@ -29,7 +29,7 @@ import type {
   Po3Read,
   Sweep,
 } from "./types.js";
-import { minutesOf, etWeekday } from "./time.js";
+import { minutesOf, etWeekday, toEt } from "./time.js";
 import { indexAtMinute, indexBeforeMinute } from "./series-index.js";
 import { buildLevels, levelsAsOf, findLevel, type KeyLevel } from "./levels.js";
 import { atrAt } from "./primitives/atr.js";
@@ -117,8 +117,11 @@ export function readDay(
     keyOpen: config.keyOpen,
     asiaOpen: config.contextOpens.asia,
     midnightOpen: config.contextOpens.midnight,
-    openingRangeStart: config.accumulationStart,
-    openingRangeEnd: config.accumulationEnd,
+    // The 09:30-10:00 cash opening range is a liquidity pool in its own right
+    // and is NOT the model's accumulation window any more — accumulation now
+    // runs 18:00-00:00. Both are real pools; conflating them would lose one.
+    openingRangeStart: "09:30",
+    openingRangeEnd: "10:00",
   });
   const activeLevels = levelsAsOf(allLevels, keyOpenCandle.time);
   read.levels = activeLevels.map((entry) => ({
@@ -129,12 +132,12 @@ export function readDay(
   }));
 
   // ---- 1. Accumulation ------------------------------------------------
-  const accStart = indexAtEtTime(candles, date, config.accumulationStart);
-  if (accStart === null) {
-    read.rejectedReason = "no candles at accumulation start";
+  const window = accumulationWindow(candles, date, config);
+  if (!window) {
+    read.rejectedReason = "no candles in the accumulation window";
     return { read, setup: null };
   }
-  const accEnd = keyOpenIndex - 1;
+  const { from: accStart, to: accEnd } = window;
   const accumulation = extremesOf(candles, accStart, accEnd, config.rangeBasis);
   if (!accumulation) {
     read.rejectedReason = "empty accumulation range";
@@ -152,9 +155,13 @@ export function readDay(
   read.contextBias = contextBias(candles, keyOpenIndex, activeLevels, config);
 
   // ---- 2/3. Manipulation ----------------------------------------------
-  const manipulationEnd = indexBeforeEtTime(candles, date, config.manipulationEnd) ?? candles.length - 1;
+  // The manipulation phase runs from the end of accumulation to the key open —
+  // Asia, London and the New York pre-market. The engine used to scan the half
+  // hour AFTER 10:00, which the source calls distribution: by then the move it
+  // was looking for has already happened. See docs/15-source-model.md.
+  const manipulationEnd = indexBeforeEtTime(candles, date, config.manipulationEnd) ?? keyOpenIndex;
   const pools = buildPools(candles, accStart, accEnd, activeLevels, config);
-  const sweep = findSweep(candles, pools, keyOpenIndex, manipulationEnd, {
+  const sweep = findSweep(candles, pools, accEnd + 1, manipulationEnd, {
     minPenetration: config.minSweepPenetration,
     requireCloseBackInside: config.requireCloseBackInside,
     reclaimBars: config.sweepReclaimBars,
@@ -201,12 +208,18 @@ export function readDay(
     minAtrMultiple: config.minDisplacementAtr,
     atrPeriod: config.atrPeriod,
     requireFvg: config.requireFvg,
-    reclaimPrice: config.requireKeyOpenReclaim ? keyOpen.price : null,
+    reclaimPrice: config.requireCisd ? cisdReference(candles, sweep.index, direction) : null,
     maxCandles: config.maxDisplacementCandles,
   });
 
   if (!displacement) {
-    read.rejectedReason = "no qualifying displacement back through the key open";
+    // findDisplacement bundles three conditions, so the message names all of
+    // them rather than blaming whichever one happens to be enabled. Reporting
+    // "no CISD" for a day that failed the energy threshold would send someone
+    // looking at the wrong thing.
+    read.rejectedReason = config.requireCisd
+      ? "no qualifying displacement — needs a CISD close through the opposing leg's open, enough energy, and an imbalance"
+      : "no qualifying displacement — needs enough energy and an imbalance";
     return { read, setup: null };
   }
   read.distribution = displacement;
@@ -278,8 +291,14 @@ export function readDay(
 
   // ---- 6. Risk ---------------------------------------------------------
   const buffer = atr * config.stopBufferAtr;
+  // The wick of the structure being entered, not the raid that may have run
+  // hours earlier. See `stopAnchor` in the spec for why this changed.
+  const stopReference =
+    config.stopAnchor === "raid-extreme"
+      ? manipulationExtreme
+      : entryStructureExtreme(candles, displacement.startIndex, direction, manipulationExtreme);
   const stopPrice =
-    direction === "long" ? manipulationExtreme - buffer : manipulationExtreme + buffer;
+    direction === "long" ? stopReference - buffer : stopReference + buffer;
   const risk = Math.abs(entry.price - stopPrice);
   if (risk <= 0) {
     read.rejectedReason = "degenerate stop distance";
@@ -505,7 +524,7 @@ function buildPools(
       price: extent.high,
       time: lastAccCandle.time,
       weight: 5,
-      label: "opening range high",
+      label: "accumulation high",
     });
     pools.push({
       kind: "opening-range-low",
@@ -513,7 +532,7 @@ function buildPools(
       price: extent.low,
       time: lastAccCandle.time,
       weight: 5,
-      label: "opening range low",
+      label: "accumulation low",
     });
   }
 
@@ -606,6 +625,123 @@ function extremesOf(
   }
   if (high === -Infinity || low === Infinity) return null;
   return { high, low };
+}
+
+/**
+ * The accumulation window, which spans midnight.
+ *
+ * The source builds its range from the 18:00 futures reopen to the midnight
+ * open, so for trading date D the window starts on the *previous session day*.
+ * Resolved by finding 00:00 on D and walking back to the most recent candle at
+ * the configured start time, rather than by subtracting a calendar day — that
+ * way a weekend or a holiday resolves to the last session that actually traded
+ * instead of to a gap.
+ */
+function accumulationWindow(
+  candles: Candle[],
+  date: string,
+  config: ModelConfig,
+): { from: number; to: number } | null {
+  const startMinute = minutesOf(config.accumulationStart);
+  const endMinute = minutesOf(config.accumulationEnd);
+
+  // A window that does not cross midnight is a plain intraday span.
+  if (startMinute < endMinute) {
+    const from = indexAtEtTime(candles, date, config.accumulationStart);
+    const to = indexBeforeEtTime(candles, date, config.accumulationEnd);
+    return from === null || to === null || from > to ? null : { from, to };
+  }
+
+  // The crossing case, resolved by boundary rather than by exact minute match.
+  // Demanding a candle stamped exactly 00:00 looked reasonable and broke on the
+  // first real feed: Yahoo stamps 5-minute bars at 00:05, 00:10 …, so midnight
+  // itself never appears and every session reported an empty window.
+  let firstOfDate = -1;
+  for (let i = 0; i < candles.length; i++) {
+    const candle = candles[i];
+    if (!candle) continue;
+    const parts = toEt(candle.time);
+    if (parts.date === date) {
+      if (parts.minuteOfDay >= endMinute) {
+        firstOfDate = i;
+        break;
+      }
+    } else if (parts.date > date) {
+      break;
+    }
+  }
+  if (firstOfDate <= 0) return null;
+
+  // Walk back over the previous session's evening block. Thirty hours of slack
+  // lets a Monday reach Friday's 18:00 without ever stepping over a session
+  // that did trade.
+  const floorTime = (candles[firstOfDate] as Candle).time - 30 * 60 * 60 * 1000;
+  let from = -1;
+  for (let i = firstOfDate - 1; i >= 0; i--) {
+    const candle = candles[i];
+    if (!candle || candle.time < floorTime) break;
+    if (toEt(candle.time).minuteOfDay < startMinute) break;
+    from = i;
+  }
+  return from === -1 ? null : { from, to: firstOfDate - 1 };
+}
+
+/**
+ * The price a CISD has to close through: the open of the most recent opposing
+ * delivery leg.
+ *
+ * "CISD is confirmed the moment a candle closes beyond the open of the most
+ * recent opposing delivery leg — not merely when a wick pokes through a swing
+ * high or low." Walking back from the sweep over the run of candles delivering
+ * *against* the intended direction gives the start of that leg; its open is the
+ * reference.
+ *
+ * This replaces the engine's old requirement that displacement close back
+ * through the 10:00 open, which appears nowhere in the source and rejected 26
+ * of 50 measured sessions.
+ */
+function cisdReference(candles: Candle[], sweepIndex: number, direction: Direction): number | null {
+  const opposing = (candle: Candle) =>
+    direction === "long" ? candle.close < candle.open : candle.close > candle.open;
+
+  let start = Math.min(sweepIndex, candles.length - 1);
+  while (start > 0) {
+    const candle = candles[start];
+    const previous = candles[start - 1];
+    if (!candle || !previous) break;
+    if (!opposing(candle) && !opposing(previous)) break;
+    if (!opposing(previous)) break;
+    start--;
+  }
+  return candles[start]?.open ?? null;
+}
+
+/**
+ * The extreme of the candles that formed the entry array — the "wick" the stop
+ * goes beyond.
+ *
+ * Bounded by the raid extreme so the stop can never end up on the wrong side of
+ * the premise: if price trades through the raid extreme the setup is dead
+ * regardless, and a stop beyond that point would be looser than the idea itself.
+ */
+function entryStructureExtreme(
+  candles: Candle[],
+  displacementStart: number,
+  direction: Direction,
+  raidExtreme: number,
+): number {
+  const from = Math.max(0, displacementStart - 2);
+  const to = Math.min(candles.length - 1, displacementStart + 1);
+  let extreme = direction === "long" ? Infinity : -Infinity;
+  for (let i = from; i <= to; i++) {
+    const candle = candles[i];
+    if (!candle) continue;
+    extreme = direction === "long" ? Math.min(extreme, candle.low) : Math.max(extreme, candle.high);
+  }
+  if (!Number.isFinite(extreme)) return raidExtreme;
+  return direction === "long"
+    ? Math.max(extreme, raidExtreme)
+    : Math.min(extreme, raidExtreme);
 }
 
 /** The furthest price the leg reached in its direction of travel. */

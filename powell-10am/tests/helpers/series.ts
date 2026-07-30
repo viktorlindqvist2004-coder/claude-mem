@@ -74,62 +74,72 @@ export function flat(date: string, from: string, to: string, price: number, wick
 }
 
 /**
- * The canonical bullish 10am setup, scripted end to end:
+ * The canonical bullish setup, scripted end to end on the SOURCE's clock.
  *
- *   09:30–10:00  accumulation builds a 100.0–104.0 range
- *   10:00        key open at 102.00
- *   10:01–10:03  raid: price drives through 100.0 to 99.80 and closes back inside
- *   10:04–10:06  displacement up through the key open, leaving a fair value gap
- *   10:07–10:12  retracement into the gap — the entry
- *   10:13–11:00  expansion to the standard deviation objective
+ *   18:00–00:00  accumulation builds a 100.0–104.0 range (previous session day)
+ *   00:00        midnight open — accumulation ends, manipulation begins
+ *   03:00–03:03  raid: price drives through 100.0 to 99.80 and closes back inside
+ *   03:04–03:06  CISD — a candle closes above the opposing leg's open, leaving a gap
+ *   03:06–03:12  retracement into the gap, to its CE — the entry
+ *   03:13–09:00  expansion toward the objective
+ *   10:00        the key open, by which time distribution is under way
  *
- * The prior session is included so the level builder has something to work with.
+ * The clock is the point. The engine used to script this whole sequence into
+ * 09:30–10:30, which is where the source expects the move to be *finishing*.
  */
 export function bullishSetupDay(): Candle[] {
   const candles: Candle[] = [];
 
-  // Prior session, so prior-day high/low/close exist.
+  // Prior session daytime, so prior-day high/low/close exist as levels.
   candles.push(...ramp(PRIOR_DATE, "09:30", "12:00", 98.0, 99.0));
   candles.push(...ramp(PRIOR_DATE, "12:00", "16:00", 99.0, 98.5));
 
-  // 1. Accumulation: up to 104, down to 100, back to 102.
-  candles.push(...ramp(TEST_DATE, "09:30", "09:40", 102.0, 104.0));
-  candles.push(...ramp(TEST_DATE, "09:40", "09:52", 104.0, 100.0));
-  candles.push(...ramp(TEST_DATE, "09:52", "10:00", 100.0, 102.0));
+  // 1. Accumulation, 18:00 → midnight: up to 104, down to 100, back to 102.
+  candles.push(...ramp(PRIOR_DATE, "18:00", "20:00", 102.0, 104.0));
+  candles.push(...ramp(PRIOR_DATE, "20:00", "22:00", 104.0, 100.0));
+  candles.push(...ramp(PRIOR_DATE, "22:00", "24:00", 100.0, 102.0));
 
-  // 2. Key open.
-  candles.push(candle(TEST_DATE, "10:00", 102.0, 102.1, 101.8, 101.9));
+  // 2. Midnight open, then quiet Asia hours.
+  candles.push(...flat(TEST_DATE, "00:00", "03:00", 102.0));
 
-  // 3. Manipulation: through the 100.00 opening-range low, closing back above.
-  candles.push(candle(TEST_DATE, "10:01", 101.9, 101.95, 101.0, 101.1));
-  candles.push(candle(TEST_DATE, "10:02", 101.1, 101.15, 100.2, 100.3));
-  candles.push(candle(TEST_DATE, "10:03", 100.3, 100.35, 99.8, 100.3));
+  // 3. Manipulation: through the 100.00 accumulation low, closing back above.
+  candles.push(candle(TEST_DATE, "03:00", 102.0, 102.05, 101.0, 101.1));
+  candles.push(candle(TEST_DATE, "03:01", 101.1, 101.15, 100.2, 100.3));
+  candles.push(candle(TEST_DATE, "03:02", 100.3, 100.35, 99.8, 100.3));
 
-  // 4. Distribution: three bullish candles reclaiming the key open. The gap is
-  //    between the 10:04 high and the 10:06 low.
-  candles.push(candle(TEST_DATE, "10:04", 100.3, 100.9, 100.25, 100.85));
-  candles.push(candle(TEST_DATE, "10:05", 100.85, 102.4, 100.8, 102.35));
-  candles.push(candle(TEST_DATE, "10:06", 102.35, 102.6, 101.2, 102.5));
+  // 4. CISD: three bullish candles closing back through the opening of the leg
+  //    that delivered into the sweep. The gap sits between the 03:03 high and
+  //    the 03:04 low.
+  candles.push(candle(TEST_DATE, "03:03", 100.3, 100.9, 100.25, 100.85));
+  candles.push(candle(TEST_DATE, "03:04", 100.85, 102.4, 100.8, 102.35));
+  candles.push(candle(TEST_DATE, "03:05", 102.35, 102.6, 101.2, 102.5));
 
-  // 5. Retracement into the gap. The 10:04 candle's high (100.90) and the
-  //    10:05 candle's low (100.80) bracket the gap, so price must trade at or
-  //    below 100.80 for the entry to fill.
-  candles.push(...ramp(TEST_DATE, "10:07", "10:13", 102.5, 100.7));
+  // 5. Retracement into the gap. The entry is the CE — the 50% of the imbalance
+  //    — not its near edge, so the retracement has to reach into the middle of
+  //    the gap rather than just tag its top. It stops well above the 99.78 stop.
+  candles.push(...ramp(TEST_DATE, "03:06", "03:12", 102.5, 100.4));
 
-  // 6. Expansion to the objective and beyond.
-  candles.push(...ramp(TEST_DATE, "10:13", "11:00", 100.7, 108.5));
-  candles.push(...flat(TEST_DATE, "11:00", "16:00", 108.0));
+  // 6. Expansion to the objective and beyond, through the 10:00 open.
+  candles.push(...ramp(TEST_DATE, "03:12", "09:00", 100.4, 108.5));
+  candles.push(...flat(TEST_DATE, "09:00", "09:30", 108.0));
+  // A distinct cash opening range, so that level is still exercised — it is a
+  // real liquidity pool even though it is no longer the accumulation window.
+  candles.push(...ramp(TEST_DATE, "09:30", "09:45", 108.0, 109.0));
+  candles.push(...ramp(TEST_DATE, "09:45", "10:00", 109.0, 108.0));
+  candles.push(...flat(TEST_DATE, "10:00", "16:00", 108.0));
 
   return candles;
 }
 
 /**
- * A day that never raids anything: price drifts sideways from the open. Used to
- * assert the model declines to trade rather than inventing a setup.
+ * A day that never raids anything: price drifts sideways through accumulation
+ * and manipulation alike. Used to assert the model declines to trade rather
+ * than inventing a setup.
  */
 export function quietDay(): Candle[] {
   return [
     ...ramp(PRIOR_DATE, "09:30", "16:00", 100.0, 100.5),
-    ...flat(TEST_DATE, "09:30", "16:00", 101.0),
+    ...flat(PRIOR_DATE, "18:00", "24:00", 101.0),
+    ...flat(TEST_DATE, "00:00", "16:00", 101.0),
   ];
 }

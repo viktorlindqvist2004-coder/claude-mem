@@ -154,3 +154,46 @@ bun run src/cli.ts ablate data.csv
 ```
 
 Five days cannot establish this. Worth revisiting at 50 entries.
+
+---
+
+## 8 — The spec encodes only the reversal half of the playbook
+
+**Status:** `open` · **Evidence:** 29 Jul 2026, plus a Powell clip the user surfaced
+
+The model as encoded is purely mean-reverting: it waits for a raid and trades
+*away* from it. It has no mechanism for trading *with* an expansion.
+
+On 29 July the verdict was `INVALID — expansion`, and the reasoning said in as
+many words: *"treat this as a warning in the opposite direction rather than a
+missed opportunity."* Price then travelled 370 points in exactly that direction.
+The warning was correct and actionable, and the spec had no rule that turned it
+into a trade.
+
+The user then surfaced a Powell clip suggesting he took a trade on a day the
+encoded model declined. That is consistent rather than contradictory **if he was
+trading continuation** — which the spec simply does not cover.
+
+**What is confirmed by the clip:** his chart shows fib levels 0.62 / 0.705 /
+0.79 — exactly the OTE band in `src/primitives/fib.ts`. First direct sighting of
+one of his own levels; it matches.
+
+**What is not established:** the date, the instrument, the direction, or the
+entry. The clip's prices top around 27,960 against a 27,870 window high in our
+29 July read — roughly a 90-point offset, consistent with NQ futures versus a
+US100 cash CFD. The clip also surfaced under a "MMSM" (Market Maker Sell Model)
+search, which is a *different* ICT model.
+
+**Candidate:** a continuation variant — enter in the direction of an expansion
+that closes through the level, rather than declining the day.
+
+**Do not bolt this onto the spec.** It is a different model with a different
+premise, and it needs its own spec, its own backtest and its own journal. Adding
+"…unless it's expansion, then trade the other way" to a reversal model is how a
+tested edge becomes an untested guess.
+
+**Highest-value next step for the whole project:** the user can reach Powell's
+actual content. `docs/08-sources.md` records that every rule here is
+reconstructed from secondary material because the source videos were
+unreachable. Primary-source material — what he says, not what a chart implies —
+is worth more than any further chart reading.

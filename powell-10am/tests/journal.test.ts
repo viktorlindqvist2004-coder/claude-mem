@@ -94,14 +94,51 @@ describe("summariseJournal", () => {
   });
 });
 
-describe("the seeded journal", () => {
-  test("the committed record parses and matches what was reviewed", async () => {
+describe("the committed journal", () => {
+  /**
+   * Deliberately asserts invariants rather than a day count or an R total.
+   * The record grows every time a chart is reviewed, so a test pinned to
+   * "5 days, 3.35R" fails on the next honest entry and trains whoever hits it
+   * to edit the expectation without reading it. What is worth protecting is
+   * that the file stays parseable and internally consistent.
+   */
+  test("parses, and every entry is internally consistent", async () => {
     const text = await Bun.file(new URL("../journal/entries.jsonl", import.meta.url)).text();
     const entries = parseJournal(text);
-    const stats = summariseJournal(entries);
-    expect(stats.daysReviewed).toBe(5);
-    expect(stats.setups).toBe(1);
-    expect(stats.totalR).toBeCloseTo(3.35, 2);
-    expect(stats.confidence).toContain("anecdote");
+    expect(entries.length).toBeGreaterThan(0);
+
+    const dates = new Set<string>();
+    for (const entry of entries) {
+      expect(entry.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(dates.has(entry.date)).toBe(false);
+      dates.add(entry.date);
+
+      // A plan without a direction-consistent stop is a transcription error,
+      // and it would feed a wrong R into the stats unnoticed.
+      if (entry.plan) {
+        const { direction, entry: fill, stop, target } = entry.plan;
+        if (direction === "long") {
+          expect(stop).toBeLessThan(fill);
+          expect(target).toBeGreaterThan(fill);
+        } else {
+          expect(stop).toBeGreaterThan(fill);
+          expect(target).toBeLessThan(fill);
+        }
+        expect(entry.plan.plannedR).toBeGreaterThan(0);
+      }
+
+      // A realised R only means something against a plan to measure it from.
+      if (entry.outcome?.r !== undefined && entry.outcome.r !== 0) {
+        expect(entry.plan).toBeDefined();
+      }
+    }
+  });
+
+  test("the sample is still far too small to draw conclusions from", async () => {
+    const text = await Bun.file(new URL("../journal/entries.jsonl", import.meta.url)).text();
+    const stats = summariseJournal(parseJournal(text));
+    expect(stats.daysReviewed).toBe(stats.rejections.reduce((sum, r) => sum + r.count, 0) + stats.setups);
+    expect(stats.taken).toBeLessThan(30);
+    expect(stats.confidence).not.toBe("");
   });
 });

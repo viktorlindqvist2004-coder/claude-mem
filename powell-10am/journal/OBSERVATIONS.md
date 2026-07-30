@@ -354,3 +354,61 @@ would have filled early and caught the move to 29,540; the `ote-sweet` fallback
 sat 140 points below price and never filled. That is the fill-rate/risk trade-off
 in `docs/05` playing out for real, and it is what the `entryMode` grid search
 measures.
+
+---
+
+## 12 — A gate can pass by less than the reading error, and the verdict does not say so
+
+**Status:** `open` · **Evidence:** 10 Jul 2026 (probable date), 1 instance
+
+Every structural gate passed on 10 July. One of them passed by 1.5 points:
+
+```
+cleared 09:30-10:00 high by 5.00 — threshold is 3.46 (2% of the range)
+```
+
+Both numbers are axis reads off a 5-minute screenshot. The window high and the
+raid extreme each carry roughly ±10 points of uncertainty, so the true
+penetration is somewhere between 0 and 15 and the true threshold between about
+3.0 and 3.9. The gate's answer is not 5 > 3.46 = pass. Its answer is *unknown*,
+and it reported `pass` with a tick beside it.
+
+This is a different failure from anything recorded so far. Observations 1 and 8
+are about whether a rule is *right*. This one is about whether the engine is
+entitled to an opinion at all given the precision of its input. A gate that
+reports a boolean when the margin is inside the error bars is not merely
+imprecise — it converts a coin flip into a green tick, on the one surface the
+user consults *before* entering.
+
+**Why it did not bite here:** the overall verdict was `UNCERTAIN` anyway, because
+the 5m chart left the FVG and displacement-energy gates unreadable. That is luck.
+On a 1m chart with a visible gap, the same marginal penetration would have
+produced a confident `VALID` at 5.43R.
+
+**Candidate:** give `ChartObservation` an optional `priceTolerance` (points), set
+from how the reading was obtained — small when prices come from the OHLC hover
+readout, larger for an axis read, and scalable with the gridline spacing. Any
+numeric gate whose margin is smaller than the propagated tolerance returns
+`unknown` with wording that names the margin, instead of `pass` or `fail`. The
+raid-penetration gate is the obvious first case; the key-open reclaim test and
+the 2R floor have the same shape.
+
+Note this interacts with observation 10 in a useful way. An absolute floor on
+`minSweepPenetration` would have raised the threshold here from 3.46 to
+something like 10–15, which does not resolve the ambiguity — it moves the
+5-point read from a marginal pass to a clear fail. Both changes are worth having,
+but only the tolerance one is honest about *why* the answer is uncertain.
+
+**Test:** the tolerance change cannot be validated by backtest, because CSV data
+has no reading error — it only ever affects the screenshot path. So the test is
+the journal: apply it retrospectively to every entry logged so far and check that
+it flips only the readings whose margin was genuinely thin, and leaves the eight
+clear-cut days alone. If it turns days like 24 July uncertain, the tolerance is
+set too wide to be useful.
+
+**Also open on this day, unresolved:** a ~190 point lower wick to 29,476 printed
+on the 10:25–10:30 candle while price sat at ~29,668. If that print is real it
+reached the 29,585 target before the 29,738 entry was ever touched — the same
+shape as observation 11, where the move happens without you. If it is a CFD feed
+artefact it is nothing. Screenshots cannot distinguish the two, which is one more
+argument for getting real data in.

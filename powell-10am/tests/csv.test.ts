@@ -93,3 +93,30 @@ describe("toCsv", () => {
     expect(reparsed).toEqual(original);
   });
 });
+
+describe("zone-less timestamps", () => {
+  /**
+   * Regression: these used to reach `Date.parse`, which resolves a stamp with no
+   * offset against the machine's timezone. The docs promised UTC, and the test
+   * suite agreed only because CI runs on UTC. Forcing a non-UTC zone is the
+   * whole point of this test.
+   */
+  const cases = ["2026-07-08 09:30:00", "2026-07-08T09:30:00", "2026-07-08 09:30"];
+  for (const stamp of cases) {
+    test(`${stamp} is UTC regardless of the machine's timezone`, () => {
+      const { candles, errors } = parseCsv(
+        `time,open,high,low,close\n${stamp},1,2,0.5,1.5\n`,
+      );
+      expect(errors).toEqual([]);
+      expect(candles).toHaveLength(1);
+      expect(new Date(candles[0]!.time).toISOString()).toBe("2026-07-08T09:30:00.000Z");
+    });
+  }
+
+  test("an explicit offset is still honoured", () => {
+    const { candles } = parseCsv(
+      `time,open,high,low,close\n2026-07-08T09:30:00-04:00,1,2,0.5,1.5\n`,
+    );
+    expect(new Date(candles[0]!.time).toISOString()).toBe("2026-07-08T13:30:00.000Z");
+  });
+});

@@ -85,7 +85,57 @@ back-adjustment are fine; the model is intraday, so roll artefacts affect only
 the days around a roll.
 
 **TradingView.** The chart export gives 1-minute data over a limited lookback
-depending on plan. Export in UTC if the option exists.
+depending on plan. See the step-by-step below.
+
+### Exporting from TradingView, in detail
+
+This is written out because it is the step that has blocked this project
+repeatedly, and none of it is discoverable from the mobile app.
+
+1. **Use a computer.** The export lives in the web chart at tradingview.com and
+   in the desktop app. **The iOS and Android apps cannot export**, on any plan.
+   There is no workaround; a screenshot is the mobile path, and
+   `scripts/chart-measure.ts` exists for exactly that reason.
+2. **Load the history first.** The export writes out only the bars currently
+   loaded in the chart, so scroll left until it stops loading more before you
+   export. How far back that goes is a function of timeframe and plan — 1-minute
+   history is the shallowest.
+3. **Right-click the chart → "Export chart data…"**, or find the same item under
+   the chart's `⋯` menu.
+4. **In the dialog, pick UNIX timestamps** if offered. This is the one setting
+   worth caring about: it is unambiguous, whereas the formatted option writes
+   the chart's *local* wall clock with no offset attached. If you must use the
+   formatted option, set the chart's timezone to UTC first (bottom-right clock
+   → UTC) so what comes out actually means what it says.
+5. Extra columns from indicators are harmless — the loader matches columns by
+   name and ignores the rest.
+
+A zone-less stamp like `2026-07-08 09:30:00` is read as UTC, and there is a test
+pinning that under a non-UTC machine timezone. That is a guess on your behalf,
+not knowledge: if the file is really New York wall clock, every session in it is
+four or five hours out of place. Prefer UNIX, or an explicit offset.
+
+### Getting the file into a review session
+
+Attach the `.csv` to the conversation the same way you would a screenshot. If the
+client refuses the extension, rename it to `.txt` — the loader looks at the
+content, not the name — or paste the rows inline. One session of 5-minute candles
+is under 200 rows and pastes comfortably; 1-minute is nearer a thousand and is
+better attached.
+
+### One day of CSV is barely worth the trip
+
+For reviewing a single day, a screenshot and `chart-measure.ts` land within about
+a pixel, which on a 5-minute chart is a fraction of a point. Exporting one day
+gains precision that changes no verdict.
+
+What CSV unlocks is the thing screenshots can never do: `backtest`, `ablate` and
+`learn` across hundreds of sessions. Several questions in
+`journal/OBSERVATIONS.md` — whether the accumulation range should use bodies or
+wicks, whether `manipulationEnd` should move, whether the raid threshold needs an
+absolute floor — are all stuck waiting on that and cannot be settled one day at a
+time. So when you do get to a computer, export **as much history as the plan
+gives you in one go**, not the day you happen to be looking at.
 
 **Free sources** generally do not offer 1-minute futures history at usable
 depth. This is the real constraint on running this project properly.

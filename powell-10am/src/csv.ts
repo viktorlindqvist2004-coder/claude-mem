@@ -170,12 +170,21 @@ function parseTime(raw: string | undefined): number | null {
     return null;
   }
 
-  const parsed = Date.parse(trimmed);
-  if (!Number.isNaN(parsed)) return parsed;
+  // "2026-01-05 09:30:00" or "2026-01-05T09:30:00" with no zone.
+  //
+  // This has to be caught BEFORE Date.parse, not after it. Date.parse accepts
+  // both spellings and resolves them against the *machine's* timezone, so the
+  // fallback that used to sit below this was unreachable and the documented
+  // promise — that a zone-less stamp means UTC — held only on a machine already
+  // set to UTC. Everywhere else a TradingView export without an offset was
+  // silently shifted by the local offset, which moves the 10:00 key open to
+  // some other hour and produces either nothing or, worse, a plausible day.
+  const zoneless = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)$/.exec(trimmed);
+  if (zoneless) {
+    const utc = Date.parse(`${zoneless[1]}T${zoneless[2]}Z`);
+    return Number.isNaN(utc) ? null : utc;
+  }
 
-  // "2026-01-05 09:30:00" without a zone — Date.parse handles this
-  // inconsistently across runtimes, so normalise to ISO and treat as UTC.
-  const normalised = trimmed.replace(" ", "T");
-  const retry = Date.parse(normalised.endsWith("Z") ? normalised : `${normalised}Z`);
-  return Number.isNaN(retry) ? null : retry;
+  const parsed = Date.parse(trimmed);
+  return Number.isNaN(parsed) ? null : parsed;
 }

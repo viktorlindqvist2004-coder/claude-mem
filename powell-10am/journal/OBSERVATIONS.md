@@ -568,3 +568,78 @@ the reversal half of the playbook. If the same trader also takes continuation on
 trending days, then days like 30 July, which this model correctly refuses to
 fade, may be days he trades in the other direction entirely. That is a second
 model, not a looser version of this one.
+
+---
+
+## 15 — The engine implements a different model from the one in the source
+
+**Status:** `blocking` · **Evidence:** `docs/source/` transcripts, analysed in
+`docs/15-source-model.md` · **Supersedes the framing of observations 1, 8, 13.**
+
+Primary source material arrived on 30 July 2026 and settles the question this
+project has been circling for weeks. The user's objection — a real trader takes
+this setup far more often than the encoding fires — was right, and the cause is
+larger than any parameter discussed so far.
+
+**The session clock is wrong.**
+
+| | Engine | Source |
+|---|---|---|
+| Accumulation | 09:30–10:00 | **18:00–00:00** |
+| Manipulation | 10:00–10:30 | **00:00–10:00** |
+| 10:00 ET | the manipulation window | **the start of distribution** |
+
+The engine hunts for a sweep during the half hour in which the source expects the
+move to already be under way. That is why the raid gate only began passing once
+prior-day, London and Asia pools were added: those are precisely the levels the
+source says get swept — between midnight and 10:00, which the engine never looks
+at.
+
+Everything measured so far therefore describes a model nobody trades. The 50-session
+run, the 2-setup rate, the 4% figure, the ablation — all of it was measuring an
+opening-range PO3 that was never the target.
+
+**Second-order errors, each independently significant:**
+
+- The trigger is **CISD** — a candle closing beyond the open of the most recent
+  opposing leg — not `requireKeyOpenReclaim`, which appears nowhere in the source
+  and rejected 26 of 50 sessions.
+- **Stops are structural and tiny**: just beyond the sweep wick, 5–20 points on
+  NQ, with an explicit "drop a timeframe to find a smaller rejection block" rule
+  when that comes out too wide. The engine uses the raid extreme plus an ATR
+  buffer, which is far wider. This is why the source reaches 1:8 and 1:17 while
+  the engine cannot clear its own 2R floor.
+- The stated minimum is **1:3, preferably 1:4** — *higher* than the engine's 2R.
+  The engine finds nothing not because its floor is strict but because its stops
+  are wide.
+- Entries are at the **CE (0.5)** or **0.705**, never the zone's near edge. The
+  engine defaults to `fvg-proximal`, which is why both measured setups were
+  no-fills.
+- A hard **two-trade daily limit** with 50% de-risk after a first loss. No
+  equivalent exists, and it changes what a backtest means.
+
+**One correction that cuts against the user's premise, and has to be recorded
+because the record is only worth anything if it holds inconvenient findings too.**
+The source explicitly describes a *low-frequency* model:
+
+> "on most days, the honest, correct execution of this playbook is deciding that
+> nothing here lined up, and taking no trade at all."
+>
+> "Treat a session with zero qualifying setups as a successful day, not a missed
+> one."
+
+Combined with the two-trade ceiling, "a setup almost every day" is not what the
+source describes. Publicly posted trades are a selected sample; the days with
+nothing on them do not get posted. That does not rescue the engine — the clock is
+still wrong — but the target frequency should not be set from an impression.
+
+**Also revised:** observation 1 (key open at the window extreme predicts failure)
+was measured against a window the source does not use. Its five-for-one evidence
+is about the 09:30–10:00 range and does not transfer. Observation 8 — that the
+spec encodes only the reversal half — is subsumed: MMXM has both a buy and a sell
+model, and the missing half was never a separate model.
+
+**What this does not invalidate:** the measurement machinery. `chart-measure`,
+the level builder, the fill logic, the no-look-ahead discipline, the journal —
+all of it survives and is what makes the rewrite testable. What has to change is
+the spec, in the order listed at the end of `docs/15-source-model.md`.

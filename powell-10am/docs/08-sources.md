@@ -1,4 +1,14 @@
-# 08 — Sources and provenance
+# 08 — Sources
+
+> **SUPERSEDED IN PART, 30 July 2026.** Primary source material has arrived: a
+> field guide built from official transcripts of eight teaching sessions, kept in
+> `docs/source/` and analysed in [`15-source-model.md`](15-source-model.md).
+>
+> It shows the engine in `src/` is **not** the model described. The session clock
+> is wrong — accumulation runs 18:00–00:00 and manipulation 00:00–10:00, with
+> 10:00 as the start of *distribution* rather than a manipulation window. Read
+> `15-source-model.md` before trusting any rule described below or any number
+> this project has produced.
 
 **Read this before trusting anything else in this project.**
 

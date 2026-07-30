@@ -1,0 +1,705 @@
+The Powell Trades Method — Entry-to-Exit Field Guide
+P
+Powell's Model
+☰
+P
+Powell's Model
+v2 — sourced from his own words
+Start
+Overview
+Method & Sources
+Foundations
+The Toolkit
+Core Philosophy
+Key Opens & Sessions
+The Model
+5-Step Checklist
+Engineered Liquidity
+Market Maker Models
+CISD
+Fib / OTE / CE Entries
+Wick Theory
+Opening Gaps
+Execution
+Top-Down Entries
+Risk & R-Multiples
+The Playbook
+Reference
+Real Trade Examples
+Psychology & Discretion
+Community & Firms
+Disclaimer
+Built from his own transcripts — not guesswork
+The Powell Trades Method —
+entry to exit
+, step by step.
+A complete field guide to the ICT / Smart-Money-Concepts NQ futures scalping system taught by Robert "Powell" Powell and his
+Dumb Money Concepts
+community — built from his own spoken explanations across 8 teaching sessions, matched frame-by-frame to what's on the chart.
+8
+Sessions analyzed
+~64 min
+Video + transcript
+NQ
+Primary instrument
+TradingView
++ Tradovate execution
+00 — Method & Sources
+How this guide was built
+This is the second pass. The first version was built from on-screen visual evidence alone; this version adds the actual subtitle/transcript files for all 8 sessions, which changes a lot.
+01 · Verified transcripts
+Official .srt subtitle files were provided for every recording, timestamp-aligned to the video. This means explanations, numeric rules, and reasoning that were spoken but never written on the chart are now captured directly — not inferred. Where this guide states a rule or a number, it is either read off a frame or spoken by him directly in the transcript.
+02 · Visual analysis
+Every recording was also broken into timestamped frames and reviewed directly — on-screen checklists, indicator settings, drawn levels, and the platform's own risk/reward readouts. Transcript and frame were cross-matched by timestamp so a spoken explanation is paired with the chart it was said over.
+03 · Public cross-reference
+The trader's identity and community are confirmed directly inside the footage — a Discord server named
+DUMB MONEY CONCEPTS
+, a channel structure including
+#powell-levels
+, and he refers to his own system as "the Powell Model" on camera. That let this guide cross-reference his publicly listed course curriculum and an open-sourced TradingView indicator describing his own "Wick Theory" checklist, filling in a small number of terms his own transcripts reference by name but don't fully re-define on camera.
+A note on the transcripts themselves:
+these are casual, unscripted teaching videos — he talks fast, swears constantly, goes on tangents, and occasionally can't remember which day a trade happened. That's left in spirit (quotes are cleaned up for reading, not sanitized of meaning) because the honesty and the trial-and-error is part of what makes the source material credible. A few words are consistently mis-transcribed by the captioning software in predictable ways — "day high/day low" reliably comes out as "data high/data low," and "sweep" sometimes renders as "soup" — these are corrected silently below since the intended meaning is unambiguous from context.
+01 — Foundations
+The Toolkit
+Identical setup across all 8 sessions. Nothing exotic — the edge is in the framework, not the software.
+Layer
+What's used
+Notes
+Charting
+TradingView (Pro/Premium)
+Bar Replay used extensively for backtesting; multi-chart layouts with NQ + a correlated ticker side by side
+Execution
+Tradovate
+Connected directly via the TradingView
+Trading Panel
+/
+Tradovate
+integration tab
+Instrument
+NQ — E-mini Nasdaq-100 (CME)
+Front-month contracts rolled across the sessions (Sep '24, Dec '24, Sep '25). ES tracked alongside as a correlated pair for divergence checks
+Prop firms
+Apex, Alpha Futures, Tradeify, MyFundedFutures, Topstep
+Apex Trader Funding and Topstep bookmarked directly in-browser; full partner list confirmed via linked referral page (code
+POWELL
+)
+Chart theme
+Custom saved template ("James default")
+Slate-gray background, burnt-orange/red bearish candles, black/charcoal bullish candles — high-contrast, low visual noise
+Indicators confirmed on-screen
+ICT Killzones [LuxAlgo]
+Session/kill-zone shading. Legend shows Fibonacci ratios
+0 · 0.236 · 0.382 · 0.5 · 0.618 · 0.782 · 1
+driving the zone math.
+ICT NWOG/NDOG & EHPDA [LuxAlgo]
+New Week / New Day Opening Gap tool. "Show" toggled to
+NWOG
+, lookback
+Amount
+adjusted live (5 → 44) to widen historical gap context.
+Key Opens (custom)
+Plots three fixed daily opens as horizontal rays —
+6:00 PM
+,
+12:00 AM
+, and
+10:00 AM
+, all Eastern Time.
+Long/Short Position tool
+TradingView's native risk-tool, dragged onto nearly every setup before entry to pre-calculate stop distance, target distance, and the resulting R-multiple.
+indicator settings · captured on-screen
+The exact indicator stack, mid-adjustment
+Both LuxAlgo ICT tools visible in the top-left legend simultaneously — "ICT NWOG/NDOG & EHPDA" and "ICT Killzones" with its Fibonacci ratio list — while the NWOG lookback amount is being changed live from 5 to 44 periods.
+A note on the Fibonacci levels:
+alongside the indicator's built-in 0.236–0.782 ratios, Powell posts his own manual retracement set directly in the Discord:
+0.5 · 0.62 · 0.705 · 0.79
+. That's a close variant of the standard ICT "Optimal Trade Entry" zone (0.62–0.79) with 0.5 added as an extra anchor — used for locating entries inside the FVG/order-block retracement described later in this guide. Full mechanics of how he actually uses these four numbers are in the
+Fib / OTE / CE Entries
+section.
+In his own words:
+"
+It's called the ICT NWOG by LuxAlgo… it's literally the only indicator I use. This, kill zones, whatever.
+" He keeps the chart almost bare on purpose — the edge sits in the levels and the checklist, not in a stack of indicators.
+02 — Foundations
+Core philosophy: Dumb Money vs. Smart Money
+The community's name is the thesis, not just branding.
+Retail order flow clusters at obvious, visually clean levels — equal highs and lows, round numbers, the most recent swing point, a trendline everyone can see. Those clusters of stop-losses and breakout orders
+are
+liquidity, and large institutional orders need exactly that liquidity to fill into. So price gets engineered toward those obvious pools before it actually does what it's "supposed" to do.
+Trading the Powell way means refusing to be the liquidity. You don't chase the breakout retail is chasing. Instead, the entire 5-step checklist below exists to answer one question before any entry:
+which liquidity pool is about to get run, and which direction does smart money go once it has?
+This is squarely
+ICT (Inner Circle Trader) / Smart Money Concepts
+methodology. Powell's own course module list uses this vocabulary directly — CISD, MMXM, OTE, FVG — so this guide treats his system as an applied, NQ-scalping-specific implementation of that broader framework rather than something invented from scratch.
+03 — Foundations
+Key opens & session timing
+"The key opens that I like to use is the 1800 opening, the midnight open, and the 10am hourly candle open." Three fixed lines, marked the moment he logs on, before anything else.
+ACCUMULATION
+MANIPULATION
+DISTRIBUTION
+range built, tight consolidation
+false moves, liquidity sweeps
+CISD, true directional move
+6:00 PM ET
+futures open
+12:00 AM ET
+midnight open
+10:00 AM ET
+true day open
+6:00 PM ET — "1800"
+Accumulation
+Futures session reopens and builds a tight range. Low volatility by design — this range's high and low become the levels the next phase will likely run through.
+12:00 AM ET — Midnight
+Manipulation
+Covers the Asia range, the London open, and the New York pre-market. The midnight open itself doubles as the day's premium/discount divider — a swing below it is the daily discount level, a swing above it the daily premium.
+10:00 AM ET
+Distribution
+The "true day open." The highest-conviction continuation moves in every session reviewed happened once price was trading through this open.
+These levels don't trade themselves
+Directly from his own opening line on the subject:
+"Everything we use with these levels has to be in context first of all. So you do your top-down analysis…"
+A key open by itself is not a trade — it's a reference line. Two things turn it into one:
+A confirming close, not a touch
+"It's not a market structure shift, but you want to see a strong candle close above that level." Price has to close beyond the key open in your favor before it counts for anything.
+Enter on the nearest PD array, not the line itself
+"In this scenario you wouldn't enter on the line — you would enter on the closest PD array." A
+PD array
+is his catch-all term for any reactive zone (an FVG, order block, or breaker) sitting near the key open. The line tells you
+where
+to look; the nearest array is what you actually trade off.
+An honest regime warning, in his own words:
+"From April to maybe mid-July you could sweep these levels without too much context. However, it's kind of stopped working… because you don't have the proper context." He's openly flagging that how cleanly these levels react changes with the broader market regime — treat "just trade the key open" as something that works better in some stretches than others, not a constant.
+The "draw" rule — don't fade your own target
+Once price reaches a level you correctly identified as the draw on liquidity and prints a strong confirming close there, the bias flips — you do not fade back against the move you were just waiting for. In his words, narrating a live example:
+"You guys knew this was going to be the draw… that's why you don't short this when it comes back to it after this strong close — because we hit the draw, so you're now bullish."
+Color coding on his charts (noted as roughly consistent, not perfectly fixed across every session):
+green
+for the 6PM/1800 open,
+pink or yellow
+for the midnight open,
+yellow
+for the 10AM open. By his own account these three levels — used with proper context — are "the concepts and the levels that probably made me the most money."
+04 — The Model
+The 5-step top-down checklist
+Captured directly, in order, from the on-screen checklist used at the start of every session reviewed:
+1. Daily pxl/pxh · 2. Key opens · 3. EQL/EQH · 4. MMXM · 5. 4H and 1H CISD
+.
+PXH/PXL
+Daily PxL / PxH
+Prior period's high and low — your highest-timeframe liquidity reference points.
+"Number one, daily PXL, PXH — that's the first thing I do, because if we haven't [swept it] and the daily [level] lines up, that's easy daily [liquidity]." These are the two largest, most obvious magnets on the chart, checked before anything else.
+How to mark it: Mark as two horizontal rays. Everything else in the checklist gets evaluated relative to these two lines first.
+OPENS
+Key Opens
+Horizontal lines at 6:00 PM, 12:00 AM, and 10:00 AM — all Eastern Time.
+"Then what else I look for is — I mark my key opens, just mark them." Price's position relative to these three opens tells you whether you're trading at a premium or a discount relative to where the trading day technically began. Full mechanics in the dedicated section above.
+How to mark it: Plotted automatically by the custom Key Opens indicator; can be drawn manually as three rays if the indicator isn't available.
+LIQUIDITY
+EQL / EQH — without SMT
+Equal Lows / Equal Highs — two or more swing points sitting at, or very near, the same price — on a correlated pair that agree with each other.
+Quoted directly, and more specific than it first sounds: "equal highs, equal lows,
+without SMT
+, because if there's equal lows but there's SMT at that low, then that's kind of mid." For this step, a pool only counts as a clean, valid target when a correlated instrument (he keeps ES alongside NQ for this) confirms the same equal level — not when ES diverges from it. Divergence here downgrades the pool's quality rather than improving it.
+How to mark it: Scan visually across the last several swings on the working timeframe; mark any pair (or cluster) that lines up within a few ticks of each other, then check the correlated pair agrees.
+MODEL
+MMXM
+Market Maker Buy Model or Market Maker Sell Model — which of the two canonical sequences price is currently running.
+Decided by which side has already been swept and which side remains untouched. "Almost every market maker model has an original consolidation" followed by a buy-side curve and a sell-side curve — full breakdown including the precision-entry "breaker" technique is in the dedicated section below.
+How to mark it: Determined, not drawn — this is a judgment call made by reading steps 1–3 together, then confirmed by step 5.
+CONFIRMATION
+4H and 1H CISD
+Change in State of Delivery, checked on both the 4-hour and the 1-hour chart as the top-down pair — though the same mechanic is used fractally on lower timeframes for the actual entry trigger.
+The actual confirmation step. Has the higher-timeframe delivery genuinely flipped, or is price still inside the prior leg? Skipping either timeframe risks being early relative to the dominant trend, or missing how the bigger picture just reshaped.
+How to mark it: Mark the open of the most recent impulse leg as a ray on each timeframe; CISD is confirmed the moment a candle closes through that ray in the new direction.
+Order matters.
+This is a top-down funnel, not a five-item shopping list to confirm in any sequence — each step narrows what the next step is looking for. Step 5 (CISD) is the actual trigger; steps 1–4 exist purely to tell you
+where
+to expect it.
+05 — The Model
+Engineered liquidity — the five forms
+Step 3 of the checklist asks "is this liquidity engineered?" Here's the full answer, straight from his dedicated lesson on the topic: "It's literally engineered liquidity is just a clear, [obvious] low. That's one example of it."
+Order block CE liquidity
+Clean lows (or highs) left stacked just above the CE (50% mark) of an order block. "These are clear lows left above the CE of the order block. This to me is engineered liquidity." Entry sits a couple of ticks beyond the CE itself.
+Low resistance liquidity (LRL)
+A trendline connecting a series of higher lows (or lower highs) that's obviously visible on the chart — "just trendline low resistance liquidity, it's pretty simple." The trendline itself is the engineered pool.
+Equal highs / equal lows
+Two or more swing points sitting at the same price — the most textbook, most visually obvious form, and the one most likely to have retail stops resting directly behind it.
+Day high / day low
+The current session's high or low, especially ones formed around scheduled news releases. "They're like news wicks, bro… it's like engineered liquidity basically." He's candid that he doesn't have a precise mechanical explanation for why these react so reliably — only that years of screen time confirm they do.
+Clear swing highs / swing lows
+Sometimes it really is just a single obvious swing point with nothing else going on — no trendline, no order block, just a high or low that visibly stands out on the timeframe you're reading.
+How close is too close? How far is too far?
+SWEET SPOT — liquidity inside the rejection block
+CE (50% — consequent encroachment)
+≤ 2 points from CE → treated as already mitigated, skip it
+too far — won%t stand out
+This is a direct answer to a frequently asked question, with a precise numeric rule attached:
+Too close — already mitigated
+"My rule of thumb is if it's like 2 points or less away from the CE, I'll just not take it — because at that point I count the CE as already mitigated." Inside ~2 points, the liquidity and the entry zone are functionally the same level; there's no real sweep-then-reverse left to trade.
+The sweet spot
+"If the liquidity is inside of the rejection block… that's usually the sweet spot for me. That shows we've already rejected at this level, we're willing to reject price here, come down, sweep, go into the actual level."
+Can it be too far away?
+"Not really… it would have to be like stupid far away — if you have any discretion at all, you'll just see it. If it doesn't stand out to you, it's probably too far away."
+There's no hard outer-distance number — the test is whether the level visually stands out as significant, not a fixed point count.
+The bigger point, in his words:
+"It's not over-complicated. Well — I mean, it's not complicated, so don't over-complicate it." Engineered liquidity is always one (or a stack) of these five forms. It's a confluence to combine with everything else in this guide, not a standalone setup on its own.
+06 — The Model
+Market Maker Models — MMXM
+Two mirrored sequences. Once you know which one is active, every subsequent step in the checklist is just locating where you are inside it.
+Sell model
+BEARISH FVG / ORDER BLOCK
+EQH — buy-side liquidity (engineered by retail)
+EL — sell-side liquidity (draw / target)
+① LIQUIDITY SWEEP
+② CISD — bearish
+③ ENTRY TRIGGER
+rejection at FVG
+④ DISTRIBUTION → target
+① Price sweeps a buy-side liquidity pool (equal highs) above the recent range → ② a sharp bearish displacement candle closes back below the open of the prior bullish leg — CISD confirmed → ③ a shallow retracement drifts back up into the bearish FVG/order block left behind by that candle — this is the entry zone → ④ distribution continues down to the next sell-side liquidity pool.
+Buy model
+BULLISH FVG / ORDER BLOCK
+EQL — sell-side liquidity (engineered by retail)
+EQH — buy-side liquidity (draw / target)
+① LIQUIDITY SWEEP
+② CISD — bullish
+③ ENTRY TRIGGER
+rejection at FVG
+④ DISTRIBUTION → target
+The exact mirror: ① sweep below an equal-lows pool → ② bullish CISD closes back above the prior bearish leg's open → ③ retracement dips back down into the bullish FVG/order block → ④ distribution continues up to the next buy-side liquidity pool.
+How to actually spot one: the original consolidation
+Directly from his dedicated lesson:
+"Almost every market maker model has an original consolidation"
+— a tight base the entire structure builds from —
+"and then a buy-side curve and a sell-side curve."
+Spotting that initial consolidation before price expands away from it is, in his words,
+"one of the biggest things that's going to help you identify a market maker model"
+in the first place — before any entry technique even applies.
+Breakers — the actual entry trigger
+the breaker level
+low
+higher high
+closes through low
+retrace = entry
+continuation
+① high → low → higher high
+② candle CLOSES
+through the low
+③ BREAKER
+retrace = entry trigger
+A market maker model is the
+bias
+. A breaker is the
+trigger
+. His own definition, almost verbatim:
+"Let's say it's a high and a low and a higher high, and then that gets traded through — that's going to be our breaker."
+Price makes a low, rallies to a higher high, and then a candle
+closes back through that original low
+— the zone between that low and the candle that broke it flips from support into resistance (or the mirror, for a bullish breaker).
+"Breakers are going to be the biggest part of your market maker entries."
+The close matters, not the wick
+"You want a candle closure above this breaker… look at this, it didn't close above, it just kind of swept it and then had a retracement leg." A wick alone through the breaker level doesn't validate it — wait for an actual close.
+Stack an imbalance on top
+"You got this five-minute imbalance on top of this five-minute breaker." A breaker overlapping a fair value gap is what he calls a
+unicorn
+— two confluences at the same price doing the same job.
+For precise risk, he doesn't enter at the edge of the breaker zone:
+"I like to use the 50% mark of every imbalance, just so that my risk is better."
+In a worked example: enter at 44, stop at 39 — a clean 5-point stop, with the target sitting at the next equal-highs (or equal-lows) pool. And one more layer of confluence that upgrades the whole setup:
+"You want a swing above or below your midnight open for it to be like a plus-plus."
+His own summary of the whole technique:
+"A market maker model is essentially your bias. Breakers is going to be the essential entry trigger. Imbalances — great bonus. And a swing above or below midnight open — plus-plus." Five-minute is his preferred timeframe for reading MMXM structure itself: "I've found that the five-minute timeframe is the best to use."
+Get the directional call wrong here and every level you draw afterward is mirrored in the wrong direction — it's worth being more certain about which model is active than any other single step in the checklist.
+07 — The Model
+CISD — Change in State of Delivery
+The actual trigger condition behind step 5 of the checklist, defined precisely.
+Definition:
+CISD is confirmed the moment a candle
+closes
+beyond the open of the most recent opposing delivery leg — not merely when a wick pokes through a swing high or low. He's openly dismissive of the more formal "market structure shift" (MSS) language some ICT traders insist on:
+"We have a market structure shift, for those of you that care about that — I personally don't give a flying fuck."
+CISD, in his usage, is the practical version of the same idea: did delivery actually flip, yes or no.
+Why 4H specifically
+Tells you whether the higher-timeframe delivery itself is actually turning, or whether what you're looking at is still noise inside the existing dominant leg.
+Why 1H specifically
+Confirms the immediate next leg is locked in, giving you a current, tighter frame of reference to drop into for the actual 15m point-of-interest search.
+That 4H/1H pair is the top-down checklist standard — but the same close-through-the-open mechanic is used fractally all the way down. In one trade walkthrough he points to CISD forming on the
+30-minute and the 15-minute
+simultaneously near a session open, and separately describes a
+1-minute entry trigger
+as "basically a CISD entry in this case." The timeframe pair changes with context; the trigger logic — a close through the prior leg's open — doesn't.
+Practical marking method:
+draw the open of each impulse leg as a horizontal ray on the relevant timeframe. CISD is confirmed the instant a candle on that same timeframe closes through that ray in the new direction — not before.
+A full worked example, narrated live
+From a top-down trade breakdown, condensed: previous day's high gets swept → an
+inducement
+leg fakes lower (his definition:
+"a fake move, a manipulation move, to create stop orders up here to then sweep"
+) → price doesn't even touch the inducement, resweeps the real level with size → leaves an
+untouched day low
+, which becomes the session bias → 30m and 15m CISD confirm near the 9AM window → price retraces back into that 15m CISD level right as the
+10AM open
+taps in → a hard rejection prints, closing strongly back below the 10AM open → an inversion forms
+without
+ever taking out the day low. Entry: 5-point stop, target the day low —
+a 1:8 result
+, "more than we could ever ask for."
+He's explicit that this setup is only valid as long as price respects the day low:
+"Does not take that low — that's important. If it took that low, you could still target the day low if you got this entry, but it's just going to be lower probability."
+A level being re-swept after your entry doesn't always invalidate the trade outright, but it does downgrade its quality.
+08 — The Model
+Fib / OTE / CE — the precision entry layer
+"The fib is super powerful, especially with these settings." His own four-level set, and exactly how he trades each one.
+Level
+Role
+0.5
+The
+CE
+(consequent encroachment) — his default, most-used precision entry on order blocks and FVGs. "Most sensitive," tightest risk.
+0.62
+Gives more entries than 0.705, but needs a bigger stop if you take it standalone.
+0.705
+His personal favorite for fib-specific entries: "I just prefer using the 0.705." This is the deep
+OTE
+(Optimal Trade Entry) zone.
+0.79
+"Also a very good level" — used as the stop-loss reference, not usually as an entry itself.
+His standard fib trade, verbatim:
+"What I always do if I use the fib is I enter at 0.705 and I always put my stop like below the 0.79. Obviously you can put it all the way down at the low, but that's just going to give you a stop that I'm not really a fan of."
+Why it works — and when it doesn't
+The fib isn't a standalone setup — it's a precision tool laid onto a move that's already happening.
+"You can use this for like a safety net if you miss your first entry… price usually gets really aggressive when it comes down to that 0.705."
+He explicitly ties it to the same underlying idea as engineered liquidity and the AMD model: a sweep, an initial bounce, then a sharp move back through the fib zone.
+Where NOT to use it:
+"Everything in this type of price action is just going to be drastically lower probability, because it's accumulating for a reason." Choppy, range-bound, still-accumulating price doesn't respect fib levels reliably — save the tool for after a clean directional sweep, not during one.
+A real worked example — confluence stacking
+From a live setup he points to directly: a PPI news release, lining up with the
+8:30 key-open reference
+, a 1-minute FVG, a breaker, and the 0.5 of that leg — five separate confluences sitting at the same price. Result: 10-point stop, 40-point target, hit in three candles — a clean 1:4.
+"You really don't have to overcomplicate trading."
+09 — The Model
+Wick Theory — the 5-point rejection checklist
+Powell's own published filter for deciding whether a wick is a genuine liquidity-sweep-and-reverse, sourced directly from his open-sourced TradingView checklist script.
+① liquidity sweep
+wick pierces prior high/low
+② imbalance (FVG)
+inefficient, one-sided delivery
+③ rejection block
+tiny real body vs. wick = absorption
+④ engineered liquidity (equal highs)
+⑤ SMT divergence — confirm against a correlated pair
+(e.g. ES vs NQ) failing to make the same extreme
+Liquidity Sweep
+The wick has to take real resting liquidity — a prior high/low, an equal-highs/lows pool, or a session extreme. Not just any wiggle qualifies.
+Imbalance (FVG)
+The sweep candle, or the one immediately after it, should leave behind a fair value gap — visible evidence of aggressive, one-directional delivery rather than calm two-sided trade.
+Rejection Block
+The candle's real body should be small relative to its wick. A long wick with a tiny body shows firm rejection from the extreme, not a slow grind back.
+Engineered Liquidity
+The level that got swept needs to be one retail traders would obviously be resting orders at — textbook equal highs/lows, a clean trendline, a round number. Manufactured, obvious liquidity, not a random wick in open air.
+SMT Divergence
+Confirm against a correlated instrument. Powell keeps ES alongside NQ on a second ticker for exactly this: if NQ sweeps a new extreme but ES fails to match it (or vice versa), that divergence adds real confluence the sweep was a liquidity run, not a genuine new trend.
+All five conditions are meant to stack on the
+same
+candle or cluster — a wick that sweeps liquidity but leaves no imbalance, or rejects cleanly but at a level nobody was actually resting orders at, is a weaker signal than one that checks every box. Treat this as a pass/fail filter applied to the sweep candle identified in the MMXM sequence above, not a separate standalone setup.
+10 — The Model
+Opening gaps — NWOG / NDOG
+"It's literally the only indicator I use." New Week Opening Gaps and New Day Opening Gaps, and how he actually trades them.
+Setup
+ICT NWOG by LuxAlgo, set to show the last four or five new-week opening gaps, with everything else in the indicator turned off. A deliberately minimal chart.
+The "free bias" rule
+"If you see a gap that is unfilled — like there's zero trading inside of it — that's a free bias. That's going to be your bias. If you have another bias, you're [wrong]." An untouched gap overrides a guess.
+Two distinct ways he trades these gaps:
+As a key-open-style reaction level
+"I would kind of treat it as a key open — you wait for a candle close above or below to actually enter on it." Same rule as the three key opens: a touch isn't enough, a confirming close is required.
+As a gap-fill target
+"If you see an empty gap with no volume inside, just know that 90 to 95% of the time we're going to come back and fill that gap." A high-probability magnet to target once direction is established, frequently combined with a break-and-retest of the gap's edge afterward.
+His explicit warning about over-tooling:
+"I'm giving you guys a lot of levels to look for, which could result in over-trading… don't do that, that's [not good]. Use your brain, combine it with levels." More confluence tools means more chances to talk yourself into a mediocre trade — discipline matters more as the toolkit grows.
+A timeframe note that applies broadly, not just to gaps: "I think a lot of you guys would just really improve with sticking to the five-minute, doing five-minute entries… if you just look at the five-minute, it's going to be way less stressful" than watching every tick on the 1-minute and panicking through normal retracements.
+11 — Execution
+Top-down analysis & entry triggers
+Every session cycles through the same four-stage funnel, narrowing from bias to an actual clickable trigger.
+DAILY / 4H
+directional bias — which side of the market you favor
+1H
+CISD context — has delivery actually shifted?
+15M
+POI — locate the FVG / order block / EQH-EQL
+1M / 5M
+entry trigger — CISD candle close in your favor
+DAILY / 4H
+Form the bias
+Mark PDH/PDL and the relevant weekly high/low. Decide whether price is trading at a premium or a discount of the recent range. This produces an initial directional lean — nothing is traded off this alone.
+1H
+Confirm CISD context
+Require 1H CISD in the direction of the daily/4H lean. If the 1-hour disagrees with the higher-timeframe bias, the answer is to stand down or wait — not to override one timeframe with the other.
+15M
+Locate the PD array
+With direction confirmed, drop to the 15-minute chart and mark the specific point of interest — the nearest PD array (FVG / order block / breaker) to your key level, not the level's raw line itself.
+1M / 5M
+Wait for the entry trigger
+Once price actually trades into the PD array, drop to the 1-minute or 5-minute chart and require a CISD-style confirmation candle — a close back in your favor — before clicking anything. Touching the zone is not the trigger; a confirming close is.
+He's explicit that five-minute is usually the better choice over one-minute for this last step: tiny, sub-5-minute PD arrays are exactly where you get "edged" — clipped by noise — most often. One-minute earns its place only when the structure backing it is unusually clean.
+12 — Execution
+Risk management — the R-multiple framework
+Before sizing into any of the trades reviewed, the same risk tool was used to pre-build the trade and read off the math
+before
+clicking.
+TARGET — next liquidity pool (EL / EQH)
+ENTRY — CISD confirmation candle close
+STOP — beyond the sweep wick
+Mechanically, this was consistent across every clip: drag TradingView's Long/Short Position tool onto the chart, set the stop just beyond the structural invalidation point, set the target at the next unswept liquidity pool, and read the resulting Risk/Reward Ratio before risking anything.
+Real R-multiples observed directly in the footage
+Instrument
+Stop (pts)
+Target (pts)
+R-Multiple
+NQ
+15.00
+56.25
+3.75R
+NQ
+5.00
+88.50
+17.7R
+NQ
+10.00
+70.00
+7.0R
+NQ
+10.00
+81.25*
+15.7R
+*Open trade at time of capture, P&L and ratio shown live by the platform's tool rather than a closed result. Full chart evidence for each row is in the
+Trade Breakdown
+section below.
+How big should the stop actually be?
+His direct answer, more than once, is: it depends.
+"I always say it depends on volatility, depends on the points of the range."
+But there's a real method underneath that, not just a shrug:
+Start with the structurally correct stop
+"For it to make sense, you would have to have your stop loss pretty much below the wick." That's the textbook-correct placement — full invalidation, no ambiguity.
+If that stop is too big, don't widen your target math to compensate — drop timeframe instead
+In one real example a structurally correct stop came out to 46 points. Even with a 200-point target (a 1:4), he passed:
+"That's a little bit too big, I don't like that… that's not what I'm really trying to get out of this."
+His fix wasn't a wider target — it was finding a 5-minute rejection block inside the same zone, which cut the same trade down to a clean, much smaller stop.
+Big wicks sometimes just mean a bigger stop, and that's fine
+On a 20-point-wide five-minute wick, he simply took the 20-point stop against a 200-point target — a 1:10. "Is it a big stop loss to me? Yes, not something I usually go for, but we have to account for volatility."
+Trade management once you're in
+The stop doesn't have to sit static for the whole trade. His stated default:
+"I usually do like 10-point stops, and then if it gives me a reaction, I would just trail it to five, and then trail it to break-even."
+For bigger expansion moves specifically, the same idea scales up: move to break-even or trail to roughly 1:3 once price reacts, then hold (or scale out across contracts) for the rest of the move risk-free.
+Minimum reward-to-risk, stated directly:
+"Do good RR — 1 to 3 minimum, preferably 1 to 4." Several of the real examples above run far past that, but 1:3 is the floor he names explicitly, not the target.
+The math behind why he's comfortable with tiny win rates
+He makes this point directly with a real example: a 5-point stop against a 90-point target (true day open / midnight open) — roughly 1:17 — and then asks his audience to imagine
+"if you lose 15 of these trades in a row, which you're not going to do, but let's say you do."
+At that ratio, you'd still need to lose
+more than 17 in a row
+before the strategy is underwater. The general relationship:
+R-Multiple
+Breakeven win rate
+Rough loss-streak tolerance
+1:3
+25%
+~4 in a row before breakeven risk rises sharply
+1:4
+20%
+~7–8 consecutive losses still net positive
+1:8
+11%
+~13–14 consecutive losses still net positive
+1:17
+~5.5%
+~17–18 consecutive losses before breakeven
+Breakeven win rate = 1 ÷ (1 + R). Figures are simplified, ignore fees/slippage, and assume constant risk per trade — illustrative of the logic he's describing, not a guarantee of any specific outcome.
+The honest trade-off, in his own words:
+"If you do five-point stops and big TPs, your win rate is going to take a hit no matter what you do — but this I've found to be pretty consistent." He doesn't claim a high win rate. He claims the math survives a low one, and says so directly: "I'm not going to sit here and pretend like it's 100% win rate — it's definitely not."
+The daily trade-limit rule
+A concrete, stated session rule for managing risk across a whole day rather than one trade at a time:
+"If the first trade is a win, then get off. If the first trade is a loss, de-risk 50%. If that's a loss, get off. If that's a win, get off."
+In practice: a maximum of two trades a day. A win on trade one ends the session. A loss on trade one halves size for trade two — and trade two ends the session regardless of its outcome.
+General best practice layered on top
+(standard funded-account risk discipline): size contracts to a small, fixed percentage of account equity per trade — commonly 0.5–1% in prop-firm contexts — rather than a fixed lot size regardless of stop distance. Respect whatever daily-loss limit and trailing or static drawdown rule your specific funded account carries on top of the rules above; a single oversized loss can end an evaluation outright even if your win rate is otherwise strong.
+13 — Execution · The Centerpiece
+The complete playbook — entry to exit
+Every concept above, collapsed into one literal sequence to run each session, in order, from before the chart opens to after the trade closes.
+Pre-session prep
+Mark your highest-timeframe references
+Plot the prior day's (or relevant period's) high and low — Daily PxL/PxH — before the session starts. These are your two largest liquidity magnets for the day.
+Plot the three key opens
+Add horizontal rays at 6:00 PM (1800), 12:00 AM (midnight), and 10:00 AM ET. These need top-down context to mean anything — they are reference lines, not trade triggers on their own.
+Scan for equal highs / equal lows — and check the correlated pair
+On the Daily/4H, identify the most obvious EQH and EQL pools on both sides of price. Only count a pool as clean if a correlated instrument (ES alongside NQ) shows the same equal level without SMT divergence.
+Form your top-down bias
+Decide which pool looks more obviously engineered — and therefore more likely to be the one that hasn't been run yet. That becomes your working directional lean for the session, not yet a trade.
+Accumulation window — 6PM to 12AM ET
+Let the range build, don't trade it
+Note the high and low of the range that forms. This range is the one the manipulation leg will likely sweep through. Watch for an inducement leg too — a fake move designed to build stops before the real sweep — and don't mistake it for the real thing.
+Manipulation window — 12AM to ~10AM ET
+Watch for the sweep
+Through Asia and London hours, watch for price to run through the accumulation range's high/low, or through one of the daily EQH/EQL levels marked earlier. A level that's been tested and rejected multiple times tends to sweep with real force once it finally goes — repeated rejections build up the liquidity behind it.
+Check CISD the moment a sweep happens
+Has delivery actually flipped on the relevant timeframes (4H/1H as the top-down pair, or 30m/15m if that's what the session structure is offering), or is this still noise inside the existing leg? Require a candle close beyond the prior leg's open, not just a wick.
+Confirm the day high/day low context
+If the sweep is happening around the day's high or low — especially one shaped by a scheduled news release — treat it as engineered liquidity in its own right. These react reliably even when the exact mechanism isn't fully explainable.
+Locating the trade
+Find the nearest PD array, not the raw line
+With CISD confirming, drop to the 15-minute chart and mark the nearest PD array (FVG / order block / breaker) to your key level. Entries happen at the array, not at the key open line itself.
+Check the CE-distance rule
+If the liquidity you're targeting sits 2 points or less from the CE, treat the CE as already mitigated and skip the setup. The sweet spot is liquidity sitting inside the rejection block the array left behind — not too close, not so far it fails to stand out.
+Run the 5-point Wick Theory checklist
+Test the sweep candle itself: genuine liquidity swept, imbalance left behind, small body vs. wick, a level retail was obviously resting orders at, and SMT divergence against the correlated pair.
+Entry
+Wait for price to return to the PD array
+Do not enter on first touch. Let price actually trade back into the zone you marked.
+Require a closing entry trigger, not a wick
+Drop to the 1-minute or 5-minute chart and wait for a CISD-style confirmation candle — a close back in your favor — inside that array. If you're using a breaker specifically, this means a candle close through the breaker level, not a sweep of it.
+Size the stop to structure, then adjust for volatility
+Default placement is just beyond the structural wick. If that comes out too large for the setup, don't widen your target to compensate — drop to a tighter timeframe and find a smaller rejection block inside the same zone instead. For precise FVG/OB entries, use the 50% mark (the CE) rather than the zone's outer edge to keep risk tighter.
+Confirm the ratio before clicking
+Read the platform's Risk/Reward Ratio before sizing in. 1:3 is the stated minimum, 1:4 preferred — several real examples ran into double digits because the structural stop was simply that tight.
+Management & exit
+Trail as the trade proves itself
+Default management: start around a 10-point stop, trail to 5 points once price reacts in your favor, then trail to break-even. For larger expansion moves, the same logic scales — move to break-even or roughly 1:3, then hold or scale out for the rest of the move risk-free.
+Respect the draw — don't fade your own target
+Once price reaches the level you identified as the draw on liquidity and prints a strong confirming close there, your bias flips with it. Don't fade back against the move you were waiting for.
+Apply the daily trade-limit rule
+Win on trade one → done for the day. Loss on trade one → de-risk 50% for trade two → done for the day regardless of how trade two closes. Two trades is the ceiling.
+Journal every trade against this exact checklist
+Structured post-trade review is part of the discipline — not an optional extra. Treat a session with zero qualifying setups as a successful day, not a missed one.
+This is a checklist, not a guarantee.
+Even he doesn't claim a high win rate off it — the math above is built to survive being wrong most of the time. Every step exists to filter
+out
+low-quality setups; on most days, the honest, correct execution of this playbook is deciding that nothing here lined up, and taking no trade at all.
+14 — Reference
+Trade breakdown — real examples
+Five worked setups captured directly from the recordings, plus two full trades narrated in his own words.
+R:R 3.75
+Short into a swept high, tight structural stop
+Entry placed after a sweep through the recent high; stop sits just above the sweep wick, target sits at the next liquidity pool below. Closed P&L and ratio shown live by the platform's Long/Short tool.
+15.00
+Stop (pts)
+56.25
+Target (pts)
+3.75R
+Ratio
+R:R 17.7
+The tightest stop observed — structural invalidation a few ticks away
+A 5-point stop against an 88.50-point target — only possible because the entry was taken right at a rejection point rather than chased after the move was already confirmed. The Fibonacci retracement tool (with Powell's custom 0.5/0.62/0.705/0.79 levels) is visible drawn on the retracement leg.
+5.00
+Stop (pts)
+88.50
+Target (pts)
+17.7R
+Ratio
+R:R 7.0
+Fib-confluence entry inside the retracement leg
+The manual Fibonacci tool's
+0 / 0.25 / 0.5 / 0.705 / 0.79
+levels are visible marking the retracement back into the order block before continuation — the exact CE/OTE entry zone described in the Fib section above.
+10.00
+Stop (pts)
+70.00
+Target (pts)
+7.0R
+Ratio
+order placement · pending orders
+Pending orders staged ahead of price — Sell Limit at resistance, Sell Stop at the EL target
+Rather than entering reactively, a
+Sell Limit
+sits pre-staged at the swept-high resistance level while a
+Sell Stop
+sits at the "EL" (equal lows) target below — the exact liquidity-pool-to-liquidity-pool framing the MMXM sell model describes, set up as working orders rather than a manual click.
+R:R 15.7
+Open position tracking toward the EL liquidity target
+A live, still-open trade with a 15.7 ratio displayed by the platform in real time, the
+EL
+label visible marking the equal-lows level the position is targeting.
+10.00
+Stop (pts)
+81.25
+Open target (pts)
+15.7R
+Ratio
+Narrated in full: the day-low trade
+This one has no single screenshot — it's a complete top-down sequence he talks through live, start to finish, and it's worth walking through in his own order because it shows every layer of this guide working together on one trade:
+Previous day's high gets swept → an inducement leg fakes lower without ever getting touched → price comes back and resweeps the real level "pretty significantly" → leaves an untouched day low, which becomes the session bias → 30-minute and 15-minute CISD both confirm near the 9AM window → price retraces back into that 15m level right as the 10AM open taps in → a hard rejection prints, closing strongly below the 10AM open → an inversion forms without ever taking the day low → entry with a 5-point stop, target the day low →
+closed at a 1:8
+, "more than we could ever ask for."
+Narrated in full: the FAQ trade (a 1:10 with a 20-point stop)
+From a Q&A-style recap answering his own community's questions about a long he'd taken: structural stop on the hourly came out to 46 points — too big for what he wanted. He dropped to a 5-minute rejection block inside the same hourly CE instead. Considered a 1-minute entry trigger too, but passed on it directly:
+"you would have gotten edged, which happens a lot when you've got these tiny, tiny PDRAs."
+Market-ordered into the 5-minute rejection block with a 20-point stop — "this 5-minute rejection block is pretty big" — against a 200-point target:
+a 1:10
+. "Like I don't really care that my stop loss is 20 points, if that makes sense" — once the structure justifies it, stop size stops being the deciding factor.
+15 — Reference
+Psychology & discretion
+The least systematic, most honest part of any of this — kept in his own words rather than smoothed over.
+On his own mistakes
+Narrating a trade where he got stopped out early:
+"I think I got stopped in this bullshit trying to catch the day low — well, in reality, I should have just waited for the change in state of delivery to happen."
+He doesn't edit this out or reframe it as intentional. It's presented as a direct lesson: the checklist exists precisely because skipping it is a known, recurring failure mode — including for him.
+"Patience is something even I have to practice. I'm just teaching guys the technicals that I've watched over a long period of time… but I'm not going to sit here and pretend like I have perfect psychology and a perfect mentality, because I don't, at all. I'm impatient as fuck when it comes to trading sometimes, and I want to revenge trade a lot, and I want to over-trade, I want to over-leverage when price stops me out and goes in my direction. But we just can't."
+On missed trades
+After narrating a setup that only partially played out and missed a 200-point move because two levels overlapped imperfectly:
+"This stuff happens all the time… you just gotta know that you called the bottom, you didn't catch the bottom, which is already absolutely insane — so we gotta stay level-headed when that happens, because it's gonna happen a million more times. Don't put too much frustration into it."
+On discretion — and why there's no shortcut to it
+Asked, in effect, how he knows when a level is genuinely significant versus just noise:
+"This is kind of what I mean when I say discretion is important — you get better at discretion with time. I know all these things because I've seen them happen a thousand times. There's not really a secret book I can tell you guys to read. No — you're going to get better with experience. That's an unfortunate answer, but that's just how it is."
+He's equally direct that not every day offers a trade:
+"Price action lately has been kind of wonky… there's no clear setup here — we manipulate above, but we also manipulate below. Nothing really makes that much sense."
+Recognizing a low-quality day and sitting on your hands is presented as a skill in itself, not a failure to find a setup.
+16 — Reference
+Community, mentorship & prop-firm context
+The model doesn't exist in isolation from the community structure it's taught inside. He refers to it directly, on camera, as "a Powell Model trade."
+Discord · captured on-screen
+The "Dumb Money Concepts" server
+Channel structure includes a dedicated
+POWELL
+category with a
+#powell-levels
+channel, alongside a shared
+#fib
+channel where the account "Powell" posted the exact retracement settings referenced in the Fib section above.
+Published course curriculum
+Cross-referencing a public course listing for the same material returns a module structure that maps almost one-to-one onto everything covered in this guide — itself a strong confirmation the transcripts capture the full system, not an incomplete fragment of it:
+Psychology
+Risk Management
+AMD
+PxH/PxL
+CISD
+Key Opens
+Engineered Liquidity
+FVG in OB
+MMXM
+OTE (Fib)
+Opening Gaps
+Rejections
+Wick Theory
+News HL
+Top Down Analysis
+Gap Fill
+Entry Triggers
+Trade Breakdowns
+Prop-firm partnerships
+Confirmed via a linked partner page:
+Apex Trader Funding, Alpha Futures, Tradeify, MyFundedFutures,
+and
+Topstep
+, all under a shared referral code. Relevant because every piece of the risk-management framing in this guide — tight structural stops, R-multiple discipline, the two-trade daily limit, respecting drawdown rules — is built around trading funded/evaluation accounts, where a single oversized loss can end an account outright regardless of overall win rate.
+17 — Reference
+Limitations, sourcing notes & disclaimer
+Transcripts
+Official .srt subtitle files were supplied for all 8 recordings (~64 minutes total runtime; two of the nine original video files were byte-identical duplicates). Quotes in this guide are drawn directly from those files, lightly cleaned for filler words and predictable mis-transcriptions ("data high/low" → "day high/low," "soup" → "sweep"), never altered in meaning.
+Footage
+Every recording was also broken into timestamped frames and reviewed directly — on-screen checklists, indicator settings, drawn levels, and the platform's own risk/reward readouts were matched to the transcript by timestamp.
+Cross-reference
+Matched against publicly available material tied to the same identity confirmed inside the footage (Discord server name, channel structure, and his own on-camera reference to "a Powell Model trade"): a public course-module listing, an open-sourced TradingView indicator description for the "Wick Theory" checklist, and a linked prop-firm partnership page.
+Background
+Standard ICT/Smart-Money-Concepts definitions were used only to fill the small number of gaps where a term is referenced by name but not fully re-defined on camera.
+Independent analysis, not an official publication.
+This guide is an independent, third-party educational breakdown built from supplied recordings and their transcripts. It is not an official Powell Trades / Dumb Money Concepts publication and is not affiliated with, reviewed by, or endorsed by the original creator.
+Not financial advice.
+This content is for education only. Futures trading carries a substantial risk of loss and is not suitable for every investor. Past performance — including any R-multiples, win-rate framing, or worked examples shown above — does not guarantee future results, and the specific trades shown were not independently verified as profitable closed trades beyond what the speaker stated or the platform displayed on-screen. Position-sizing examples are illustrative, not a personal recommendation.
+Compiled from the supplied recordings and their official transcripts, plus public web research conducted June 2026. Trading and prop-firm rules referenced (drawdown types, consistency requirements, payout structures) vary by firm and change over time — verify current terms directly with the provider before trading a funded account.

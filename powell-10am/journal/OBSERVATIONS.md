@@ -309,3 +309,48 @@ because the same points figure means different things on NAS100 and ES.
 **Test:** implement the floor, then compare across the full range of window
 widths. Watch specifically whether it changes anything on wide-window days — it
 should not, and if it does the floor is set too high.
+
+---
+
+## 11 — First evidence that `entryCutoff` earns its keep
+
+**Status:** `open` · **Evidence:** 13 Jul 2026 (1 instance)
+
+`entryCutoff` is `12:00` and marked `tunable` — a convention with no published
+basis, whose stated purpose is to stop a stale setup filling into the lunch-hour
+drift.
+
+13 July is the first day where it would have changed the outcome, and it is a
+clean illustration of *why* the rule exists rather than just *that* it does:
+
+```
+10:15         raid, rejected. 10:20-10:25 displacement. Setup valid.
+11:10         price reaches 29,540 — ABOVE the 29,514 target
+              …while the 29,347.5 entry has never been touched
+12:16-12:20   entry finally touched — 20 minutes past the cutoff
+12:30         price wicks to ~29,260, through the 29,282 stop
+```
+
+The move the model was positioned for **happened in full**. The entry was simply
+too deep to participate. What eventually reached the entry was not a retracement
+into the setup — it was the reversal out of it.
+
+Under the spec: `no-fill`, 0R. As actually taken: −1R.
+
+**Why this is only one data point:** a cutoff that helps once could hurt the next
+time by abandoning an order 5 minutes before a good fill. The honest test is
+whether expectancy improves across the whole sample, not whether it saved a
+particular day:
+
+```bash
+bun run src/cli.ts backtest data.csv --entryCutoff 11:30
+bun run src/cli.ts backtest data.csv --entryCutoff 12:00
+bun run src/cli.ts backtest data.csv --entryCutoff 13:00
+```
+
+**Related, and more interesting:** this day suggests the deeper question is not
+*when* the order expires but *how deep* the entry sits. A `fvg-proximal` entry
+would have filled early and caught the move to 29,540; the `ote-sweet` fallback
+sat 140 points below price and never filled. That is the fill-rate/risk trade-off
+in `docs/05` playing out for real, and it is what the `entryMode` grid search
+measures.

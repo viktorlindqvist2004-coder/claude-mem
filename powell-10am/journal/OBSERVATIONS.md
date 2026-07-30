@@ -357,58 +357,93 @@ measures.
 
 ---
 
-## 12 — A gate can pass by less than the reading error, and the verdict does not say so
+## 12 — Eyeballing a chart gets the ranges right and the candle margins wrong
 
-**Status:** `open` · **Evidence:** 10 Jul 2026 (date confirmed), 1 instance
+**Status:** `open` · **Evidence:** 10 Jul 2026, measured against the axis read of
+the same image
 
-Every structural gate passed on 10 July. One of them passed by 1.5 points:
+The first review of 10 July read the chart by eye and reported:
 
 ```
-cleared 09:30-10:00 high by 5.00 — threshold is 3.46 (2% of the range)
+raid of the highs at 10:05-10:10 to ~29,763,
+clearing the 29,758 window high by ~5 pts
 ```
 
-Both numbers are axis reads off a 5-minute screenshot. The window high and the
-raid extreme each carry roughly ±10 points of uncertainty, so the true
-penetration is somewhere between 0 and 15 and the true threshold between about
-3.0 and 3.9. The gate's answer is not 5 > 3.46 = pass. Its answer is *unknown*,
-and it reported `pass` with a tick beside it.
+Measured by pixel from the same screenshot, the highest post-10:00 wick was
+**29,754.3** against a window high of **29,757.7**. The push fell **3.4 points
+short**. The highs were never taken, there was no raid, and the day is a
+rejection rather than the marginal short it was written up as.
 
-This is a different failure from anything recorded so far. Observations 1 and 8
-are about whether a rule is *right*. This one is about whether the engine is
-entitled to an opinion at all given the precision of its input. A gate that
-reports a boolean when the margin is inside the error bars is not merely
-imprecise — it converts a coin flip into a green tick, on the one surface the
-user consults *before* entering.
+What makes this worth recording is the *pattern* of the error, not its size:
 
-**Why it did not bite here:** the overall verdict was `UNCERTAIN` anyway, because
-the 5m chart left the FVG and displacement-energy gates unreadable. That is luck.
-On a 1m chart with a visible gap, the same marginal penetration would have
-produced a confident `VALID` at 5.43R.
+| | axis read | measured | error |
+|---|---|---|---|
+| window high | 29,758 | 29,757.7 | 0.3 |
+| window low | 29,585 | 29,587.4 | 2.4 |
+| key open | 29,725 | 29,712.6 | **12.4** |
+| raid extreme | 29,763 | 29,754.3 | **8.7** |
+| displacement extreme | 29,679 | 29,635.4 | **43.6** |
 
-**Candidate:** give `ChartObservation` an optional `priceTolerance` (points), set
-from how the reading was obtained — small when prices come from the OHLC hover
-readout, larger for an axis read, and scalable with the gridline spacing. Any
-numeric gate whose margin is smaller than the propagated tolerance returns
-`unknown` with wording that names the margin, instead of `pass` or `fail`. The
-raid-penetration gate is the obvious first case; the key-open reclaim test and
-the 2R floor have the same shape.
+The eye locates the *extremes of the whole formation* well — those are the
+easiest things on a chart to see. It fails on everything that requires comparing
+one candle to another. And the model consists almost entirely of comparisons
+between individual candles: did this wick clear that wick, did this close cross
+that open. So the axis read was accurate exactly where it did not matter and
+wrong exactly where the verdict lived.
 
-Note this interacts with observation 10 in a useful way. An absolute floor on
-`minSweepPenetration` would have raised the threshold here from 3.46 to
-something like 10–15, which does not resolve the ambiguity — it moves the
-5-point read from a marginal pass to a clear fail. Both changes are worth having,
-but only the tolerance one is honest about *why* the answer is uncertain.
+**Consequence, already acted on:** `scripts/chart-measure.ts` measures OHLC from
+the image by pixel, calibrated from the axis labels, with a self-check — on a
+continuous series each open equals the previous close, so the chaining residual
+detects a bad reading instead of letting it through. On this chart the residual
+was 0.57 points per candle, which is one pixel, the floor. Journal entries now
+carry `source: "pixel"` to distinguish a measured reading from an eyeballed one.
+
+**Still open, and not solved by the tool:** the verdict surface reports gates as
+booleans without carrying any error bar. Even measured, a gate can pass by less
+than the reading error — here the window high and the 10:10 high are six pixels
+apart, which is 3.4 ± 1.2 points. The candidate remains an optional
+`priceTolerance` on `ChartObservation`, with any numeric gate whose margin falls
+inside the propagated tolerance returning `unknown` rather than `pass` or `fail`.
+Measurement narrowed the error from ±10 points to ±0.6; it did not remove it.
 
 **Test:** the tolerance change cannot be validated by backtest, because CSV data
-has no reading error — it only ever affects the screenshot path. So the test is
-the journal: apply it retrospectively to every entry logged so far and check that
-it flips only the readings whose margin was genuinely thin, and leaves the eight
-clear-cut days alone. If it turns days like 24 July uncertain, the tolerance is
-set too wide to be useful.
+has no reading error — it only ever affects the screenshot path. Apply it
+retrospectively to the journal and check it flips only the genuinely thin
+readings.
 
-**Also open on this day, unresolved:** a ~190 point lower wick to 29,476 printed
-on the 10:25–10:30 candle while price sat at ~29,668. If that print is real it
-reached the 29,585 target before the 29,738 entry was ever touched — the same
-shape as observation 11, where the move happens without you. If it is a CFD feed
-artefact it is nothing. Screenshots cannot distinguish the two, which is one more
-argument for getting real data in.
+---
+
+## 13 — The raid can arrive one candle after the window shuts, and the day is still a no-trade
+
+**Status:** `open` · **Evidence:** 10 Jul 2026 (1 instance, measured)
+
+`manipulationEnd` is `10:30` and marked `tunable`. 10 July is the first day in
+the record where relaxing it can be tested against something rather than
+argued about, because the manipulation arrived at **10:30–10:35** — the first
+candle outside the window:
+
+```
+10:00-10:30   highs missed by 3.4, lows missed by 48.  No raid.
+10:30-10:35   low 29,476.0 — 111.4 pts through the 29,587.4 window low
+              close 29,634.3 — 46.9 pts back inside.  A clean sweep.
+10:35-10:50   best high 29,699.4 — 13.2 pts SHORT of the 29,712.6 key open
+```
+
+So the tempting change — widen the window and catch the raid — does not produce a
+trade anyway. The displacement never reclaimed the key open, so the day fails the
+reclaim gate instead of the manipulation gate. Same answer, different reason.
+
+**Why that is worth more than it looks.** The obvious reading of this day is
+"the spec's window is too tight and cost me a setup". Measured, the spec and the
+relaxation agree, and the relaxation gains nothing. That is the first piece of
+evidence *for* `manipulationEnd` as it stands, and it arrived on the day that
+looked like evidence against it.
+
+**Not settled by one day.** A late raid that fails to reclaim proves nothing
+about late raids that do. The test is a backtest across `--manipulationEnd 10:30`
+/ `10:35` / `10:45`, watching fill rate and expectancy together — a wider window
+admits more setups, and the question is whether the marginal ones pay.
+
+**Related:** the key open sat at 73.5% of the window here — upper third, not at
+the extreme. Under observation 1 that is neither a confirming nor a
+contradicting instance, so 1 stays where it is at 5 for and 1 against.

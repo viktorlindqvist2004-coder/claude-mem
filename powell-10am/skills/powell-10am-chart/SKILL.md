@@ -38,7 +38,54 @@ resembles a pattern already recorded.
 - Is the price scale visible? Without it no price can be read.
 - Is the timeframe 1m or 5m? 15m is too coarse to resolve the gap.
 
-### 2. Extract a `ChartObservation`
+### 2. Measure the chart before reading it by eye
+
+**Do this first. Eyeballing prices off the axis is not good enough, and the way
+it fails is not the way you would expect.** On 10 July 2026 an axis read had a
+wick clearing the window high by 5 points when it had actually fallen 3.4 points
+short — the sign was wrong, which inverted the direction of the entire setup. The
+same read got the window itself right to within 3 points. The eye is good at the
+extremes of the whole formation and bad at comparing one candle to another, and
+the model is almost entirely comparisons between individual candles.
+
+```bash
+cd powell-10am
+export FFMPEG_PATH=...            # or: npm install ffmpeg-static --no-save
+
+# 1. find the axis landmarks
+bun run scripts/chart-measure.ts shot.png --calibrate
+
+# 2. read two price labels and two time labels off the image yourself,
+#    then measure everything else
+bun run scripts/chart-measure.ts shot.png \
+  --price 1549=29700 --price 1899=29500 \
+  --time 189=08:00 --time 790.5=10:00 \
+  --minutes 5 --from 09:15 --to 11:05 \
+  --plot-top 400 --plot-bottom 2150 --plot-right 1106 \
+  --csv /tmp/day.csv --date 2026-07-10
+
+# 3. the measured candles run through the real engine
+bun run src/cli.ts explain /tmp/day.csv --date 2026-07-10
+bun run src/cli.ts levels  /tmp/day.csv --date 2026-07-10
+```
+
+**Check the chaining residual before you believe a single number.** The script
+resolves candle direction by requiring each open to equal the previous close, and
+reports the average mismatch. Around one pixel's worth of points means the
+reading is sound; more than 3 points means the pitch or phase is wrong — usually
+`--time` naming the wrong candle — and every price will be wrong in a way that
+still looks entirely plausible.
+
+Two traps the script documents and you should not rediscover: never calibrate
+from TradingView's floating price tags (it pushes overlapping ones apart, which
+gave a 20% scale error), and set `--plot-top`/`--plot-bottom` to exclude phone
+chrome, or the toolbar becomes every candle's high.
+
+If measurement is genuinely impossible — no ffmpeg, an unreadable axis — fall
+back to reading by eye, but say in the verdict that you did, and set the
+uncertain fields to `null` generously.
+
+### 3. Extract a `ChartObservation`
 
 Fill in the structure from `src/verdict.ts`, working through the chart in the
 model's own order:
@@ -63,7 +110,7 @@ expansion, which is the difference between the trade and its opposite. On a
 zoomed-out chart it is frequently indeterminate — set it to `null` and ask the
 user to zoom in on that one candle rather than inferring it from the wick.
 
-### 3. Get the calendar in
+### 4. Get the calendar in
 
 10:00 ET is one of the busiest US release slots — ISM, JOLTS and consumer
 confidence all land on it. Always establish the calendar, in this order:
@@ -85,7 +132,7 @@ Ordinary high-impact releases (ISM, JOLTS) deliver raids and the model still
 applies, with the caveat that the rejection test is unreliable until the release
 candle closes.
 
-### 4. Run the evaluation
+### 5. Run the evaluation
 
 ```bash
 cd powell-10am
@@ -100,7 +147,7 @@ If running it is not practical, apply `evaluate()`'s gates by hand **in order**
 and in full — never a subset, and never with a gate softened because the setup
 otherwise looks good.
 
-### 5. Report
+### 6. Report
 
 Lead with the verdict and the action, then the reasoning, then the gate table.
 Keep the engine's wording for the gates; it is precise on purpose.
@@ -109,7 +156,7 @@ Always state the reading uncertainty: prices read off an axis are approximate,
 so an R figure is "about 3R", not 3.00R. If the verdict is `UNCERTAIN`, the
 answer is the list of what to send — not a hedged guess.
 
-### 6. Append to the journal — also not optional
+### 7. Append to the journal — also not optional
 
 Every day reviewed gets a line, whether it traded or not. The no-trades are the
 denominator, and without them the record flatters the model.
@@ -126,10 +173,9 @@ JSON
 bun run src/cli.ts journal --add /tmp/entry.json
 ```
 
-Set `failedGate` and `reason` on a rejection. Set `source` honestly —
-`screenshot` means prices were read off an axis, `hover` means they came from the
-OHLC readout, and the stats report the mix because it bounds what the record is
-worth.
+Set `failedGate` and `reason` on a rejection. Set `source` honestly: `screenshot` = eyeballed off the axis, `pixel` = measured
+with `chart-measure.ts`, `hover` = from the OHLC readout, `data` = from a CSV.
+The stats report the mix because it bounds what the whole record is worth.
 
 If the review surfaced something that might improve the model, add it to
 `journal/OBSERVATIONS.md` with its **evidence** and status `open`. An observation

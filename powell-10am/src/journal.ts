@@ -55,8 +55,17 @@ export interface JournalEntry {
   /**
    * How the reading was obtained, because it bounds how much the entry is
    * worth: prices read off an axis are not prices read off an OHLC readout.
+   *
+   *   screenshot  eyeballed against the price axis. Gets ranges roughly right
+   *               and gets the relationships between individual candles wrong —
+   *               see the 10 Jul 2026 entry, where an axis read had a wick
+   *               clearing a level that it actually fell 3.4 points short of.
+   *   pixel       measured with `scripts/chart-measure.ts`. Accurate to about a
+   *               pixel, which the tool states in points for that chart.
+   *   hover       from TradingView's OHLC readout. Exact.
+   *   data        from a CSV. Exact, and the only source a backtest can use.
    */
-  source: "screenshot" | "hover" | "data";
+  source: "screenshot" | "pixel" | "hover" | "data";
   /** ISO timestamp of when the review happened. */
   reviewedAt: string;
   notes?: string[];

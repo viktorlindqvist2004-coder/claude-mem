@@ -287,9 +287,16 @@ export function renderJournal(entries: JournalEntry[], stats: JournalStats): str
 
   lines.push(``);
   lines.push(`  Reading source:`);
+  const sourceNotes: Record<string, string> = {
+    screenshot: "  ← eyeballed off the axis; wrong about candle-to-candle margins",
+    pixel: "  ← measured from the image, about a pixel of error",
+    hover: "  ← exact, from the OHLC readout",
+    data: "  ← exact",
+  };
   for (const entry of stats.sourceMix) {
-    const note = entry.source === "screenshot" ? "  ← axis-read, approximate" : "";
-    lines.push(`    ${String(entry.count).padStart(3)}  ${entry.source}${note}`);
+    lines.push(
+      `    ${String(entry.count).padStart(3)}  ${entry.source.padEnd(10)}${sourceNotes[entry.source] ?? ""}`,
+    );
   }
 
   lines.push(``);

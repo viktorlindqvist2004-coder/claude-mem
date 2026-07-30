@@ -17,6 +17,12 @@
  *               to read days and to see whether a rule is directionally sane,
  *               nowhere near enough to conclude anything.
  *
+ *   json        A Yahoo chart response already downloaded — with curl, or by
+ *               opening the URL in a browser and saving the page. Nothing is
+ *               installed and nothing is fetched, so this is the path for someone
+ *               who has a terminal but does not want a toolchain: they run one
+ *               curl, send the file, and it is converted here.
+ *
  *   dukascopy   No account either, and years of 1-minute history. Shells out to
  *               `npx dukascopy-node`, because the raw feed is LZMA-compressed
  *               bi5 tick data and decoding it here would be a project of its
@@ -29,6 +35,8 @@
  *
  *     bun run scripts/fetch-data.ts --source dukascopy --symbol usa100idxusd \
  *       --from 2024-01-01 --to 2026-07-30 --out us100-1m.csv
+ *
+ *     bun run scripts/fetch-data.ts --json ~/Desktop/nq-5m.json --out nq-5m.csv
  *
  *     bun run src/cli.ts explain  nq-5m.csv
  *     bun run src/cli.ts backtest nq-5m.csv
@@ -60,13 +68,15 @@ import { toEt } from "../src/time.js";
 import type { Candle } from "../src/types.js";
 
 interface Args {
-  source: "yahoo" | "dukascopy";
+  source: "yahoo" | "dukascopy" | "json";
   symbol: string;
   interval: string;
   range: string;
   from?: string;
   to?: string;
   out: string;
+  /** A Yahoo chart response already saved to disk — see `--source json`. */
+  json?: string;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -88,6 +98,7 @@ function parseArgs(argv: string[]): Args {
       case "--from": args.from = next(); break;
       case "--to": args.to = next(); break;
       case "--out": args.out = next(); break;
+      case "--json": args.json = next(); args.source = "json"; break;
       default: throw new Error(`Unknown flag ${token}`);
     }
   }
@@ -306,9 +317,19 @@ function summarise(candles: Candle[]): void {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  console.log(`${args.source} · ${args.symbol} · ${args.source === "yahoo" ? args.interval : "m1"}`);
+  if (args.source === "json" && !args.json) throw new Error("--source json needs --json <file>.");
+  console.log(
+    args.source === "json"
+      ? `json · ${args.json}`
+      : `${args.source} · ${args.symbol} · ${args.source === "yahoo" ? args.interval : "m1"}`,
+  );
 
-  const candles = args.source === "yahoo" ? await fetchYahoo(args) : await fetchDukascopy(args);
+  const candles =
+    args.source === "json"
+      ? parseYahooChart(await Bun.file(args.json!).json())
+      : args.source === "yahoo"
+        ? await fetchYahoo(args)
+        : await fetchDukascopy(args);
   if (candles.length === 0) throw new Error("No candles came back. Nothing was written.");
 
   candles.sort((a, b) => a.time - b.time);

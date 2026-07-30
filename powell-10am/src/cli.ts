@@ -16,6 +16,7 @@
  */
 
 import { loadCsvFile } from "./csv.js";
+import { ALL_MODELS, scanDay, type ConflictPolicy } from "./models/index.js";
 import { readDay } from "./model.js";
 import { simulate } from "./trade.js";
 import { backtest } from "./backtest.js";
@@ -118,6 +119,29 @@ async function main(): Promise<number> {
         console.log(
           `  ${"★".repeat(level.weight).padEnd(5)} ${level.price.toFixed(2).padStart(10)}  ${level.label}`,
         );
+      }
+      return 0;
+    }
+
+    case "scan": {
+      const candles = await requireCsv(positional[0], flags);
+      const dates = flags.date ? [flags.date as string] : [...groupByEtDate(candles).keys()].sort();
+      const onConflict = flags.onConflict as ConflictPolicy | undefined;
+      for (const date of dates) {
+        const result = scanDay(candles, date, ALL_MODELS, config, {
+          ...(onConflict ? { onConflict } : {}),
+        });
+        console.log(`\n── ${date} ${"─".repeat(40)}`);
+        for (const read of result.reads) {
+          const mark = read.status === "setup" ? "✓" : read.status === "unavailable" ? "—" : "✗";
+          const detail =
+            read.status === "setup" && read.setup
+              ? `${read.direction} @ ${read.setup.entryPrice.toFixed(2)} → ${read.setup.targetPrice.toFixed(2)} (${read.setup.plannedR.toFixed(2)}R)`
+              : (read.reason ?? "");
+          console.log(`  ${mark} ${read.modelName.padEnd(22)} ${detail}`);
+        }
+        console.log(`  ${result.outcome.toUpperCase()} → ${result.action}`);
+        console.log(`  ${result.summary}`);
       }
       return 0;
     }
@@ -233,6 +257,7 @@ function usage(): string {
     "  spec                          print the encoded rules with provenance",
     "  levels    <csv> --date D      key levels in force on a date",
     "  explain   <csv> [--date D]    narrate the model's read, day by day",
+    "  scan      <csv> [--date D]    run every registered model and compare them",
     "  backtest  <csv> [--cost R]    run the model and report statistics",
     "  learn     <csv> [--folds N]   grid search plus walk-forward validation",
     "  ablate    <csv>               measure what each rule contributes",

@@ -270,3 +270,42 @@ That is testable as-is: `--partialAtR`, `--breakEvenAtR`, `--stdDevTarget -4`.
 not specifically the 10am variant. Same family, different anchor. Do not promote
 any of them from `inferred` to `sourced` on this basis — it would be exactly the
 mistake `docs/08-sources.md` exists to prevent.
+
+---
+
+## 10 — The raid threshold has no floor, so a narrow window makes it meaningless
+
+**Status:** `open` · **Evidence:** 14 Jul 2026, plus the arithmetic
+
+`minSweepPenetration` is a *fraction of the accumulation range* — 2% by default.
+That scaling is the right idea: it adapts to a quiet morning or a violent one
+instead of hard-coding a number of points. But it has no lower bound, and the
+arithmetic degrades badly:
+
+| Window width | 2% threshold |
+|---|---|
+| 330 pts (24 Jul) | 6.6 pts |
+| 223 pts (15 Jul) | 4.5 pts |
+| **115 pts (14 Jul)** | **2.3 pts** |
+| 40 pts (a quiet morning) | 0.8 pts |
+
+At 2.3 points the test stops separating a genuine raid from a tick of noise. On
+a 40-point range it separates nothing at all — every wiggle past the level
+"clears" it.
+
+14 July did not turn on this (price cleared the level by 117 points), so this is
+a weakness spotted by inspection rather than one that cost anything yet. That is
+the best time to record it.
+
+`docs/07-invalidations.md` already flags narrow ranges as a soft warning and
+suggests raising `minSweepPenetration` by hand on quiet mornings. Nothing in the
+code enforces it.
+
+**Candidate:** an absolute floor alongside the percentage — take the *greater* of
+`range × minSweepPenetration` and some minimum. Expressing the minimum in ATR
+units rather than points would keep it instrument-agnostic, which matters
+because the same points figure means different things on NAS100 and ES.
+
+**Test:** implement the floor, then compare across the full range of window
+widths. Watch specifically whether it changes anything on wide-window days — it
+should not, and if it does the floor is set too high.

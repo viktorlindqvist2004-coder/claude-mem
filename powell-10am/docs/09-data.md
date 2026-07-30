@@ -158,8 +158,52 @@ absolute floor — are all stuck waiting on that and cannot be settled one day a
 time. So when you do get to a computer, export **as much history as the plan
 gives you in one go**, not the day you happen to be looking at.
 
-**Free sources** generally do not offer 1-minute futures history at usable
-depth. This is the real constraint on running this project properly.
+### Free sources — `scripts/fetch-data.ts`
+
+If the TradingView download is not available on your plan, this fetches data
+without an account and writes it in the format above:
+
+```bash
+# 60 days of 5-minute Nasdaq futures. No key, no signup.
+bun run scripts/fetch-data.ts --source yahoo --symbol 'NQ=F' \
+  --interval 5m --range 60d --out nq-5m.csv
+
+# Years of 1-minute history, still free.
+bun run scripts/fetch-data.ts --source dukascopy --symbol usa100idxusd \
+  --from 2024-01-01 --to 2026-07-30 --out us100-1m.csv
+```
+
+**Yahoo** caps lookback by interval — 1m gives 7 days, 5m and 15m give 60, 1h
+gives 730 — and truncates a longer request without saying so, which the script
+warns about. 60 days of 5-minute data is the "first look" band in the table
+below: enough to read days and to see whether a rule is directionally sane, not
+enough to conclude anything.
+
+**Dukascopy** has years of 1-minute history and needs no account either. The
+script shells out to `npx dukascopy-node`, because the raw feed is LZMA-compressed
+tick data. This is the option for a real backtest.
+
+Symbols worth knowing:
+
+| Symbol | Source | Notes |
+|---|---|---|
+| `NQ=F` | yahoo | E-mini front month. What the model is written for, and nearly 24h so the overnight levels work. |
+| `usa100idxusd` | dukascopy | Nasdaq-100 CFD — closest to a broker cash CFD. |
+| `QQQ` | yahoo | The ETF. RTH only, so no midnight open or NDOG, but 09:30–10:00 and the 10:00 open are inside RTH so the core still reads. |
+| `^NDX` | yahoo | The index. RTH only, no volume. |
+
+Prices differ across these — futures carry basis over cash — but the model reads
+structure, not absolute level.
+
+After a fetch the script reports how many dates actually have a 10:00 ET candle
+and 09:30–10:00 coverage. Read that before running anything: a file covering the
+wrong hours looks perfectly healthy and makes `explain` report nothing on every
+day.
+
+**The network calls in that script have never been executed.** Every market data
+host is blocked by policy from the environment this project is developed in, so
+the response parsing is covered by tests against recorded shapes while the fetch
+itself is not. If a response shape has drifted, the error will say what to send.
 
 ### How much
 

@@ -29,6 +29,11 @@ raid extreme and the target at the next meaningful pool of liquidity.
 bun install
 bun run scripts/make-fixture.ts        # generates fixtures/sample-1m.csv (synthetic)
 
+# real data, free, no account — see docs/09-data.md
+bun run scripts/fetch-data.ts --source yahoo --symbol 'NQ=F' --interval 5m --range 60d --out nq.csv
+# a chart screenshot, measured by pixel rather than eyeballed
+bun run scripts/chart-measure.ts shot.png --calibrate
+
 bun run src/cli.ts spec                                    # the encoded rules
 bun run src/cli.ts explain  fixtures/sample-1m.csv --date 2026-03-10
 bun run src/cli.ts levels   fixtures/sample-1m.csv --date 2026-03-10
@@ -48,7 +53,7 @@ Point the CLI at real 1-minute data before concluding anything — see
 [`docs/09-data.md`](docs/09-data.md).
 
 ```bash
-bun test          # 157 tests
+bun test          # 174 tests
 bun run typecheck
 ```
 
@@ -70,6 +75,7 @@ src/trade.ts     Fill and exit simulation
 src/backtest.ts  Statistics, with costs and rejection accounting
 src/learn.ts     Grid search, walk-forward validation, rule ablation
 skills/          Claude Code skills: model Q&A, and judging chart screenshots
+scripts/         fetch-data (free OHLC) · chart-measure (OHLC from a screenshot)
 ```
 
 **If `docs/` and `src/spec.ts` disagree, the spec is right and the docs are the

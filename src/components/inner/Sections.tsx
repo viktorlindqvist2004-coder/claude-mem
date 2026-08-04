@@ -12,7 +12,7 @@ const stagger = (p: number, i: number, n: number, spread = 0.55) => {
 
 /* ── Hjältesektionen inne i skärmen ──────────────────────────────────── */
 
-const WORDMARK = 'Vantage Studio'
+const WORDMARK = 'Vantage Design Studio'
 
 export function Hero() {
   const chars = useRef<(HTMLSpanElement | null)[]>([])

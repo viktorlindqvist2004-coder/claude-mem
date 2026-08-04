@@ -25,18 +25,23 @@ export const PHOTO = {
   /** Sökväg under `public/`. */
   src: 'images/studio.jpg',
 
-  /** Bildens proportioner (bredd delat med höjd). */
-  aspect: 16 / 9,
+  /** Bildens proportioner (bredd delat med höjd). 1280 × 714. */
+  aspect: 1.7927,
 
-  /** Skärmytans plats i bilden, som andel av bildens bredd och höjd. */
-  screen: { x: 0.43, y: 0.355, w: 0.14, h: 0.14 },
+  /**
+   * Skärmytans plats i bilden. Uppmätt automatiskt: originalbilden hade en
+   * magenta skärm, vars pixlar gav rutan x474–806, y310–494 av 1280 × 714.
+   * Magentan är övermålad i den sparade bilden så att den inte blöder rosa
+   * när fotot suddas.
+   */
+  screen: { x: 0.3703, y: 0.4342, w: 0.2602, h: 0.2591 },
 
   /** Oskärpa på fotot i vila respektive när kameran är som närmast (px). */
-  blur: 6,
-  blurNear: 18,
+  blur: 5,
+  blurNear: 16,
 
   /** Hur mycket fotot mörkas ned så att texten ovanpå går att läsa (0–1). */
-  dim: 0.42,
+  dim: 0.3,
 } as const
 
 export type PhotoScreen = { x: number; y: number; w: number; h: number }

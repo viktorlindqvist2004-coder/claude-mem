@@ -28,7 +28,7 @@ export function TitlePlate() {
   return (
     <div className="title-plate" ref={ref}>
       <span className="label">Designstudio · Grundad {STUDIO.founded}</span>
-      <h2 className="title-plate__big">Vantage Studio</h2>
+      <h2 className="title-plate__big">Vantage Design Studio</h2>
       <p className="title-plate__sub">
         Vi ritar och kodar webbplatser med lugn form och tydlig riktning.
         Scrolla in i skärmen.

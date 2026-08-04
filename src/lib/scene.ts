@@ -38,6 +38,16 @@ export type Camera = {
   originY: number
   /** Kamerans maximala framåtrörelse. */
   zMax: number
+  /**
+   * Skalan på sidan inuti skärmen.
+   *
+   * `contentExact` gör att sidan landar i exakt 1:1 när kameran är hela vägen
+   * inne. `contentCover` gör att den fyller hela skärmytan på håll. De skiljer
+   * sig åt eftersom skärmens proportioner sällan är precis fönstrets — utan
+   * övergången mellan dem syns svarta kanter inuti monitorn under resan.
+   */
+  contentExact: number
+  contentCover: number
 }
 
 export function computeCamera(
@@ -66,7 +76,13 @@ export function computeCamera(
 
   const zMax = (PERSPECTIVE - Z_PLANE) * (1 - 1 / scale)
 
-  return { stageW, stageH, screenW, screenH, scale, dx, dy, originX, originY, zMax }
+  const contentExact = Math.min(screenW / vw, screenH / vh)
+  const contentCover = Math.max(screenW / vw, screenH / vh)
+
+  return {
+    stageW, stageH, screenW, screenH, scale, dx, dy, originX, originY, zMax,
+    contentExact, contentCover,
+  }
 }
 
 /** Fotoplanets skala vid kamerapositionen `zc`. */

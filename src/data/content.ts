@@ -7,7 +7,7 @@
  */
 
 export const STUDIO = {
-  name: 'Vantage Studio',
+  name: 'Vantage Design Studio',
   founder: 'Viktor Lindqvist',
   founded: 2026,
   email: 'hej@vantagestudio.se',

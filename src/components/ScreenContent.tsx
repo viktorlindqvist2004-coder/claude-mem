@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useCamera, cameraProgress } from './Stage'
 import { useFrame, useMeasuredHeight, useViewport } from '../lib/hooks'
-import { clamp01, mapRange } from '../lib/math'
+import { clamp01, easeOutCubic, lerp, mapRange } from '../lib/math'
 import { MARQUEE_WORDS } from '../data/content'
 import { Marquee } from './inner/Marquee'
 import { About, Hero, Manifest, Numbers, Outro, Services } from './inner/Sections'
@@ -27,6 +27,7 @@ export function ScreenContent({
   const cam = useCamera()
   const { vw, vh } = useViewport()
 
+  const rootRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const wakeRef = useRef<HTMLDivElement>(null)
   const barRef = useRef<HTMLSpanElement>(null)
@@ -40,6 +41,12 @@ export function ScreenContent({
     }
 
     const u = cameraProgress(f.act1, f.act3)
+
+    // Fyller skärmytan på håll, landar i exakt 1:1 när vi är inne.
+    if (rootRef.current) {
+      const k = lerp(cam.contentCover, cam.contentExact, easeOutCubic(u))
+      rootRef.current.style.transform = `translate(-50%, -50%) scale(${k.toFixed(5)})`
+    }
 
     // Vinjetten hör hemma på avstånd; väl inne ska bilden vara ren.
     if (crtRef.current) {
@@ -65,11 +72,8 @@ export function ScreenContent({
   return (
     <div
       className="screen-content"
-      style={{
-        width: vw,
-        height: vh,
-        transform: `translate(-50%, -50%) scale(${1 / cam.scale})`,
-      }}
+      ref={rootRef}
+      style={{ width: vw, height: vh }}
     >
       <div className="screen-scroll" ref={scrollRef}>
         <Hero />
@@ -81,13 +85,13 @@ export function ScreenContent({
           caption="Varje projekt börjar med ett tomt ark."
         />
         <Work />
-        <Marquee words={['Vantage Studio', 'Grundad 2026', 'Handkodat', 'Inga mallar']} direction={-1} speed={0.03} />
+        <Marquee words={['Vantage Design Studio', 'Grundad 2026', 'Handkodat', 'Inga mallar']} direction={-1} speed={0.03} />
         <Services />
         <Process />
         <Showcase
           src="images/showcase-02.jpg"
-          kicker="Hantverket"
-          caption="Handkodat, komponent för komponent."
+          kicker="Identitet"
+          caption="Formen ska bära varumärket hela vägen ut."
           length={2}
           zoom={0.36}
         />
@@ -99,7 +103,7 @@ export function ScreenContent({
       {!reduced && (
         <>
           <div className="wake" ref={wakeRef} aria-hidden="true">
-            <span className="wake__mark">Vantage Studio</span>
+            <span className="wake__mark">Vantage Design Studio</span>
             <div className="wake__bar">
               <span ref={barRef} />
             </div>

@@ -51,6 +51,18 @@
   will-change: transform, opacity;
 }
 
+/* Menyn ligger över helskärmsfoton som kan vara ljusa. Ett svagt tak håller
+   den läsbar utan att synas mot de mörka partierna. */
+.nav::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 220%;
+  background: linear-gradient(180deg, rgba(11, 11, 12, 0.72) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .nav__mark {
   display: flex;
   align-items: center;
@@ -128,7 +140,9 @@
   font-size: 0.5625rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--dim);
+  /* Läsbar även mot ljusa foton. */
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
 }
 
 @media (max-width: 780px) {

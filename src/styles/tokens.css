@@ -1,0 +1,51 @@
+:root {
+  /* Färg -------------------------------------------------------------
+     Nästan monokromt. En enda dämpad accent i sand, resten är ljus och
+     skugga. Det som ska dra blicken är typografin och rörelsen — inte
+     färgerna. */
+  --ink: #0b0b0c;
+  --ink-2: #121214;
+  --ink-3: #1a1a1d;
+  --ink-4: #26262a;
+
+  --bone: #eceae5;
+  --dim: #94918b;
+  --faint: #5d5b57;
+
+  --accent: #c9bfad;
+  --glow: #cfd8dd;
+
+  --line: color-mix(in srgb, var(--bone) 11%, transparent);
+  --line-soft: color-mix(in srgb, var(--bone) 6%, transparent);
+
+  /* Typografi --------------------------------------------------------
+     Ett enda typsnitt genom hela sidan, med vikten som enda kontrast. */
+  --sans: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    'Helvetica Neue', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Rytm -------------------------------------------------------------- */
+  --gutter: clamp(1.5rem, 5vw, 6rem);
+  --rule: 1px solid var(--line);
+
+  /* Rörelse ----------------------------------------------------------- */
+  --swift: 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  --smooth: 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Stora rubriker: låg vikt, stram spärr, generöst radavstånd. */
+.display {
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+/* Små etiketter — det enda stället versaler och spärr används. */
+.label {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}

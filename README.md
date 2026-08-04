@@ -17,6 +17,33 @@ npm run build    # produktionsbygge till dist/
 npm run preview  # förhandsgranska bygget
 ```
 
+## Driftsättning på Vercel
+
+Projektet är en vanlig Vite-sajt utan server. `vercel.json` sätter byggkommando,
+utdatakatalog och cache-huvuden, så Vercel behöver ingen extra konfiguration.
+
+| Inställning | Värde |
+| --- | --- |
+| Framework Preset | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+**Root Directory** beror på var koden ligger:
+
+- Eget repo med sajten i roten → lämna tomt.
+- Sajten som en mapp i ett större repo → sätt till `vantage-studio`, och slå på
+  *Include files outside the root directory* endast om det behövs (det gör det
+  inte här).
+
+Ligger projektet i ett repo tillsammans med annat bör du också sätta en
+*Ignored Build Step* i Vercel, annars byggs sajten om vid varje push som inte
+rör den:
+
+```bash
+git diff --quiet HEAD^ HEAD -- .
+```
+
 ## Bilderna
 
 Sidan vill ha följande filer i `public/images/`. Saknas en fil ritas en neutral

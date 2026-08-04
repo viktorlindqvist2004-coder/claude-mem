@@ -1,0 +1,119 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   SKRIVBORDET
+   Ett riktigt fotografi, lätt oskarpt. Hela scenen är ett plan som skalas
+   kring bildskärmens mittpunkt när kameran åker framåt.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.camera {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Cover: scenen är alltid minst lika stor som fönstret. */
+  width: max(100vw, calc(100vh * var(--photo-aspect, 1.7778)));
+  will-change: transform;
+}
+
+/* ── Fotot ───────────────────────────────────────────────────────────── */
+
+.plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #08080a;
+}
+
+.plate__img {
+  position: absolute;
+  /* Oskärpan suddar ut kanterna, så bilden får spilla över lite. */
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  object-fit: cover;
+  will-change: opacity;
+}
+
+.plate__img--soft {
+  opacity: 0;
+}
+
+/* Om fotot saknas visas en neutral botten i stället för en trasig bild. */
+.plate--missing {
+  background:
+    radial-gradient(58% 52% at 50% 42%, #1c1d21 0%, #0d0d10 62%, #08080a 100%);
+}
+
+.plate__dim {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+}
+
+.plate__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    74% 70% at 50% 44%,
+    transparent 38%,
+    rgba(0, 0, 0, 0.5) 84%,
+    rgba(0, 0, 0, 0.78) 100%
+  );
+}
+
+/* ── Skärmytan — portalen in i webbplatsen ───────────────────────────── */
+
+.screen {
+  position: absolute;
+  overflow: hidden;
+  background: var(--ink);
+  transform: translateZ(0);
+  /* Mjuk kant så att den skarpa sidan inte ser inklistrad ut mot det
+     oskarpa fotot. */
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 0 3vw 0.6vw color-mix(in srgb, var(--glow) 12%, transparent);
+}
+
+.is-inside .plate {
+  visibility: hidden;
+}
+
+/* ── Inpassningsläge (?calibrate) ────────────────────────────────────── */
+
+.calib__box {
+  position: absolute;
+  z-index: 120;
+  border: 2px solid #ff2ea6;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.calib__panel {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(90vw, 30rem);
+  padding: 1rem 1.25rem;
+  background: #101014;
+  border: 1px solid #ff2ea6;
+  color: var(--bone);
+  font: 400 0.75rem var(--mono);
+  line-height: 1.5;
+}
+
+.calib__panel code {
+  padding: 0.6rem 0.75rem;
+  background: #000;
+  color: #ff8fd0;
+  user-select: all;
+  word-break: break-all;
+}

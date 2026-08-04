@@ -20,6 +20,8 @@ export type Project = {
   sector: string
   year: string
   tags: string
+  /** Foto under `public/`. Saknas filen ritas grafiken i ProjectMedia i stället. */
+  image: string
   seed: number
   palette: [string, string, string]
 }
@@ -32,6 +34,7 @@ export const PROJECTS: Project[] = [
     sector: 'Fintech',
     year: '2026',
     tags: 'Webbplats · Designsystem',
+    image: 'images/work-01.jpg',
     seed: 11,
     palette: ['#8d97a5', '#565e6a', '#131519'],
   },
@@ -40,6 +43,7 @@ export const PROJECTS: Project[] = [
     sector: 'Mode',
     year: '2026',
     tags: 'Identitet · E-handel',
+    image: 'images/work-02.jpg',
     seed: 27,
     palette: ['#cabfad', '#7d7263', '#191613'],
   },
@@ -48,6 +52,7 @@ export const PROJECTS: Project[] = [
     sector: 'Arkitektur',
     year: '2026',
     tags: 'Portfölj · Art direction',
+    image: 'images/work-03.jpg',
     seed: 43,
     palette: ['#bcbab5', '#68665f', '#141415'],
   },
@@ -56,6 +61,7 @@ export const PROJECTS: Project[] = [
     sector: 'Varumärke',
     year: '2026',
     tags: 'Förpackning · Webb',
+    image: 'images/work-04.jpg',
     seed: 58,
     palette: ['#a89579', '#655a49', '#161310'],
   },
@@ -64,6 +70,7 @@ export const PROJECTS: Project[] = [
     sector: 'Kultur',
     year: '2026',
     tags: 'Kampanj · Rörelse',
+    image: 'images/work-05.jpg',
     seed: 71,
     palette: ['#a39aa8', '#635d6b', '#141216'],
   },
@@ -72,6 +79,7 @@ export const PROJECTS: Project[] = [
     sector: 'Teknik',
     year: '2026',
     tags: 'Produktsajt · Motion',
+    image: 'images/work-06.jpg',
     seed: 89,
     palette: ['#9db0b4', '#5e6d70', '#101415'],
   },

@@ -3,10 +3,10 @@
 Webbplats för Vantage Studio — designstudio för webbplatser, grundad 2026 av
 Viktor Lindqvist.
 
-Sidans idé: besökaren möter en designstudio i halvdunkel. När man scrollar åker
-kameran framåt genom rummet, in i bildskärmen — och innanför skärmen ligger
-själva webbplatsen. Längst ner backar kameran ut igen och lämnar kvar
-kontaktuppgifterna på skrivbordet.
+Sidans idé: besökaren möter ett fotografi av ett skrivbord, lätt oskarpt. När
+man scrollar åker kameran framåt in i bildskärmen på fotot — och innanför
+skärmen ligger själva webbplatsen. Längst ner backar kameran ut igen och lämnar
+kvar kontaktuppgifterna på skrivbordet.
 
 ## Kom igång
 
@@ -17,9 +17,36 @@ npm run build    # produktionsbygge till dist/
 npm run preview  # förhandsgranska bygget
 ```
 
-Inga externa bilder används — rummet och projektbilderna är ritade i SVG och
-CSS. Bygget är knappt 70 kB (gzip) och laddar bara två typsnitt från Google
-Fonts.
+## Bilderna
+
+Sidan vill ha följande filer i `public/images/`. Saknas en fil ritas en neutral
+reserv i stället, så sidan aldrig visar en trasig bildruta:
+
+| Fil | Används till |
+| --- | --- |
+| `studio.jpg` | Skrivbordet som sidan öppnar med. **Viktigast.** |
+| `work-01.jpg` … `work-06.jpg` | Projektkorten i arbetsgalleriet (4:3) |
+| `showcase-01.jpg`, `showcase-02.jpg` | Helskärmsbilderna som zoomar |
+
+**`studio.jpg` behöver vara ett foto där bildskärmen är vänd rakt mot
+kameran.** Ju mer skärmen är vriden, desto tydligare syns det att den
+rektangulära webbsidan inte ligger i samma vinkel som skärmen i bilden. Ett
+foto med naturligt kort skärpedjup är extra bra — då behövs mindre oskärpa i
+CSS.
+
+### Passa in skärmytan
+
+När `studio.jpg` är på plats behöver koden veta exakt var skärmen ligger i
+bilden. Starta `npm run dev` och lägg till `?calibrate` i adressfältet:
+
+```
+http://localhost:5173/?calibrate
+```
+
+En ram läggs över skärmytan. Piltangenter flyttar, skift ändrar storlek, alt
+finjusterar. Siffrorna visas i panelen nere till vänster — klistra in dem i
+`screen` i `src/data/scene-photo.ts` och ta bort `?calibrate`. Där ställer du
+även bildens proportioner (`aspect`) och hur oskarp den ska vara.
 
 ## Så fungerar kameran
 
@@ -35,15 +62,18 @@ Scrollen delas i tre akter (`src/App.tsx`):
 | 2 | innehållets höjd | Sidan inuti skärmen rullar |
 | 3 | 3 fönsterhöjder | Kameran backar ut, kontakten träder fram |
 
-**Rummet** (`src/lib/scene.ts`) byggs av plana lager på olika djup. I stället
-för CSS 3D projiceras varje lager för hand: ett lager på djupet `z` skalas med
-`(P − z) / (P − z − zc)` när kameran flyttat sig `zc` framåt. Alla lager skalas
-kring samma punkt — mitten av bildskärmen — så skärmen ligger stilla i bild
-medan rummet sveper förbi. Lager närmare kameran växer fortare och tonas ut när
-de passerar den, vilket ger äkta parallax i stället för en platt inzoomning.
+**Skrivbordet** (`src/lib/scene.ts`) är ett enda plan — fotografiet. Kameran
+åker rakt fram mot skärmen i bilden, vilket motsvarar att skala fotot kring
+skärmens mittpunkt med `(P − z) / (P − z − zc)` när kameran flyttat sig `zc`
+framåt. Formeln i stället för en rak `scale(1 → 7)` gör att rörelsen
+accelererar som en riktig framåtåkning: långsamt på håll, snabbt de sista
+metrarna. Fotot täcker alltid fönstret, så slutskalan blir densamma oavsett
+fönsterformat.
 
-Eftersom både scenen och skärmen är 16:9, och scenen alltid täcker fönstret,
-blir slutskalan exakt `1 / 0,14 ≈ 7,14` oavsett fönsterformat.
+Samtidigt tonas en kraftigare oskarp kopia av fotot in — skärpedjupet minskar
+när kameran närmar sig, som en riktig kamera som ställer om fokus från rummet
+till skärmen. Att korstona två färdiga bilder är mycket billigare än att
+animera `filter: blur()`.
 
 **Skärmens innehåll** (`src/components/ScreenContent.tsx`) ritas i fönstrets
 fulla storlek och skalas ned med `1 / kameraskalan`. När kameran nått hela vägen
@@ -86,13 +116,16 @@ src/
   App.tsx                  akterna, sidans höjd, kamerans förflyttning
   lib/
     scroll.ts              bildruteloop, utjämnad scroll, härledda värden
-    scene.ts               kamerans matematik och lagrens djup
+    scene.ts               kamerans matematik
     track.ts               sektionernas egen position inuti skärmen
     hooks.ts               useFrame, mätning, minskad rörelse
+  data/
+    scene-photo.ts         bakgrundsfotot och skärmytans inpassning
+    content.ts             all text, projekt och tjänster
   components/
-    Stage.tsx              kamerakontext och lagerkomponenten
-    Room.tsx               studion, ritad i SVG och CSS
+    Stage.tsx              kamerakontext och kamerans förlopp
+    Scene.tsx              skrivbordsfotot och skärmytan
     ScreenContent.tsx      sidan som ligger på bildskärmen
     inner/                 sektionerna inuti skärmen
-  styles/                  tokens, bas, rum, skärm, gränssnitt
+  styles/                  tokens, bas, scen, skärm, gränssnitt
 ```

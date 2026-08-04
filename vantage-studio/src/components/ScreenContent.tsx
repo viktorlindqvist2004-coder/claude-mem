@@ -7,6 +7,7 @@ import { Marquee } from './inner/Marquee'
 import { About, Hero, Manifest, Numbers, Outro, Services } from './inner/Sections'
 import { Work } from './inner/Work'
 import { Process } from './inner/Process'
+import { Showcase } from './inner/Showcase'
 import { Contact } from './Plates'
 
 /**
@@ -74,10 +75,22 @@ export function ScreenContent({
         <Hero />
         <Marquee words={MARQUEE_WORDS} />
         <Manifest />
+        <Showcase
+          src="images/showcase-01.jpg"
+          kicker="Så här jobbar vi"
+          caption="Varje projekt börjar med ett tomt ark."
+        />
         <Work />
         <Marquee words={['Vantage Studio', 'Grundad 2026', 'Handkodat', 'Inga mallar']} direction={-1} speed={0.03} />
         <Services />
         <Process />
+        <Showcase
+          src="images/showcase-02.jpg"
+          kicker="Hantverket"
+          caption="Handkodat, komponent för komponent."
+          length={2}
+          zoom={0.36}
+        />
         <Numbers />
         <About />
         {reduced ? <Contact variant="static" /> : <Outro />}

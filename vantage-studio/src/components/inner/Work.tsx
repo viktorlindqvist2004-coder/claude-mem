@@ -3,7 +3,7 @@ import { useFrame } from '../../lib/hooks'
 import { useTrack } from '../../lib/track'
 import { clamp, clamp01 } from '../../lib/math'
 import { PROJECTS } from '../../data/content'
-import { ProjectArt } from '../ProjectArt'
+import { ProjectMedia } from '../ProjectMedia'
 
 /**
  * Arbetena ligger på ett vågrätt band. Sektionen är hög, innehållet nålas fast
@@ -31,14 +31,17 @@ export function Work() {
     const x = -t.pin * distance
     rail.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`
 
-    // Konstverket inuti varje kort rör sig långsammare än kortet självt.
+    // Bilden zoomar in medan kortet vandrar mot mitten och ut igen, och rör
+    // sig samtidigt långsammare i sidled än kortet självt.
     cardRefs.current.forEach((el) => {
       if (!el) return
-      const art = el.querySelector<SVGElement>('.card__art')
+      const art = el.querySelector<HTMLElement>('.card__art')
       if (!art) return
       const center = el.offsetLeft + el.offsetWidth / 2 + x
       const away = (center - f.vw / 2) / f.vw
-      art.style.transform = `translate3d(${(away * -5).toFixed(2)}%, 0, 0) scale(1.12)`
+      const zoom = 1.02 + Math.min(Math.abs(away), 1.2) * 0.3
+      art.style.transform =
+        `translate3d(${(away * -6).toFixed(2)}%, 0, 0) scale(${zoom.toFixed(3)})`
       el.style.opacity = (1 - clamp01(Math.abs(away) - 0.6) * 1.4).toFixed(3)
     })
 
@@ -72,7 +75,7 @@ export function Work() {
               ref={(el) => { cardRefs.current[i] = el }}
             >
               <div className="card__frame">
-                <ProjectArt project={p} index={i} />
+                <ProjectMedia project={p} index={i} />
               </div>
               <div className="card__meta">
                 <h3 className="card__name">{p.name}</h3>

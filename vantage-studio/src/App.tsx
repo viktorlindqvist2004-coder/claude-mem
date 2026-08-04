@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CameraProvider, cameraProgress, useCamera } from './components/Stage'
-import { Room } from './components/Room'
+import { Scene } from './components/Scene'
 import { ScreenContent } from './components/ScreenContent'
 import { Cursor, Hint, Nav, Progress } from './components/Overlay'
 import { Contact, Preloader, TitlePlate } from './components/Plates'
@@ -71,8 +71,12 @@ function Experience() {
     const u = cameraProgress(f.act1, f.act3)
 
     if (cameraRef.current) {
+      // Kameran centrerar skärmytan, plus en lätt drift efter muspekaren som
+      // klingar av när vi väl är inne i skärmen.
+      const driftX = -f.pointerX * 16 * (1 - u)
+      const driftY = -f.pointerY * 10 * (1 - u)
       cameraRef.current.style.transform =
-        `translate3d(${(cam.dx * u).toFixed(2)}px, ${(cam.dy * u).toFixed(2)}px, 0)`
+        `translate3d(${(cam.dx * u + driftX).toFixed(2)}px, ${(cam.dy * u + driftY).toFixed(2)}px, 0)`
     }
 
     // Väl inne i skärmen behövs inte rummet — klassen plockar bort det ur
@@ -86,11 +90,9 @@ function Experience() {
 
       <div className="viewport" ref={viewportRef}>
         <div className="camera" ref={cameraRef}>
-          <div className="stage">
-            <Room
-              screen={<ScreenContent onHeight={setContentHeight} reduced={reduced} />}
-            />
-          </div>
+          <Scene
+            screen={<ScreenContent onHeight={setContentHeight} reduced={reduced} />}
+          />
         </div>
 
         {/* Rummets titel och kontaktvyn hör ihop med kameraresan. Utan den

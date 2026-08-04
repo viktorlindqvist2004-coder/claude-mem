@@ -1,59 +1,36 @@
-import { clamp, smoothstep } from './math'
+import { clamp } from './math'
+import { PHOTO, type PhotoScreen } from '../data/scene-photo'
 
 /**
  * KAMERAN
  * ───────
- * Rummet byggs som ett antal plana lager på olika djup framför en virtuell
- * kamera. I stället för CSS 3D projicerar vi själva: ett lager på djupet `z`
- * som kameran flyttat sig `zc` framåt mot skalas med
+ * Bakgrunden är ett enda plan — fotografiet. Kameran åker rakt fram mot
+ * bildskärmen i bilden, vilket motsvarar att skala fotot kring skärmens
+ * mittpunkt:
  *
  *     m = (P - z) / (P - z - zc)
  *
- * där P är perspektivavståndet. Alla lager skalas kring samma punkt — mitten
- * av bildskärmen — så skärmen ligger stilla i bild medan rummet sveper förbi.
- * Lager närmare kameran får större m och rusar därför ut ur bild först, vilket
- * ger äkta parallax i stället för en platt inzoomning.
+ * där P är perspektivavståndet och zc hur långt kameran flyttat sig framåt.
+ * Formeln i stället för en rak `scale(1 → 7)` gör att rörelsen accelererar
+ * som en riktig framåtåkning: långsamt på håll, snabbt de sista metrarna.
  *
- * Scenen är en 16:9-yta som alltid täcker fönstret (cover). Eftersom skärmen
- * också är 16:9 blir slutskalan exakt 1 / SCREEN.w oavsett fönsterformat.
+ * Fotot täcker alltid fönstret (cover), så slutskalan blir densamma oavsett
+ * fönsterformat.
  */
 
-export const STAGE_AR = 16 / 9
-
-/** Skärmens plats på scenen, som andel av scenens bredd respektive höjd. */
-export const SCREEN = { x: 0.43, y: 0.355, w: 0.14, h: 0.14 } as const
-
-export const SCREEN_CENTER = {
-  x: SCREEN.x + SCREEN.w / 2,
-  y: SCREEN.y + SCREEN.h / 2,
-} as const
-
-/** Perspektivavstånd i "scenbredder". */
 export const PERSPECTIVE = 1.15
 
-/** Djup per lager. Mindre värde = längre bort från kameran. */
-export const Z = {
-  wall: -0.46,
-  window: -0.45,
-  posters: -0.43,
-  shelf: -0.42,
-  plant: -0.4,
-  monitor: -0.35,
-  desk: -0.22,
-  props: -0.16,
-  lamp: -0.05,
-  foreground: 0.2,
-} as const
+/** Fotoplanets djup. */
+export const Z_PLANE = -0.35
 
 export type Camera = {
   stageW: number
   stageH: number
-  /** Skärmens storlek i px vid vila. */
   screenW: number
   screenH: number
-  /** Slutskala som får skärmen att täcka fönstret. */
+  /** Skala som får skärmytan att täcka fönstret. */
   scale: number
-  /** Kameraförflyttning som centrerar skärmen i fönstret. */
+  /** Förflyttning som centrerar skärmytan i fönstret. */
   dx: number
   dy: number
   /** Transform-origin i px, relativt scenens låda. */
@@ -63,50 +40,39 @@ export type Camera = {
   zMax: number
 }
 
-export function computeCamera(vw: number, vh: number): Camera {
+export function computeCamera(
+  vw: number,
+  vh: number,
+  aspect: number = PHOTO.aspect,
+  screen: PhotoScreen = PHOTO.screen,
+): Camera {
   // Cover: scenen är minst lika bred och hög som fönstret.
-  const stageW = Math.max(vw, vh * STAGE_AR)
-  const stageH = stageW / STAGE_AR
+  const stageW = Math.max(vw, vh * aspect)
+  const stageH = stageW / aspect
 
-  const screenW = stageW * SCREEN.w
-  const screenH = stageH * SCREEN.h
+  const screenW = stageW * screen.w
+  const screenH = stageH * screen.h
 
   const scale = Math.max(vw / screenW, vh / screenH)
 
   const stageLeft = (vw - stageW) / 2
   const stageTop = (vh - stageH) / 2
 
-  const originX = SCREEN_CENTER.x * stageW
-  const originY = SCREEN_CENTER.y * stageH
+  const originX = (screen.x + screen.w / 2) * stageW
+  const originY = (screen.y + screen.h / 2) * stageH
 
   const dx = vw / 2 - (stageLeft + originX)
   const dy = vh / 2 - (stageTop + originY)
 
-  const zMax = (PERSPECTIVE - Z.monitor) * (1 - 1 / scale)
+  const zMax = (PERSPECTIVE - Z_PLANE) * (1 - 1 / scale)
 
   return { stageW, stageH, screenW, screenH, scale, dx, dy, originX, originY, zMax }
 }
 
-/** Avstånd från kameran till ett lager, i scenbredder. */
-const depthOf = (z: number, zc: number) => PERSPECTIVE - z - zc
-
-export type LayerState = { scale: number; opacity: number }
-
-/**
- * Skala och synlighet för ett lager vid kameraposition `zc`.
- *
- * Bara lager framför bildskärmen tonas ut: de passerar faktiskt kameran och
- * skulle annars explodera i storlek. Skärmen och allt bakom den behåller full
- * opacitet hela vägen in — de är målet för resan, inte kuliss som sveper förbi.
- */
-export function layerState(z: number, zc: number): LayerState {
-  const d = depthOf(z, zc)
-  if (d <= 0.1) return { scale: 1, opacity: 0 }
-
-  const scale = depthOf(z, 0) / d
-  const opacity = z > Z.monitor ? smoothstep(0.1, 0.34, d) : 1
-
-  return { scale, opacity }
+/** Fotoplanets skala vid kamerapositionen `zc`. */
+export function planeScale(zc: number) {
+  const d0 = PERSPECTIVE - Z_PLANE
+  return d0 / Math.max(d0 - zc, 0.001)
 }
 
 /**

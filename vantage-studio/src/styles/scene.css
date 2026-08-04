@@ -28,12 +28,15 @@
   background: #08080a;
 }
 
+/* Bilden måste ligga exakt i scenens koordinatsystem — det är samma system
+   som skärmytan pekas ut i. Minsta överskott eller förskjutning här och
+   webbsidan hamnar bredvid monitorn i fotot. Oskärpans mjuka kanter döljs i
+   stället av vinjetten. */
 .plate__img {
   position: absolute;
-  /* Oskärpan suddar ut kanterna, så bilden får spilla över lite. */
-  inset: -4%;
-  width: 108%;
-  height: 108%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   will-change: opacity;
 }

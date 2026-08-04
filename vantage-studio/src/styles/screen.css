@@ -154,7 +154,9 @@
 
 .wordmark {
   position: relative;
-  font-size: clamp(3rem, 11vw, 12rem);
+  /* Tre ord som får radbrytas — storleken är satt så att det blir två rader
+     på en vanlig skärm, inte tre. */
+  font-size: clamp(2.4rem, 8vw, 8.5rem);
   font-weight: 200;
   letter-spacing: -0.045em;
   line-height: 1;
@@ -370,14 +372,17 @@
     radial-gradient(62% 58% at 42% 40%, #232429 0%, #131316 58%, #0b0b0c 100%);
 }
 
+/* Bilderna är ljusa och detaljrika. Mitten hålls öppen så fotot får synas,
+   men nederkanten mörkas ordentligt — det är där texten står. */
 .showcase__scrim {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(11, 11, 12, 0.5) 0%,
-    rgba(11, 11, 12, 0.25) 40%,
-    rgba(11, 11, 12, 0.85) 100%
+    rgba(11, 11, 12, 0.55) 0%,
+    rgba(11, 11, 12, 0.18) 30%,
+    rgba(11, 11, 12, 0.62) 68%,
+    rgba(11, 11, 12, 0.93) 100%
   );
 }
 
@@ -392,12 +397,19 @@
   will-change: transform, opacity;
 }
 
+.showcase__cap .label {
+  color: color-mix(in srgb, var(--bone) 78%, transparent);
+}
+
 .showcase__text {
   max-width: 20ch;
   font-size: clamp(1.6rem, 4vw, 4rem);
   font-weight: 200;
   letter-spacing: -0.03em;
   line-height: 1.14;
+  /* Fotot bakom kan vara ljust i partier — skuggan håller texten läsbar
+     utan att lägga en tyngre platta över bilden. */
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
 /* ── Tjänster ────────────────────────────────────────────────────────── */

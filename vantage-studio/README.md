@@ -1,6 +1,6 @@
-# Vantage Studio
+# Vantage Design Studio
 
-Webbplats för Vantage Studio — designstudio för webbplatser, grundad 2026 av
+Webbplats för Vantage Design Studio — designstudio för webbplatser, grundad 2026 av
 Viktor Lindqvist.
 
 Sidans idé: besökaren möter ett fotografi av ett skrivbord, lätt oskarpt. När
@@ -24,9 +24,10 @@ reserv i stället, så sidan aldrig visar en trasig bildruta:
 
 | Fil | Används till |
 | --- | --- |
-| `studio.jpg` | Skrivbordet som sidan öppnar med. **Viktigast.** |
-| `work-01.jpg` … `work-06.jpg` | Projektkorten i arbetsgalleriet (4:3) |
-| `showcase-01.jpg`, `showcase-02.jpg` | Helskärmsbilderna som zoomar |
+| `studio.jpg` | Skrivbordet som sidan öppnar med. **Viktigast.** ✅ |
+| `showcase-01.jpg` | Helskärmsbild efter manifestet — skrivbordet uppifrån ✅ |
+| `showcase-02.jpg` | Helskärmsbild efter processen — identitetsarbete ✅ |
+| `work-01.jpg` … `work-06.jpg` | Projektkorten i arbetsgalleriet (4:3) — saknas än |
 
 **`studio.jpg` behöver vara ett foto där bildskärmen är vänd rakt mot
 kameran.** Ju mer skärmen är vriden, desto tydligare syns det att den

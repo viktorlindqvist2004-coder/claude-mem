@@ -11,8 +11,8 @@
     --rule-soft:   #E1EAEA;
     --accent:      #B65C08;
     --accent-soft: #FBEEDF;
-    --good:        #2C6B4C;
-    --good-soft:   #E1F0E7;
+    --them:        #3E7D8C;
+    --them-soft:   #E2EFF2;
     --stop:        #9E2F27;
     --stop-soft:   #F8E6E4;
     --shadow:      0 1px 2px rgba(22,35,42,.05), 0 8px 24px -18px rgba(22,35,42,.35);
@@ -34,8 +34,8 @@
       --rule-soft:   #223138;
       --accent:      #E8A33D;
       --accent-soft: #33260F;
-      --good:        #6BC095;
-      --good-soft:   #16301F;
+      --them:        #7EC0D0;
+      --them-soft:   #14303A;
       --stop:        #E9887F;
       --stop-soft:   #351A18;
       --shadow:      0 1px 2px rgba(0,0,0,.3), 0 8px 24px -18px rgba(0,0,0,.8);
@@ -53,8 +53,8 @@
     --rule-soft:   #223138;
     --accent:      #E8A33D;
     --accent-soft: #33260F;
-    --good:        #6BC095;
-    --good-soft:   #16301F;
+    --them:        #7EC0D0;
+    --them-soft:   #14303A;
     --stop:        #E9887F;
     --stop-soft:   #351A18;
     --shadow:      0 1px 2px rgba(0,0,0,.3), 0 8px 24px -18px rgba(0,0,0,.8);
@@ -68,919 +68,570 @@
     color: var(--ink);
     font-family: var(--sans);
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
 
-  .wrap {
-    max-width: 60rem;
-    margin: 0 auto;
-    padding: 0 1.5rem 6rem;
-  }
+  .wrap { max-width: 52rem; margin: 0 auto; padding: 0 1.5rem 5rem; }
 
   /* ---------- topbar ---------- */
   .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
+    position: sticky; top: 0; z-index: 20;
     background: color-mix(in srgb, var(--ground) 92%, transparent);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--rule);
   }
   .topbar-inner {
-    max-width: 60rem;
-    margin: 0 auto;
-    padding: .6rem 1.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .4rem 1.1rem;
+    max-width: 52rem; margin: 0 auto; padding: .55rem 1.5rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: .35rem 1.1rem;
   }
   .topbar .brand {
-    font-family: var(--mono);
-    font-size: .68rem;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-right: auto;
-    white-space: nowrap;
+    font-family: var(--mono); font-size: .66rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); margin-right: auto; white-space: nowrap;
   }
   .topbar a {
-    font-family: var(--mono);
-    font-size: .7rem;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    text-decoration: none;
-    padding: .18rem .1rem;
-    border-bottom: 1.5px solid transparent;
+    font-family: var(--mono); font-size: .69rem; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--ink-soft); text-decoration: none;
+    padding: .15rem .05rem; border-bottom: 1.5px solid transparent;
   }
   .topbar a:hover, .topbar a:focus-visible { color: var(--ink); border-bottom-color: var(--accent); }
 
-  /* ---------- header ---------- */
-  header.masthead { padding: 3.5rem 0 2.5rem; border-bottom: 2px solid var(--ink); }
+  /* ---------- masthead ---------- */
+  header.masthead { padding: 2.8rem 0 1.8rem; }
   .eyebrow {
-    font-family: var(--mono);
-    font-size: .72rem;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 1rem;
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 .8rem;
   }
   h1 {
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: clamp(2.1rem, 5.5vw, 3.3rem);
-    line-height: 1.08;
-    letter-spacing: -.015em;
-    margin: 0 0 1rem;
-    text-wrap: balance;
+    font-family: var(--serif); font-weight: 600;
+    font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.08;
+    letter-spacing: -.015em; margin: 0 0 .7rem; text-wrap: balance;
   }
   .standfirst {
-    font-family: var(--serif);
-    font-size: 1.18rem;
-    line-height: 1.55;
-    color: var(--ink-soft);
-    max-width: 42rem;
-    margin: 0;
+    font-family: var(--serif); font-size: 1.1rem; line-height: 1.5;
+    color: var(--ink-soft); max-width: 36rem; margin: 0;
   }
-
-  /* ---------- key ---------- */
-  .key {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-    gap: .75rem;
-    margin: 2rem 0 0;
-    padding: 1.1rem;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    box-shadow: var(--shadow);
-  }
-  .key div { font-size: .86rem; color: var(--ink-soft); line-height: 1.45; }
-  .key b { color: var(--ink); }
-  .key .swatch-say  { font-family: var(--serif); color: var(--accent); font-weight: 600; }
-  .key .swatch-them { font-family: var(--serif); font-style: italic; color: var(--ink-faint); }
 
   /* ---------- sections ---------- */
-  section { padding-top: 3.5rem; }
+  section { padding-top: 3rem; }
   h2 {
-    font-family: var(--serif);
-    font-size: clamp(1.5rem, 3.2vw, 2rem);
-    font-weight: 600;
-    letter-spacing: -.01em;
-    line-height: 1.15;
-    margin: 0 0 .35rem;
-    text-wrap: balance;
+    font-family: var(--serif); font-size: clamp(1.35rem, 3vw, 1.75rem);
+    font-weight: 600; letter-spacing: -.01em; line-height: 1.15;
+    margin: 0 0 .3rem; text-wrap: balance;
   }
-  .sec-note {
-    font-size: .92rem;
-    color: var(--ink-faint);
-    margin: 0 0 1.6rem;
-    max-width: 40rem;
-  }
-  h3 {
-    font-family: var(--sans);
-    font-size: 1.02rem;
-    font-weight: 650;
-    letter-spacing: -.005em;
-    margin: 2rem 0 .7rem;
-  }
-  p { max-width: 42rem; }
+  .sec-note { font-size: .89rem; color: var(--ink-faint); margin: 0 0 1.4rem; max-width: 36rem; }
 
-  /* ---------- spoken lines ---------- */
-  .say, .them {
-    font-family: var(--serif);
-    font-size: 1.12rem;
-    line-height: 1.5;
-    margin: .8rem 0;
-    padding: .55rem 0 .55rem 1.1rem;
-    max-width: 44rem;
+  /* ---------- spoken ---------- */
+  .say {
+    font-family: var(--serif); font-size: 1.08rem; line-height: 1.45;
+    margin: 0; padding: .1rem 0 .1rem .85rem;
+    border-left: 3px solid var(--accent); color: var(--ink); max-width: 34rem;
   }
-  .say  { border-left: 3px solid var(--accent); color: var(--ink); }
-  .them { border-left: 3px solid var(--rule); color: var(--ink-soft); font-style: italic; }
-  .say  + .say { margin-top: .45rem; }
+  .say + .say { margin-top: .5rem; }
   .slot {
-    font-family: var(--mono);
-    font-size: .86em;
-    font-style: normal;
-    background: var(--accent-soft);
-    color: var(--accent);
-    padding: .05em .35em;
-    border-radius: 2px;
-    white-space: nowrap;
+    font-family: var(--mono); font-size: .84em; font-style: normal;
+    background: var(--accent-soft); color: var(--accent);
+    padding: .05em .32em; border-radius: 2px; white-space: nowrap;
   }
-
-  /* ---------- stage directions ---------- */
   .cue {
-    display: flex;
-    gap: .7rem;
-    align-items: baseline;
-    font-size: .89rem;
-    color: var(--ink-soft);
-    margin: .7rem 0;
-    max-width: 44rem;
-    line-height: 1.5;
+    font-size: .84rem; color: var(--ink-faint); margin: .5rem 0 0;
+    max-width: 34rem; line-height: 1.45;
   }
-  .cue .tag {
-    font-family: var(--mono);
-    font-size: .64rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    flex: 0 0 4.4rem;
-    padding-top: .18rem;
-  }
-  .cue.warn .tag { color: var(--stop); }
-  .cue.win  .tag { color: var(--good); }
+  .cue b { color: var(--ink-soft); }
+  .cue.warn b { color: var(--stop); }
 
-  /* ---------- numbered steps ---------- */
-  .step { border-top: 1px solid var(--rule); padding: 1.6rem 0 .4rem; }
-  .step:first-of-type { border-top: none; }
-  .step-head { display: flex; align-items: baseline; gap: .9rem; margin-bottom: .3rem; }
-  .step-num {
-    font-family: var(--mono);
-    font-size: .8rem;
-    font-weight: 600;
-    color: var(--accent);
-    flex: 0 0 auto;
-    padding-top: .1rem;
-    font-variant-numeric: tabular-nums;
+  /* ---------- essentials card ---------- */
+  .essentials {
+    background: var(--ink); color: var(--ground);
+    border-radius: 4px; padding: 1.5rem 1.6rem 1.7rem; box-shadow: var(--shadow);
   }
-  .step-title { font-family: var(--sans); font-weight: 650; font-size: 1.08rem; margin: 0; }
-  .step-time {
-    font-family: var(--mono);
-    font-size: .68rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    margin-left: auto;
-    white-space: nowrap;
+  .essentials .qlabel {
+    font-family: var(--mono); font-size: .63rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 1.1rem;
   }
-  .step-body { padding-left: 0; }
+  .essentials .say { border-left-color: var(--accent); color: var(--ground); }
+  .essentials .say + .say { margin-top: .9rem; }
+  .essentials .slot { background: rgba(255,255,255,.13); color: var(--accent); }
+  .essentials .cue { color: rgba(255,255,255,.55); margin-top: 1.1rem; }
+  .essentials .cue b { color: rgba(255,255,255,.85); }
 
-  /* ---------- branches ---------- */
-  .branches { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
-  .branch {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-top: 3px solid var(--accent);
-    border-radius: 3px;
-    padding: 1.1rem 1.2rem 1.3rem;
-    box-shadow: var(--shadow);
+  /* ---------- talk ratio ---------- */
+  .ratio { margin: 0 0 1.8rem; max-width: 36rem; }
+  .ratio-bar {
+    display: flex; height: .55rem; border-radius: 999px; overflow: hidden;
+    background: var(--rule-soft); margin-bottom: .5rem;
   }
-  .branch h4 {
-    font-family: var(--sans);
-    font-size: .95rem;
-    font-weight: 650;
-    margin: 0 0 .2rem;
+  .ratio-bar span { display: block; }
+  .ratio-bar .r-you  { background: var(--accent); }
+  .ratio-bar .r-them { background: var(--them); }
+  .ratio-key {
+    display: flex; flex-wrap: wrap; gap: .3rem 1.1rem;
+    font-family: var(--mono); font-size: .66rem; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--ink-faint);
   }
-  .branch .verdict {
-    font-family: var(--mono);
-    font-size: .64rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin: 0 0 .8rem;
+  .ratio-key i { font-style: normal; display: inline-flex; align-items: center; gap: .35rem; }
+  .ratio-key i::before {
+    content: ""; width: .5rem; height: .5rem; border-radius: 2px; background: currentColor;
   }
-  .branch.hot   { border-top-color: var(--good); }
-  .branch.hot   .verdict { color: var(--good); }
-  .branch.warm  .verdict { color: var(--accent); }
-  .branch.cold  { border-top-color: var(--rule); }
-  .branch.cold  .verdict { color: var(--ink-faint); }
-  .branch .say, .branch .them { font-size: 1rem; margin: .6rem 0; }
-  .branch .cue { font-size: .84rem; }
+  .ratio-key .k-you  { color: var(--accent); }
+  .ratio-key .k-them { color: var(--them); }
 
-  /* ---------- objections ---------- */
-  .obj {
-    border-top: 1px solid var(--rule-soft);
-    padding: 1.5rem 0;
+  /* ---------- timeline ---------- */
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .tl {
+    display: grid;
+    grid-template-columns: 3.1rem 1.1rem 1fr;
+    column-gap: .85rem;
+    padding-bottom: 1.5rem;
+    position: relative;
   }
-  .obj:first-of-type { border-top: 1px solid var(--rule); }
-  .obj-head {
-    display: flex;
-    align-items: baseline;
-    gap: .8rem;
-    flex-wrap: wrap;
-    margin-bottom: .1rem;
+  .tl-time {
+    font-family: var(--mono); font-size: .82rem; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--ink-soft);
+    text-align: right; padding-top: .05rem; white-space: nowrap;
   }
-  .obj-head h3 {
-    font-family: var(--serif);
-    font-style: italic;
-    font-weight: 500;
-    font-size: 1.2rem;
-    color: var(--ink);
-    margin: 0;
+  .tl-rail { position: relative; }
+  .tl-rail::before {
+    content: ""; position: absolute; left: 50%; top: .95rem; bottom: -1.5rem;
+    width: 2px; transform: translateX(-50%); background: var(--rule);
   }
-  .obj-head h3::before { content: "„"; color: var(--ink-faint); }
-  .obj-head h3::after  { content: "”"; color: var(--ink-faint); }
-  .pill {
-    font-family: var(--mono);
-    font-size: .6rem;
-    letter-spacing: .11em;
-    text-transform: uppercase;
-    padding: .18rem .5rem;
-    border-radius: 999px;
-    white-space: nowrap;
+  .tl:last-child .tl-rail::before { display: none; }
+  .tl-rail::after {
+    content: ""; position: absolute; left: 50%; top: .25rem;
+    width: .62rem; height: .62rem; border-radius: 50%;
+    transform: translateX(-50%);
+    background: var(--accent); box-shadow: 0 0 0 3px var(--ground);
   }
-  .pill.real  { background: var(--good-soft);  color: var(--good); }
-  .pill.brush { background: var(--accent-soft);color: var(--accent); }
-  .pill.end   { background: var(--stop-soft);  color: var(--stop); }
-  .why {
-    font-size: .88rem;
-    color: var(--ink-faint);
-    max-width: 42rem;
-    margin: .55rem 0 0;
-    padding-left: 1.1rem;
-    border-left: 1px dashed var(--rule);
+  .tl.them .tl-rail::after { background: var(--them); }
+  .tl.stopnote .tl-rail::after { background: var(--stop); }
+  .tl-body { min-width: 0; padding-bottom: .1rem; }
+  .tl-label {
+    font-family: var(--sans); font-weight: 650; font-size: .97rem;
+    margin: 0 0 .45rem; display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap;
   }
+  .tl-dur {
+    font-family: var(--mono); font-size: .64rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); font-weight: 400;
+  }
+  .tl.them .tl-label { color: var(--them); }
+  .tl.stopnote .tl-label { color: var(--stop); }
+  .tl.them .say { border-left-color: var(--them); }
 
-  /* ---------- tables ---------- */
-  .tablewrap { overflow-x: auto; margin: 1rem 0; }
-  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: .92rem; }
-  th, td { text-align: left; vertical-align: top; padding: .6rem .8rem; border-bottom: 1px solid var(--rule-soft); }
+  /* ---------- compact tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: .91rem; }
+  th, td { text-align: left; vertical-align: top; padding: .55rem .8rem .55rem 0; border-bottom: 1px solid var(--rule-soft); }
   th {
-    font-family: var(--mono);
-    font-size: .64rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    border-bottom: 1px solid var(--rule);
-    white-space: nowrap;
+    font-family: var(--mono); font-size: .63rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink-faint);
+    border-bottom: 1px solid var(--rule); white-space: nowrap;
   }
-  td:first-child { font-weight: 600; white-space: nowrap; }
+  td.they { font-family: var(--serif); font-style: italic; color: var(--ink-soft); width: 34%; }
+  td.you  { color: var(--ink); }
+  td.you b { color: var(--accent); font-weight: 600; }
+  td.first { font-weight: 600; white-space: nowrap; width: 12rem; }
+
+  /* ---------- plain lists (no grid — avoids text-node cells) ---------- */
+  ul.plain { list-style: none; padding: 0; margin: 0; }
+  ul.plain li {
+    position: relative; padding-left: 1.4rem; margin-bottom: .55rem;
+    font-size: .93rem; line-height: 1.5; max-width: 36rem;
+  }
+  ul.plain li::before {
+    content: ""; position: absolute; left: .15rem; top: .62rem;
+    width: .38rem; height: .38rem; border-radius: 50%; background: var(--accent);
+  }
+  ul.plain.box li::before {
+    content: ""; top: .38rem; left: 0;
+    width: .78rem; height: .78rem; border-radius: 2px;
+    background: none; border: 1.5px solid var(--ink-faint);
+  }
+  ul.plain.no li::before {
+    content: "✕"; background: none; width: auto; height: auto;
+    top: 0; left: 0; color: var(--stop); font-weight: 700; font-size: .86rem;
+  }
+  ul.plain b { color: var(--ink); }
 
   /* ---------- callout ---------- */
   .callout {
-    background: var(--surface-2);
-    border-left: 3px solid var(--accent);
-    padding: 1rem 1.2rem;
-    margin: 1.5rem 0;
-    border-radius: 0 3px 3px 0;
-    font-size: .93rem;
-    max-width: 44rem;
+    background: var(--surface-2); border-left: 3px solid var(--accent);
+    padding: .9rem 1.1rem; margin: 1.4rem 0 0; border-radius: 0 3px 3px 0;
+    font-size: .89rem; max-width: 36rem;
   }
-  .callout p { margin: 0 0 .6rem; max-width: none; }
-  .callout p:last-child { margin-bottom: 0; }
+  .callout p { margin: 0; }
   .callout.stop { border-left-color: var(--stop); }
 
-  /* ---------- never list ---------- */
-  .never { list-style: none; padding: 0; margin: 0; display: grid; gap: .8rem; max-width: 44rem; }
-  .never li {
-    display: grid;
-    grid-template-columns: 1.4rem 1fr;
-    gap: .6rem;
-    font-size: .95rem;
-    line-height: 1.5;
-  }
-  .never li::before { content: "✕"; color: var(--stop); font-weight: 700; }
-  .never b { display: block; font-family: var(--serif); font-style: italic; font-weight: 500; color: var(--ink); font-size: 1.02rem; }
-  .never span { color: var(--ink-soft); }
-
-  /* ---------- checklist ---------- */
-  .check { list-style: none; padding: 0; margin: 0; display: grid; gap: .65rem; max-width: 44rem; }
-  .check li { display: grid; grid-template-columns: 1.3rem 1fr; gap: .6rem; font-size: .95rem; line-height: 1.5; }
-  .check li::before {
-    content: "";
-    width: .82rem; height: .82rem;
-    margin-top: .32rem;
-    border: 1.5px solid var(--ink-faint);
-    border-radius: 2px;
-  }
-
   /* ---------- email ---------- */
-  .email {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    padding: 1.2rem 1.3rem;
-    max-width: 44rem;
-    box-shadow: var(--shadow);
+  details.email {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 3px; padding: .9rem 1.1rem; max-width: 36rem;
   }
-  .email .field {
-    font-family: var(--mono);
-    font-size: .72rem;
-    letter-spacing: .06em;
-    color: var(--ink-faint);
-    padding-bottom: .5rem;
-    margin-bottom: .5rem;
-    border-bottom: 1px solid var(--rule-soft);
+  details.email summary {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent); cursor: pointer;
   }
-  .email .field b { color: var(--ink); font-weight: 600; }
-  .email .body { font-family: var(--serif); font-size: 1.02rem; line-height: 1.6; }
-  .email .body p { margin: 0 0 .8rem; max-width: none; }
-  .email .body p:last-child { margin-bottom: 0; }
-
-  /* ---------- quickcard ---------- */
-  .quickcard {
-    background: var(--ink);
-    color: var(--ground);
-    border-radius: 4px;
-    padding: 1.8rem 1.8rem 2rem;
-    margin-top: 1rem;
-  }
-  :root[data-theme="dark"] .quickcard,
-  .quickcard { box-shadow: var(--shadow); }
-  .quickcard h3 { color: var(--ground); margin-top: 1.5rem; font-size: .95rem; }
-  .quickcard h3:first-child { margin-top: 0; }
-  .quickcard .qlabel {
-    font-family: var(--mono);
-    font-size: .64rem;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 1.2rem;
-  }
-  .quickcard .say {
-    border-left-color: var(--accent);
-    color: var(--ground);
-    font-size: 1.05rem;
-  }
-  .quickcard ol { padding-left: 1.2rem; margin: .4rem 0 0; }
-  .quickcard li { margin-bottom: .35rem; font-size: .93rem; }
-  .quickcard .slot { background: rgba(255,255,255,.12); color: var(--accent); }
+  details.email[open] summary { margin-bottom: .9rem; }
+  details.email .body { font-family: var(--serif); font-size: 1rem; line-height: 1.55; }
+  details.email .body p { margin: 0 0 .7rem; }
+  details.email .body p:last-child { margin-bottom: 0; }
 
   footer {
-    margin-top: 4rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--rule);
-    font-size: .82rem;
-    color: var(--ink-faint);
-    max-width: 44rem;
+    margin-top: 3.5rem; padding-top: 1.3rem; border-top: 1px solid var(--rule);
+    font-size: .8rem; color: var(--ink-faint); max-width: 36rem;
   }
 
   a { color: var(--accent); }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-  @media (max-width: 34rem) {
-    .cue { display: block; }
-    .cue .tag { display: block; margin-bottom: .1rem; }
-    .step-time { margin-left: 0; flex-basis: 100%; }
+  @media (max-width: 30rem) {
+    .tl { grid-template-columns: 2.6rem .9rem 1fr; column-gap: .6rem; }
+    td.they { width: auto; }
+    td.first { width: auto; white-space: normal; }
   }
 </style>
 
 <nav class="topbar">
   <div class="topbar-inner">
     <span class="brand">Vantage Design Studio</span>
-    <a href="#forbered">Förbered</a>
-    <a href="#samtalet">Samtalet</a>
-    <a href="#grenar">Grenar</a>
+    <a href="#kortet">Kortet</a>
+    <a href="#tidslinje">Tidslinje</a>
+    <a href="#spar">Spår</a>
     <a href="#invandningar">Invändningar</a>
-    <a href="#bransch">Bransch</a>
-    <a href="#snabbkort">Snabbkort</a>
+    <a href="#efterat">Efteråt</a>
   </div>
 </nav>
 
 <div class="wrap">
 
 <header class="masthead">
-  <p class="eyebrow">Samtalsmanus · Kalla samtal · Dalsland &amp; Trestad</p>
-  <h1>Ringa företag som saknar webbplats</h1>
+  <p class="eyebrow">Samtalsmanus · Kalla samtal</p>
+  <h1>Tre minuter i telefon</h1>
   <p class="standfirst">
-    Manus, förgreningar och invändningshantering för samtalen i ringlistan. Du säljer inte
-    en hemsida i telefon — du ställer en fråga, lyssnar på svaret och bokar nästa steg.
-    Målet med ett samtal är ett ja till att få skicka ett förslag, inget mer.
+    Du säljer ingen hemsida i telefon. Du ställer en fråga, låter dem svara,
+    och bokar ett förslag. Det är hela samtalet.
   </p>
-
-  <div class="key">
-    <div><span class="swatch-say">Orange linjal</span><br><b>Det du säger.</b> Läs det gärna ordagrant tills det sitter.</div>
-    <div><span class="swatch-them">Grå kursiv</span><br><b>Det de säger.</b> Vanliga formuleringar att känna igen.</div>
-    <div><span style="font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;color:var(--ink-faint)">GÖR / LYSSNA</span><br><b>Regi till dig själv.</b> Sägs aldrig högt.</div>
-  </div>
 </header>
 
-<section id="forbered">
-  <h2>Innan du trycker på ring</h2>
-  <p class="sec-note">Trettio sekunder förberedelse per samtal. Det är skillnaden mellan ett telefonförsäljarsamtal och ett samtal från någon som faktiskt tittat på deras företag.</p>
+<section id="kortet" style="padding-top:1.5rem">
+  <div class="essentials">
+    <p class="qlabel">Kan du de här två raderna behöver du inget annat</p>
 
-  <ul class="check">
-    <li>Läs raden i ringlistan högt för dig själv: <b>företagsnamn, ort, vad de gör</b>. Du ska kunna säga branschen utan att titta.</li>
-    <li>Kolla kolumnen <b>Tel-säkerhet</b>. Står det <b>Låg</b> eller <b>Saknas</b> — slå upp numret först. Ringer du fel person bränner du både tid och rykte.</li>
-    <li>Googla företagsnamnet i tio sekunder. Hittar du en sida du missat i listan, byt spår innan du ringer — inget sänker ett samtal snabbare än att påstå att de saknar hemsida när de har en.</li>
-    <li>Ha en konkret observation redo: en Facebooksida utan öppettider, ett bildgalleri från 2016, en död länk. <b>Specifikt slår allmänt varje gång.</b></li>
-    <li>Ring från en plats där du kan prata ostört och anteckna samtidigt.</li>
-    <li>Bäst tider till hantverkare och verkstäder: <b>07.30–08.30</b> och <b>15.00–16.30</b>. Undvik lunch 11.30–13.00. Frisörer och butiker: tidig förmiddag, mitt i veckan.</li>
-  </ul>
+    <p class="say">Hej, det är <span class="slot">[namn]</span> från Vantage Design Studio.
+    Är det <span class="slot">[företag]</span>? Jag tar en minut — har du en halvminut,
+    eller ringer jag helt fel?</p>
 
-  <div class="callout">
-    <p><b>Om hur du fick numret.</b> Var beredd att svara rakt på det. Uppgifterna är hämtade
-    från öppna källor — hitta.se, eniro, bolagsregistret. Det är helt i sin ordning att ringa
-    företag, men många i listan är enskilda firmor där företagsnumret är någons privata mobil.</p>
-    <p>Säger någon <b>”ring inte igen”</b> — då är det slut där. Anteckna <span class="slot">RING EJ</span>
-    i arket och respektera det. En irriterad företagare i Brålanda pratar med tolv andra företagare i Brålanda.</p>
+    <p class="say">Jag letade efter <span class="slot">[bransch]</span> i
+    <span class="slot">[ort]</span> och hittade er, men ingen hemsida. Stämmer det?</p>
+
+    <p class="cue"><b>Sedan: håll tyst.</b> Frågan gör jobbet. Fyll inte tystnaden.</p>
   </div>
 </section>
 
-<section id="samtalet">
-  <h2>Samtalet, steg för steg</h2>
-  <p class="sec-note">Fem steg i ordning. De första två avgör allt — kommer du förbi kroken utan att bli avbruten har du oftast fyra minuter till.</p>
+<section id="tidslinje">
+  <h2>Tidslinjen</h2>
+  <p class="sec-note">Ett samtal som går hela vägen tar tre minuter. Följ klockan — ligger du efter har du pratat för mycket.</p>
 
-  <div class="step">
-    <div class="step-head">
-      <span class="step-num">01</span>
-      <p class="step-title">Öppningen</p>
-      <span class="step-time">0–15 sek</span>
+  <div class="ratio">
+    <div class="ratio-bar" role="img" aria-label="Fördelning av taltid: du talar ungefär 70 sekunder, de talar ungefär 110 sekunder av tre minuter">
+      <span class="r-you"  style="flex:10"></span>
+      <span class="r-them" style="flex:20"></span>
+      <span class="r-you"  style="flex:8"></span>
+      <span class="r-them" style="flex:30"></span>
+      <span class="r-you"  style="flex:25"></span>
+      <span class="r-them" style="flex:20"></span>
+      <span class="r-you"  style="flex:20"></span>
+      <span class="r-them" style="flex:10"></span>
+      <span class="r-you"  style="flex:12"></span>
     </div>
-    <div class="step-body">
-      <div class="cue"><span class="tag">Gör</span><span>Le innan du börjar prata. Det hörs. Prata långsammare än du tror att du behöver.</span></div>
-
-      <p class="say">Hej, det är <span class="slot">[ditt namn]</span> från Vantage Design Studio.
-      Är det <span class="slot">[företagsnamn]</span> jag har kommit till?</p>
-
-      <div class="cue"><span class="tag">Lyssna</span><span>Vänta på ett ja. Låt dem svara. Att bekräfta vem de är gör att de landar i samtalet.</span></div>
-
-      <p class="say">Jag ska inte ta mer än en minut av din tid — har du en halvminut, eller ringer jag helt fel?</p>
-
-      <div class="cue win"><span class="tag">Varför</span><span>Du ger dem en väg ut direkt. Nästan alla säger ”nej då, kör”. De som säger nej hade ändå inte lyssnat, och nu vet du det på tio sekunder istället för två minuter.</span></div>
+    <div class="ratio-key">
+      <i class="k-you">Du · ca 70 sek</i>
+      <i class="k-them">De · ca 110 sek</i>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-head">
-      <span class="step-num">02</span>
-      <p class="step-title">Kroken — frågan om webbplats</p>
-      <span class="step-time">15–40 sek</span>
-    </div>
-    <div class="step-body">
-      <div class="cue"><span class="tag">Gör</span><span>Detta är hela samtalet. Ställ frågan och håll sedan tyst. Fyll inte tystnaden.</span></div>
+  <ol class="timeline">
 
-      <p class="say">Jag ringer runt till företag här i <span class="slot">[Brålanda / Mellerud / Trollhättan]</span>
-      just nu. Jag letade efter <span class="slot">[bilverkstad / snickare / åkeri]</span> i trakten och hittade er —
-      men jag hittade ingen hemsida. Stämmer det, eller har jag missat något?</p>
-
-      <div class="cue"><span class="tag">Lyssna</span><span>Håll tyst i tre sekunder efter frågetecknet. Låt dem svara först.</span></div>
-
-      <div class="cue win"><span class="tag">Varför</span><span>Frågan är sann, specifik och lätt att svara på. Du påstår ingenting, du säljer ingenting, och du ger dem chansen att rätta dig — vilket gör dig till någon som lyssnar istället för någon som läser upp ett manus.</span></div>
-
-      <div class="callout">
-        <p><b>Har de en sida du inte hittade</b> — erkänn det direkt och byt spår:</p>
-        <p class="say" style="margin-bottom:0">Då har jag missat den, ursäkta. Vad har ni för adress? … Jag tittar snabbt medan vi pratar.</p>
+    <li class="tl">
+      <div class="tl-time">0:00</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Öppning <span class="tl-dur">10 sek</span></p>
+        <p class="say">Hej, det är <span class="slot">[namn]</span> från Vantage Design Studio.
+        Är det <span class="slot">[företag]</span>?</p>
+        <p class="cue">Le innan du börjar. Vänta på deras ja.</p>
       </div>
-    </div>
-  </div>
+    </li>
 
-  <div class="step">
-    <div class="step-head">
-      <span class="step-num">03</span>
-      <p class="step-title">Spegla och gräv</p>
-      <span class="step-time">40 sek–2 min</span>
-    </div>
-    <div class="step-body">
-      <div class="cue"><span class="tag">Gör</span><span>Upprepa deras egna ord tillbaka och ställ en följdfråga. Nu ska de prata, inte du.</span></div>
+    <li class="tl">
+      <div class="tl-time">0:10</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Be om tillstånd <span class="tl-dur">10 sek</span></p>
+        <p class="say">Jag tar en minut — har du en halvminut, eller ringer jag helt fel?</p>
+        <p class="cue">Du ger dem en väg ut. Nästan alla säger ”kör”. De som inte gör det hade ändå inte lyssnat.</p>
+      </div>
+    </li>
 
-      <p class="say">Hur hittar folk er idag, då? Är det mest rekommendationer?</p>
-      <p class="say">Får du någonsin frågan om ni har en sida?</p>
-      <p class="say">Vad är det för jobb du helst vill ha in fler av?</p>
+    <li class="tl">
+      <div class="tl-time">0:20</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Kroken <span class="tl-dur">15 sek</span></p>
+        <p class="say">Jag letade efter <span class="slot">[bransch]</span> i
+        <span class="slot">[ort]</span> och hittade er, men ingen hemsida. Stämmer det?</p>
+        <p class="cue warn"><b>Håll tyst i tre sekunder.</b> Det här är hela samtalet.</p>
+      </div>
+    </li>
 
-      <div class="cue win"><span class="tag">Guldläge</span><span>Säger de ”folk ringer och frågar om öppettider hela tiden” eller ”jag hinner inte svara på alla som frågar vad vi gör” — då har de själva formulerat problemet. Skriv ner deras exakta formulering och använd den i steg 4.</span></div>
+    <li class="tl them">
+      <div class="tl-time">0:35</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">De svarar <span class="tl-dur">20 sek</span></p>
+        <p class="cue">Svaret avgör resten. Fyra möjliga spår — se nästa avsnitt. Är du osäker, fortsätt som vanligt.</p>
+      </div>
+    </li>
 
-      <div class="cue"><span class="tag">Undvik</span><span>Att börja beskriva vad du kan bygga. Det är för tidigt. Varje sekund du pratar här är en sekund de inte berättar vad de behöver.</span></div>
-    </div>
-  </div>
+    <li class="tl">
+      <div class="tl-time">0:55</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Två frågor, inte fler <span class="tl-dur">15 sek</span></p>
+        <p class="say">Hur hittar folk er idag?</p>
+        <p class="say">Vad är det för jobb du vill ha in fler av?</p>
+      </div>
+    </li>
 
-  <div class="step">
-    <div class="step-head">
-      <span class="step-num">04</span>
-      <p class="step-title">Erbjudandet — litet, konkret, riskfritt</p>
-      <span class="step-time">2–3 min</span>
-    </div>
-    <div class="step-body">
-      <div class="cue"><span class="tag">Gör</span><span>Knyt an till det de precis sa. Erbjud ett förslag, inte ett köp.</span></div>
+    <li class="tl them">
+      <div class="tl-time">1:10</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">De berättar <span class="tl-dur">40 sek</span></p>
+        <p class="cue"><b>Anteckna deras exakta ord.</b> Det de säger här återanvänder du i nästa steg och i mejlet.</p>
+      </div>
+    </li>
 
-      <p class="say">Det är precis det vi gör. Vi är en liten studio och bygger enkla, snygga sidor
-      åt företag som er — en sida som visar vad ni gör, var ni finns, öppettider och telefonnummer,
-      så att den som googlar klockan nio på kvällen hittar er och inte grannen.</p>
+    <li class="tl">
+      <div class="tl-time">1:50</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Erbjudandet <span class="tl-dur">30 sek</span></p>
+        <p class="say">Det är precis det vi gör. Vi är en liten studio och bygger enkla sidor
+        åt företag som er — vad ni gör, var ni finns, öppettider och nummer.</p>
+        <p class="say">Låt mig skissa ett förslag med fast pris. Kostar inget, och du
+        behöver inte bestämma något nu.</p>
+      </div>
+    </li>
 
-      <p class="say">Jag tänkte så här: låt mig skissa ihop ett förslag på hur en sida för
-      <span class="slot">[företagsnamn]</span> skulle kunna se ut, med ett fast pris. Det kostar dig
-      ingenting och du behöver inte bestämma något nu. Tycker du det låter vettigt så skickar
-      jag över det, tycker du inget om det så hör vi aldrig av oss igen.</p>
+    <li class="tl them">
+      <div class="tl-time">2:20</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Invändningen <span class="tl-dur">25 sek</span></p>
+        <p class="cue">Räkna med en. Svara kort och gå direkt vidare till mejladressen — se tabellen nedan.</p>
+      </div>
+    </li>
 
-      <div class="cue win"><span class="tag">Varför</span><span>”Fast pris” tar bort deras största rädsla: att det ska skena. ”Du behöver inte bestämma något nu” tar bort den näst största: att bli fast. Och du lovar uttryckligen att inte tjata — det är ett löfte du faktiskt måste hålla.</span></div>
-    </div>
-  </div>
+    <li class="tl">
+      <div class="tl-time">2:45</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Avslutet <span class="tl-dur">25 sek</span></p>
+        <p class="say">Vad är bästa mejladressen? … Jag skickar det
+        <span class="slot">[imorgon]</span> och ringer <span class="slot">[torsdag vid tio]</span>.</p>
+        <p class="cue warn"><b>Aldrig ”jag hör av mig”.</b> Utan bokad tid är samtalet bortkastat.</p>
+      </div>
+    </li>
 
-  <div class="step">
-    <div class="step-head">
-      <span class="step-num">05</span>
-      <p class="step-title">Avslutet — sätt en tid, inte ett ”vi hörs”</p>
-      <span class="step-time">3–4 min</span>
-    </div>
-    <div class="step-body">
-      <p class="say">Vad är bästa mejladressen till dig? … Och vem ska jag skriva till, är det du som bestämmer sådant?</p>
-      <p class="say">Jag skickar det <span class="slot">[i eftermiddag / imorgon förmiddag]</span>.
-      Ska vi säga att jag ringer <span class="slot">[torsdag vid tio]</span> och hör vad du tyckte?
-      Då slipper du hålla reda på mejlet.</p>
+    <li class="tl">
+      <div class="tl-time">3:10</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Lägg på <span class="tl-dur">5 sek</span></p>
+        <p class="say">Tack för att du tog dig tid. Ha en bra dag.</p>
+        <p class="cue">Fyll i arket <b>innan</b> du ringer nästa.</p>
+      </div>
+    </li>
 
-      <div class="cue"><span class="tag">Gör</span><span>Läs upp mejladressen bokstav för bokstav. Skriv in återkopplingsdatumet i arket <b>medan du har dem kvar på linjen</b>.</span></div>
-
-      <p class="say">Toppen. Tack för att du tog dig tid — trevlig helg.</p>
-
-      <div class="cue warn"><span class="tag">Aldrig</span><span>”Jag hör av mig vid tillfälle.” Ett samtal utan bokad tid är ett samtal du får göra om från början.</span></div>
-    </div>
-  </div>
+  </ol>
 </section>
 
-<section id="grenar">
-  <h2>Fyra spår efter kroken</h2>
-  <p class="sec-note">Svaret på frågan i steg 2 avgör resten av samtalet. Här är de fyra du kommer att möta.</p>
+<section id="spar">
+  <h2>Fyra svar på kroken</h2>
+  <p class="sec-note">Det de svarar vid 0:35 avgör tonen i resten av samtalet.</p>
 
-  <div class="branches">
-
-    <div class="branch hot">
-      <h4>”Nej, vi har ingen hemsida.”</h4>
-      <p class="verdict">Bästa läget · kör hela manuset</p>
-      <p class="say">Okej. Var det ett medvetet val, eller har det bara aldrig blivit av?</p>
-      <div class="cue"><span class="tag">Lyssna</span><span>Nio av tio säger ”det har aldrig blivit av” eller ”jag har inte tid”. Då är invändningen tid, inte pengar — och tid är precis det du säljer.</span></div>
-      <p class="say">Det är den vanligaste anledningen jag hör. Det är också hela poängen med
-      att anlita någon — du ska inte behöva lägga en kväll på det.</p>
-    </div>
-
-    <div class="branch warm">
-      <h4>”Vi har en, men den är gammal.”</h4>
-      <p class="verdict">Näst bäst · de har redan sagt problemet</p>
-      <div class="cue win"><span class="tag">Guld</span><span>De har erkänt problemet innan du nämnt det. Sälj aldrig in det de redan sagt — fråga vidare.</span></div>
-      <p class="say">Vad är det du inte gillar med den?</p>
-      <p class="say">När byggdes den, ungefär? … Och funkar den i mobilen?</p>
-      <div class="cue"><span class="tag">Gör</span><span>Över hälften av alla besök sker i mobil. Är sidan inte mobilanpassad har du ett konkret, mätbart problem att erbjuda en lösning på.</span></div>
-    </div>
-
-    <div class="branch warm">
-      <h4>”Vi finns på Facebook.”</h4>
-      <p class="verdict">Vanligast i listan · hantera varsamt</p>
-      <div class="cue warn"><span class="tag">Undvik</span><span>Att racka ner på Facebook. Det är ofta deras stolthet och där de har sina kunder.</span></div>
-      <p class="say">Bra, då har ni redan bilderna och texten — det är halva jobbet gjort.
-      Det som brukar hända är bara att den som söker på <span class="slot">[”bilverkstad Mellerud”]</span>
-      i Google sällan hamnar på en Facebooksida.</p>
-      <p class="say">Får jag fråga: hur många säger att de hittade er via Facebook?</p>
-    </div>
-
-    <div class="branch cold">
-      <h4>”Vi har en sida och är nöjda.”</h4>
-      <p class="verdict">Avsluta snyggt · fråga om hänvisning</p>
-      <p class="say">Då ska jag inte störa mer. Jag tittade snabbt och den ser fin ut.</p>
-      <p class="say">En sak bara innan jag lägger på — känner du någon här i trakten
-      som skulle behöva en? Jag ringer hellre någon du tipsar om än någon jag hittar i registret.</p>
-      <div class="cue"><span class="tag">Gör</span><span>Sätt lead <b>C</b> i arket och gå vidare. Ett kort, trevligt samtal med en hänvisning är värt mer än tio minuters övertalning.</span></div>
-    </div>
-
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>De säger</th><th>Du svarar</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="they">Nej, vi har ingen</td>
+          <td class="you">Var det ett medvetet val, eller har det bara aldrig blivit av?
+          <b>→ bästa läget, kör hela tidslinjen.</b></td>
+        </tr>
+        <tr>
+          <td class="they">Vi har en men den är gammal</td>
+          <td class="you">Vad är det du inte gillar med den? Funkar den i mobilen?
+          <b>→ de har sagt problemet åt dig.</b></td>
+        </tr>
+        <tr>
+          <td class="they">Vi finns på Facebook</td>
+          <td class="you">Bra, då finns bilderna redan. Hur många säger att de hittade er där?
+          <b>→ racka aldrig ner på Facebook.</b></td>
+        </tr>
+        <tr>
+          <td class="they">Vi har en och är nöjda</td>
+          <td class="you">Då stör jag inte mer. Känner du någon här i trakten som behöver en?
+          <b>→ sätt lead C, gå vidare.</b></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
 <section id="invandningar">
   <h2>Invändningar</h2>
-  <p class="sec-note">Märkningen säger vad invändningen egentligen är: <span class="pill real">Äkta</span> ett verkligt hinder du kan lösa · <span class="pill brush">Artigt nej</span> ett sätt att avsluta samtalet · <span class="pill end">Avsluta</span> respektera och lägg på.</p>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Jag har inte tid nu</h3><span class="pill real">Äkta</span></div>
-    <p class="say">Det förstår jag, du står säkert mitt i något. Ska jag ringa tillbaka i eftermiddag,
-    eller passar det bättre imorgon förmiddag?</p>
-    <p class="why">Ge två alternativ istället för en ja/nej-fråga. ”Passar det senare?” bjuder in till nej.
-    Anteckna tiden i arket och <b>ring exakt när du sagt</b> — det gör dig till någon som håller vad hen lovar,
-    innan ni ens gjort affär.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Vad kostar det?</h3><span class="pill real">Äkta</span></div>
-    <div class="cue warn"><span class="tag">Undvik</span><span>Att smita undan frågan. Svävar du på målet låter det dyrt, och de slutar lyssna.</span></div>
-    <p class="say">Det beror på hur stor den ska vara. En enkel sida som gör jobbet — vad ni gör,
-    bilder, kontakt, öppettider, funkar i mobilen — ligger normalt på
-    <span class="slot">[ditt pris]</span>, och sen <span class="slot">[din månadskostnad]</span> i
-    månaden för domän, drift och att någon håller den vid liv.</p>
-    <p class="say">Men jag vill inte gissa på ditt företag. Låt mig skicka ett fast pris på just er,
-    så vet du exakt.</p>
-    <p class="why">Ange ett spann och gå vidare till nästa steg i samma andetag. Frågan om pris är
-    ett köpsignal, inte ett nej — de har börjat föreställa sig affären.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Vi har fullt upp ändå, behöver inga fler kunder</h3><span class="pill real">Äkta</span></div>
-    <p class="say">Det är det bästa jag hört idag, faktiskt. Då handlar det inte om <em>fler</em> jobb
-    — det handlar om rätt jobb. En sida sållar lika gärna bort de förfrågningar du inte vill ha.</p>
-    <p class="say">Vad är det för uppdrag du helst tackar nej till?</p>
-    <p class="why">Vänd på argumentet istället för att bemöta det. Fullbokade företag har ofta ett
-    annat problem: fel sorts kunder, för mycket telefontid, prispress. Hitta det problemet.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Vi är för små för en hemsida</h3><span class="pill real">Äkta</span></div>
-    <p class="say">De flesta vi bygger åt är en eller två personer. Det är faktiskt de små företagen
-    som märker mest skillnad — ett stort bolag hittar folk ändå. Är det bara du, eller är ni några stycken?</p>
-    <p class="why">Bakom ”för små” ligger nästan alltid ”för dyrt”. Nämn priset innan de hinner tänka det.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Vi tänkte fixa det själva</h3><span class="pill brush">Artigt nej</span></div>
-    <p class="say">Det går absolut, det finns bra verktyg idag. Vad har stoppat er hittills?</p>
-    <div class="cue"><span class="tag">Lyssna</span><span>Svaret är i princip alltid ”tid”. Ibland ”vi kom halvvägs”.</span></div>
-    <p class="say">Så brukar det bli. Det tar en helg att komma igång och sedan ligger den halvfärdig
-    i två år. Vill du att jag skickar ett förslag så har du något att jämföra med — då kan du
-    fortfarande göra den själv om du hellre vill.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Skicka ett mejl så tittar jag</h3><span class="pill brush">Artigt nej</span></div>
-    <p class="say">Det gör jag gärna. Men mejl har en tendens att drunkna — ska vi säga att jag
-    skickar det nu och ringer på <span class="slot">[torsdag förmiddag]</span> och hör vad du tyckte?
-    Två minuter, inte mer.</p>
-    <p class="why">Nästan alltid ett vänligt sätt att avsluta. Skicka mejlet ändå — men lämna aldrig
-    samtalet utan en bokad återkoppling, annars är leadet dött.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Min brorson fixade vår sida</h3><span class="pill real">Äkta</span></div>
-    <div class="cue warn"><span class="tag">Varning</span><span>Kritisera aldrig sidan. Du kritiserar en familjemedlem, och samtalet är över på sekunden.</span></div>
-    <p class="say">Då ska jag inte klanka ner på den. Det är oftast inte utseendet som är problemet
-    utan att ingen har hunnit röra den på några år — och det är svårt att be en släkting om det
-    gång på gång.</p>
-    <p class="say">Vill du att jag tittar och säger vad jag skulle ändra? Kostar inget, och så
-    bestämmer du sedan om det är värt något.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Jag måste prata med min fru / kompanjon</h3><span class="pill real">Äkta</span></div>
-    <p class="say">Klokt. Vad tror du hon säger?</p>
-    <div class="cue"><span class="tag">Lyssna</span><span>Svaret avslöjar den verkliga invändningen. ”Hon tycker nog det är onödigt” är något helt annat än ”hon sköter ekonomin”.</span></div>
-    <p class="say">Ska vi ta tio minuter när ni båda kan? Då slipper du vara mellanhand.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Hur fick du tag i mitt nummer?</h3><span class="pill real">Äkta</span></div>
-    <p class="say">Det står öppet på hitta.se och i bolagsregistret. Jag har gått igenom företagen
-    här i trakten och ringer dem som inte verkar ha någon sida. Vill du inte bli uppringd igen så
-    stryker jag dig direkt.</p>
-    <p class="why">Fullständig ärlighet, inga undanflykter, och ett erbjudande att sluta. Det avväpnar
-    misstanken. Och menar du det — gör det.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Ring efter sommaren / efter nyår</h3><span class="pill brush">Artigt nej</span></div>
-    <p class="say">Absolut. Ska jag skriva upp <span class="slot">[vecka 34]</span>? Och vem frågar
-    jag efter då — är det du som heter?</p>
-    <p class="why">Gör uppskjutningen konkret. Ett datum och ett namn förvandlar ett artigt nej till
-    ett bokat samtal. Har de bara velat bli av med dig märks det på tvekan — sätt lead <b>B</b> och gå vidare.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Jag är inte intresserad</h3><span class="pill brush">Artigt nej</span></div>
-    <p class="say">Det respekterar jag. Får jag bara fråga en sak — är det för att du inte behöver
-    någon sida, eller för att du får för många såna här samtal?</p>
-    <div class="cue"><span class="tag">Gör</span><span>Är svaret ”för många samtal” har du fortfarande ett läge: <b>”Det förstår jag. Jag är inte ett callcenter, jag sitter i [ort] och bygger sidorna själv. Ett par minuter?”</b> Är svaret ”behöver ingen” — tacka och lägg på.</span></div>
-    <div class="cue warn"><span class="tag">Regel</span><span>Ett försök. Aldrig två.</span></div>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Jag ska snart gå i pension</h3><span class="pill end">Avsluta</span></div>
-    <p class="say">Då ska jag verkligen inte sälja på dig något. Tack för att du var rak — det
-    sparar tid åt oss båda.</p>
-    <p class="say">En sak innan jag lägger på: är det någon som tar över, eller någon annan här
-    i trakten du tycker jag borde ringa?</p>
-    <p class="why">Diskvalificera snabbt och vänligt. Sätt <b>Intresserad = Nej</b> i arket.
-    Frågan om hänvisning är gratis och ger förvånansvärt ofta ett namn.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Kan ni fixa så vi hamnar först på Google?</h3><span class="pill real">Äkta</span></div>
-    <p class="say">Ingen kan lova en förstaplats, och den som gör det ljuger. Det jag kan lova är
-    att ni går från att inte finnas till att finnas — och att sidan är byggd så att Google förstår
-    vad ni gör och var ni finns. För en <span class="slot">[bilverkstad i Mellerud]</span> är det
-    ofta det som räcker.</p>
-    <p class="why">Lova aldrig placeringar. Ärligheten här är också en säljpoäng — de har troligen
-    blivit lovade guld av någon annan.</p>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Är det ni som ringde förra veckan?</h3><span class="pill real">Äkta</span></div>
-    <p class="say">Inte vad jag vet — men jag kan kolla. Vad hette de?</p>
-    <div class="cue"><span class="tag">Gör</span><span>Var det ni: be om ursäkt, notera dubbletten i arket och lägg på. Var det någon annan: skilj er från dem genom att vara konkret. <b>”Vi är tre personer i [ort]. Jag ringer om just er — jag såg att ni saknar sida.”</b></span></div>
-  </div>
-
-  <div class="obj">
-    <div class="obj-head"><h3>Arg eller otrevlig ton</h3><span class="pill end">Avsluta</span></div>
-    <p class="say">Ursäkta att jag störde. Jag stryker ditt nummer. Ha en bra dag.</p>
-    <div class="cue warn"><span class="tag">Gör</span><span>Lägg på utan att försvara dig. Skriv <span class="slot">RING EJ</span> i Anteckningar. Ta inte med dig samtalet till nästa — gå en runda om det behövs.</span></div>
-  </div>
-</section>
-
-<section id="rostbrevlada">
-  <h2>Röstbrevlåda</h2>
-  <p class="sec-note">Håll det under tjugo sekunder. Sälj ingenting — syftet är bara att de ska känna igen namnet när du ringer igen.</p>
-
-  <p class="say">Hej, <span class="slot">[ditt namn]</span> heter jag, från Vantage Design Studio.
-  Jag ringde om en sak som rör <span class="slot">[företagsnamn]</span> — inget viktigt, jag
-  provar igen imorgon. Ha det bra.</p>
-
-  <div class="cue"><span class="tag">Varför</span><span>Inget pitch, ingen uppmaning att ringa tillbaka. De ringer ändå aldrig upp en säljare, och ett långt meddelande gör att de undviker numret nästa gång.</span></div>
-  <div class="cue"><span class="tag">Gör</span><span>Sätt <b>Fick svar = Röstbrevlåda</b> och ett återkopplingsdatum. Försök tre gånger vid olika tider på dygnet innan du lägger leadet åt sidan.</span></div>
-</section>
-
-<section id="mejl">
-  <h2>Uppföljningsmejlet</h2>
-  <p class="sec-note">Skicka samma dag, medan samtalet sitter kvar. Kort, konkret och med deras egna ord i.</p>
-
-  <div class="email">
-    <div class="field"><b>Ämne:</b> Förslag på hemsida till <span class="slot">[företagsnamn]</span> – som vi pratade om</div>
-    <div class="body">
-      <p>Hej <span class="slot">[namn]</span>,</p>
-      <p>Kul att prata med dig nyss. Du nämnde att <span class="slot">[deras egna ord — t.ex. ”folk ringer
-      och frågar om öppettider hela tiden”]</span>, och det är precis den typen av sak en enkel sida löser.</p>
-      <p>Så här skulle jag göra det för er:</p>
-      <p><span class="slot">[3–4 punkter: startsida med vad ni gör · tjänster · bilder på tidigare jobb ·
-      kontakt, karta och öppettider · fungerar i mobilen]</span></p>
-      <p>Fast pris: <span class="slot">[summa]</span>. Därefter <span class="slot">[summa]</span>/mån
-      för domän och drift. Inget bindningsavtal.</p>
-      <p>Jag ringer som sagt på <span class="slot">[torsdag vid tio]</span> och hör vad du tyckte.
-      Passar det dåligt, svara bara på det här mejlet så tar vi det när det passar.</p>
-      <p>Hälsningar,<br>
-      <span class="slot">[ditt namn]</span><br>
-      Vantage Design Studio<br>
-      <span class="slot">[telefon]</span></p>
-    </div>
-  </div>
-
-  <div class="cue warn"><span class="tag">Undvik</span><span>Bifogade pdf:er, prislistor och långa presentationer om studion. De läser mejlet i mobilen mellan två jobb.</span></div>
-</section>
-
-<section id="bransch">
-  <h2>Anpassa kroken efter bransch</h2>
-  <p class="sec-note">Samma manus, men byt ut argumentet i steg 4 mot det som faktiskt betyder något för dem. Branscherna nedan är de vanligaste i ringlistan.</p>
+  <p class="sec-note">Ett svar var. Svara kort och styr tillbaka till mejladressen — argumentera aldrig.</p>
 
   <div class="tablewrap">
     <table>
       <thead>
-        <tr><th>Bransch</th><th>Vad som säljer</th><th>Meningen att säga</th></tr>
+        <tr><th>De säger</th><th>Du svarar</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td>Bilverkstad</td>
-          <td>Akuta sökningar. Öppettider och telefonnummer avgör vem som blir uppringd.</td>
-          <td>”När någons bil inte startar googlar de <em>bilverkstad</em> plus ort. Då är det den som syns med öppettider och nummer som får jobbet.”</td>
+          <td class="they">Jag har inte tid nu</td>
+          <td class="you">Eftermiddag eller imorgon förmiddag? <b>Två alternativ, aldrig ja/nej.</b></td>
         </tr>
         <tr>
-          <td>Frisör &amp; salong</td>
-          <td>Onlinebokning. Kunder bokar på kvällen när salongen är stängd.</td>
-          <td>”Hälften bokar tid efter nio på kvällen. Har du en bokningsknapp behöver du inte ringa tillbaka nästa dag.”</td>
+          <td class="they">Vad kostar det?</td>
+          <td class="you">En enkel sida ligger på <span class="slot">[pris]</span>, sen
+          <span class="slot">[pris]</span>/mån för drift. Jag skickar ett fast pris på just er.
+          <b>Svara rakt — priset är en köpsignal.</b></td>
         </tr>
         <tr>
-          <td>Åkeri &amp; transport</td>
-          <td>Trovärdighet mot inköpare, inte privatpersoner.</td>
-          <td>”Det är inte privatpersoner som söker er — det är en inköpare som ska kolla att ni finns på riktigt innan hen skickar en förfrågan.”</td>
+          <td class="they">Vi har fullt upp ändå</td>
+          <td class="you">Då handlar det inte om fler jobb utan rätt jobb. Vad tackar du helst nej till?</td>
         </tr>
         <tr>
-          <td>Bygg, mark &amp; entreprenad</td>
-          <td>Referensbilder. Tidigare jobb säljer utan att du är med.</td>
-          <td>”Bilder på tio jobb ni gjort säljer åt dig medan du sitter i grävmaskinen.”</td>
+          <td class="they">Vi är för små</td>
+          <td class="you">De flesta vi bygger åt är en eller två personer. <b>Nämn priset innan de hinner tänka det.</b></td>
         </tr>
         <tr>
-          <td>Gårdsbutik &amp; camping</td>
-          <td>Öppettider och vägbeskrivning. Praktisk information, inte marknadsföring.</td>
-          <td>”Ingen kör tjugo minuter på grusväg utan att först veta att ni har öppet.”</td>
+          <td class="they">Vi fixar det själva</td>
+          <td class="you">Det går absolut. Vad har stoppat er hittills? <b>Svaret är alltid tid.</b></td>
         </tr>
         <tr>
-          <td>Veterinär &amp; vård</td>
-          <td>Trygghet. Folk vill se vem de lämnar sitt djur till.</td>
-          <td>”Folk vill se ett ansikte och läsa ett par rader innan de lämnar hunden hos någon.”</td>
+          <td class="they">Skicka ett mejl</td>
+          <td class="you">Gärna — och så ringer jag torsdag och hör vad du tyckte.
+          <b>Skicka det, men boka tiden först.</b></td>
         </tr>
         <tr>
-          <td>Verkstad &amp; plåt</td>
-          <td>Rekrytering lika mycket som kunder.</td>
-          <td>”Det är inte bara kunder som googlar er — det är folk som funderar på att söka jobb hos er.”</td>
+          <td class="they">Min brorson fixade den</td>
+          <td class="you">Då klankar jag inte ner på den. Vill du att jag tittar och säger vad jag
+          skulle ändra? <b>Kritisera aldrig sidan.</b></td>
         </tr>
         <tr>
-          <td>Restaurang &amp; gatukök</td>
-          <td>Meny och öppettider, uppdaterat.</td>
-          <td>”Meny och öppettider är de två sakerna folk letar efter, och de ska stämma.”</td>
+          <td class="they">Hur fick du mitt nummer?</td>
+          <td class="you">Det står öppet på hitta.se. Vill du inte bli uppringd stryker jag dig direkt.
+          <b>Och gör det.</b></td>
+        </tr>
+        <tr>
+          <td class="they">Ring efter sommaren</td>
+          <td class="you">Ska jag skriva upp <span class="slot">[vecka]</span>? Vem frågar jag efter?</td>
+        </tr>
+        <tr>
+          <td class="they">Kan ni fixa förstaplats på Google?</td>
+          <td class="you">Ingen kan lova det. Ni går från att inte finnas till att finnas.
+          <b>Lova aldrig placeringar.</b></td>
+        </tr>
+        <tr>
+          <td class="they">Jag är inte intresserad</td>
+          <td class="you">Är det för att du inte behöver en, eller för att du får för många såna samtal?
+          <b>Ett försök. Aldrig två.</b></td>
+        </tr>
+        <tr>
+          <td class="they">Jag ska snart gå i pension</td>
+          <td class="you">Då säljer jag inget. Någon annan i trakten jag borde ringa? <b>Avsluta vänligt.</b></td>
         </tr>
       </tbody>
     </table>
   </div>
-</section>
 
-<section id="aldrig">
-  <h2>Det här säger du aldrig</h2>
-  <p class="sec-note">Varje rad här har sänkt fler samtal än den räddat.</p>
-
-  <ul class="never">
-    <li><span><b>”Er hemsida är ganska ful.”</b><span>Du förolämpar den som byggde den — ofta personen du pratar med, eller någon i familjen. Prata om vad sidan <em>gör</em>, aldrig om hur den ser ut.</span></span></li>
-    <li><span><b>”Alla har ju hemsida idag.”</b><span>Skam säljer inte. Det gör dem defensiva, och en defensiv person säger nej.</span></span></li>
-    <li><span><b>”Jag är i området i eftermiddag ändå.”</b><span>Om det inte är sant. Lögner i ett litet samhälle kommer tillbaka.</span></span></li>
-    <li><span><b>”Vi kan få upp er först på Google.”</b><span>Ingen kan lova det. Ett löfte du inte kan hålla ger dig en missnöjd kund istället för ingen kund.</span></span></li>
-    <li><span><b>”Det är helt gratis.”</b><span>Om det inte är det. Säg ”kostnadsfritt förslag” och var tydlig med vad som kostar.</span></span></li>
-    <li><span><b>”Bara en sak till…”</b><span>Efter ett tydligt nej. Ett nej är ett nej. Du bränner både leadet och deras uppfattning om studion.</span></span></li>
-    <li><span><b>Facktermer.</b><span>Responsiv, CMS, SEO, konvertering, domänpekare. Säg ”funkar i mobilen”, ”ni kan ändra själva”, ”syns på Google”.</span></span></li>
-  </ul>
+  <div class="callout stop">
+    <p><b>Lägg på direkt</b> när de sagt nej två gånger, bett dig att inte ringa igen,
+    eller blir otrevliga. Skriv <span class="slot">RING EJ</span> i arket. Många nummer i listan
+    är privata mobiler till enskilda firmor — och folk i Brålanda pratar med varandra.</p>
+  </div>
 </section>
 
 <section id="efterat">
-  <h2>Efter varje samtal</h2>
-  <p class="sec-note">Fyll i arket direkt, inte i slutet av dagen. Du minns mindre än du tror.</p>
+  <h2>Före och efter</h2>
 
+  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:1.5rem 0 .7rem">30 sekunder innan du ringer</h2>
+  <ul class="plain box">
+    <li><span>Läs raden högt: företag, ort, bransch. Du ska kunna säga det utan att titta.</span></li>
+    <li><span>Står det <b>Låg</b> eller <b>Saknas</b> i Tel-säkerhet — slå upp numret först.</span></li>
+    <li><span>Googla namnet i tio sekunder. Har de en sida du missat, byt spår innan du ringer.</span></li>
+  </ul>
+
+  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Direkt efter, i arket</h2>
+  <ul class="plain">
+    <li><span><b>Ringd</b> ✓ — även när ingen svarade.</span></li>
+    <li><span><b>Återkoppling</b> — alltid ett datum när det inte är ett nej. Tomt fält = förlorat lead.</span></li>
+    <li><span><b>Anteckningar</b> — namnet du pratade med, deras egna ord om problemet, vad du lovade.</span></li>
+  </ul>
+
+  <div class="callout">
+    <p>Av tio uppringda svarar tre till fyra, ett till två samtal går hela vägen, ett förslag skickas.
+    Det är ett normalt utfall — inte ett dåligt.</p>
+  </div>
+
+  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Bästa ringtider</h2>
   <div class="tablewrap">
     <table>
-      <thead>
-        <tr><th>Kolumn i arket</th><th>Vad du för in</th></tr>
-      </thead>
       <tbody>
-        <tr><td>Ringd</td><td><b>✓</b> — även när ingen svarade.</td></tr>
-        <tr><td>Fick svar</td><td>Ja · Nej · Röstbrevlåda · Fel nummer. Är numret fel, rätta det i telefonkolumnen på en gång.</td></tr>
-        <tr><td>Intresserad</td><td>Ja bara när de sagt ja till ett förslag. Kanske vid uppskjutning med datum. Nej vid tydligt avslag.</td></tr>
-        <tr><td>Återkoppling</td><td>Alltid ett datum när det inte är ett nej. Tomt fält = förlorat lead.</td></tr>
-        <tr><td>Anteckningar</td><td>Namnet på den du pratade med, <b>deras egna formulering av problemet</b>, och vad du lovade. Skriv <span class="slot">RING EJ</span> när de bett om det.</td></tr>
+        <tr><td class="first">Verkstad &amp; hantverk</td><td>07.30–08.30 och 15.00–16.30</td></tr>
+        <tr><td class="first">Frisör &amp; butik</td><td>Tidig förmiddag, mitt i veckan</td></tr>
+        <tr><td class="first">Undvik alltid</td><td>11.30–13.00</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="callout">
-    <p><b>Rimliga siffror att mäta mot.</b> Av tio uppringda får du oftast tre till fyra att svara,
-    en till två samtal som går hela vägen, och ett skickat förslag. Det är ett normalt utfall —
-    inte ett dåligt. Räknarna högst upp i ringlistan visar var du ligger.</p>
-  </div>
-</section>
+  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Säg aldrig</h2>
+  <ul class="plain no">
+    <li><span><b>”Er hemsida är ful.”</b> Du förolämpar den som byggde den.</span></li>
+    <li><span><b>”Alla har ju hemsida idag.”</b> Skam säljer inte.</span></li>
+    <li><span><b>”Vi kan få upp er först på Google.”</b> Ingen kan lova det.</span></li>
+    <li><span><b>”Bara en sak till…”</b> Efter ett nej. Ett nej är ett nej.</span></li>
+    <li><span><b>Facktermer.</b> Säg ”funkar i mobilen”, inte ”responsiv”.</span></li>
+  </ul>
 
-<section id="snabbkort">
-  <h2>Snabbkort</h2>
-  <p class="sec-note">Det du behöver framför dig när du ringer. Resten är bakgrund.</p>
-
-  <div class="quickcard">
-    <p class="qlabel">Vantage Design Studio · ha detta framme</p>
-
-    <h3>Öppningen</h3>
-    <p class="say">Hej, det är <span class="slot">[namn]</span> från Vantage Design Studio.
-    Är det <span class="slot">[företag]</span>? … Jag ska inte ta mer än en minut — har du en
-    halvminut, eller ringer jag helt fel?</p>
-
-    <h3>Kroken</h3>
-    <p class="say">Jag letade efter <span class="slot">[bransch]</span> i <span class="slot">[ort]</span>
-    och hittade er, men ingen hemsida. Stämmer det?</p>
-
-    <h3>Sedan — i den här ordningen</h3>
-    <ol>
-      <li>Håll tyst. Låt dem svara först.</li>
-      <li>Fråga hur folk hittar dem idag.</li>
-      <li>Fråga vad de vill ha in fler av. Anteckna deras exakta ord.</li>
-      <li>Erbjud ett kostnadsfritt förslag med fast pris.</li>
-      <li>Ta mejladressen och boka en tid för återkoppling.</li>
-    </ol>
-
-    <h3>De tre reflexerna</h3>
-    <ol>
-      <li>”Inte tid” → två alternativa tider, aldrig en ja/nej-fråga.</li>
-      <li>”Vad kostar det?” → säg spannet rakt ut, gå direkt vidare till förslaget.</li>
-      <li>”Skicka mejl” → skicka det, men boka samtalet innan du lägger på.</li>
-    </ol>
-
-    <h3>Sluta direkt när</h3>
-    <ol>
-      <li>De säger nej två gånger.</li>
-      <li>De ber dig att inte ringa igen.</li>
-      <li>Tonen blir otrevlig.</li>
-    </ol>
-  </div>
+  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Mallar</h2>
+  <details class="email">
+    <summary>Röstbrevlåda &amp; uppföljningsmejl</summary>
+    <p class="say" style="margin-bottom:1.2rem">Hej, <span class="slot">[namn]</span> från
+    Vantage Design Studio. Jag ringde om en sak som rör <span class="slot">[företag]</span> —
+    inget viktigt, jag provar igen imorgon.</p>
+    <div class="body">
+      <p><b>Ämne:</b> Förslag på hemsida till <span class="slot">[företag]</span></p>
+      <p>Hej <span class="slot">[namn]</span>,</p>
+      <p>Kul att prata med dig. Du nämnde att <span class="slot">[deras egna ord]</span> — det är
+      precis vad en enkel sida löser.</p>
+      <p><span class="slot">[3 punkter om sidan]</span></p>
+      <p>Fast pris <span class="slot">[summa]</span>, sen <span class="slot">[summa]</span>/mån
+      för domän och drift. Ingen bindningstid.</p>
+      <p>Jag ringer <span class="slot">[torsdag vid tio]</span> och hör vad du tyckte.</p>
+      <p><span class="slot">[ditt namn]</span>, Vantage Design Studio</p>
+    </div>
+  </details>
 </section>
 
 <footer>
-  Samtalsmanus för Vantage Design Studio · avsett att användas tillsammans med ringlistan över
-  företag i Brålanda, Frändefors, Mellerud, Vänersborg och Trollhättan. Priser och tider inom
-  <span class="slot">[hakparentes]</span> fylls i av er.
+  Används tillsammans med ringlistan över företag i Brålanda, Frändefors, Mellerud,
+  Vänersborg och Trollhättan. Fyll i priser och tider inom <span class="slot">[hakparentes]</span>.
 </footer>
 
 </div>

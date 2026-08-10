@@ -261,20 +261,6 @@
   .callout p { margin: 0; }
   .callout.stop { border-left-color: var(--stop); }
 
-  /* ---------- email ---------- */
-  details.email {
-    background: var(--surface); border: 1px solid var(--rule);
-    border-radius: 3px; padding: .9rem 1.1rem; max-width: 36rem;
-  }
-  details.email summary {
-    font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--accent); cursor: pointer;
-  }
-  details.email[open] summary { margin-bottom: .9rem; }
-  details.email .body { font-family: var(--serif); font-size: 1rem; line-height: 1.55; }
-  details.email .body p { margin: 0 0 .7rem; }
-  details.email .body p:last-child { margin-bottom: 0; }
-
   footer {
     margin-top: 3.5rem; padding-top: 1.3rem; border-top: 1px solid var(--rule);
     font-size: .8rem; color: var(--ink-faint); max-width: 36rem;
@@ -294,8 +280,9 @@
   <div class="topbar-inner">
     <span class="brand">Vantage Design Studio</span>
     <a href="#kortet">Kortet</a>
-    <a href="#tidslinje">Tidslinje</a>
+    <a href="#tidslinje">Samtal 1</a>
     <a href="#spar">Spår</a>
+    <a href="#samtal2">Samtal 2</a>
     <a href="#invandningar">Invändningar</a>
     <a href="#efterat">Efteråt</a>
   </div>
@@ -307,8 +294,8 @@
   <p class="eyebrow">Samtalsmanus · Kalla samtal</p>
   <h1>Tre minuter i telefon</h1>
   <p class="standfirst">
-    Du säljer ingen hemsida i telefon. Du ställer en fråga, låter dem svara,
-    och bokar ett förslag. Det är hela samtalet.
+    Allt sker i luren — inga mejl, inga pdf:er. Första samtalet ställer en fråga
+    och bokar det andra. Det andra stänger affären.
   </p>
 </header>
 
@@ -328,8 +315,8 @@
 </section>
 
 <section id="tidslinje">
-  <h2>Tidslinjen</h2>
-  <p class="sec-note">Ett samtal som går hela vägen tar tre minuter. Följ klockan — ligger du efter har du pratat för mycket.</p>
+  <h2>Samtal ett · tre minuter</h2>
+  <p class="sec-note">Målet är inte att sälja här. Målet är en bokad tid för samtal två. Följ klockan — ligger du efter har du pratat för mycket.</p>
 
   <div class="ratio">
     <div class="ratio-bar" role="img" aria-label="Fördelning av taltid: du talar ungefär 70 sekunder, de talar ungefär 110 sekunder av tre minuter">
@@ -407,7 +394,7 @@
       <div class="tl-rail"></div>
       <div class="tl-body">
         <p class="tl-label">De berättar <span class="tl-dur">40 sek</span></p>
-        <p class="cue"><b>Anteckna deras exakta ord.</b> Det de säger här återanvänder du i nästa steg och i mejlet.</p>
+        <p class="cue"><b>Anteckna deras exakta ord.</b> Du citerar dem tillbaka i början av samtal två.</p>
       </div>
     </li>
 
@@ -418,8 +405,8 @@
         <p class="tl-label">Erbjudandet <span class="tl-dur">30 sek</span></p>
         <p class="say">Det är precis det vi gör. Vi är en liten studio och bygger enkla sidor
         åt företag som er — vad ni gör, var ni finns, öppettider och nummer.</p>
-        <p class="say">Låt mig skissa ett förslag med fast pris. Kostar inget, och du
-        behöver inte bestämma något nu.</p>
+        <p class="say">Låt mig titta på ert företag och ringa upp med ett färdigt upplägg
+        och ett fast pris. Fem minuter, och du behöver inte bestämma något idag.</p>
       </div>
     </li>
 
@@ -428,7 +415,7 @@
       <div class="tl-rail"></div>
       <div class="tl-body">
         <p class="tl-label">Invändningen <span class="tl-dur">25 sek</span></p>
-        <p class="cue">Räkna med en. Svara kort och gå direkt vidare till mejladressen — se tabellen nedan.</p>
+        <p class="cue">Räkna med en. Svara kort och styr direkt tillbaka till tiden — se tabellen nedan.</p>
       </div>
     </li>
 
@@ -436,10 +423,10 @@
       <div class="tl-time">2:45</div>
       <div class="tl-rail"></div>
       <div class="tl-body">
-        <p class="tl-label">Avslutet <span class="tl-dur">25 sek</span></p>
-        <p class="say">Vad är bästa mejladressen? … Jag skickar det
-        <span class="slot">[imorgon]</span> och ringer <span class="slot">[torsdag vid tio]</span>.</p>
-        <p class="cue warn"><b>Aldrig ”jag hör av mig”.</b> Utan bokad tid är samtalet bortkastat.</p>
+        <p class="tl-label">Boka samtal två <span class="tl-dur">25 sek</span></p>
+        <p class="say">Passar <span class="slot">[torsdag vid tio]</span>? … Och är det
+        det här numret jag ringer, och dig jag frågar efter?</p>
+        <p class="cue warn"><b>Aldrig ”jag hör av mig”.</b> Utan dag, tid och namn är samtalet bortkastat.</p>
       </div>
     </li>
 
@@ -491,9 +478,137 @@
   </div>
 </section>
 
+<section id="samtal2">
+  <h2>Samtal två · fem minuter</h2>
+  <p class="sec-note">Här stängs affären. Du har inget att visa — allt måste gå att säga. Kan du inte beskriva sidan på tre meningar är upplägget för krångligt.</p>
+
+  <div class="ratio">
+    <div class="ratio-bar" role="img" aria-label="Fördelning av taltid i samtal två: du talar ungefär två minuter, de talar ungefär tre minuter">
+      <span class="r-you"  style="flex:20"></span>
+      <span class="r-them" style="flex:15"></span>
+      <span class="r-you"  style="flex:15"></span>
+      <span class="r-you"  style="flex:35"></span>
+      <span class="r-them" style="flex:30"></span>
+      <span class="r-you"  style="flex:20"></span>
+      <span class="r-them" style="flex:45"></span>
+      <span class="r-you"  style="flex:15"></span>
+      <span class="r-them" style="flex:25"></span>
+      <span class="r-you"  style="flex:30"></span>
+    </div>
+    <div class="ratio-key">
+      <i class="k-you">Du · ca 2 min</i>
+      <i class="k-them">De · ca 3 min</i>
+    </div>
+  </div>
+
+  <ol class="timeline">
+
+    <li class="tl">
+      <div class="tl-time">0:00</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Ring på utsatt tid <span class="tl-dur">20 sek</span></p>
+        <p class="say">Hej <span class="slot">[namn]</span>, <span class="slot">[ditt namn]</span>
+        från Vantage Design Studio — vi sa tio i tisdags. Passar det fortfarande?</p>
+        <p class="cue warn"><b>Ring på minuten.</b> Att hålla tiden är halva förtroendet, och det enda de sett av dig hittills.</p>
+      </div>
+    </li>
+
+    <li class="tl">
+      <div class="tl-time">0:20</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Citera dem <span class="tl-dur">20 sek</span></p>
+        <p class="say">Du sa förra gången att <span class="slot">[deras exakta ord]</span>.
+        Det är det jag har byggt upplägget kring.</p>
+        <p class="cue">Deras egna ord, inte dina. Det visar att du lyssnade — och att förslaget är gjort för dem.</p>
+      </div>
+    </li>
+
+    <li class="tl">
+      <div class="tl-time">0:40</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Sidan, på tre meningar <span class="tl-dur">40 sek</span></p>
+        <p class="say">Det blir en sida med <span class="slot">[startsida, tjänster, kontakt]</span>.
+        Överst syns <span class="slot">[det viktigaste för dem]</span> och telefonnumret,
+        så att den som googlar ser det direkt.</p>
+        <p class="say">Den funkar i mobilen, och söker någon på
+        <span class="slot">[”bilverkstad Mellerud”]</span> ska ni finnas där.</p>
+        <p class="cue">Inga facktermer. De ska kunna se sidan framför sig medan du pratar.</p>
+      </div>
+    </li>
+
+    <li class="tl">
+      <div class="tl-time">1:20</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Priset — och tystnad <span class="tl-dur">15 sek</span></p>
+        <p class="say"><span class="slot">[summa]</span> för att bygga den, klar på
+        <span class="slot">[två veckor]</span>. Sen <span class="slot">[summa]</span> i månaden
+        för domän och drift. Ingen bindningstid.</p>
+        <p class="cue warn"><b>Säg summan och håll tyst.</b> Den som pratar först efter ett pris förhandlar mot sig själv.</p>
+      </div>
+    </li>
+
+    <li class="tl them">
+      <div class="tl-time">1:35</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">De reagerar <span class="tl-dur">60 sek</span></p>
+        <p class="cue">Frågor om innehåll och tid är köpsignaler. Tystnad är oftast eftertanke — låt den vara.</p>
+      </div>
+    </li>
+
+    <li class="tl them">
+      <div class="tl-time">2:35</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Invändning <span class="tl-dur">60 sek</span></p>
+        <p class="cue">Oftast pris, tid eller ”måste prata med någon”. Ett svar var — se tabellen nedan.</p>
+      </div>
+    </li>
+
+    <li class="tl">
+      <div class="tl-time">3:35</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Fråga rakt ut <span class="tl-dur">15 sek</span></p>
+        <p class="say">Ska vi köra?</p>
+        <p class="cue warn"><b>Tre ord, sedan tyst.</b> De flesta säljsamtal dör här för att ingen vågar fråga.</p>
+      </div>
+    </li>
+
+    <li class="tl">
+      <div class="tl-time">3:50</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Vid ja — ta uppgifterna direkt <span class="tl-dur">70 sek</span></p>
+        <p class="say">Vad ska stå överst på sidan? Har ni bilder på jobb ni gjort?
+        Vilka öppettider gäller? Och vad är faktureringsadressen?</p>
+        <p class="cue">Ta allt du behöver medan du har dem. Ju färre gånger du måste återkomma, desto mindre hinner de tveka.</p>
+        <p class="cue"><b>Enda gången du skickar något:</b> en kort bekräftelse på vad ni kom överens om.
+        Det är en kvittens, inte ett säljmejl.</p>
+      </div>
+    </li>
+
+    <li class="tl stopnote">
+      <div class="tl-time">3:50</div>
+      <div class="tl-rail"></div>
+      <div class="tl-body">
+        <p class="tl-label">Vid nej — en fråga, sedan slut <span class="tl-dur">30 sek</span></p>
+        <p class="say">Det respekterar jag. Var det priset eller var det något annat?</p>
+        <p class="cue">Svaret är värt mer än affären — det säger dig om nästa samtal ska läggas upp annorlunda.
+        Tacka och lägg på. Sätt <b>Intresserad = Nej</b>.</p>
+      </div>
+    </li>
+
+  </ol>
+</section>
+
 <section id="invandningar">
   <h2>Invändningar</h2>
-  <p class="sec-note">Ett svar var. Svara kort och styr tillbaka till mejladressen — argumentera aldrig.</p>
+  <p class="sec-note">Ett svar var. Svara kort och styr tillbaka till tiden eller till frågan — argumentera aldrig.</p>
 
   <div class="tablewrap">
     <table>
@@ -508,7 +623,7 @@
         <tr>
           <td class="they">Vad kostar det?</td>
           <td class="you">En enkel sida ligger på <span class="slot">[pris]</span>, sen
-          <span class="slot">[pris]</span>/mån för drift. Jag skickar ett fast pris på just er.
+          <span class="slot">[pris]</span>/mån för drift. Exakt summa för er tar jag på torsdag.
           <b>Svara rakt — priset är en köpsignal.</b></td>
         </tr>
         <tr>
@@ -524,9 +639,9 @@
           <td class="you">Det går absolut. Vad har stoppat er hittills? <b>Svaret är alltid tid.</b></td>
         </tr>
         <tr>
-          <td class="they">Skicka ett mejl</td>
-          <td class="you">Gärna — och så ringer jag torsdag och hör vad du tyckte.
-          <b>Skicka det, men boka tiden först.</b></td>
+          <td class="they">Skicka ett mejl istället</td>
+          <td class="you">Det drunknar bland allt annat. Ge mig fem minuter på torsdag så säger
+          jag det på tjugo sekunder istället. <b>Håll kvar det i luren.</b></td>
         </tr>
         <tr>
           <td class="they">Min brorson fixade den</td>
@@ -580,13 +695,14 @@
   <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Direkt efter, i arket</h2>
   <ul class="plain">
     <li><span><b>Ringd</b> ✓ — även när ingen svarade.</span></li>
-    <li><span><b>Återkoppling</b> — alltid ett datum när det inte är ett nej. Tomt fält = förlorat lead.</span></li>
-    <li><span><b>Anteckningar</b> — namnet du pratade med, deras egna ord om problemet, vad du lovade.</span></li>
+    <li><span><b>Återkoppling</b> — dag och tid för samtal två. Tomt fält = förlorat lead.</span></li>
+    <li><span><b>Anteckningar</b> — namnet du frågar efter, och <b>deras exakta ord om problemet</b>.
+    Den meningen är din öppning i samtal två.</span></li>
   </ul>
 
   <div class="callout">
-    <p>Av tio uppringda svarar tre till fyra, ett till två samtal går hela vägen, ett förslag skickas.
-    Det är ett normalt utfall — inte ett dåligt.</p>
+    <p>Av tio uppringda svarar tre till fyra, ett till två bokar samtal två, och ungefär vartannat
+    andrasamtal blir affär. Det är ett normalt utfall — inte ett dåligt.</p>
   </div>
 
   <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Bästa ringtider</h2>
@@ -609,24 +725,17 @@
     <li><span><b>Facktermer.</b> Säg ”funkar i mobilen”, inte ”responsiv”.</span></li>
   </ul>
 
-  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Mallar</h2>
-  <details class="email">
-    <summary>Röstbrevlåda &amp; uppföljningsmejl</summary>
-    <p class="say" style="margin-bottom:1.2rem">Hej, <span class="slot">[namn]</span> från
-    Vantage Design Studio. Jag ringde om en sak som rör <span class="slot">[företag]</span> —
-    inget viktigt, jag provar igen imorgon.</p>
-    <div class="body">
-      <p><b>Ämne:</b> Förslag på hemsida till <span class="slot">[företag]</span></p>
-      <p>Hej <span class="slot">[namn]</span>,</p>
-      <p>Kul att prata med dig. Du nämnde att <span class="slot">[deras egna ord]</span> — det är
-      precis vad en enkel sida löser.</p>
-      <p><span class="slot">[3 punkter om sidan]</span></p>
-      <p>Fast pris <span class="slot">[summa]</span>, sen <span class="slot">[summa]</span>/mån
-      för domän och drift. Ingen bindningstid.</p>
-      <p>Jag ringer <span class="slot">[torsdag vid tio]</span> och hör vad du tyckte.</p>
-      <p><span class="slot">[ditt namn]</span>, Vantage Design Studio</p>
-    </div>
-  </details>
+  <h2 style="font-size:1rem;font-family:var(--sans);font-weight:650;margin:2rem 0 .7rem">Röstbrevlåda</h2>
+  <p class="say">Hej, <span class="slot">[namn]</span> från Vantage Design Studio. Jag ringde
+  om en sak som rör <span class="slot">[företag]</span> — inget viktigt, jag provar igen imorgon.</p>
+  <p class="cue">Sälj ingenting. Syftet är bara att de känner igen namnet nästa gång. Tre försök vid
+  olika tider på dygnet, sedan lägg leadet åt sidan.</p>
+
+  <div class="callout">
+    <p><b>Det enda du skickar</b> är en kort bekräftelse efter ett ja: vad ni kom överens om,
+    pris och när sidan är klar. Ingen offert, ingen pdf, inget säljmejl — det som ska övertyga
+    har redan sagts i luren.</p>
+  </div>
 </section>
 
 <footer>

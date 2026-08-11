@@ -100,220 +100,78 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
 
 /* ═══ Background ═══
 
-   A quiet sweep of combed hair behind the page.
+   The hex-tile floor. Everything visual lives in CSS (see .floor in
+   index.css); all this does is feed the pointer position to the light
+   pool as two custom properties, and only when the pointer has actually
+   moved far enough to matter.
 
-   This is deliberately almost invisible. It is a barbershop, so the
-   motif is hair lying in a comb sweep — but the background's job is to
-   give the dark surface some life, not to be looked at. Everything is
-   kept low: few strands, low contrast, slow drift, and a pointer that
-   parts the hair gently instead of swirling it.
-
-   Scroll lets the sweep settle and shorten toward the foot of the page,
-   the way hair is taken down at the neck. */
-
-type Strand = {
-  ax: number; ay: number
-  pts: Float32Array
-  w: number
-  warm: boolean
-  drift: number
-}
-
-const PTS = 16
-const STEP = 16
-const LEVELS = 3
+   Writing --mx/--my drives a transform, so each update is a compositor
+   nudge rather than a repaint. Untouched, the pool drifts on its own so
+   the effect is not hidden from anyone who never moves the mouse. */
 
 function BarberBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const poolRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const pool = poolRef.current
+    if (!pool) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-
-    let w = 0
-    let h = 0
-    let strands: Strand[] = []
-    let raf = 0
-    let scroll = -1
-    let clock = 0
-    let maxScroll = 1
-
-    let px = 0
-    let py = 0
+    let x = window.innerWidth * 0.5
+    let y = window.innerHeight * 0.4
+    let tx = x
+    let ty = y
     let touched = 0
+    let raf = 0
+    let clock = 0
 
-    const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
-
-    const SIN_N = 2048
-    const SIN = new Float32Array(SIN_N)
-    for (let i = 0; i < SIN_N; i++) SIN[i] = Math.sin((i / SIN_N) * Math.PI * 2)
-    const K = SIN_N / (Math.PI * 2)
-    const fsin = (x: number) => SIN[((x * K) | 0) & (SIN_N - 1)]
-    const fcos = (x: number) => SIN[(((x * K) | 0) + (SIN_N >> 2)) & (SIN_N - 1)]
-
-    // A shallow sweep. Small amplitudes keep the hair combed rather than
-    // swirling — the wide angles are what read as decorative noise.
-    const flow = (x: number, y: number) =>
-      1.16 +
-      fsin(x * 0.0013 + clock * 0.06) * 0.26 +
-      fcos(y * 0.0017 - clock * 0.045) * 0.22
-
-    const measureScroll = () => {
-      maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+    const set = () => {
+      pool.style.setProperty('--mx', `${x.toFixed(1)}px`)
+      pool.style.setProperty('--my', `${y.toFixed(1)}px`)
     }
 
-    const build = () => {
-      w = window.innerWidth
-      h = window.innerHeight
-      canvas.width = Math.round(w * dpr)
-      canvas.height = Math.round(h * dpr)
-      canvas.style.width = `${w}px`
-      canvas.style.height = `${h}px`
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      if (document.hidden) return
+      clock += 0.016
 
-      const small = w < 640
-      const count = small ? 40 : Math.round((w * h) / 15000)
-      strands = []
-      for (let i = 0; i < count; i++) {
-        strands.push({
-          ax: Math.random() * (w + 240) - 120,
-          ay: Math.random() * (h + 240) - 120,
-          pts: new Float32Array(PTS * 2),
-          w: (small ? 1.3 : 1.7) * (0.5 + Math.random()),
-          warm: Math.random() < 0.13,
-          drift: 0.05 + Math.random() * 0.11,
-        })
+      if (performance.now() - touched > 3000) {
+        tx = window.innerWidth * (0.5 + 0.26 * Math.sin(clock * 0.17))
+        ty = window.innerHeight * (0.5 + 0.2 * Math.sin(clock * 0.13 + 1.7))
       }
-      if (!touched) { px = w * 0.5; py = h * 0.42 }
-      measureScroll()
+
+      const dx = tx - x
+      const dy = ty - y
+      if (dx * dx + dy * dy < 0.25) return
+      x += dx * 0.06
+      y += dy * 0.06
+      set()
     }
 
-    const onPointer = (e: PointerEvent) => { px = e.clientX; py = e.clientY; touched = performance.now() }
+    const onPointer = (e: PointerEvent) => { tx = e.clientX; ty = e.clientY; touched = performance.now() }
     const onTouch = (e: TouchEvent) => {
       const t = e.touches[0]
       if (!t) return
-      px = t.clientX; py = t.clientY; touched = performance.now()
+      tx = t.clientX; ty = t.clientY; touched = performance.now()
     }
 
-    const bodies: Path2D[] = []
-    const off = new Float32Array(PTS * 2)
-
-    const frame = () => {
-      raf = requestAnimationFrame(frame)
-      if (document.hidden) return
-
-      const p = clamp01(window.scrollY / maxScroll)
-      scroll = scroll < 0 ? p : scroll + (p - scroll) * 0.1
-      if (!reduced) clock += 0.016
-
-      if (!reduced && performance.now() - touched > 3000) {
-        px += (w * (0.5 + 0.2 * fsin(clock * 0.16)) - px) * 0.012
-        py += (h * (0.5 + 0.16 * fsin(clock * 0.12 + 1.7)) - py) * 0.012
-      }
-
-      ctx.clearRect(0, 0, w, h)
-
-      // Hair shortens toward the foot of the page, the way it is taken
-      // down at the neck. No hard line, no glow — just a little less.
-      const taken = clamp01((scroll - 0.35) / 0.5)
-      const R = Math.min(w, h) * 0.24
-      const R2 = R * R
-
-      for (let i = 0; i < LEVELS * 2; i++) bodies[i] = new Path2D()
-
-      for (const s of strands) {
-        if (!reduced) {
-          s.ay += s.drift
-          if (s.ay > h + 120) { s.ay = -120; s.ax = Math.random() * (w + 240) - 120 }
-        }
-
-        let x = s.ax
-        let y = s.ay
-        for (let i = 0; i < PTS; i++) {
-          s.pts[i * 2] = x
-          s.pts[i * 2 + 1] = y
-
-          const dx = x - px
-          const dy = y - py
-          const d2 = dx * dx + dy * dy
-          if (d2 < R2) {
-            const d = Math.sqrt(d2) || 1
-            const f = 1 - d / R
-            x += (dx / d) * f * f * 5
-            y += (dy / d) * f * f * 5
-          }
-
-          const a = flow(x, y)
-          x += fcos(a) * STEP
-          y += fsin(a) * STEP
-        }
-
-        const width = s.w * (1 - taken * 0.55)
-        if (width < 0.25) continue
-
-        const lvl = Math.min(LEVELS - 1, ((s.w / 3.4) * LEVELS) | 0)
-        const body = bodies[(s.warm ? LEVELS : 0) + lvl]
-        const inv = 1 / (PTS - 1)
-
-        for (let i = 0; i < PTS; i++) {
-          const taper = Math.sqrt(fsin(i * inv * Math.PI)) * width
-          const j = i * 2
-          const k = Math.min(PTS - 1, i + 1) * 2
-          const tx = s.pts[k] - s.pts[j]
-          const ty = s.pts[k + 1] - s.pts[j + 1]
-          const m = Math.sqrt(tx * tx + ty * ty) || 1
-          const ox = (-ty / m) * taper
-          const oy = (tx / m) * taper
-          off[j] = ox
-          off[j + 1] = oy
-          if (i === 0) body.moveTo(s.pts[j] + ox, s.pts[j + 1] + oy)
-          else body.lineTo(s.pts[j] + ox, s.pts[j + 1] + oy)
-        }
-        for (let i = PTS - 1; i >= 0; i--) {
-          const j = i * 2
-          body.lineTo(s.pts[j] - off[j], s.pts[j + 1] - off[j + 1])
-        }
-        body.closePath()
-      }
-
-      for (let lvl = 0; lvl < LEVELS; lvl++) {
-        const a = 0.038 + (lvl / LEVELS) * 0.042
-        ctx.fillStyle = `rgba(216,224,238,${a.toFixed(3)})`
-        ctx.fill(bodies[lvl])
-        ctx.fillStyle = `rgba(212,175,55,${(a * 1.15).toFixed(3)})`
-        ctx.fill(bodies[LEVELS + lvl])
-      }
-    }
-
-    let resizeTimer: number | undefined
-    const onResize = () => {
-      window.clearTimeout(resizeTimer)
-      resizeTimer = window.setTimeout(build, 150)
-    }
-
-    build()
-    frame()
-    const ro = new ResizeObserver(measureScroll)
-    ro.observe(document.body)
-    window.addEventListener('resize', onResize)
+    set()
+    tick()
     window.addEventListener('pointermove', onPointer, { passive: true })
     window.addEventListener('touchmove', onTouch, { passive: true })
     return () => {
       cancelAnimationFrame(raf)
-      window.clearTimeout(resizeTimer)
-      ro.disconnect()
-      window.removeEventListener('resize', onResize)
       window.removeEventListener('pointermove', onPointer)
       window.removeEventListener('touchmove', onTouch)
     }
   }, [])
 
-  return <canvas ref={canvasRef} aria-hidden className="fixed inset-0 z-0 pointer-events-none" />
+  return (
+    <div className="floor" aria-hidden>
+      <div className="floor-base" />
+      <div className="floor-pool" ref={poolRef} />
+    </div>
+  )
 }
 
 /* ═══ App ═══ */

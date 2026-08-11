@@ -228,8 +228,11 @@
 /* ═══ Review card ═══ */
 .review-card {
   border: 1px solid rgba(212,175,55,0.12);
-  background: rgba(255,255,255,0.02);
-  backdrop-filter: blur(20px);
+  /* No backdrop-filter here. Over the animated background the blur has to
+     be recomputed every frame for all 16 cards, which measured out at
+     roughly half the frame rate — for an effect that is invisible against
+     a near-black ground. A slightly lighter fill reads the same. */
+  background: rgba(255,255,255,0.035);
   padding: 2rem;
   transition: all 0.5s ease;
   position: relative;

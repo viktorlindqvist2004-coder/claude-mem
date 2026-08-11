@@ -98,16 +98,35 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
   )
 }
 
-/* ═══ Scroll-driven skinfade background ═══
-   A field of hair strands with a clipper line that sweeps down the page as
-   you scroll. Above the line the hair is full length, below it is taken down
-   to skin, and the taper between the two glows gold. */
+/* ═══ Interactive barber background ═══
+   One canvas, three scenes that hand over as you scroll, all of them
+   reacting to the pointer:
 
-type Strand = { x: number; y: number; len: number; ang: number; phase: number; tier: 0 | 1 }
+     1. HÅRET   — a full head of hair you can comb through. Strands bend
+                  away from the cursor and spring back.
+     2. FADEN   — the clipper. Hair is taken down to skin along a taper
+                  that tracks the scroll, and the cursor shaves a path
+                  that slowly grows back in.
+     3. RUTNÄT  — a halftone dot fade, the way a modern fade is drawn on
+                  paper. The cursor pushes a ripple through the grid.
+
+   When the pointer has been idle it drifts on its own so the page is
+   never static. */
+
+type Strand = {
+  x: number; y: number; len: number
+  bx: number; by: number // resting direction
+  cx: number; cy: number // current direction
+  shaved: number
+  phase: number
+  thick: boolean
+}
+
+type Dot = { x: number; y: number; r: number }
 
 const ALPHA_STEPS = 7
 
-function ScrollFadeBackground() {
+function BarberBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -122,11 +141,27 @@ function ScrollFadeBackground() {
     let w = 0
     let h = 0
     let strands: Strand[] = []
+    let dots: Dot[] = []
     let raf = 0
-    let smoothed = -1
+    let scroll = -1
     let clock = 0
+    let maxScroll = 1
 
-    // Draw buckets, reused every frame so the loop allocates nothing.
+    // Pointer, plus an idle drift so the effect shows itself unprompted.
+    let px = 0
+    let py = 0
+    let touched = 0
+
+    const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
+
+    // Math.hypot and Math.sin are hot here — thousands of calls per frame.
+    // A lookup table and plain sqrt keep the loop cheap.
+    const SIN_N = 1024
+    const SIN = new Float32Array(SIN_N)
+    for (let i = 0; i < SIN_N; i++) SIN[i] = Math.sin((i / SIN_N) * Math.PI * 2)
+    const fsin = (x: number) => SIN[((x * (SIN_N / (Math.PI * 2))) | 0) & (SIN_N - 1)]
+
+    // Reused every frame so the render loop allocates nothing.
     const silver = [
       Array.from({ length: ALPHA_STEPS }, () => [] as number[]),
       Array.from({ length: ALPHA_STEPS }, () => [] as number[]),
@@ -142,99 +177,236 @@ function ScrollFadeBackground() {
       canvas.style.height = `${h}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-      const gap = w < 640 ? 22 : 17
+      const small = w < 640
+      const gap = small ? 22 : 23
       strands = []
-      for (let x = 0; x <= w + gap; x += gap) {
-        for (let y = 0; y <= h + gap; y += gap) {
+      for (let x = -gap; x <= w + gap; x += gap) {
+        for (let y = -gap; y <= h + gap; y += gap) {
+          const ang = -Math.PI / 2 + (Math.random() - 0.5) * 0.5
           strands.push({
-            x: x + (Math.random() - 0.5) * gap * 0.9,
-            y: y + (Math.random() - 0.5) * gap * 0.9,
-            len: gap * (1.05 + Math.random() * 1.15),
-            ang: -Math.PI / 2 + (Math.random() - 0.5) * 0.6,
+            x: x + (Math.random() - 0.5) * gap,
+            y: y + (Math.random() - 0.5) * gap,
+            len: gap * (1.35 + Math.random() * 1.35),
+            bx: Math.cos(ang), by: Math.sin(ang),
+            cx: Math.cos(ang), cy: Math.sin(ang),
+            shaved: 0,
             phase: Math.random() * Math.PI * 2,
-            tier: Math.random() > 0.74 ? 1 : 0,
+            thick: Math.random() > 0.72,
           })
         }
       }
+
+      const dgap = small ? 26 : 27
+      dots = []
+      for (let x = dgap / 2; x < w + dgap; x += dgap) {
+        for (let y = dgap / 2; y < h + dgap; y += dgap) {
+          dots.push({ x, y, r: dgap * 0.34 })
+        }
+      }
+
+      if (!touched) { px = w * 0.5; py = h * 0.45 }
+      measureScroll()
     }
 
-    const scrollProgress = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+    const measureScroll = () => {
+      maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+    }
+
+    const onPointer = (e: PointerEvent) => {
+      px = e.clientX
+      py = e.clientY
+      touched = performance.now()
+    }
+    const onTouch = (e: TouchEvent) => {
+      const t = e.touches[0]
+      if (!t) return
+      px = t.clientX
+      py = t.clientY
+      touched = performance.now()
     }
 
     const frame = () => {
       raf = requestAnimationFrame(frame)
       if (document.hidden) return
 
-      const target = scrollProgress()
-      smoothed = smoothed < 0 ? target : smoothed + (target - smoothed) * 0.12
-      if (!reduced) clock += 0.007
+      // maxScroll is cached: reading scrollHeight forces a full layout, and
+      // doing that every frame costs more than everything drawn below.
+      const p = clamp01(window.scrollY / maxScroll)
+      scroll = scroll < 0 ? p : scroll + (p - scroll) * 0.12
+      if (!reduced) clock += 0.016
+
+      // Idle drift — a slow lissajous so the page breathes on its own.
+      if (!reduced && performance.now() - touched > 2600) {
+        px += ((w * (0.5 + 0.32 * Math.sin(clock * 0.31))) - px) * 0.02
+        py += ((h * (0.5 + 0.26 * Math.sin(clock * 0.23 + 1.7))) - py) * 0.02
+      }
+
+      // Scene weights. Hair hands over to the fade, the fade to the grid.
+      const wHair = 1 - clamp01((scroll - 0.26) / 0.1)
+      const wGrid = clamp01((scroll - 0.62) / 0.1)
+      const wFade = Math.max(0, 1 - wHair - wGrid)
+      const wStrand = wHair + wFade
 
       ctx.clearRect(0, 0, w, h)
 
-      // Clipper line position, from just above the fold to past the bottom.
-      const fade = -0.22 + smoothed * 1.44
-      const blend = 0.3
+      /* ── Scenes 1 + 2: the strand field ───────────────────────────── */
+      if (wStrand > 0.01) {
+        // The clipper line, sweeping down the page as the fade takes over.
+        const line = -0.25 + clamp01((scroll - 0.2) / 0.5) * 1.5
+        const combR = Math.min(w, h) * 0.3
+        const clipR = Math.min(w, h) * 0.14
 
-      // Warm band of light riding along the taper.
-      const fy = fade * h
-      const band = h * 0.26
-      const glowGrad = ctx.createLinearGradient(0, fy - band, 0, fy + band)
-      glowGrad.addColorStop(0, 'rgba(212,175,55,0)')
-      glowGrad.addColorStop(0.5, 'rgba(212,175,55,0.075)')
-      glowGrad.addColorStop(1, 'rgba(212,175,55,0)')
-      ctx.fillStyle = glowGrad
-      ctx.fillRect(0, fy - band, w, band * 2)
+        for (const bucket of silver) for (const a of bucket) a.length = 0
+        for (const a of gold) a.length = 0
 
-      for (const bucket of silver) for (const arr of bucket) arr.length = 0
-      for (const arr of gold) arr.length = 0
+        const combR2 = combR * combR
+        const clipR2 = clipR * clipR
 
-      for (const s of strands) {
-        const d = (s.y / h - fade) / blend
-        const k = Math.max(-1, Math.min(1, d))
-        const cut = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin((k * Math.PI) / 2))
-        const glow = Math.max(0, 1 - Math.abs(d))
+        for (const s of strands) {
+          const dx = s.x - px
+          const dy = s.y - py
+          const d2 = dx * dx + dy * dy
 
-        const ang = s.ang + (reduced ? 0 : Math.sin(clock * 1.6 + s.phase) * 0.07)
-        const len = s.len * cut
-        const x2 = s.x + Math.cos(ang) * len
-        const y2 = s.y + Math.sin(ang) * len
+          // Comb: strands lean away from the pointer, then spring back.
+          let tx = s.bx
+          let ty = s.by
+          let dist = 0
+          if (d2 < combR2 && wHair > 0.01) {
+            dist = Math.sqrt(d2) || 1
+            const q = 1 - dist / combR
+            const f = q * q * wHair
+            const mx = s.bx * (1 - f) + (dx / dist) * f * 1.6
+            const my = s.by * (1 - f) + (dy / dist) * f * 1.6
+            const m = Math.sqrt(mx * mx + my * my) || 1
+            tx = mx / m
+            ty = my / m
+          }
+          if (!reduced) tx += fsin(clock * 1.1 + s.phase) * 0.05
+          s.cx += (tx - s.cx) * 0.12
+          s.cy += (ty - s.cy) * 0.12
 
-        const ai = Math.min(ALPHA_STEPS - 1, Math.floor((0.18 + cut * 0.82) * ALPHA_STEPS))
-        silver[s.tier][ai].push(s.x, s.y, x2, y2)
+          // Clipper: shave under the pointer, regrow over a few seconds.
+          if (d2 < clipR2 && wFade > 0.01) {
+            const dc = Math.sqrt(d2)
+            s.shaved = Math.max(s.shaved, (1 - dc / clipR) * wFade)
+          }
+          s.shaved *= 0.994
 
-        if (glow > 0.1) {
-          const gi = Math.min(ALPHA_STEPS - 1, Math.floor(glow * ALPHA_STEPS))
-          gold[gi].push(s.x, s.y, x2, y2)
+          // Taper along the clipper line: full length above, skin below.
+          const d = (s.y / h - line) / 0.28
+          const k = d < -1 ? -1 : d > 1 ? 1 : d
+          const u = (k + 1) * 0.5
+          const taper = 0.14 + 0.86 * u * u * (3 - 2 * u)
+          const growth = (wHair + wFade * taper) / wStrand
+          const cut = growth * (1 - s.shaved * 0.88)
+
+          // cx/cy stay near unit length as they chase normalized targets,
+          // so the per-strand renormalization is not worth its sqrt.
+          const len = s.len * cut
+          const x2 = s.x + s.cx * len
+          const y2 = s.y + s.cy * len
+
+          const ai = Math.min(ALPHA_STEPS - 1, (((0.2 + cut * 0.8) * ALPHA_STEPS) | 0))
+          silver[s.thick ? 1 : 0][ai].push(s.x, s.y, x2, y2)
+
+          // Gold picks out the taper and the hair riding the comb.
+          // dist is only resolved inside the comb radius, so gate on d2.
+          const glowFade = wFade * Math.max(0, 1 - Math.abs(d))
+          let glowComb = 0
+          if (d2 < combR2 && dist > 0) {
+            const q = 1 - dist / combR
+            glowComb = wHair * q * q
+          }
+          // Gold strands are drawn a second time, so keep the band tight.
+          const glow = Math.max(glowFade, glowComb)
+          if (glow > 0.22) {
+            const gi = Math.min(ALPHA_STEPS - 1, (glow * ALPHA_STEPS) | 0)
+            gold[gi].push(s.x, s.y, x2, y2)
+          }
         }
-      }
 
-      ctx.lineCap = 'round'
-
-      const strokeBucket = (arr: number[]) => {
-        ctx.beginPath()
-        for (let i = 0; i < arr.length; i += 4) {
-          ctx.moveTo(arr[i], arr[i + 1])
-          ctx.lineTo(arr[i + 2], arr[i + 3])
+        // 'round' caps rasterize two arcs per segment; at a few thousand
+        // hair-thin strands that cost is invisible but not cheap.
+        ctx.lineCap = 'butt'
+        const stroke = (arr: number[]) => {
+          ctx.beginPath()
+          for (let i = 0; i < arr.length; i += 4) {
+            ctx.moveTo(arr[i], arr[i + 1])
+            ctx.lineTo(arr[i + 2], arr[i + 3])
+          }
+          ctx.stroke()
         }
-        ctx.stroke()
-      }
 
-      for (let tier = 0; tier < 2; tier++) {
-        ctx.lineWidth = tier === 0 ? 0.7 : 1.3
+        for (let t = 0; t < 2; t++) {
+          ctx.lineWidth = t === 0 ? 0.75 : 1.4
+          for (let a = 0; a < ALPHA_STEPS; a++) {
+            if (!silver[t][a].length) continue
+            const al = ((a + 1) / ALPHA_STEPS) * 0.34 * wStrand
+            ctx.strokeStyle = `rgba(228,233,242,${al.toFixed(3)})`
+            stroke(silver[t][a])
+          }
+        }
+
+        ctx.lineWidth = 1.2
         for (let a = 0; a < ALPHA_STEPS; a++) {
-          if (!silver[tier][a].length) continue
-          ctx.strokeStyle = `rgba(226,232,240,${(((a + 1) / ALPHA_STEPS) * 0.3).toFixed(3)})`
-          strokeBucket(silver[tier][a])
+          if (!gold[a].length) continue
+          const al = ((a + 1) / ALPHA_STEPS) * 0.5 * wStrand
+          ctx.strokeStyle = `rgba(212,175,55,${al.toFixed(3)})`
+          stroke(gold[a])
+        }
+
+        // The clipper head itself.
+        if (wFade > 0.15) {
+          const g = ctx.createRadialGradient(px, py, 0, px, py, clipR)
+          g.addColorStop(0, `rgba(212,175,55,${(0.13 * wFade).toFixed(3)})`)
+          g.addColorStop(1, 'rgba(212,175,55,0)')
+          ctx.fillStyle = g
+          ctx.fillRect(px - clipR, py - clipR, clipR * 2, clipR * 2)
         }
       }
 
-      ctx.lineWidth = 1.1
-      for (let a = 0; a < ALPHA_STEPS; a++) {
-        if (!gold[a].length) continue
-        ctx.strokeStyle = `rgba(212,175,55,${(((a + 1) / ALPHA_STEPS) * 0.45).toFixed(3)})`
-        strokeBucket(gold[a])
+      /* ── Scene 3: halftone fade ───────────────────────────────────── */
+      if (wGrid > 0.01) {
+        const t = (scroll - 0.62) / 0.38
+        const edge = t * 1.4 - 0.35
+        const GOLD_R = 210
+        const TAU = Math.PI * 2
+
+        // Radius per dot is wanted twice, so resolve it once per pass.
+        const radius = (d: Dot, dist: number) => {
+          const along = (d.x / w) * 0.35 + (d.y / h) * 0.65
+          let f = clamp01((along - edge) * 1.9)
+          f += fsin(dist * 0.045 - clock * 2.4) * Math.exp(-dist / 260) * 0.65
+          return d.r * clamp01(f)
+        }
+
+        ctx.fillStyle = `rgba(228,233,242,${(0.3 * wGrid).toFixed(3)})`
+        ctx.beginPath()
+        for (const d of dots) {
+          const ddx = d.x - px
+          const ddy = d.y - py
+          const r = radius(d, Math.sqrt(ddx * ddx + ddy * ddy))
+          if (r < 0.35) continue
+          ctx.moveTo(d.x + r, d.y)
+          ctx.arc(d.x, d.y, r, 0, TAU)
+        }
+        ctx.fill()
+
+        // A gold pass on the dots nearest the pointer.
+        ctx.fillStyle = `rgba(212,175,55,${(0.42 * wGrid).toFixed(3)})`
+        ctx.beginPath()
+        for (const d of dots) {
+          const ddx = d.x - px
+          const ddy = d.y - py
+          const dd2 = ddx * ddx + ddy * ddy
+          if (dd2 > GOLD_R * GOLD_R) continue
+          const dist = Math.sqrt(dd2)
+          const r = radius(d, dist) * (1 - dist / GOLD_R)
+          if (r < 0.35) continue
+          ctx.moveTo(d.x + r, d.y)
+          ctx.arc(d.x, d.y, r, 0, TAU)
+        }
+        ctx.fill()
       }
     }
 
@@ -246,11 +418,20 @@ function ScrollFadeBackground() {
 
     build()
     frame()
+    // Re-measure only when the document actually changes height (images
+    // loading, fonts swapping in) rather than polling it every frame.
+    const ro = new ResizeObserver(measureScroll)
+    ro.observe(document.body)
     window.addEventListener('resize', onResize)
+    window.addEventListener('pointermove', onPointer, { passive: true })
+    window.addEventListener('touchmove', onTouch, { passive: true })
     return () => {
       cancelAnimationFrame(raf)
       window.clearTimeout(resizeTimer)
+      ro.disconnect()
       window.removeEventListener('resize', onResize)
+      window.removeEventListener('pointermove', onPointer)
+      window.removeEventListener('touchmove', onTouch)
     }
   }, [])
 
@@ -307,7 +488,7 @@ function App() {
   return (
     <div className="min-h-screen rich-bg grain-overlay" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" }}>
 
-      <ScrollFadeBackground />
+      <BarberBackground />
 
       <div className="relative z-10">
 
@@ -459,7 +640,7 @@ function App() {
 
       {/* ═══ SALONGEN ═══ */}
       <section id="salon" className="relative min-h-screen flex items-center px-6 sm:px-14 md:px-20 py-24">
-        <div className="max-w-lg rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-8 sm:p-10">
+        <div className="max-w-lg rounded-2xl border border-white/10 bg-white/[0.045] p-8 sm:p-10">
           <FadeIn>
             <p className="section-label mb-4">Salongen</p>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
@@ -488,7 +669,7 @@ function App() {
 
       {/* ═══ HANTVERKET ═══ */}
       <section id="craft" className="relative min-h-screen flex items-center justify-end px-6 sm:px-14 md:px-20 py-24">
-        <div className="max-w-lg text-right rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-8 sm:p-10">
+        <div className="max-w-lg text-right rounded-2xl border border-white/10 bg-white/[0.045] p-8 sm:p-10">
           <FadeIn>
             <p className="section-label mb-4">Hantverket</p>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">

@@ -28,24 +28,19 @@
   background-attachment: fixed;
 }
 
-/* ═══ Hex-tile floor ═══
-   The tiling every barbershop floor is laid with, under a diagonal light
-   — a nod to the pole without the stripes — and a warm pool that follows
-   the pointer.
+/* ═══ Pinstripe ═══
+   Fine diagonal stripes, the weave of a tailored suit, under a soft
+   diagonal light. A hexagonal tiling sat here before and read as tech
+   honeycomb rather than barbershop; this is the same restraint with the
+   right associations. Pure gradients, so there is no asset to fetch and
+   nothing to go stale.
 
-   Measured at 1440x900 with no GPU, the page runs 60fps and each way of
-   animating a screenful of background cost a large slice of that: a
-   canvas redraw 25fps, two mask-image layers 43fps, an animated
-   full-screen gradient 11fps. So only one small element moves here. If
-   this ever needs more motion, measure with the background removed
-   first — the page itself is not the constraint, the screen-sized
-   composite is. */
-:root {
-  /* Stroke opacity lives in the file so the tiling can sit next to a
-     brighter gradient in the same element without fighting over
-     background-layer opacity, which CSS does not offer per layer. */
-  --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='48'%3E%3Cpath fill='none' stroke='%23fff' stroke-opacity='.055' stroke-width='1' d='M28,0L14,24L-14,24L-28,0L-14,-24L14,-24Z M28,48L14,72L-14,72L-28,48L-14,24L14,24Z M112,0L98,24L70,24L56,0L70,-24L98,-24Z M112,48L98,72L70,72L56,48L70,24L98,24Z M70,24L56,48L28,48L14,24L28,0L56,0Z M70,-24L56,0L28,0L14,-24L28,-48L56,-48Z M70,72L56,96L28,96L14,72L28,48L56,48Z'/%3E%3C/svg%3E");
-}
+   Nothing here moves. Measured at 1440x900 with no GPU the page holds
+   60fps on its own, and every animated screenful of background spent a
+   large slice of that budget — a canvas redraw 25fps, two mask-image
+   layers 43fps, an animated full-screen gradient 11fps. If this ever
+   needs motion again, measure with the background removed first: the
+   page is not the constraint, the screen-sized composite is. */
 
 .floor {
   position: fixed;
@@ -55,37 +50,28 @@
   overflow: hidden;
 }
 
-/* The floor and its light are one layer, painted once and never again.
-   An animated full-screen sweep was measured at ~11fps of the frame
-   budget on its own, so the diagonal light is baked in statically and
-   the only thing that moves is the pointer's pool. */
 .floor-base {
   position: absolute;
   inset: 0;
   background-image:
+    /* the light */
     linear-gradient(118deg,
-      rgba(255, 244, 218, 0) 18%,
-      rgba(255, 244, 218, 0.035) 47%,
-      rgba(255, 244, 218, 0) 76%),
-    var(--hex);
-  background-size: 100% 100%, 84px 48px;
+      rgba(255, 244, 218, 0) 16%,
+      rgba(255, 244, 218, 0.04) 47%,
+      rgba(255, 244, 218, 0) 78%),
+    /* a wider shadow stripe, for depth in the weave */
+    repeating-linear-gradient(58deg,
+      rgba(255, 250, 236, 0.014) 0px,
+      rgba(255, 250, 236, 0.014) 3px,
+      transparent 3px,
+      transparent 26px),
+    /* the pinstripe itself */
+    repeating-linear-gradient(58deg,
+      rgba(255, 250, 236, 0.05) 0px,
+      rgba(255, 250, 236, 0.05) 1px,
+      transparent 1px,
+      transparent 13px);
   transform: translateZ(0);
-}
-
-/* Sized once and moved with a transform, so following the pointer costs
-   a compositor nudge rather than a repaint. */
-.floor-pool {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 520px;
-  height: 520px;
-  margin: -260px 0 0 -260px;
-  background: radial-gradient(circle closest-side,
-    rgba(255, 230, 172, 0.06),
-    rgba(255, 230, 172, 0) 72%);
-  transform: translate3d(var(--mx, 50vw), var(--my, 40vh), 0);
-  will-change: transform;
 }
 
 /* ═══ Fly-through sections ═══ */

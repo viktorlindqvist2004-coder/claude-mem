@@ -106,76 +106,13 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
 
 /* ═══ Background ═══
 
-   The hex-tile floor. Everything visual lives in CSS (see .floor in
-   index.css); all this does is feed the pointer position to the light
-   pool as two custom properties, and only when the pointer has actually
-   moved far enough to matter.
-
-   Writing --mx/--my drives a transform, so each update is a compositor
-   nudge rather than a repaint. Untouched, the pool drifts on its own so
-   the effect is not hidden from anyone who never moves the mouse. */
+   The hex-tile floor. Purely presentational and entirely static — see
+   .floor in index.css. */
 
 function BarberBackground() {
-  const poolRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const pool = poolRef.current
-    if (!pool) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-
-    let x = window.innerWidth * 0.5
-    let y = window.innerHeight * 0.4
-    let tx = x
-    let ty = y
-    let touched = 0
-    let raf = 0
-    let clock = 0
-
-    const set = () => {
-      pool.style.setProperty('--mx', `${x.toFixed(1)}px`)
-      pool.style.setProperty('--my', `${y.toFixed(1)}px`)
-    }
-
-    const tick = () => {
-      raf = requestAnimationFrame(tick)
-      if (document.hidden) return
-      clock += 0.016
-
-      if (performance.now() - touched > 3000) {
-        tx = window.innerWidth * (0.5 + 0.26 * Math.sin(clock * 0.17))
-        ty = window.innerHeight * (0.5 + 0.2 * Math.sin(clock * 0.13 + 1.7))
-      }
-
-      const dx = tx - x
-      const dy = ty - y
-      if (dx * dx + dy * dy < 0.25) return
-      x += dx * 0.06
-      y += dy * 0.06
-      set()
-    }
-
-    const onPointer = (e: PointerEvent) => { tx = e.clientX; ty = e.clientY; touched = performance.now() }
-    const onTouch = (e: TouchEvent) => {
-      const t = e.touches[0]
-      if (!t) return
-      tx = t.clientX; ty = t.clientY; touched = performance.now()
-    }
-
-    set()
-    tick()
-    window.addEventListener('pointermove', onPointer, { passive: true })
-    window.addEventListener('touchmove', onTouch, { passive: true })
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('pointermove', onPointer)
-      window.removeEventListener('touchmove', onTouch)
-    }
-  }, [])
-
   return (
     <div className="floor" aria-hidden>
       <div className="floor-base" />
-      <div className="floor-pool" ref={poolRef} />
     </div>
   )
 }

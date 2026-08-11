@@ -99,32 +99,39 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
 }
 
 /* ═══ Interactive barber background ═══
-   One canvas, three scenes that hand over as you scroll, all of them
-   reacting to the pointer:
 
-     1. HÅRET   — a full head of hair you can comb through. Strands bend
-                  away from the cursor and spring back.
-     2. FADEN   — the clipper. Hair is taken down to skin along a taper
-                  that tracks the scroll, and the cursor shaves a path
-                  that slowly grows back in.
-     3. RUTNÄT  — a halftone dot fade, the way a modern fade is drawn on
-                  paper. The cursor pushes a ripple through the grid.
+   Thick, silky hair flowing through a field you can push around, and a
+   clipper that cuts it.
 
-   When the pointer has been idle it drifts on its own so the page is
-   never static. */
+   Hairline strokes read as rain, not hair, so the hair here is drawn as
+   tapered ribbons — filled polygons with a bright specular core — the way
+   hair actually catches light. A few hundred of them flow along a noise
+   field. The pointer both pushes them aside and drags them around it, so
+   the hair parts under your finger and swirls back.
 
-type Strand = {
-  x: number; y: number; len: number
-  bx: number; by: number // resting direction
-  cx: number; cy: number // current direction
-  shaved: number
-  phase: number
-  thick: boolean
+   Scroll drives a clipper line down the page. Below it the hair is taken
+   off, cut ends glow gold, and clippings fall away. Past the fade the
+   background hands over to a halftone dot grid — a fade the way it gets
+   drawn on paper — which ripples under the pointer.
+
+   The pointer drifts on its own when untouched so none of this stays
+   hidden from someone who never moves the mouse. */
+
+type Ribbon = {
+  ax: number; ay: number     // anchor
+  pts: Float32Array          // flattened x,y walked along the flow field
+  w: number                  // half-width at the belly
+  gold: boolean
+  bright: boolean            // carries a specular core
+  drift: number
+  seed: number
 }
 
 type Dot = { x: number; y: number; r: number }
+type Clip = { x: number; y: number; vx: number; vy: number; a: number; rot: number; spin: number; len: number }
 
-const ALPHA_STEPS = 7
+const RIB_PTS = 20
+const STEP = 19
 
 function BarberBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -140,33 +147,40 @@ function BarberBackground() {
 
     let w = 0
     let h = 0
-    let strands: Strand[] = []
+    let ribbons: Ribbon[] = []
     let dots: Dot[] = []
+    let clips: Clip[] = []
     let raf = 0
     let scroll = -1
     let clock = 0
     let maxScroll = 1
 
-    // Pointer, plus an idle drift so the effect shows itself unprompted.
     let px = 0
     let py = 0
+    let ppx = 0
+    let ppy = 0
     let touched = 0
 
     const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 
-    // Math.hypot and Math.sin are hot here — thousands of calls per frame.
-    // A lookup table and plain sqrt keep the loop cheap.
-    const SIN_N = 1024
+    // Trig runs tens of thousands of times per frame walking the field.
+    const SIN_N = 2048
     const SIN = new Float32Array(SIN_N)
     for (let i = 0; i < SIN_N; i++) SIN[i] = Math.sin((i / SIN_N) * Math.PI * 2)
-    const fsin = (x: number) => SIN[((x * (SIN_N / (Math.PI * 2))) | 0) & (SIN_N - 1)]
+    const K = SIN_N / (Math.PI * 2)
+    const fsin = (x: number) => SIN[((x * K) | 0) & (SIN_N - 1)]
+    const fcos = (x: number) => SIN[(((x * K) | 0) + (SIN_N >> 2)) & (SIN_N - 1)]
 
-    // Reused every frame so the render loop allocates nothing.
-    const silver = [
-      Array.from({ length: ALPHA_STEPS }, () => [] as number[]),
-      Array.from({ length: ALPHA_STEPS }, () => [] as number[]),
-    ]
-    const gold = Array.from({ length: ALPHA_STEPS }, () => [] as number[])
+    // A smooth swirling field. Cheap, and reads as hair lying in a sweep.
+    const flow = (x: number, y: number) =>
+      fsin(x * 0.0016 + clock * 0.17) * 1.15 +
+      fcos(y * 0.0022 - clock * 0.12) * 1.0 +
+      fsin((x + y) * 0.0011 + clock * 0.08) * 0.75 -
+      1.35
+
+    const measureScroll = () => {
+      maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+    }
 
     const build = () => {
       w = window.innerWidth
@@ -178,201 +192,251 @@ function BarberBackground() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
       const small = w < 640
-      const gap = small ? 22 : 23
-      strands = []
-      for (let x = -gap; x <= w + gap; x += gap) {
-        for (let y = -gap; y <= h + gap; y += gap) {
-          const ang = -Math.PI / 2 + (Math.random() - 0.5) * 0.5
-          strands.push({
-            x: x + (Math.random() - 0.5) * gap,
-            y: y + (Math.random() - 0.5) * gap,
-            len: gap * (1.35 + Math.random() * 1.35),
-            bx: Math.cos(ang), by: Math.sin(ang),
-            cx: Math.cos(ang), cy: Math.sin(ang),
-            shaved: 0,
-            phase: Math.random() * Math.PI * 2,
-            thick: Math.random() > 0.72,
-          })
-        }
+      const count = small ? 120 : Math.round((w * h) / 5800)
+      ribbons = []
+      for (let i = 0; i < count; i++) {
+        ribbons.push({
+          ax: Math.random() * (w + 260) - 130,
+          ay: Math.random() * (h + 260) - 130,
+          pts: new Float32Array(RIB_PTS * 2),
+          w: (small ? 2.6 : 3.6) * (0.5 + Math.random() * 1.2),
+          gold: Math.random() < 0.22,
+          bright: Math.random() < 0.4,
+          drift: 0.12 + Math.random() * 0.3,
+          seed: Math.random() * 100,
+        })
       }
 
       const dgap = small ? 26 : 27
       dots = []
       for (let x = dgap / 2; x < w + dgap; x += dgap) {
-        for (let y = dgap / 2; y < h + dgap; y += dgap) {
-          dots.push({ x, y, r: dgap * 0.34 })
-        }
+        for (let y = dgap / 2; y < h + dgap; y += dgap) dots.push({ x, y, r: dgap * 0.34 })
       }
 
-      if (!touched) { px = w * 0.5; py = h * 0.45 }
+      clips = []
+      for (let i = 0; i < (small ? 26 : 46); i++) {
+        clips.push({ x: Math.random() * w, y: Math.random() * h, vx: 0, vy: 0, a: 0, rot: 0, spin: 0, len: 0 })
+      }
+
+      if (!touched) { px = w * 0.5; py = h * 0.42; ppx = px; ppy = py }
       measureScroll()
     }
 
-    const measureScroll = () => {
-      maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
-    }
-
-    const onPointer = (e: PointerEvent) => {
-      px = e.clientX
-      py = e.clientY
-      touched = performance.now()
-    }
+    const onPointer = (e: PointerEvent) => { px = e.clientX; py = e.clientY; touched = performance.now() }
     const onTouch = (e: TouchEvent) => {
       const t = e.touches[0]
       if (!t) return
-      px = t.clientX
-      py = t.clientY
-      touched = performance.now()
+      px = t.clientX; py = t.clientY; touched = performance.now()
     }
+
+    const respawn = (c: Clip, line: number) => {
+      c.x = Math.random() * w
+      c.y = line * h + (Math.random() - 0.5) * h * 0.16
+      c.vx = (Math.random() - 0.5) * 0.5
+      c.vy = 0.35 + Math.random() * 0.9
+      c.a = 0.5 + Math.random() * 0.5
+      c.rot = Math.random() * 6.283
+      c.spin = (Math.random() - 0.5) * 0.09
+      c.len = 4 + Math.random() * 8
+    }
+
+    // Ribbons are grouped so overlapping hair of one shade fills as a
+    // single path — 8 fills a frame instead of several hundred.
+    const LEVELS = 4
+    const bodies: Path2D[] = []
+    const cores: Path2D[] = []
+    const off = new Float32Array(RIB_PTS * 2)
 
     const frame = () => {
       raf = requestAnimationFrame(frame)
       if (document.hidden) return
 
-      // maxScroll is cached: reading scrollHeight forces a full layout, and
-      // doing that every frame costs more than everything drawn below.
       const p = clamp01(window.scrollY / maxScroll)
       scroll = scroll < 0 ? p : scroll + (p - scroll) * 0.12
       if (!reduced) clock += 0.016
 
-      // Idle drift — a slow lissajous so the page breathes on its own.
-      if (!reduced && performance.now() - touched > 2600) {
-        px += ((w * (0.5 + 0.32 * Math.sin(clock * 0.31))) - px) * 0.02
-        py += ((h * (0.5 + 0.26 * Math.sin(clock * 0.23 + 1.7))) - py) * 0.02
+      if (!reduced && performance.now() - touched > 2400) {
+        px += (w * (0.5 + 0.33 * fsin(clock * 0.29)) - px) * 0.02
+        py += (h * (0.5 + 0.28 * fsin(clock * 0.21 + 1.7)) - py) * 0.02
       }
+      const pvx = px - ppx
+      const pvy = py - ppy
+      ppx += (px - ppx) * 0.25
+      ppy += (py - ppy) * 0.25
 
-      // Scene weights. Hair hands over to the fade, the fade to the grid.
-      const wHair = 1 - clamp01((scroll - 0.26) / 0.1)
-      const wGrid = clamp01((scroll - 0.62) / 0.1)
-      const wFade = Math.max(0, 1 - wHair - wGrid)
-      const wStrand = wHair + wFade
+      const wGrid = clamp01((scroll - 0.63) / 0.11)
+      const wHair = 1 - wGrid
 
       ctx.clearRect(0, 0, w, h)
 
-      /* ── Scenes 1 + 2: the strand field ───────────────────────────── */
-      if (wStrand > 0.01) {
-        // The clipper line, sweeping down the page as the fade takes over.
-        const line = -0.25 + clamp01((scroll - 0.2) / 0.5) * 1.5
-        const combR = Math.min(w, h) * 0.3
-        const clipR = Math.min(w, h) * 0.14
+      /* ── Hair ─────────────────────────────────────────────────────── */
+      if (wHair > 0.01) {
+        // The clipper line sweeping down the page.
+        // Starts below the fold so nothing is cut yet, then travels up the
+        // page as you scroll. Inverting these two ends cuts every ribbon at
+        // its first point and the hair never draws at all.
+        const line = 1.3 - clamp01((scroll - 0.14) / 0.46) * 1.6
+        const R = Math.min(w, h) * 0.32
+        const R2 = R * R
+        const CLIP = Math.min(w, h) * 0.15
+        const CLIP2 = CLIP * CLIP
 
-        for (const bucket of silver) for (const a of bucket) a.length = 0
-        for (const a of gold) a.length = 0
+        for (let i = 0; i < LEVELS * 2; i++) {
+          bodies[i] = new Path2D()
+          cores[i] = new Path2D()
+        }
 
-        const combR2 = combR * combR
-        const clipR2 = clipR * clipR
-
-        for (const s of strands) {
-          const dx = s.x - px
-          const dy = s.y - py
-          const d2 = dx * dx + dy * dy
-
-          // Comb: strands lean away from the pointer, then spring back.
-          let tx = s.bx
-          let ty = s.by
-          let dist = 0
-          if (d2 < combR2 && wHair > 0.01) {
-            dist = Math.sqrt(d2) || 1
-            const q = 1 - dist / combR
-            const f = q * q * wHair
-            const mx = s.bx * (1 - f) + (dx / dist) * f * 1.6
-            const my = s.by * (1 - f) + (dy / dist) * f * 1.6
-            const m = Math.sqrt(mx * mx + my * my) || 1
-            tx = mx / m
-            ty = my / m
+        for (const r of ribbons) {
+          // Anchors sink slowly so the sweep is never quite still.
+          if (!reduced) {
+            r.ay += r.drift
+            if (r.ay > h + 130) { r.ay = -130; r.ax = Math.random() * (w + 260) - 130 }
           }
-          if (!reduced) tx += fsin(clock * 1.1 + s.phase) * 0.05
-          s.cx += (tx - s.cx) * 0.12
-          s.cy += (ty - s.cy) * 0.12
 
-          // Clipper: shave under the pointer, regrow over a few seconds.
-          if (d2 < clipR2 && wFade > 0.01) {
-            const dc = Math.sqrt(d2)
-            s.shaved = Math.max(s.shaved, (1 - dc / clipR) * wFade)
+          let x = r.ax
+          let y = r.ay
+          let cut = 1
+          let cutAt = RIB_PTS
+
+          for (let i = 0; i < RIB_PTS; i++) {
+            r.pts[i * 2] = x
+            r.pts[i * 2 + 1] = y
+
+            let a = flow(x, y)
+
+            const dx = x - px
+            const dy = y - py
+            const d2 = dx * dx + dy * dy
+            if (d2 < R2) {
+              const d = Math.sqrt(d2) || 1
+              const f = 1 - d / R
+              // Push aside, and drag along with the pointer's motion.
+              a += Math.atan2(dy, dx) * 0 + f * f * 1.9 * (dx * pvy - dy * pvx > 0 ? 1 : -1)
+              x += (dx / d) * f * f * 9
+              y += (dy / d) * f * f * 9
+            }
+
+            x += fcos(a) * STEP
+            y += fsin(a) * STEP
+
+            // Taken off below the clipper line.
+            if (cutAt === RIB_PTS && y / h > line) {
+              const over = (y / h - line) * 5
+              if (over > 1) { cutAt = i + 1; break }
+              cut = 1 - over
+            }
           }
-          s.shaved *= 0.994
 
-          // Taper along the clipper line: full length above, skin below.
-          const d = (s.y / h - line) / 0.28
-          const k = d < -1 ? -1 : d > 1 ? 1 : d
-          const u = (k + 1) * 0.5
-          const taper = 0.14 + 0.86 * u * u * (3 - 2 * u)
-          const growth = (wHair + wFade * taper) / wStrand
-          const cut = growth * (1 - s.shaved * 0.88)
+          const n = cutAt < 4 ? 0 : cutAt
+          if (!n) continue
 
-          // cx/cy stay near unit length as they chase normalized targets,
-          // so the per-strand renormalization is not worth its sqrt.
-          const len = s.len * cut
-          const x2 = s.x + s.cx * len
-          const y2 = s.y + s.cy * len
-
-          const ai = Math.min(ALPHA_STEPS - 1, (((0.2 + cut * 0.8) * ALPHA_STEPS) | 0))
-          silver[s.thick ? 1 : 0][ai].push(s.x, s.y, x2, y2)
-
-          // Gold picks out the taper and the hair riding the comb.
-          // dist is only resolved inside the comb radius, so gate on d2.
-          const glowFade = wFade * Math.max(0, 1 - Math.abs(d))
-          let glowComb = 0
-          if (d2 < combR2 && dist > 0) {
-            const q = 1 - dist / combR
-            glowComb = wHair * q * q
+          // Shaved right under the pointer, in the fade half of the page.
+          let shave = 1
+          if (scroll > 0.2) {
+            const dx = r.ax - px
+            const dy = r.ay - py
+            const d2 = dx * dx + dy * dy
+            if (d2 < CLIP2) shave = 0.12 + 0.88 * (Math.sqrt(d2) / CLIP)
           }
-          // Gold strands are drawn a second time, so keep the band tight.
-          const glow = Math.max(glowFade, glowComb)
-          if (glow > 0.22) {
-            const gi = Math.min(ALPHA_STEPS - 1, (glow * ALPHA_STEPS) | 0)
-            gold[gi].push(s.x, s.y, x2, y2)
+
+          const width = r.w * cut * shave
+          if (width < 0.3) continue
+
+          const lvl = Math.min(LEVELS - 1, ((r.w / 4) * LEVELS) | 0)
+          const idx = (r.gold ? LEVELS : 0) + lvl
+          const body = bodies[idx]
+
+          // Walk out one side and back the other to close the ribbon. The
+          // offsets are kept from the outbound pass — recomputing them on
+          // the way back doubles the normalize work for identical numbers.
+          const inv = 1 / (n - 1)
+          for (let i = 0; i < n; i++) {
+            const taper = Math.sqrt(fsin(i * inv * Math.PI)) * width
+            const j = i * 2
+            const k = Math.min(n - 1, i + 1) * 2
+            const tx = r.pts[k] - r.pts[j]
+            const ty = r.pts[k + 1] - r.pts[j + 1]
+            const m = Math.sqrt(tx * tx + ty * ty) || 1
+            const ox = (-ty / m) * taper
+            const oy = (tx / m) * taper
+            off[j] = ox
+            off[j + 1] = oy
+            if (i === 0) body.moveTo(r.pts[j] + ox, r.pts[j + 1] + oy)
+            else body.lineTo(r.pts[j] + ox, r.pts[j + 1] + oy)
+          }
+          for (let i = n - 1; i >= 0; i--) {
+            const j = i * 2
+            body.lineTo(r.pts[j] - off[j], r.pts[j + 1] - off[j + 1])
+          }
+          body.closePath()
+
+          if (r.bright) {
+            const core = cores[idx]
+            core.moveTo(r.pts[0], r.pts[1])
+            for (let i = 1; i < n; i++) core.lineTo(r.pts[i * 2], r.pts[i * 2 + 1])
           }
         }
 
-        // 'round' caps rasterize two arcs per segment; at a few thousand
-        // hair-thin strands that cost is invisible but not cheap.
-        ctx.lineCap = 'butt'
-        const stroke = (arr: number[]) => {
+        for (let lvl = 0; lvl < LEVELS; lvl++) {
+          const a = (0.1 + (lvl / LEVELS) * 0.2) * wHair
+          ctx.fillStyle = `rgba(214,222,238,${a.toFixed(3)})`
+          ctx.fill(bodies[lvl])
+          ctx.fillStyle = `rgba(212,175,55,${(a * 1.6).toFixed(3)})`
+          ctx.fill(bodies[LEVELS + lvl])
+        }
+        ctx.lineWidth = 0.9
+        ctx.strokeStyle = `rgba(240,246,255,${(0.22 * wHair).toFixed(3)})`
+        for (let lvl = 0; lvl < LEVELS; lvl++) ctx.stroke(cores[lvl])
+        ctx.strokeStyle = `rgba(255,226,150,${(0.38 * wHair).toFixed(3)})`
+        for (let lvl = 0; lvl < LEVELS; lvl++) ctx.stroke(cores[LEVELS + lvl])
+
+        // Light along the taper, and the clipper head itself.
+        const fy = line * h
+        const band = h * 0.2
+        const g = ctx.createLinearGradient(0, fy - band, 0, fy + band)
+        g.addColorStop(0, 'rgba(212,175,55,0)')
+        g.addColorStop(0.5, `rgba(212,175,55,${(0.07 * wHair).toFixed(3)})`)
+        g.addColorStop(1, 'rgba(212,175,55,0)')
+        ctx.fillStyle = g
+        ctx.fillRect(0, fy - band, w, band * 2)
+
+        if (scroll > 0.2) {
+          const cg = ctx.createRadialGradient(px, py, 0, px, py, CLIP)
+          cg.addColorStop(0, `rgba(212,175,55,${(0.16 * wHair).toFixed(3)})`)
+          cg.addColorStop(1, 'rgba(212,175,55,0)')
+          ctx.fillStyle = cg
+          ctx.fillRect(px - CLIP, py - CLIP, CLIP * 2, CLIP * 2)
+        }
+
+        // Clippings falling away from the cut.
+        if (!reduced) {
+          ctx.strokeStyle = `rgba(226,232,244,${(0.3 * wHair).toFixed(3)})`
+          ctx.lineWidth = 1
           ctx.beginPath()
-          for (let i = 0; i < arr.length; i += 4) {
-            ctx.moveTo(arr[i], arr[i + 1])
-            ctx.lineTo(arr[i + 2], arr[i + 3])
+          for (const c of clips) {
+            if (c.a <= 0) { respawn(c, line); continue }
+            c.x += c.vx
+            c.y += c.vy
+            c.vy += 0.012
+            c.rot += c.spin
+            c.a -= 0.006
+            if (c.y > h + 20) c.a = 0
+            const ex = fcos(c.rot) * c.len
+            const ey = fsin(c.rot) * c.len
+            ctx.moveTo(c.x - ex, c.y - ey)
+            ctx.lineTo(c.x + ex, c.y + ey)
           }
           ctx.stroke()
         }
-
-        for (let t = 0; t < 2; t++) {
-          ctx.lineWidth = t === 0 ? 0.75 : 1.4
-          for (let a = 0; a < ALPHA_STEPS; a++) {
-            if (!silver[t][a].length) continue
-            const al = ((a + 1) / ALPHA_STEPS) * 0.34 * wStrand
-            ctx.strokeStyle = `rgba(228,233,242,${al.toFixed(3)})`
-            stroke(silver[t][a])
-          }
-        }
-
-        ctx.lineWidth = 1.2
-        for (let a = 0; a < ALPHA_STEPS; a++) {
-          if (!gold[a].length) continue
-          const al = ((a + 1) / ALPHA_STEPS) * 0.5 * wStrand
-          ctx.strokeStyle = `rgba(212,175,55,${al.toFixed(3)})`
-          stroke(gold[a])
-        }
-
-        // The clipper head itself.
-        if (wFade > 0.15) {
-          const g = ctx.createRadialGradient(px, py, 0, px, py, clipR)
-          g.addColorStop(0, `rgba(212,175,55,${(0.13 * wFade).toFixed(3)})`)
-          g.addColorStop(1, 'rgba(212,175,55,0)')
-          ctx.fillStyle = g
-          ctx.fillRect(px - clipR, py - clipR, clipR * 2, clipR * 2)
-        }
       }
 
-      /* ── Scene 3: halftone fade ───────────────────────────────────── */
+      /* ── Halftone fade ────────────────────────────────────────────── */
       if (wGrid > 0.01) {
-        const t = (scroll - 0.62) / 0.38
+        const t = (scroll - 0.63) / 0.37
         const edge = t * 1.4 - 0.35
         const GOLD_R = 210
         const TAU = Math.PI * 2
 
-        // Radius per dot is wanted twice, so resolve it once per pass.
         const radius = (d: Dot, dist: number) => {
           const along = (d.x / w) * 0.35 + (d.y / h) * 0.65
           let f = clamp01((along - edge) * 1.9)
@@ -380,7 +444,7 @@ function BarberBackground() {
           return d.r * clamp01(f)
         }
 
-        ctx.fillStyle = `rgba(228,233,242,${(0.3 * wGrid).toFixed(3)})`
+        ctx.fillStyle = `rgba(228,233,242,${(0.32 * wGrid).toFixed(3)})`
         ctx.beginPath()
         for (const d of dots) {
           const ddx = d.x - px
@@ -392,8 +456,7 @@ function BarberBackground() {
         }
         ctx.fill()
 
-        // A gold pass on the dots nearest the pointer.
-        ctx.fillStyle = `rgba(212,175,55,${(0.42 * wGrid).toFixed(3)})`
+        ctx.fillStyle = `rgba(212,175,55,${(0.45 * wGrid).toFixed(3)})`
         ctx.beginPath()
         for (const d of dots) {
           const ddx = d.x - px
@@ -418,8 +481,6 @@ function BarberBackground() {
 
     build()
     frame()
-    // Re-measure only when the document actually changes height (images
-    // loading, fonts swapping in) rather than polling it every frame.
     const ro = new ResizeObserver(measureScroll)
     ro.observe(document.body)
     window.addEventListener('resize', onResize)

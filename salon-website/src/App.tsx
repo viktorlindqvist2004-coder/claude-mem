@@ -35,8 +35,6 @@ const ServiceIcon = ({ type }: { type: string }) => {
 
 const IMAGES = {
   hero: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
-  salon: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920&q=85&auto=format',
-  craft: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1920&q=85&auto=format',
 }
 
 const services = [
@@ -100,6 +98,165 @@ function FadeIn({ children, className = '', delay = 0 }: { children: React.React
   )
 }
 
+/* ═══ Scroll-driven skinfade background ═══
+   A field of hair strands with a clipper line that sweeps down the page as
+   you scroll. Above the line the hair is full length, below it is taken down
+   to skin, and the taper between the two glows gold. */
+
+type Strand = { x: number; y: number; len: number; ang: number; phase: number; tier: 0 | 1 }
+
+const ALPHA_STEPS = 7
+
+function ScrollFadeBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+
+    let w = 0
+    let h = 0
+    let strands: Strand[] = []
+    let raf = 0
+    let smoothed = -1
+    let clock = 0
+
+    // Draw buckets, reused every frame so the loop allocates nothing.
+    const silver = [
+      Array.from({ length: ALPHA_STEPS }, () => [] as number[]),
+      Array.from({ length: ALPHA_STEPS }, () => [] as number[]),
+    ]
+    const gold = Array.from({ length: ALPHA_STEPS }, () => [] as number[])
+
+    const build = () => {
+      w = window.innerWidth
+      h = window.innerHeight
+      canvas.width = Math.round(w * dpr)
+      canvas.height = Math.round(h * dpr)
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+      const gap = w < 640 ? 22 : 17
+      strands = []
+      for (let x = 0; x <= w + gap; x += gap) {
+        for (let y = 0; y <= h + gap; y += gap) {
+          strands.push({
+            x: x + (Math.random() - 0.5) * gap * 0.9,
+            y: y + (Math.random() - 0.5) * gap * 0.9,
+            len: gap * (1.05 + Math.random() * 1.15),
+            ang: -Math.PI / 2 + (Math.random() - 0.5) * 0.6,
+            phase: Math.random() * Math.PI * 2,
+            tier: Math.random() > 0.74 ? 1 : 0,
+          })
+        }
+      }
+    }
+
+    const scrollProgress = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+    }
+
+    const frame = () => {
+      raf = requestAnimationFrame(frame)
+      if (document.hidden) return
+
+      const target = scrollProgress()
+      smoothed = smoothed < 0 ? target : smoothed + (target - smoothed) * 0.12
+      if (!reduced) clock += 0.007
+
+      ctx.clearRect(0, 0, w, h)
+
+      // Clipper line position, from just above the fold to past the bottom.
+      const fade = -0.22 + smoothed * 1.44
+      const blend = 0.3
+
+      // Warm band of light riding along the taper.
+      const fy = fade * h
+      const band = h * 0.26
+      const glowGrad = ctx.createLinearGradient(0, fy - band, 0, fy + band)
+      glowGrad.addColorStop(0, 'rgba(212,175,55,0)')
+      glowGrad.addColorStop(0.5, 'rgba(212,175,55,0.075)')
+      glowGrad.addColorStop(1, 'rgba(212,175,55,0)')
+      ctx.fillStyle = glowGrad
+      ctx.fillRect(0, fy - band, w, band * 2)
+
+      for (const bucket of silver) for (const arr of bucket) arr.length = 0
+      for (const arr of gold) arr.length = 0
+
+      for (const s of strands) {
+        const d = (s.y / h - fade) / blend
+        const k = Math.max(-1, Math.min(1, d))
+        const cut = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin((k * Math.PI) / 2))
+        const glow = Math.max(0, 1 - Math.abs(d))
+
+        const ang = s.ang + (reduced ? 0 : Math.sin(clock * 1.6 + s.phase) * 0.07)
+        const len = s.len * cut
+        const x2 = s.x + Math.cos(ang) * len
+        const y2 = s.y + Math.sin(ang) * len
+
+        const ai = Math.min(ALPHA_STEPS - 1, Math.floor((0.18 + cut * 0.82) * ALPHA_STEPS))
+        silver[s.tier][ai].push(s.x, s.y, x2, y2)
+
+        if (glow > 0.1) {
+          const gi = Math.min(ALPHA_STEPS - 1, Math.floor(glow * ALPHA_STEPS))
+          gold[gi].push(s.x, s.y, x2, y2)
+        }
+      }
+
+      ctx.lineCap = 'round'
+
+      const strokeBucket = (arr: number[]) => {
+        ctx.beginPath()
+        for (let i = 0; i < arr.length; i += 4) {
+          ctx.moveTo(arr[i], arr[i + 1])
+          ctx.lineTo(arr[i + 2], arr[i + 3])
+        }
+        ctx.stroke()
+      }
+
+      for (let tier = 0; tier < 2; tier++) {
+        ctx.lineWidth = tier === 0 ? 0.7 : 1.3
+        for (let a = 0; a < ALPHA_STEPS; a++) {
+          if (!silver[tier][a].length) continue
+          ctx.strokeStyle = `rgba(226,232,240,${(((a + 1) / ALPHA_STEPS) * 0.3).toFixed(3)})`
+          strokeBucket(silver[tier][a])
+        }
+      }
+
+      ctx.lineWidth = 1.1
+      for (let a = 0; a < ALPHA_STEPS; a++) {
+        if (!gold[a].length) continue
+        ctx.strokeStyle = `rgba(212,175,55,${(((a + 1) / ALPHA_STEPS) * 0.45).toFixed(3)})`
+        strokeBucket(gold[a])
+      }
+    }
+
+    let resizeTimer: number | undefined
+    const onResize = () => {
+      window.clearTimeout(resizeTimer)
+      resizeTimer = window.setTimeout(build, 150)
+    }
+
+    build()
+    frame()
+    window.addEventListener('resize', onResize)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(resizeTimer)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
+
+  return <canvas ref={canvasRef} aria-hidden className="fixed inset-0 z-0 pointer-events-none" />
+}
+
 /* ═══ App ═══ */
 
 function App() {
@@ -149,6 +306,10 @@ function App() {
 
   return (
     <div className="min-h-screen rich-bg grain-overlay" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" }}>
+
+      <ScrollFadeBackground />
+
+      <div className="relative z-10">
 
       {/* Progress bar */}
       <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-[#d4af37] via-[#b8860b] to-[#d4af37] z-[200]"
@@ -297,79 +458,61 @@ function App() {
       </section>
 
       {/* ═══ SALONGEN ═══ */}
-      <section id="salon" className="relative h-screen overflow-hidden">
-        <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
-          style={{ backgroundImage: `url(${IMAGES.salon})` }} />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
-        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#080808] to-transparent z-[3] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080808] to-transparent z-[3] pointer-events-none" />
-        <div className="ft-vignette" />
-
-        <div className="relative z-10 h-full flex items-center px-6 sm:px-14 md:px-20">
-          <div className="max-w-lg">
-            <FadeIn>
-              <p className="section-label mb-4">Salongen</p>
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
-                Designad för<br />din stund
-              </h2>
-              <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
-            </FadeIn>
-            <FadeIn delay={200}>
-              <p className="text-white/70 text-base leading-relaxed mt-4">
-                Läder, mässing och varma träslag. Vår salong på Edsgatan 23 är byggd
-                för att du ska kunna slappna av. Ingen stress, inga köer — bara hantverk
-                och en stund för dig själv.
-              </p>
-            </FadeIn>
-            <FadeIn delay={400}>
-              <div className="flex flex-wrap gap-3 mt-8">
-                {['Klassisk inredning', 'Avslappnad atmosfär', 'Centralt läge'].map(tag => (
-                  <span key={tag} className="text-[10px] text-[#d4af37]/70 uppercase tracking-[0.15em] border border-[#d4af37]/15 px-3 py-1.5">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </FadeIn>
-          </div>
+      <section id="salon" className="relative min-h-screen flex items-center px-6 sm:px-14 md:px-20 py-24">
+        <div className="max-w-lg rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-8 sm:p-10">
+          <FadeIn>
+            <p className="section-label mb-4">Salongen</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
+              Designad för<br />din stund
+            </h2>
+            <div className="gold-line active" style={{ margin: '1.5rem auto 1.5rem 0' }} />
+          </FadeIn>
+          <FadeIn delay={200}>
+            <p className="text-white/70 text-base leading-relaxed mt-4">
+              Läder, mässing och varma träslag. Vår salong på Edsgatan 23 är byggd
+              för att du ska kunna slappna av. Ingen stress, inga köer — bara hantverk
+              och en stund för dig själv.
+            </p>
+          </FadeIn>
+          <FadeIn delay={400}>
+            <div className="flex flex-wrap gap-3 mt-8">
+              {['Klassisk inredning', 'Avslappnad atmosfär', 'Centralt läge'].map(tag => (
+                <span key={tag} className="text-[10px] text-[#d4af37]/70 uppercase tracking-[0.15em] border border-[#d4af37]/15 px-3 py-1.5">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </FadeIn>
         </div>
       </section>
 
       {/* ═══ HANTVERKET ═══ */}
-      <section id="craft" className="relative h-screen overflow-hidden">
-        <div data-parallax className="absolute inset-[-8%] bg-cover"
-          style={{ backgroundImage: `url(${IMAGES.craft})`, backgroundPosition: 'center 40%' }} />
-        <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/50 to-black/30" />
-        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#080808] to-transparent z-[3] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080808] to-transparent z-[3] pointer-events-none" />
-        <div className="ft-vignette" />
-
-        <div className="relative z-10 h-full flex items-center justify-end px-6 sm:px-14 md:px-20">
-          <div className="max-w-lg text-right">
-            <FadeIn>
-              <p className="section-label mb-4">Hantverket</p>
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
-                Precision i<br />varje detalj
-              </h2>
-              <div className="gold-line active" style={{ margin: '1.5rem 0 1.5rem auto' }} />
-            </FadeIn>
-            <FadeIn delay={200}>
-              <p className="text-white/70 text-base leading-relaxed mt-4">
-                Från klassiska herrklippningar till skinfades med rakkniv. Vi behärskar
-                både traditionella och moderna tekniker — alltid med rakkniv, varma handdukar
-                och öga för detaljen. Varje klippning avslutas med styling och personliga
-                tips för att hålla looken hemma.
-              </p>
-            </FadeIn>
-            <FadeIn delay={400}>
-              <div className="flex flex-wrap justify-end gap-3 mt-8">
-                {['Skinfade', 'Rakkniv', 'Varma handdukar', 'Skäggvård'].map(tag => (
-                  <span key={tag} className="text-[10px] text-[#d4af37]/70 uppercase tracking-[0.15em] border border-[#d4af37]/15 px-3 py-1.5">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </FadeIn>
-          </div>
+      <section id="craft" className="relative min-h-screen flex items-center justify-end px-6 sm:px-14 md:px-20 py-24">
+        <div className="max-w-lg text-right rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-8 sm:p-10">
+          <FadeIn>
+            <p className="section-label mb-4">Hantverket</p>
+            <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
+              Precision i<br />varje detalj
+            </h2>
+            <div className="gold-line active" style={{ margin: '1.5rem 0 1.5rem auto' }} />
+          </FadeIn>
+          <FadeIn delay={200}>
+            <p className="text-white/70 text-base leading-relaxed mt-4">
+              Från klassiska herrklippningar till skinfades med rakkniv. Vi behärskar
+              både traditionella och moderna tekniker — alltid med rakkniv, varma handdukar
+              och öga för detaljen. Varje klippning avslutas med styling och personliga
+              tips för att hålla looken hemma.
+            </p>
+          </FadeIn>
+          <FadeIn delay={400}>
+            <div className="flex flex-wrap justify-end gap-3 mt-8">
+              {['Skinfade', 'Rakkniv', 'Varma handdukar', 'Skäggvård'].map(tag => (
+                <span key={tag} className="text-[10px] text-[#d4af37]/70 uppercase tracking-[0.15em] border border-[#d4af37]/15 px-3 py-1.5">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </FadeIn>
         </div>
       </section>
 
@@ -566,6 +709,8 @@ function App() {
           </div>
         </div>
       </footer>
+
+      </div>
     </div>
   )
 }

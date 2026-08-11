@@ -33,8 +33,14 @@ const ServiceIcon = ({ type }: { type: string }) => {
 
 /* ═══ Data ═══ */
 
+/* Generated for this site (Higgsfield, soul_2). These are hotlinked from
+   the generator's CDN because the build environment could not download
+   them; move them into public/img and swap these for local paths when
+   convenient, so the site does not depend on someone else's host. */
 const IMAGES = {
-  hero: 'https://images.unsplash.com/photo-1585747860019-8901a572253d?w=1920&q=85&auto=format',
+  hero: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Gp8ZSPuuM6vEtGDVPzKDrG4V4O/hf_20260811_221059_301359b9-83d3-44dd-9929-95ace4139e41.png',
+  salon: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Gp8ZSPuuM6vEtGDVPzKDrG4V4O/hf_20260811_221059_904e8b19-7667-48bd-985e-372321452ce2.png',
+  craft: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Gp8ZSPuuM6vEtGDVPzKDrG4V4O/hf_20260811_221059_0ddd4f42-6e00-43fd-8eea-67af353d3ed3.png',
 }
 
 const services = [
@@ -375,8 +381,15 @@ function App() {
       </section>
 
       {/* ═══ SALONGEN ═══ */}
-      <section id="salon" className="relative min-h-screen flex items-center px-6 sm:px-14 md:px-20 py-24">
-        <div className="max-w-lg rounded-2xl border border-white/10 bg-white/[0.045] p-8 sm:p-10">
+      <section id="salon" className="relative min-h-screen flex items-center px-6 sm:px-14 md:px-20 py-24 overflow-hidden">
+        <div data-parallax className="absolute inset-[-8%] bg-cover bg-center"
+          style={{ backgroundImage: `url(${IMAGES.salon})` }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-[#050505]/35" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#080808] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none" />
+        <div className="ft-vignette" />
+
+        <div className="relative z-10 max-w-lg">
           <FadeIn>
             <p className="section-label mb-4">Salongen</p>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">
@@ -404,8 +417,15 @@ function App() {
       </section>
 
       {/* ═══ HANTVERKET ═══ */}
-      <section id="craft" className="relative min-h-screen flex items-center justify-end px-6 sm:px-14 md:px-20 py-24">
-        <div className="max-w-lg text-right rounded-2xl border border-white/10 bg-white/[0.045] p-8 sm:p-10">
+      <section id="craft" className="relative min-h-screen flex items-center justify-end px-6 sm:px-14 md:px-20 py-24 overflow-hidden">
+        <div data-parallax className="absolute inset-[-8%] bg-cover"
+          style={{ backgroundImage: `url(${IMAGES.craft})`, backgroundPosition: 'center 45%' }} />
+        <div className="absolute inset-0 bg-gradient-to-l from-[#050505] via-[#050505]/80 to-[#050505]/35" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#080808] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none" />
+        <div className="ft-vignette" />
+
+        <div className="relative z-10 max-w-lg text-right">
           <FadeIn>
             <p className="section-label mb-4">Hantverket</p>
             <h2 className="hero-title text-4xl sm:text-5xl md:text-7xl mb-4">

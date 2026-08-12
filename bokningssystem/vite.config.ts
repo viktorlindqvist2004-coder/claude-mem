@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 
+// Bara för demon. Paketet självt byggs av den sida som använder det.
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  root: 'demo',
+  plugins: [react()],
+  server: { port: 5300 },
+  preview: { port: 5300 },
 })

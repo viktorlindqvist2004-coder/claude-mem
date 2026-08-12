@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Lock, Plus, Scissors, Trash2, X } from 'lucide-react'
-import { OPENING_HOURS, SLOT_INTERVAL } from './config'
-import { formatDateLong, fromDateKey, slotsForDay, toDateKey, toHHMM, toMinutes, weekdayShort } from './availability'
+import { CalendarDays, CalendarOff, ChevronLeft, ChevronRight, Clock, Loader2, Lock, Plus, Scissors, Trash2, X } from 'lucide-react'
+import { SLOT_INTERVAL } from './config'
+import { DEFAULT_SCHEDULE, formatDateLong, fromDateKey, hoursFor, slotsForDay, toDateKey, toHHMM, toMinutes, weekdayShort } from './availability'
 import { store, storeMode } from './store'
-import type { Block, Booking } from './types'
+import type { Block, Booking, Schedule, WeekHours } from './types'
 
 /**
  * The barber's view of the book.
@@ -102,6 +102,8 @@ function AdminBoard({ onLogout }: { onLogout: () => void | Promise<void> }) {
   const [blockTime, setBlockTime] = useState('12:00')
   const [blockDuration, setBlockDuration] = useState(60)
   const [blockReason, setBlockReason] = useState('')
+  const [schedule, setSchedule] = useState<Schedule>(DEFAULT_SCHEDULE)
+  const [tab, setTab] = useState<'day' | 'schedule'>('day')
 
   // The strip along the top shows the next fortnight at a glance.
   const strip = useMemo(() => {
@@ -119,7 +121,10 @@ function AdminBoard({ onLogout }: { onLogout: () => void | Promise<void> }) {
     try {
       const from = toDateKey(strip[0])
       const to = toDateKey(strip[strip.length - 1])
-      const [bs, bl] = await Promise.all([store.listBookings(from, to), store.listBlocks(from, to)])
+      const [bs, bl, sch] = await Promise.all([
+        store.listBookings(from, to), store.listBlocks(from, to), store.getSchedule(),
+      ])
+      setSchedule(sch)
       setBookings(bs.filter((b) => b.date === dateKey))
       setBlocks(bl.filter((b) => b.date === dateKey))
       const counts: Record<string, number> = {}
@@ -141,7 +146,7 @@ function AdminBoard({ onLogout }: { onLogout: () => void | Promise<void> }) {
   }
 
   const revenue = bookings.reduce((sum, b) => sum + b.price, 0)
-  const hours = OPENING_HOURS[fromDateKey(dateKey).getDay()]
+  const hours = hoursFor(dateKey, schedule)
 
   // Timeline of the day: every slot on the grid, marked with what holds it.
   // Slots already gone by are flagged so the strip does not advertise them
@@ -175,7 +180,7 @@ function AdminBoard({ onLogout }: { onLogout: () => void | Promise<void> }) {
     ? slotsForDay(dateKey, 30, [
         ...bookings.map((b) => ({ date: b.date, time: b.time, duration: b.duration })),
         ...blocks.map((b) => ({ date: b.date, time: b.time, duration: b.duration })),
-      ]).filter((s) => s.available).length
+      ], schedule).filter((s) => s.available).length
     : 0
 
   const addBlock = async () => {
@@ -213,12 +218,29 @@ function AdminBoard({ onLogout }: { onLogout: () => void | Promise<void> }) {
           </p>
         )}
 
+        {/* Tabs */}
+        <div className="flex gap-2 mb-8">
+          {([['day', 'Dagen'], ['schedule', 'Öppettider']] as const).map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`text-[10px] font-bold px-5 py-2.5 tracking-[0.2em] uppercase border transition-all duration-300 cursor-pointer bg-transparent ${
+                tab === id ? 'border-[#d4af37]/50 text-[#d4af37]' : 'border-white/[0.08] text-white/40 hover:text-white/70'
+              }`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'schedule' ? (
+          <ScheduleEditor schedule={schedule} onSaved={load} />
+        ) : (
+        <>
+
         {/* Fortnight strip */}
         <div className="flex gap-1.5 overflow-x-auto pb-2 mb-8">
           {strip.map((d) => {
             const key = toDateKey(d)
             const active = key === dateKey
-            const closed = OPENING_HOURS[d.getDay()] === null
+            const closed = hoursFor(key, schedule) === null
             const n = weekCounts[key] ?? 0
             return (
               <button key={key} onClick={() => setDateKey(key)}
@@ -412,6 +434,185 @@ function AdminBoard({ onLogout }: { onLogout: () => void | Promise<void> }) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const WEEKDAY_NAMES = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag']
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]
+
+/**
+ * Opening hours and holidays, both editable here so the barber never has to
+ * touch the code to take a week off.
+ */
+function ScheduleEditor({ schedule, onSaved }: { schedule: Schedule; onSaved: () => Promise<void> }) {
+  const [week, setWeek] = useState<WeekHours>(schedule.week)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [reason, setReason] = useState('')
+  const [special, setSpecial] = useState(false)
+  const [openTime, setOpenTime] = useState('10:00')
+  const [closeTime, setCloseTime] = useState('15:00')
+
+  useEffect(() => { setWeek(schedule.week) }, [schedule.week])
+
+  const setDay = (d: number, patch: { open?: string; close?: string } | null) => {
+    setSaved(false)
+    setWeek((w) => ({ ...w, [d]: patch === null ? null : { open: '10:00', close: '18:00', ...w[d], ...patch } }))
+  }
+
+  const saveWeek = async () => {
+    setSaving(true); setError(null)
+    try {
+      await store.saveWeek(week)
+      setSaved(true)
+      await onSaved()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kunde inte spara')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const addClosure = async () => {
+    if (!from) return
+    setError(null)
+    try {
+      await store.addClosure({
+        from, to: to || from, reason: reason.trim(),
+        open: special ? openTime : null,
+        close: special ? closeTime : null,
+      })
+      setFrom(''); setTo(''); setReason(''); setSpecial(false)
+      await onSaved()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kunde inte spara')
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+      {/* Weekly hours */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="w-3.5 h-3.5 text-[#d4af37]/70" />
+          <p className="text-white/40 text-[10px] uppercase tracking-[0.3em]">Vanliga öppettider</p>
+        </div>
+
+        <div className="border border-white/[0.06]">
+          {WEEK_ORDER.map((d, i) => {
+            const h = week[d]
+            return (
+              <div key={d} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-white/[0.04]' : ''}`}>
+                <span className="w-20 text-[12px] text-white/70">{WEEKDAY_NAMES[d]}</span>
+                {h ? (
+                  <>
+                    <input type="time" value={h.open} onChange={(e) => setDay(d, { open: e.target.value })}
+                      className="bg-transparent border border-white/[0.1] px-2 py-1.5 text-[12px] text-white focus:border-[#d4af37]/50 focus:outline-none" />
+                    <span className="text-white/25 text-xs">–</span>
+                    <input type="time" value={h.close} onChange={(e) => setDay(d, { close: e.target.value })}
+                      className="bg-transparent border border-white/[0.1] px-2 py-1.5 text-[12px] text-white focus:border-[#d4af37]/50 focus:outline-none" />
+                  </>
+                ) : (
+                  <span className="flex-1 text-white/25 text-[12px]">Stängt</span>
+                )}
+                <button onClick={() => setDay(d, h ? null : {})}
+                  className={`ml-auto text-[9px] font-bold px-3 py-1.5 tracking-[0.15em] uppercase border bg-transparent cursor-pointer transition-colors ${
+                    h ? 'border-white/[0.08] text-white/35 hover:border-red-400/40 hover:text-red-300'
+                      : 'border-[#d4af37]/30 text-[#d4af37]/80 hover:border-[#d4af37]/60'
+                  }`}>
+                  {h ? 'Stäng' : 'Öppna'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        <button onClick={saveWeek} disabled={saving}
+          className="w-full mt-3 border border-[#d4af37]/40 text-[#d4af37] text-[10px] font-bold py-3 tracking-[0.2em] uppercase bg-transparent cursor-pointer hover:bg-[#d4af37] hover:text-black transition-all duration-500 disabled:opacity-40">
+          {saving ? 'Sparar…' : saved ? 'Sparat ✓' : 'Spara öppettider'}
+        </button>
+        {error && <p className="text-red-300/80 text-xs mt-3">{error}</p>}
+      </div>
+
+      {/* Closures */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarOff className="w-3.5 h-3.5 text-[#d4af37]/70" />
+          <p className="text-white/40 text-[10px] uppercase tracking-[0.3em]">Semester &amp; avvikelser</p>
+        </div>
+
+        <div className="border border-[#d4af37]/15 bg-[#d4af37]/[0.02] p-4 mb-4">
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <label className="block">
+              <span className="block text-white/35 text-[9px] uppercase tracking-[0.2em] mb-1.5">Från</span>
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+                className="w-full bg-transparent border border-white/[0.1] px-3 py-2 text-[12px] text-white focus:border-[#d4af37]/50 focus:outline-none" />
+            </label>
+            <label className="block">
+              <span className="block text-white/35 text-[9px] uppercase tracking-[0.2em] mb-1.5">Till</span>
+              <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)}
+                className="w-full bg-transparent border border-white/[0.1] px-3 py-2 text-[12px] text-white focus:border-[#d4af37]/50 focus:outline-none" />
+            </label>
+          </div>
+          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Anledning, t.ex. Semester"
+            className="w-full bg-transparent border border-white/[0.1] px-3 py-2 text-[12px] text-white placeholder:text-white/25 focus:border-[#d4af37]/50 focus:outline-none mb-3" />
+
+          <label className="flex items-center gap-2 mb-3 cursor-pointer">
+            <input type="checkbox" checked={special} onChange={(e) => setSpecial(e.target.checked)}
+              className="accent-[#d4af37]" />
+            <span className="text-white/50 text-[11px]">Öppet, men andra tider</span>
+          </label>
+
+          {special && (
+            <div className="flex items-center gap-2 mb-3">
+              <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)}
+                className="bg-transparent border border-white/[0.1] px-2 py-1.5 text-[12px] text-white focus:border-[#d4af37]/50 focus:outline-none" />
+              <span className="text-white/25 text-xs">–</span>
+              <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
+                className="bg-transparent border border-white/[0.1] px-2 py-1.5 text-[12px] text-white focus:border-[#d4af37]/50 focus:outline-none" />
+            </div>
+          )}
+
+          <button onClick={addClosure} disabled={!from}
+            className="w-full border border-[#d4af37]/40 text-[#d4af37] text-[10px] font-bold py-2.5 tracking-[0.2em] uppercase bg-transparent cursor-pointer hover:bg-[#d4af37] hover:text-black transition-all duration-500 disabled:opacity-30">
+            Lägg till
+          </button>
+        </div>
+
+        {schedule.closures.length === 0 ? (
+          <p className="text-white/25 text-[12px]">Inga inlagda perioder.</p>
+        ) : (
+          <div className="space-y-2">
+            {schedule.closures.map((c) => (
+              <div key={c.id} className="flex items-center justify-between border border-white/[0.06] px-4 py-2.5">
+                <span className="text-[12px]">
+                  <span className="text-white/80 tabular-nums">
+                    {c.from}{c.to !== c.from ? ` – ${c.to}` : ''}
+                  </span>
+                  <span className="text-white/40">
+                    {' · '}{c.open && c.close ? `${c.open}–${c.close}` : 'Stängt'}
+                    {c.reason ? ` · ${c.reason}` : ''}
+                  </span>
+                </span>
+                <button onClick={async () => { await store.deleteClosure(c.id); await onSaved() }}
+                  aria-label="Ta bort"
+                  className="w-7 h-7 flex items-center justify-center border border-white/[0.08] text-white/35 hover:border-red-400/40 hover:text-red-300 bg-transparent cursor-pointer transition-colors">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>

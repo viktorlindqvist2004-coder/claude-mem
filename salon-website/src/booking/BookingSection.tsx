@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Loader2, Phone } from 'lucide-react'
 import { CONTACT_PHONE, MAX_ADVANCE_DAYS, SERVICES, type Service } from './config'
-import { formatDateLong, isOpen, slotsForDay, toDateKey, upcomingDays, weekdayShort } from './availability'
+import { DEFAULT_SCHEDULE, formatDateLong, isOpen, slotsForDay, toDateKey, upcomingDays, weekdayShort } from './availability'
 import { store, storeMode } from './store'
-import type { Busy } from './types'
+import type { Busy, Schedule } from './types'
 
 const DAYS_PER_PAGE = 7
 
@@ -14,6 +14,7 @@ export default function BookingSection() {
   const [time, setTime] = useState<string | null>(null)
 
   const [busy, setBusy] = useState<Busy[]>([])
+  const [schedule, setSchedule] = useState<Schedule>(DEFAULT_SCHEDULE)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,12 +25,16 @@ export default function BookingSection() {
   const [email, setEmail] = useState('')
   const [note, setNote] = useState('')
 
-  const days = useMemo(() => {
-    const all = upcomingDays(MAX_ADVANCE_DAYS).filter(isOpen)
-    return all.slice(page * DAYS_PER_PAGE, page * DAYS_PER_PAGE + DAYS_PER_PAGE)
-  }, [page])
-
-  const maxPage = Math.ceil(upcomingDays(MAX_ADVANCE_DAYS).filter(isOpen).length / DAYS_PER_PAGE) - 1
+  // Days the shop is actually open, holidays already taken out.
+  const openDays = useMemo(
+    () => upcomingDays(MAX_ADVANCE_DAYS).filter((d) => isOpen(d, schedule)),
+    [schedule],
+  )
+  const days = useMemo(
+    () => openDays.slice(page * DAYS_PER_PAGE, page * DAYS_PER_PAGE + DAYS_PER_PAGE),
+    [openDays, page],
+  )
+  const maxPage = Math.max(0, Math.ceil(openDays.length / DAYS_PER_PAGE) - 1)
 
   const load = useCallback(async () => {
     if (days.length === 0) return
@@ -38,7 +43,9 @@ export default function BookingSection() {
     try {
       const from = toDateKey(days[0])
       const to = toDateKey(days[days.length - 1])
-      setBusy(await store.listBusy(from, to))
+      const [b, sch] = await Promise.all([store.listBusy(from, to), store.getSchedule()])
+      setBusy(b)
+      setSchedule(sch)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Kunde inte hämta tider')
     } finally {
@@ -49,8 +56,8 @@ export default function BookingSection() {
   useEffect(() => { void load() }, [load])
 
   const slots = useMemo(
-    () => (dateKey && service ? slotsForDay(dateKey, service.duration, busy) : []),
-    [dateKey, service, busy],
+    () => (dateKey && service ? slotsForDay(dateKey, service.duration, busy, schedule) : []),
+    [dateKey, service, busy, schedule],
   )
   const freeCount = slots.filter((s) => s.available).length
 
@@ -60,7 +67,7 @@ export default function BookingSection() {
     setError(null)
     try {
       // Re-check against fresh data: the grid may be a few minutes old.
-      const check = slotsForDay(dateKey, service.duration, await store.listBusy(dateKey, dateKey))
+      const check = slotsForDay(dateKey, service.duration, await store.listBusy(dateKey, dateKey), schedule)
       if (!check.find((s) => s.time === time)?.available) {
         setError('Den tiden hann bli bokad. Välj en annan.')
         setTime(null)

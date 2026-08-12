@@ -1,5 +1,5 @@
-import { BUFFER_MINUTES, MIN_ADVANCE_HOURS, OPENING_HOURS, SLOT_INTERVAL } from './config'
-import type { Busy } from './types'
+import { BUFFER_MINUTES, DEFAULT_WEEK, MIN_ADVANCE_HOURS, SLOT_INTERVAL } from './config'
+import type { Busy, Schedule } from './types'
 
 /** Minutes since midnight. */
 export function toMinutes(hhmm: string): number {
@@ -32,6 +32,20 @@ function clashes(aStart: number, aDuration: number, bStart: number, bDuration: n
   return aStart < bEnd + BUFFER_MINUTES && bStart < aEnd + BUFFER_MINUTES
 }
 
+/**
+ * The hours a given date actually keeps.
+ *
+ * A closure covering the date wins over the weekly pattern, so a week of
+ * holiday shuts those days without touching the normal schedule.
+ */
+export function hoursFor(dateKey: string, schedule: Schedule): { open: string; close: string } | null {
+  const closure = schedule.closures.find((c) => dateKey >= c.from && dateKey <= c.to)
+  if (closure) return closure.open && closure.close ? { open: closure.open, close: closure.close } : null
+  return schedule.week[fromDateKey(dateKey).getDay()] ?? null
+}
+
+export const DEFAULT_SCHEDULE: Schedule = { week: DEFAULT_WEEK, closures: [] }
+
 export type Slot = {
   time: string
   /** False when it clashes with something already in the book, or when it
@@ -50,10 +64,10 @@ export function slotsForDay(
   dateKey: string,
   serviceDuration: number,
   busy: Busy[],
+  schedule: Schedule = DEFAULT_SCHEDULE,
   now: Date = new Date(),
 ): Slot[] {
-  const date = fromDateKey(dateKey)
-  const hours = OPENING_HOURS[date.getDay()]
+  const hours = hoursFor(dateKey, schedule)
   if (!hours) return []
 
   const open = toMinutes(hours.open)
@@ -90,8 +104,8 @@ export function upcomingDays(count: number, from: Date = new Date()): Date[] {
   return out
 }
 
-export function isOpen(d: Date): boolean {
-  return OPENING_HOURS[d.getDay()] !== null
+export function isOpen(d: Date, schedule: Schedule = DEFAULT_SCHEDULE): boolean {
+  return hoursFor(toDateKey(d), schedule) !== null
 }
 
 const WEEKDAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör']

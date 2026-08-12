@@ -15,8 +15,14 @@ export const SERVICES: Service[] = [
   { id: 'ansikte', name: 'Ansiktsbehandling', price: 470, duration: 60 },
 ]
 
-/** Keyed by JS getDay(): 0 = Sunday. null means closed. */
-export const OPENING_HOURS: Record<number, { open: string; close: string } | null> = {
+/**
+ * The hours the shop keeps when nobody has changed anything.
+ *
+ * Once a schedule is saved from the admin panel this is only the seed —
+ * the saved one wins. It stays here so the site works before the first
+ * save, and in local mode where there is nothing to save to.
+ */
+export const DEFAULT_WEEK: Record<number, { open: string; close: string } | null> = {
   0: null,
   1: { open: '10:00', close: '18:00' },
   2: { open: '10:00', close: '18:00' },

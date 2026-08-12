@@ -1,4 +1,5 @@
-import type { Block, Booking, Busy } from './types'
+import { DEFAULT_WEEK } from './config'
+import type { Block, Booking, Busy, Closure, Schedule, WeekHours } from './types'
 
 /**
  * Where bookings live.
@@ -34,6 +35,13 @@ export interface BookingStore {
   createBlock(b: Omit<Block, 'id'>): Promise<Block>
   deleteBlock(id: string): Promise<void>
 
+  /** Opening hours and holidays. Readable by everyone — the booking form
+   *  needs it to know which days to offer. */
+  getSchedule(): Promise<Schedule>
+  saveWeek(week: WeekHours): Promise<void>
+  addClosure(c: Omit<Closure, 'id'>): Promise<void>
+  deleteClosure(id: string): Promise<void>
+
   /** Local mode checks a password in the bundle; shared mode uses real auth. */
   signIn(email: string, password: string): Promise<void>
   signOut(): Promise<void>
@@ -67,8 +75,27 @@ function write<T>(key: string, rows: T[]) {
 
 const LOCAL_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) || 'gentlemens'
 const LOCAL_SESSION = 'gb_admin_ok'
+const WEEK = 'gb_week'
+const CLOSURES = 'gb_closures'
 
 const localStore: BookingStore = {
+  async getSchedule() {
+    let week = DEFAULT_WEEK
+    try {
+      const raw = localStorage.getItem(WEEK)
+      if (raw) week = JSON.parse(raw)
+    } catch { /* fall back to the default */ }
+    return { week, closures: read<Closure>(CLOSURES) }
+  },
+  async saveWeek(week) {
+    try { localStorage.setItem(WEEK, JSON.stringify(week)) } catch { /* ignore */ }
+  },
+  async addClosure(c) {
+    write(CLOSURES, [...read<Closure>(CLOSURES), { ...c, id: newId() }])
+  },
+  async deleteClosure(id) {
+    write(CLOSURES, read<Closure>(CLOSURES).filter((c) => c.id !== id))
+  },
   async listBusy(from, to) {
     const [bookings, blocks] = await Promise.all([this.listBookings(from, to), this.listBlocks(from, to)])
     return [...bookings, ...blocks].map((b) => ({ date: b.date, time: b.time, duration: b.duration }))
@@ -139,6 +166,52 @@ const fromRow = (r: any): Booking => ({
 })
 
 const sharedStore: BookingStore = {
+  async getSchedule() {
+    const sb = await client()
+    const [w, c] = await Promise.all([
+      sb.from('week_hours').select('*'),
+      sb.from('closures').select('*').order('from_date'),
+    ])
+    if (w.error) throw new Error(w.error.message)
+    if (c.error) throw new Error(c.error.message)
+    const week: WeekHours = { ...DEFAULT_WEEK }
+    for (const r of w.data ?? []) {
+      week[r.weekday] = r.open_time && r.close_time
+        ? { open: r.open_time.slice(0, 5), close: r.close_time.slice(0, 5) }
+        : null
+    }
+    return {
+      week,
+      closures: (c.data ?? []).map((r: any) => ({
+        id: r.id, from: r.from_date, to: r.to_date, reason: r.reason ?? '',
+        open: r.open_time ? r.open_time.slice(0, 5) : null,
+        close: r.close_time ? r.close_time.slice(0, 5) : null,
+      })),
+    }
+  },
+  async saveWeek(week) {
+    const sb = await client()
+    const rows = Object.entries(week).map(([weekday, h]) => ({
+      weekday: Number(weekday),
+      open_time: h ? h.open : null,
+      close_time: h ? h.close : null,
+    }))
+    const { error } = await sb.from('week_hours').upsert(rows, { onConflict: 'weekday' })
+    if (error) throw new Error(error.message)
+  },
+  async addClosure(c) {
+    const sb = await client()
+    const { error } = await sb.from('closures').insert({
+      from_date: c.from, to_date: c.to, reason: c.reason,
+      open_time: c.open, close_time: c.close,
+    })
+    if (error) throw new Error(error.message)
+  },
+  async deleteClosure(id) {
+    const sb = await client()
+    const { error } = await sb.from('closures').delete().eq('id', id)
+    if (error) throw new Error(error.message)
+  },
   // Reads a view that exposes only when the chair is taken. The bookings
   // table itself is closed to anonymous readers by row level security.
   async listBusy(from, to) {

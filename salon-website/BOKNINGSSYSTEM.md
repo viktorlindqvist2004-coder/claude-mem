@@ -50,12 +50,28 @@ tid och längd.
 Ett unikt index hindrar två bokningar på samma starttid. Trycker två kunder
 samtidigt får den ena tiden och den andra ett meddelande om att välja en ny.
 
-## Ändra tider och tjänster
+## Öppettider och semester
 
-Allt sitter i `src/booking/config.ts`:
+Det här sköter du själv i panelen under fliken **Öppettider** — inget i
+koden behöver röras.
+
+**Vanliga öppettider** — en rad per veckodag. Ändra tiderna, eller tryck
+*Stäng* för att göra en veckodag stängd. Glöm inte **Spara öppettider**.
+
+**Semester & avvikelser** — välj *Från* och *Till*, skriv en anledning och
+tryck *Lägg till*. Hela perioden försvinner ur kunders kalender. Ska du
+ha öppet men med andra tider, kryssa i *Öppet, men andra tider* och ange
+dem — då gäller de tiderna för perioden i stället.
+
+En avvikelse vinner alltid över veckoschemat. Sätt *Till* lika med *Från*
+för en enstaka dag.
+
+## Ändra tjänster och regler
+
+Det som sitter kvar i `src/booking/config.ts`:
 
 - `SERVICES` — namn, pris och **hur lång tid** varje behandling tar
-- `OPENING_HOURS` — öppettider per veckodag, `null` betyder stängt
+- `DEFAULT_WEEK` — öppettiderna som gäller innan du sparat egna
 - `SLOT_INTERVAL` — hur tätt starttiderna ligger (15 min)
 - `BUFFER_MINUTES` — paus mellan två kunder (5 min)
 - `MIN_ADVANCE_HOURS` — hur nära inpå någon får boka (2 timmar)
@@ -69,7 +85,8 @@ erbjuds inte en timme före stängning.
 - **Dagsremsan** högst upp visar två veckor med antal bokningar per dag
 - **Dagen** visar hela dagen tidslinje, med vem som sitter i stolen när
 - **Bokningar** listar kunderna med telefonnummer — tryck × för att avboka
-- **Spärra** tar bort tid ur kalendern: lunch, ärende, ledig dag
+- **Spärra** tar bort enstaka tid ur en dag: lunch, ett ärende
+- **Öppettider** är fliken för veckoschema och semester
 
 ## Om testlägets lösenord
 

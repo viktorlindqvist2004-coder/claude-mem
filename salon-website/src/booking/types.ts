@@ -27,3 +27,24 @@ export type Block = {
 
 /** Anything occupying the chair, whichever of the two it came from. */
 export type Busy = { date: string; time: string; duration: number }
+
+/** Opening hours per weekday, keyed by getDay(). null means closed. */
+export type WeekHours = Record<number, { open: string; close: string } | null>
+
+/**
+ * A stretch of days that does not follow the weekly pattern.
+ *
+ * With open and close null the range is shut — a holiday, a week off. With
+ * them set the range keeps different hours, which covers the short day
+ * before a red day without needing a second concept.
+ */
+export type Closure = {
+  id: string
+  from: string
+  to: string
+  reason: string
+  open: string | null
+  close: string | null
+}
+
+export type Schedule = { week: WeekHours; closures: Closure[] }

@@ -43,6 +43,38 @@ create unique index if not exists bookings_slot_unique
 create index if not exists bookings_date_idx on public.bookings (date);
 create index if not exists blocks_date_idx   on public.blocks (date);
 
+-- Öppettider per veckodag (0 = söndag). Tomma tider betyder stängt.
+-- Redigeras under Öppettider i adminpanelen.
+create table if not exists public.week_hours (
+  weekday    smallint primary key check (weekday between 0 and 6),
+  open_time  time,
+  close_time time
+);
+
+insert into public.week_hours (weekday, open_time, close_time) values
+  (0, null,    null),
+  (1, '10:00', '18:00'),
+  (2, '10:00', '18:00'),
+  (3, '10:00', '18:00'),
+  (4, '10:00', '18:00'),
+  (5, '10:00', '18:00'),
+  (6, '10:00', '15:00')
+on conflict (weekday) do nothing;
+
+-- Semester, röda dagar och kortdagar. Utan tider = stängt hela perioden,
+-- med tider = öppet men andra tider. Slår alltid veckoschemat.
+create table if not exists public.closures (
+  id         uuid primary key default gen_random_uuid(),
+  from_date  date not null,
+  to_date    date not null,
+  reason     text default '',
+  open_time  time,
+  close_time time,
+  check (to_date >= from_date)
+);
+
+create index if not exists closures_range_idx on public.closures (from_date, to_date);
+
 -- Vad allmänheten får se: att stolen är upptagen, inget mer.
 create or replace view public.busy_slots
 with (security_invoker = off) as
@@ -73,6 +105,27 @@ create policy "staff manage blocks"
   on public.blocks for all to authenticated using (true) with check (true);
 
 grant select on public.busy_slots to anon, authenticated;
+
+-- Öppettiderna måste vara läsbara för alla — bokningssidan behöver veta
+-- vilka dagar den ska erbjuda. Bara personal får ändra dem.
+alter table public.week_hours enable row level security;
+alter table public.closures   enable row level security;
+
+drop policy if exists "anyone reads hours" on public.week_hours;
+create policy "anyone reads hours"
+  on public.week_hours for select to anon, authenticated using (true);
+
+drop policy if exists "staff sets hours" on public.week_hours;
+create policy "staff sets hours"
+  on public.week_hours for all to authenticated using (true) with check (true);
+
+drop policy if exists "anyone reads closures" on public.closures;
+create policy "anyone reads closures"
+  on public.closures for select to anon, authenticated using (true);
+
+drop policy if exists "staff sets closures" on public.closures;
+create policy "staff sets closures"
+  on public.closures for all to authenticated using (true) with check (true);
 
 -- Skapa sedan din inloggning under Authentication → Users → Add user
 -- (e-post + lösenord, bekräfta den direkt). Det är den du loggar in med

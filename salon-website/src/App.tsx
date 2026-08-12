@@ -19,19 +19,6 @@ const GoogleIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
-const ServiceIcon = ({ type }: { type: string }) => {
-  const cls = "w-5 h-5 text-[#d4af37]"
-  switch (type) {
-    case 'scissors': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-    case 'blade': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21c0 0 3-2 6-2s4 2 6 2c3 0 6-2 6-2V3c0 0-3 2-6 2s-4-2-6-2-6 2-6 2z"/></svg>
-    case 'razor': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="8" y="2" width="8" height="6" rx="1"/><path d="M10 8v2a6 6 0 0 0 4 0V8"/><line x1="12" y1="12" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>
-    case 'crown': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 17l3-12 5 6 2-8 2 8 5-6 3 12z"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
-    case 'diamond': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 3h12l4 7-10 11L2 10z"/><path d="M2 10h20"/><path d="M12 21L8.5 10 12 3l3.5 7z"/></svg>
-    case 'drop': return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-    default: return null
-  }
-}
-
 /* ═══ Data ═══ */
 
 /* Generated for this site (Higgsfield, soul_2). These are hotlinked from
@@ -43,15 +30,6 @@ const IMAGES = {
   salon: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Gp8ZSPuuM6vEtGDVPzKDrG4V4O/hf_20260811_221059_904e8b19-7667-48bd-985e-372321452ce2.png',
   craft: 'https://d8j0ntlcm91z4.cloudfront.net/user_3Gp8ZSPuuM6vEtGDVPzKDrG4V4O/hf_20260811_221059_0ddd4f42-6e00-43fd-8eea-67af353d3ed3.png',
 }
-
-const services = [
-  { name: 'Herrklippning', price: '300 kr', icon: 'scissors' },
-  { name: 'Skinfade', price: '350 kr', icon: 'blade' },
-  { name: 'Skägg', price: '200 kr', icon: 'razor' },
-  { name: 'Klippning + Skägg', price: '450 kr', icon: 'crown' },
-  { name: 'Lyxbehandling Skägg', price: '299 kr', icon: 'diamond' },
-  { name: 'Ansiktsbehandling', price: '470 kr', icon: 'drop' },
-]
 
 const reviews = [
   { name: 'Thore T.', rating: 5, text: 'Bästa klippningen jag fått i Vänersborg. Professionellt bemötande och otroligt nöjd med resultatet.', source: 'Google' },
@@ -127,7 +105,6 @@ function App() {
   const [heroDetailsOpacity, setHeroDetailsOpacity] = useState(0)
   const heroWrapRef = useRef<HTMLDivElement>(null)
 
-  const servicesAnim = useInView()
   const contactAnim = useInView()
 
   useEffect(() => {
@@ -186,7 +163,6 @@ function App() {
         <div className="hidden md:flex items-center gap-8">
           {[
             { label: 'Om Oss', id: 'about' },
-            { label: 'Tjänster', id: 'services' },
             { label: 'Boka', id: 'booking' },
             { label: 'Omdömen', id: 'reviews' },
             { label: 'Besök', id: 'contact' },
@@ -213,7 +189,6 @@ function App() {
           { label: 'Om Oss', id: 'about' },
           { label: 'Salongen', id: 'salon' },
           { label: 'Hantverket', id: 'craft' },
-          { label: 'Tjänster', id: 'services' },
           { label: 'Boka', id: 'booking' },
           { label: 'Omdömen', id: 'reviews' },
           { label: 'Besök', id: 'contact' },
@@ -390,35 +365,6 @@ function App() {
               ))}
             </div>
           </FadeIn>
-        </div>
-      </section>
-
-      {/* ═══ TJÄNSTER ═══ */}
-      <section id="services" className="relative bg-transparent py-24 sm:py-32">
-        <div ref={servicesAnim.ref} className="w-full max-w-5xl mx-auto px-6 sm:px-10">
-          <FadeIn>
-            <div className="text-center mb-14">
-              <h2 className="hero-title text-4xl sm:text-5xl md:text-6xl" style={{ textTransform: 'none', paddingTop: '0.15em' }}>TJÄNSTER</h2>
-              <div className={`gold-line ${servicesAnim.visible ? 'active' : ''}`} />
-              <p className="text-white/50 text-sm mt-4">Ring för att boka din tid</p>
-            </div>
-          </FadeIn>
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children ${servicesAnim.visible ? 'active' : ''}`}>
-            {services.map((s) => (
-              <div key={s.name}
-                className="group border border-white/[0.05] hover:border-[#d4af37]/25 p-6 sm:p-8 transition-all duration-700 hover:bg-white/[0.015] relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#d4af37]/0 group-hover:via-[#d4af37]/20 to-transparent transition-all duration-700" />
-                <div className="flex items-center gap-3 mb-4">
-                  <ServiceIcon type={s.icon} />
-                  <h3 className="text-white/80 text-sm font-bold uppercase tracking-[0.12em]">{s.name}</h3>
-                </div>
-                <div className="flex items-center">
-                  <div className="flex-1 h-px bg-gradient-to-r from-[#d4af37]/0 group-hover:from-[#d4af37]/30 to-transparent transition-all duration-1000" />
-                  <span className="text-[#d4af37] text-lg font-bold ml-4 whitespace-nowrap tabular-nums">{s.price}</span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

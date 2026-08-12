@@ -36,14 +36,23 @@ export default function BookingSection() {
   )
   const maxPage = Math.max(0, Math.ceil(openDays.length / DAYS_PER_PAGE) - 1)
 
+  /**
+   * Fetches the whole bookable window in one go.
+   *
+   * The range deliberately does not come from the days on screen. Those are
+   * derived from the schedule, and this sets the schedule — every fetch
+   * returns a fresh object, so a range that depended on it would give this
+   * callback a new identity, re-run the effect, and fetch again, forever.
+   * That loop shipped once and ran ~750 times a second. Keep the deps empty.
+   */
   const load = useCallback(async () => {
-    if (days.length === 0) return
     setLoading(true)
     setError(null)
     try {
-      const from = toDateKey(days[0])
-      const to = toDateKey(days[days.length - 1])
-      const [b, sch] = await Promise.all([store.listBusy(from, to), store.getSchedule()])
+      const from = toDateKey(new Date())
+      const last = new Date()
+      last.setDate(last.getDate() + MAX_ADVANCE_DAYS)
+      const [b, sch] = await Promise.all([store.listBusy(from, toDateKey(last)), store.getSchedule()])
       setBusy(b)
       setSchedule(sch)
     } catch (e) {
@@ -51,7 +60,7 @@ export default function BookingSection() {
     } finally {
       setLoading(false)
     }
-  }, [days])
+  }, [])
 
   useEffect(() => { void load() }, [load])
 

@@ -225,10 +225,13 @@ export default function Constellations({ artwork }: { artwork: string | null }) 
         className="absolute inset-0 h-full w-full cursor-crosshair touch-none"
       />
 
-      {/* Figure tending a young tree under the stars */}
+      {/* Figure tending a young tree under the stars. The mask has to reach
+          full transparency well inside the image box rather than at its
+          corner, or the straight edge of the photograph stays visible against
+          the flat night background. */}
       <ArtDecor
         src={artwork}
-        className="pointer-events-none absolute right-0 bottom-0 hidden h-[70%] w-auto max-w-[55%] object-cover opacity-70 md:block [mask-image:radial-gradient(ellipse_at_bottom_right,black_35%,transparent_75%)]"
+        className="pointer-events-none absolute right-0 bottom-0 hidden h-[75%] w-auto max-w-[56%] object-cover opacity-75 md:block [mask-image:radial-gradient(ellipse_72%_95%_at_82%_72%,black_28%,transparent_88%)]"
         fallback={
           <svg
             className="pointer-events-none absolute right-6 bottom-0 hidden h-72 w-auto text-canvas/20 md:right-20 md:block md:h-[26rem]"

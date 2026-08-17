@@ -14,7 +14,7 @@ import {
 import { FRAGMENT_SHADER, VERTEX_SHADER } from "@/lib/shaders";
 import { prefersReducedMotion } from "@/lib/scroll";
 import {
-  MASK_MODES,
+  SCENE_TRANSITIONS,
   SCENE_BASE_COLORS,
   SCENE_COUNT,
   SCENE_PAINTERS,
@@ -26,12 +26,14 @@ const UNIFORM_NAMES = [
   "uResolution",
   "uMouse",
   "uTime",
-  "uProgress",
+  "uFade",
   "uZoomA",
   "uZoomB",
   "uAspectA",
   "uAspectB",
-  "uMaskMode",
+  "uFocusA",
+  "uFocusB",
+  "uBloom",
 ] as const;
 
 type UniformName = (typeof UNIFORM_NAMES)[number];
@@ -39,8 +41,16 @@ type UniformName = (typeof UNIFORM_NAMES)[number];
 /** Portal transitions occupy the tail of each scene's scroll unit. */
 const PORTAL_START = 0.58;
 
+/** How far the camera pushes into a focal form before the scenes swap. */
+const ZOOM_THROUGH = 6.0;
+
 function clamp01(v: number): number {
   return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = clamp01((x - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
 }
 
 /**
@@ -275,14 +285,24 @@ export default function StoryCanvas({
       const f = clamp01(u - index);
       const portal = clamp01((f - PORTAL_START) / (1 - PORTAL_START));
 
-      // Outgoing scene keeps drifting in, then accelerates as it is consumed.
-      // Kept gentle: a square texture already crops to the middle ~56% of a
-      // 16:9 viewport, so aggressive zoom on top of that magnifies the artwork
-      // hard enough to read as a mistake rather than as camera movement.
-      const zoomA = 1 + f * 0.16 + portal * 0.30;
-      // Incoming scene settles from slightly over-scaled to rest. Ends at
-      // exactly 1.0 so it matches the next unit's zoomA at f = 0.
-      const zoomB = 1.22 - 0.22 * portal;
+      // The travel. Zoom is exponential in the transition because a dolly
+      // covers equal *ratios* of distance per unit time, not equal amounts —
+      // linear zoom reads as a scale animation, exponential reads as movement.
+      //
+      // Both curves pass through exactly ZOOM_THROUGH^0.5 at portal 0.5, so at
+      // the instant of the fade the two scenes are at identical magnification.
+      // That is what makes the join invisible: matched scale, matched focal
+      // form, nothing recognisable left in frame.
+      const travel = Math.pow(ZOOM_THROUGH, portal);
+      const zoomA = (1 + f * 0.14) * travel;
+      const zoomB = ZOOM_THROUGH / travel;
+
+      // Swap inside the peak, quickly, while both frames are abstract.
+      const fade = smoothstep(0.40, 0.60, portal);
+      // Warm flare either side of the swap, strongest where it is needed.
+      const bloom = Math.sin(portal * Math.PI);
+
+      const transition = SCENE_TRANSITIONS[index] ?? SCENE_TRANSITIONS[0];
 
       const texA = textures[index];
       const texB = textures[Math.min(SCENE_COUNT - 1, index + 1)];
@@ -295,12 +315,14 @@ export default function StoryCanvas({
       gl.uniform2f(uniforms.uResolution, canvas.width, canvas.height);
       gl.uniform2f(uniforms.uMouse, state.easedX, -state.easedY);
       gl.uniform1f(uniforms.uTime, (performance.now() - start) / 1000);
-      gl.uniform1f(uniforms.uProgress, portal);
+      gl.uniform1f(uniforms.uFade, fade);
+      gl.uniform1f(uniforms.uBloom, bloom);
       gl.uniform1f(uniforms.uZoomA, zoomA);
       gl.uniform1f(uniforms.uZoomB, zoomB);
       gl.uniform1f(uniforms.uAspectA, aspects[index]);
       gl.uniform1f(uniforms.uAspectB, aspects[Math.min(SCENE_COUNT - 1, index + 1)]);
-      gl.uniform1f(uniforms.uMaskMode, MASK_MODES[index] ?? 0);
+      gl.uniform2f(uniforms.uFocusA, transition.exit[0], transition.exit[1]);
+      gl.uniform2f(uniforms.uFocusB, transition.enter[0], transition.enter[1]);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };

@@ -1257,7 +1257,27 @@ export const SCENE_ART_SLOTS = [
 /** The first five slots, in scene order, back the WebGL story. */
 export const STORY_ART_SLOTS = SCENE_ART_SLOTS.slice(0, 5);
 
-/** Mask shape used for each transition i -> i+1. 0 pear, 1 circle, 2 aperture. */
-export const MASK_MODES = [0, 1, 0, 2];
+/**
+ * Where the camera travels on each transition i -> i+1.
+ *
+ * Scenes are not cross-faded behind a mask. The camera pushes all the way into
+ * `exit` on the outgoing scene until one large form fills the frame, and the
+ * incoming scene is already pushed into `enter` on a form of the same colour
+ * and angle. The swap happens at that peak, where both frames are abstract, so
+ * there is nothing recognisable for the eye to catch the change on.
+ *
+ * The pairs therefore have to be chosen for visual rhyme, not just interest:
+ * bark into bark, gold into gold. Coordinates are in texture UV, y down.
+ */
+export const SCENE_TRANSITIONS: { exit: [number, number]; enter: [number, number] }[] = [
+  // Hanging fruit -> the trunk's dark mass.
+  { exit: [0.30, 0.22], enter: [0.62, 0.45] },
+  // Bark -> the canopy that grows out of it.
+  { exit: [0.66, 0.42], enter: [0.50, 0.30] },
+  // A single pear -> the cluster it belongs to.
+  { exit: [0.46, 0.34], enter: [0.55, 0.40] },
+  // Fruit against sky -> open sky.
+  { exit: [0.62, 0.18], enter: [0.40, 0.62] },
+];
 
 export const SCENE_COUNT = SCENE_PAINTERS.length;

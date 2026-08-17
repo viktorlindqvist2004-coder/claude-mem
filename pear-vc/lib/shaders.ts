@@ -60,7 +60,19 @@ vec2 uvCover(vec2 uv, float zoom, vec2 parallax, float texAspect) {
 vec3 sampleScene(
   sampler2D tex, float zoom, vec2 parallax, float aberration, float texAspect
 ) {
-  vec2 uv = uvCover(vUv, zoom, parallax, texAspect);
+  // Depth-weighted parallax, which is what turns a flat painting into a scene
+  // the camera moves *through* rather than across.
+  //
+  // No depth map is needed because these paintings carry depth in their value
+  // structure: the near forms — trunk, foliage, foreground grass — are the dark
+  // ones, and distance is what light and haze wash out. Inverted luminance is
+  // therefore a serviceable depth proxy. It is sampled from an unshifted read,
+  // then near pixels are displaced further than far ones.
+  vec2 base = uvCover(vUv, zoom, vec2(0.0), texAspect);
+  float luma = dot(texture2D(tex, base).rgb, vec3(0.299, 0.587, 0.114));
+  float depth = 1.0 - luma;
+
+  vec2 uv = uvCover(vUv, zoom, parallax * mix(0.3, 1.7, depth), texAspect);
   vec2 dir = vUv - 0.5;
   vec2 shift = dir * aberration * 0.0022 / max(zoom, 0.001);
   return vec3(
@@ -99,6 +111,32 @@ float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
 }
 
+/**
+ * Pollen drifting in the light.
+ *
+ * Three cell grids at different densities, each scrolling at its own rate, so
+ * the motes read as separate distances rather than one sheet. Kept sparse and
+ * dim — the point is that the air is alive, not that there is glitter on the
+ * screen.
+ */
+float motes(vec2 uv, float t) {
+  float acc = 0.0;
+  for (int i = 0; i < 3; i++) {
+    float fi = float(i);
+    float scale = 5.0 + fi * 6.0;
+    vec2 drift = vec2(t * (0.012 + fi * 0.006), -t * (0.008 + fi * 0.003));
+    vec2 p = uv * scale + drift * scale;
+    vec2 cell = floor(p);
+    vec2 f = fract(p);
+    vec2 seed = vec2(hash(cell + fi * 17.0), hash(cell + fi * 17.0 + 5.7));
+    float d = length(f - seed);
+    // Nearer grids carry larger, brighter motes.
+    acc += smoothstep(0.10 - fi * 0.02, 0.0, d) * (0.35 + 0.65 * seed.x)
+         * (1.0 - fi * 0.25);
+  }
+  return acc;
+}
+
 void main() {
   // Ease the portal so it accelerates out of rest and settles into the reveal.
   float t = uProgress * uProgress * (3.0 - 2.0 * uProgress);
@@ -106,8 +144,8 @@ void main() {
   // Aberration peaks in the middle of the transition.
   float turbulence = sin(uProgress * 3.14159265) ;
 
-  vec3 colorA = sampleScene(uTexA, uZoomA, uMouse * 0.010, turbulence, uAspectA);
-  vec3 colorB = sampleScene(uTexB, uZoomB, uMouse * 0.022, turbulence, uAspectB);
+  vec3 colorA = sampleScene(uTexA, uZoomA, uMouse * 0.020, turbulence, uAspectA);
+  vec3 colorB = sampleScene(uTexB, uZoomB, uMouse * 0.032, turbulence, uAspectB);
 
   vec2 p = centred(vUv);
   float d = maskDistance(p, t);
@@ -122,6 +160,12 @@ void main() {
   float rim = smoothstep(0.055, 0.0, abs(d));
   float rimGate = smoothstep(0.0, 0.10, uProgress) * (1.0 - smoothstep(0.88, 1.0, uProgress));
   color += GOLD * rim * rimGate * 0.6;
+
+  // Pollen sits in front of everything, brightest where the light is, so it
+  // reads as air catching the sun rather than as an overlay.
+  vec2 moteUv = vUv * vec2(uResolution.x / uResolution.y, 1.0) + uMouse * 0.03;
+  float lit = smoothstep(0.25, 0.85, dot(color, vec3(0.299, 0.587, 0.114)));
+  color += GOLD * motes(moteUv, uTime) * (0.05 + 0.16 * lit);
 
   // Film grain keeps flat sky gradients from banding on wide screens.
   float grain = hash(vUv * uResolution + fract(uTime) * 137.0) - 0.5;

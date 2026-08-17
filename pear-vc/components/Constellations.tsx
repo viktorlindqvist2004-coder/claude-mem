@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import ArtDecor from "./ArtDecor";
 import RevealText from "./RevealText";
 import { prefersReducedMotion } from "@/lib/scroll";
 
@@ -30,7 +31,7 @@ const LINK_RADIUS = 0.26;
  * hundred primitives with no per-pixel work, so a shader would buy nothing and
  * cost a second GL context.
  */
-export default function Constellations() {
+export default function Constellations({ artwork }: { artwork: string | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -224,28 +225,34 @@ export default function Constellations() {
         className="absolute inset-0 h-full w-full cursor-crosshair touch-none"
       />
 
-      {/* Figure tending a young tree, drawn in the same line language */}
-      <svg
-        className="pointer-events-none absolute right-6 bottom-0 hidden h-72 w-auto text-canvas/20 md:right-20 md:block md:h-[26rem]"
-        viewBox="0 0 240 320"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        aria-hidden="true"
-      >
-        <path d="M0 300 L240 300" />
-        {/* Sapling */}
-        <path d="M170 300 L170 210" />
-        <path d="M170 240 Q152 224 146 200" />
-        <path d="M170 232 Q190 218 196 196" />
-        <ellipse cx="170" cy="186" rx="34" ry="26" />
-        {/* Figure with a watering vessel */}
-        <path d="M74 300 Q66 252 78 214 Q88 194 100 214 Q112 252 104 300 Z" />
-        <circle cx="89" cy="196" r="13" />
-        <path d="M100 220 Q124 214 136 226" />
-        <path d="M136 220 l16 0 l-4 16 l-16 0 z" />
-        <path d="M150 236 Q158 250 160 262" strokeDasharray="3 6" />
-      </svg>
+      {/* Figure tending a young tree under the stars */}
+      <ArtDecor
+        src={artwork}
+        className="pointer-events-none absolute right-0 bottom-0 hidden h-[70%] w-auto max-w-[55%] object-cover opacity-70 md:block [mask-image:radial-gradient(ellipse_at_bottom_right,black_35%,transparent_75%)]"
+        fallback={
+          <svg
+            className="pointer-events-none absolute right-6 bottom-0 hidden h-72 w-auto text-canvas/20 md:right-20 md:block md:h-[26rem]"
+            viewBox="0 0 240 320"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            aria-hidden="true"
+          >
+            <path d="M0 300 L240 300" />
+            {/* Sapling */}
+            <path d="M170 300 L170 210" />
+            <path d="M170 240 Q152 224 146 200" />
+            <path d="M170 232 Q190 218 196 196" />
+            <ellipse cx="170" cy="186" rx="34" ry="26" />
+            {/* Figure with a watering vessel */}
+            <path d="M74 300 Q66 252 78 214 Q88 194 100 214 Q112 252 104 300 Z" />
+            <circle cx="89" cy="196" r="13" />
+            <path d="M100 220 Q124 214 136 226" />
+            <path d="M136 220 l16 0 l-4 16 l-16 0 z" />
+            <path d="M150 236 Q158 250 160 262" strokeDasharray="3 6" />
+          </svg>
+        }
+      />
 
       {/* Copy sits above the canvas but must not swallow clicks meant for it. */}
       <div className="pointer-events-none relative mx-auto w-full max-w-[1200px]">

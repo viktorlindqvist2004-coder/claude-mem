@@ -27,6 +27,8 @@ uniform float uTime;
 uniform float uProgress;   // 0..1 portal progress between A and B
 uniform float uZoomA;
 uniform float uZoomB;
+uniform float uAspectA;    // width / height of each scene's artwork
+uniform float uAspectB;
 uniform float uMaskMode;   // 0 pear, 1 circle, 2 architectural aperture
 
 const vec3 GOLD = vec3(1.0, 0.84, 0.42);
@@ -36,19 +38,23 @@ vec2 centred(vec2 uv) {
   return (uv - 0.5) * vec2(uResolution.x / uResolution.y, 1.0);
 }
 
-// Cover-fit a square texture into the viewport, then zoom and offset it.
-vec2 uvCover(vec2 uv, float zoom, vec2 parallax) {
+// Cover-fit artwork of any aspect ratio into the viewport, then zoom and
+// offset it. Photographic scenes are not guaranteed to be square, so the
+// texture's own aspect has to come in rather than being assumed.
+vec2 uvCover(vec2 uv, float zoom, vec2 parallax, float texAspect) {
   vec2 c = uv - 0.5;
-  float aspect = uResolution.x / uResolution.y;
-  vec2 k = aspect > 1.0
-    ? vec2(1.0, uResolution.y / uResolution.x)
-    : vec2(uResolution.x / uResolution.y, 1.0);
+  float screenAspect = uResolution.x / uResolution.y;
+  vec2 k = screenAspect > texAspect
+    ? vec2(1.0, texAspect / screenAspect)
+    : vec2(screenAspect / texAspect, 1.0);
   return 0.5 + c * k / max(zoom, 0.001) + parallax;
 }
 
 // Radial chromatic split — strongest mid-transition, invisible at rest.
-vec3 sampleScene(sampler2D tex, float zoom, vec2 parallax, float aberration) {
-  vec2 uv = uvCover(vUv, zoom, parallax);
+vec3 sampleScene(
+  sampler2D tex, float zoom, vec2 parallax, float aberration, float texAspect
+) {
+  vec2 uv = uvCover(vUv, zoom, parallax, texAspect);
   vec2 dir = vUv - 0.5;
   vec2 shift = dir * aberration * 0.008;
   return vec3(
@@ -94,8 +100,8 @@ void main() {
   // Aberration peaks in the middle of the transition.
   float turbulence = sin(uProgress * 3.14159265) ;
 
-  vec3 colorA = sampleScene(uTexA, uZoomA, uMouse * 0.010, turbulence);
-  vec3 colorB = sampleScene(uTexB, uZoomB, uMouse * 0.022, turbulence);
+  vec3 colorA = sampleScene(uTexA, uZoomA, uMouse * 0.010, turbulence, uAspectA);
+  vec3 colorB = sampleScene(uTexB, uZoomB, uMouse * 0.022, turbulence, uAspectB);
 
   vec2 p = centred(vUv);
   float d = maskDistance(p, t);

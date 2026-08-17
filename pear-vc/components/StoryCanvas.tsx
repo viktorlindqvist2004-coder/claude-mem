@@ -7,6 +7,7 @@ import {
   createProgram,
   createQuad,
   createSolidTexture,
+  loadImage,
   resizeToDisplay,
   uploadCanvasTexture,
 } from "@/lib/gl";
@@ -28,6 +29,8 @@ const UNIFORM_NAMES = [
   "uProgress",
   "uZoomA",
   "uZoomB",
+  "uAspectA",
+  "uAspectB",
   "uMaskMode",
 ] as const;
 
@@ -48,7 +51,14 @@ function clamp01(v: number): number {
  * part drives that scene's zoom and — past PORTAL_START — the expanding mask
  * that reveals the next scene through it.
  */
-export default function StoryCanvas({ storyId = "story" }: { storyId?: string }) {
+export default function StoryCanvas({
+  storyId = "story",
+  sceneImages = [],
+}: {
+  storyId?: string;
+  /** Resolved artwork URL per scene, or null where only the painting exists. */
+  sceneImages?: (string | null)[];
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -100,6 +110,9 @@ export default function StoryCanvas({ storyId = "story" }: { storyId?: string })
 
     const textures = SCENE_BASE_COLORS.map((rgb) => createSolidTexture(gl, rgb));
     const painted = new Array<boolean>(SCENE_COUNT).fill(false);
+    // Painted fallbacks are square; a photograph overwrites this on arrival.
+    const aspects = new Array<number>(SCENE_COUNT).fill(1);
+    let disposed = false;
 
     // Square artwork; sized to the device rather than a fixed constant so
     // phones don't pay for a 1792px texture they can't resolve.
@@ -124,6 +137,21 @@ export default function StoryCanvas({ storyId = "story" }: { storyId?: string })
       // ~50MB of memory for pixels the GPU already owns.
       offscreen.width = 0;
       offscreen.height = 0;
+
+      // Upgrade to the photographic artwork when it arrives. Painting first
+      // means the scene is never blank while a multi-megabyte image is still
+      // downloading, and a missing file simply leaves the painting in place.
+      const src = sceneImages[index];
+      if (!src) return;
+      loadImage(src)
+        .then((image) => {
+          if (disposed) return;
+          aspects[index] = image.naturalWidth / image.naturalHeight || 1;
+          uploadCanvasTexture(gl, texture, image);
+        })
+        .catch(() => {
+          /* No photograph for this scene; the painted version stands. */
+        });
     };
 
     // The first two scenes are needed for the opening frame and its transition.
@@ -266,6 +294,8 @@ export default function StoryCanvas({ storyId = "story" }: { storyId?: string })
       gl.uniform1f(uniforms.uProgress, portal);
       gl.uniform1f(uniforms.uZoomA, zoomA);
       gl.uniform1f(uniforms.uZoomB, zoomB);
+      gl.uniform1f(uniforms.uAspectA, aspects[index]);
+      gl.uniform1f(uniforms.uAspectB, aspects[Math.min(SCENE_COUNT - 1, index + 1)]);
       gl.uniform1f(uniforms.uMaskMode, MASK_MODES[index] ?? 0);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -274,6 +304,7 @@ export default function StoryCanvas({ storyId = "story" }: { storyId?: string })
     gsap.ticker.add(render);
 
     return () => {
+      disposed = true;
       gsap.ticker.remove(render);
       ScrollTrigger.removeEventListener("refresh", measure);
       visibility.kill();
@@ -284,7 +315,7 @@ export default function StoryCanvas({ storyId = "story" }: { storyId?: string })
       gl.deleteProgram(program);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [storyId]);
+  }, [storyId, sceneImages]);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">

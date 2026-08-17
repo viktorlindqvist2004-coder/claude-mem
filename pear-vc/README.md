@@ -12,6 +12,20 @@ npm run build && npm start
 Next.js 15 (App Router) · React 19 · Tailwind CSS 4 · GSAP (ScrollTrigger +
 SplitText) · Lenis.
 
+## Deploying to Vercel
+
+This app lives in a subdirectory of a larger repo, so Vercel needs to be told
+where it is:
+
+1. **Add New → Project**, import this repository.
+2. Set **Root Directory** to `pear-vc`. This is the only setting that matters —
+   everything else is picked up from `vercel.json` and `package.json`.
+3. Deploy. Framework preset (Next.js), build command and install command are
+   detected automatically; there are no environment variables to set.
+
+For the CLI: `cd pear-vc && vercel` — being inside the directory makes it the
+root, so no extra flags.
+
 ## How the story works
 
 The page has two halves. The first is a fixed, full-viewport WebGL canvas with
@@ -47,16 +61,30 @@ ScrollTrigger.
 
 ## Artwork
 
-There are no image files. Every scene is painted with Canvas 2D into an
-offscreen square and uploaded as a GL texture — nothing to download, nothing to
-license, and it resamples cleanly on a 5K display. Texture size scales with the
-device (1024–1792px). Scenes 0 and 1 are painted synchronously for the first
-frame and its transition; the rest go out on `requestIdleCallback`, and each
-backing canvas is released as soon as the GPU has the pixels.
+Scenes are photographic artwork — hyperrealistic religious painting — served
+from `public/scenes/`. **See [ARTWORK.md](./ARTWORK.md)** for the filenames,
+prompts and format each scene expects.
 
-Figures are drawn from behind or cropped above the shoulders. Canvas primitives
-cannot carry a face at close range, and classical processional figures are
-staged that way anyway.
+Every scene also has a drawn fallback: a Canvas 2D painter in `lib/scenes.ts`
+that renders the same composition from primitives. The fallback is not a
+placeholder to be deleted — it does real work:
+
+- it paints in ~30ms, so a scene is never blank while a multi-megabyte
+  photograph is still downloading;
+- a missing or failed image leaves the drawing in place rather than a black
+  screen, which is also what makes it safe to add scene files one at a time.
+
+`paintScene` therefore paints first and swaps the photograph in on load. The
+shader reads each texture's real aspect ratio, so source images do not have to
+be square — square just crops best across orientations.
+
+Texture size for the drawn version scales with the device (1024–1792px). Scenes
+0 and 1 resolve synchronously for the first frame and its transition; the rest
+go out on `requestIdleCallback`, and each backing canvas is released as soon as
+the GPU has the pixels.
+
+Drawn figures are seen from behind or cropped above the shoulders — canvas
+primitives cannot carry a face at close range. Photographs have no such limit.
 
 ## Interaction and fallbacks
 

@@ -1233,6 +1233,30 @@ export const SCENE_BASE_COLORS: [number, number, number][] = [
   [26, 90, 224],
 ];
 
+/**
+ * Photographic artwork for each scene, served from `public/scenes/`.
+ *
+ * These are the real deliverable: hyperrealistic religious-painting scenes.
+ * The procedural painters above stay as the fallback — they render instantly
+ * while a photograph is still downloading, and they carry the page unchanged
+ * if a file is missing. Drop a file in at the matching name and the scene
+ * upgrades itself with no code change. Any aspect ratio works; the shader
+ * cover-fits whatever it is handed.
+ */
+export const SCENE_ART_SLOTS = [
+  "01-hero-walk",
+  "02-graft",
+  "03-orchard",
+  "04-split-pear",
+  "05-dome",
+  // Decorative, used by the DOM sections rather than the canvas.
+  "06-orchard-pale",
+  "07-night-tending",
+] as const;
+
+/** The first five slots, in scene order, back the WebGL story. */
+export const STORY_ART_SLOTS = SCENE_ART_SLOTS.slice(0, 5);
+
 /** Mask shape used for each transition i -> i+1. 0 pear, 1 circle, 2 aperture. */
 export const MASK_MODES = [0, 1, 0, 2];
 

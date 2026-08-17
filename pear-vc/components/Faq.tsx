@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ArtDecor from "./ArtDecor";
 import RevealText from "./RevealText";
 
 const QUESTIONS = [
@@ -87,7 +88,7 @@ function FaqRow({
   );
 }
 
-export default function Faq() {
+export default function Faq({ artwork }: { artwork: string | null }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
@@ -95,18 +96,24 @@ export default function Faq() {
       id="faq"
       className="relative z-10 overflow-hidden bg-canvas px-6 py-28 text-ink md:px-14 md:py-40"
     >
-      {/* Orchard silhouette behind the questions */}
-      <svg
-        className="pointer-events-none absolute -right-24 bottom-0 h-[85%] w-auto text-ink/[0.05]"
-        viewBox="0 0 400 500"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <path d="M188 500 L188 300 Q186 250 170 210 L182 205 Q196 240 200 280 Q206 236 226 205 L236 214 Q212 250 208 300 L208 500 Z" />
-        <ellipse cx="198" cy="170" rx="130" ry="105" />
-        <ellipse cx="110" cy="215" rx="62" ry="48" />
-        <ellipse cx="290" cy="220" rx="58" ry="45" />
-      </svg>
+      {/* Orchard behind the questions */}
+      <ArtDecor
+        src={artwork}
+        className="pointer-events-none absolute right-0 bottom-0 h-[85%] w-auto max-w-[60%] object-cover opacity-25 mix-blend-multiply [mask-image:linear-gradient(to_left,black,transparent)]"
+        fallback={
+          <svg
+            className="pointer-events-none absolute -right-24 bottom-0 h-[85%] w-auto text-ink/[0.05]"
+            viewBox="0 0 400 500"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M188 500 L188 300 Q186 250 170 210 L182 205 Q196 240 200 280 Q206 236 226 205 L236 214 Q212 250 208 300 L208 500 Z" />
+            <ellipse cx="198" cy="170" rx="130" ry="105" />
+            <ellipse cx="110" cy="215" rx="62" ry="48" />
+            <ellipse cx="290" cy="220" rx="58" ry="45" />
+          </svg>
+        }
+      />
 
       <div className="relative mx-auto max-w-[1200px]">
         <RevealText as="p" className="eyebrow mb-6 text-ink/50" stagger={0}>

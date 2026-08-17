@@ -88,10 +88,29 @@ export function createSolidTexture(
   return texture;
 }
 
+/**
+ * Loads an image for use as a texture.
+ *
+ * Rejects rather than throwing on a missing file: scene artwork is optional,
+ * and a scene without a photograph falls back to its painted version.
+ */
+export function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = "async";
+    // Same-origin assets out of /public, but set explicitly so the texture is
+    // never tainted if the assets later move to a CDN.
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`could not load ${src}`));
+    image.src = src;
+  });
+}
+
 export function uploadCanvasTexture(
   gl: WebGLRenderingContext,
   texture: WebGLTexture,
-  source: HTMLCanvasElement
+  source: HTMLCanvasElement | HTMLImageElement
 ): void {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);

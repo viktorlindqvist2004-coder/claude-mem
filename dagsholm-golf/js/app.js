@@ -8,6 +8,7 @@
 
 import { CLUB, STATS, HOLES, COURSE, GREENFEE, GREENFEE_NOTE, EXTRAS,
          MEMBERSHIPS, MEMBERSHIP_NOTE, FACILITIES, RULES, FAQ, NEWS } from './data.js';
+import { m, HERO_CLIPS, REEL_CLIP, BAND_CLIP } from './media.js';
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -48,6 +49,118 @@ function preloader() {
       }, 380);
     }
   }, 130);
+}
+
+/* ---------- Film -------------------------------------------
+   Alla klipp är stämningsbilder, inte dokumentation av banan.
+   Om en URL saknas eller filen inte kan spelas lämnas ytan tom
+   och bakgrundsgradienten i CSS får stå för intrycket.       */
+function video(src, { loop = true, onFail } = {}) {
+  const url = m(src);
+  if (!url) return null;
+  const v = document.createElement('video');
+  v.src = url;
+  v.muted = true;
+  v.loop = loop;
+  v.playsInline = true;
+  v.setAttribute('muted', '');
+  v.setAttribute('playsinline', '');
+  v.preload = 'none';
+  v.addEventListener('error', () => { v.remove(); onFail?.(v); }, { once: true });
+  return v;
+}
+
+/* Spelar bara när ytan är i eller nära vyn – sparar batteri och data. */
+function playInView(el, onFirstPlay) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) { el.pause(); return; }
+      if (el.preload !== 'auto') { el.preload = 'auto'; el.load(); onFirstPlay?.(); }
+      el.play().catch(() => {});
+    });
+  }, { rootMargin: '300px' });
+  io.observe(el);
+}
+
+function heroVideo() {
+  const box = $('#heroMedia'), btn = $('#vidctl');
+  if (!box) return;
+
+  /* Levande lista: ett klipp som inte går att spela plockas ut ur
+     rotationen, annars skulle slingan stanna på ett borttaget
+     element och hero bli tom. */
+  const clips = [];
+  let i = 0, paused = false;
+
+  const current = () => clips[i];
+
+  const showClip = (n) => {
+    if (!clips.length) { btn?.remove(); return; }   /* inga klipp → bara gradienten */
+    i = ((n % clips.length) + clips.length) % clips.length;
+    clips.forEach((v, k) => {
+      v.classList.toggle('is-on', k === i);
+      if (k !== i) { v.pause(); return; }
+      v.preload = 'auto';
+      try { v.currentTime = 0; } catch { /* inte laddad än */ }
+      if (!paused) v.play().catch(() => {});
+    });
+  };
+
+  const drop = (v) => {
+    const k = clips.indexOf(v);
+    if (k < 0) return;
+    const wasCurrent = k === i;
+    clips.splice(k, 1);
+    if (k < i) i -= 1;
+    if (wasCurrent) showClip(i);      /* hoppa vidare till nästa som fungerar */
+    else if (!clips.length) btn?.remove();
+  };
+
+  HERO_CLIPS.forEach((src) => {
+    const v = video(src, { loop: false, onFail: drop });
+    if (!v) return;
+    v.addEventListener('ended', () => showClip(i + 1));
+    clips.push(v);
+    box.appendChild(v);
+  });
+
+  if (!clips.length) { btn?.remove(); return; }
+  showClip(0);
+
+  /* pausa när hero rullat ur bild */
+  new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      const v = current();
+      if (!v) return;
+      if (e.isIntersecting && !paused) v.play().catch(() => {});
+      else v.pause();
+    });
+  }, { threshold: 0.05 }).observe($('#hero'));
+
+  btn?.addEventListener('click', () => {
+    paused = !paused;
+    const v = current();
+    if (v) paused ? v.pause() : v.play().catch(() => {});
+    $('#vidctlText').textContent = paused ? 'Spela' : 'Paus';
+    btn.setAttribute('aria-label', paused ? 'Spela bakgrundsfilm' : 'Pausa bakgrundsfilm');
+    btn.querySelector('svg').innerHTML = paused
+      ? '<path d="M3 1.5l7.5 4.5L3 10.5z"/>'
+      : '<rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/>';
+  });
+}
+
+function bandVideos() {
+  const reel = $('#reelFrame');
+  if (reel) {
+    const v = video(REEL_CLIP);
+    if (v) { reel.prepend(v); playInView(v); }
+  }
+  const band = $('#bandFrame');
+  if (band) {
+    const v = video(BAND_CLIP);
+    if (v) { band.prepend(v); playInView(v); }
+    else band.remove();          /* inget klipp → inget tomt band */
+  }
 }
 
 /* ---------- Navigation ------------------------------------ */
@@ -458,6 +571,8 @@ function init() {
     document.title = `${CLUB.name} — ${CLUB.tagline}`;
   });
 
+  safe('heroVideo', heroVideo);
+  safe('bandVideos', bandVideos);
   safe('nav', nav);
   safe('ticker', ticker);
   safe('counters', counters);

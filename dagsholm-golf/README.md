@@ -3,8 +3,8 @@
 Statisk, byggfri webbplats för Dagsholm Golfklubb (18-hålsbana i
 Färgelanda kommun, Dalsland).
 
-Ingen bundler, inga npm-beroenden i drift, inga externa bilder — bara
-`index.html`, en stylesheet och två ES-moduler.
+Ingen bundler och inga npm-beroenden i drift — bara `index.html`, en
+stylesheet och tre ES-moduler.
 
 ```
 dagsholm-golf/
@@ -12,6 +12,7 @@ dagsholm-golf/
 ├── css/style.css       # designsystem, sektionsteman och layout
 ├── js/
 │   ├── data.js         # ALLT innehåll – ändra här
+│   ├── media.js        # filmklippen
 │   └── app.js          # interaktion
 └── vercel.json
 ```
@@ -21,8 +22,10 @@ dagsholm-golf/
 Sajten innehåller **bara uppgifter klubben själv kan intyga**.
 
 Tidigare versioner av den här sidan hade en påhittad banguide,
-uppskattade priser, exempelnyheter och AI-genererade bilder som inte
-föreställde banan. Allt sådant är borttaget.
+uppskattade priser, exempelnyheter och AI-genererade stillbilder som inte
+föreställde banan. Allt sådant är borttaget. Filmklippen som finns kvar
+används enbart som bakgrund och är märkta som stämningsbilder — se
+"Film och bilder" nedan.
 
 Där data saknas gör sidan ett aktivt val: den **göms eller hänvisar till
 receptionen** i stället för att visa platshållare som kan läsas som
@@ -79,15 +82,27 @@ det ska bytas.
 3. **Nyheter** — `NEWS` när ni vill ha en aktuellt-sektion.
 4. **Bilder** — se nedan.
 
-### Bilder
+### Film och bilder
 
-Sajten har medvetet **inga bilder alls**. Den är byggd för att fungera
-och se färdig ut utan dem, så att inget bildmaterial som inte föreställer
-er anläggning ligger ute.
+Sajten har **inga stillbilder**. Den är byggd för att se färdig ut utan
+dem.
 
-När ni har egna foton från banan lägger ni dem i en `media/`-mapp och
-kompletterar layouten där ni vill ha dem — hero, banöversikt och
-anläggningssektionen är de naturliga platserna. Använd riktiga foton, och
+Den har däremot **film**: sex AI-genererade solnedgångsklipp från en
+golfbana i allmänhet, som roterar i hero och ligger i två filmband. De
+**föreställer inte Dagsholm**. Därför används de enbart som bakgrund,
+aldrig med bildtext som påstår att det är klubbens egen bana, och
+filmbandet är märkt "Stämningsbild".
+
+Byt ut dem så fort ni har egen film — det är bara URL:erna i
+`js/media.js` som behöver ändras. Ta då även bort märkningen
+`.reel__note` i `index.html`.
+
+Filmen laddas först när den behövs, pausas när den rullar ur bild, och
+ett klipp som inte går att spela plockas automatiskt ur rotationen. Går
+inget klipp att spela visas hero:ns gradient i stället och paus-knappen
+tas bort.
+
+Egna foton lägger ni i en `media/`-mapp och kompletterar layouten med —
 skriv `alt`-texter som beskriver vad bilden visar.
 
 ## Deploy till Vercel
@@ -111,5 +126,5 @@ Pushar som inte rör `dagsholm-golf/` triggar ingen ny deploy.
 - Respekterar `prefers-reduced-motion` — all rörelse stängs av.
 - Tangentbordsstyrning, synlig fokusmarkering, "hoppa till innehåll"-länk,
   korrekt rubrikhierarki.
-- Enda externa anrop är Google Fonts, som har systemfallback i CSS.
-  Inga bilder, ingen video, inga inbäddade tredjepartsramar.
+- Externa anrop: Google Fonts (systemfallback i CSS) och filmklippen.
+  Inga stillbilder, inga inbäddade tredjepartsramar.

@@ -177,30 +177,28 @@ table { border-collapse: collapse; width: 100%; }
 .skip:focus { left: 1rem; top: 1rem; }
 .sr { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-/* dekor: fint rutnät */
-.deco-grid::before {
+/* Dekor: klippränder som på en nyklippt fairway.
+   Breda, mjuka diagonalband – samma mönster gräsklipparen lämnar. */
+.deco-mow::before {
   content: '';
   position: absolute; inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(var(--hair-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--hair-soft) 1px, transparent 1px);
-  background-size: clamp(3rem, 8vw, 7rem) clamp(3rem, 8vw, 7rem);
-  mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 78%);
-  opacity: 0.7;
+  background: repeating-linear-gradient(
+    114deg,
+    color-mix(in oklab, var(--fg) 3.5%, transparent) 0 clamp(3rem, 7vw, 6.5rem),
+    transparent            clamp(3rem, 7vw, 6.5rem) clamp(6rem, 14vw, 13rem)
+  );
+  mask-image: linear-gradient(to bottom, #000, transparent 88%);
 }
-/* dekor: mjuk glöd */
-.deco-glow::after {
-  content: '';
-  position: absolute;
-  width: 60vw; height: 60vw;
-  max-width: 44rem; max-height: 44rem;
-  right: -12vw; top: -18vw;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 22%, transparent), transparent 65%);
-  filter: blur(20px);
+
+/* Avdelare med flaggstång – liten golfsignatur mellan block */
+.divider {
+  display: flex; align-items: center; gap: 1.25rem;
+  margin-block: clamp(2.5rem, 6vw, 4rem);
+  color: var(--accent);
 }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
+.divider svg { width: 20px; height: 20px; flex: none; }
 
 .eyebrow {
   display: inline-flex; align-items: center; gap: 0.7em;
@@ -389,27 +387,19 @@ h3.display { font-size: var(--step-3); }
   background: linear-gradient(160deg, var(--ink-3), var(--moss) 55%, var(--ink));
   color: var(--bone);
 }
-/* Hero-dekor: koncentriska ringar, helt i CSS – inga bilder */
-.hero__canvas { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.hero__canvas::before {
+/* Hero: solnedgångsfilm i helskärm */
+.hero__media { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.hero__media video {
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity 1.4s var(--ease);
+}
+.hero__media video.is-on { opacity: 1; }
+.hero__media::after {
   content: ''; position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(245,242,233,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245,242,233,.045) 1px, transparent 1px);
-  background-size: clamp(3rem, 7vw, 6rem) clamp(3rem, 7vw, 6rem);
-  mask-image: radial-gradient(110% 80% at 70% 40%, #000 10%, transparent 72%);
+  background:
+    linear-gradient(to top, var(--ink) 1%, color-mix(in oklab, var(--ink) 34%, transparent) 42%, transparent 74%),
+    linear-gradient(to right, color-mix(in oklab, var(--ink) 74%, transparent), transparent 62%);
 }
-.hero__ring {
-  position: absolute; top: 50%; right: -6vw;
-  border: 1px solid rgba(198,164,98,.24);
-  border-radius: 50%;
-  translate: 0 -50%;
-  animation: breathe 9s var(--ease-io) infinite;
-}
-.hero__ring:nth-child(1) { width: 30vw; height: 30vw; }
-.hero__ring:nth-child(2) { width: 46vw; height: 46vw; animation-delay: -3s; border-color: rgba(198,164,98,.15); }
-.hero__ring:nth-child(3) { width: 62vw; height: 62vw; animation-delay: -6s; border-color: rgba(198,164,98,.09); }
-@keyframes breathe { 0%,100% { transform: scale(1); opacity: .85; } 50% { transform: scale(1.05); opacity: 1; } }
 
 .hero__inner { padding-block: clamp(3rem, 9vh, 7rem) clamp(3rem, 7vh, 5rem); width: 100%; }
 
@@ -578,6 +568,35 @@ h3.display { font-size: var(--step-3); }
 .scorecard .sum td, .scorecard .sum th { font-weight: 600; color: var(--accent); }
 .scorecard .sum td:first-child { background: var(--bg); }
 .note { margin-top: 1.25rem; font-size: var(--step--1); color: var(--faint); max-width: 60ch; }
+
+/* ---------- 12. Filmband ---------------------------------- */
+.reel { position: relative; padding: 0; overflow: hidden; background: var(--ink); }
+.reel__frame { position: relative; height: clamp(26rem, 74svh, 46rem); overflow: hidden; isolation: isolate; }
+.reel__frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.reel__frame::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8,18,13,.9), transparent 48%, rgba(8,18,13,.4));
+}
+.reel__caption { position: absolute; inset: auto 0 0 0; z-index: 2; padding-block: clamp(2.25rem, 5vw, 4rem); color: var(--bone); }
+.reel__quote { font-family: var(--serif); font-size: var(--step-6); line-height: 1.02; max-width: 17ch; text-wrap: balance; }
+.reel__by {
+  margin-top: 1.1rem; font-family: var(--mono); font-size: var(--step--2);
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--brass-lt);
+}
+/* diskret upplysning om att filmen är stämningsbild */
+.reel__note {
+  position: absolute; right: var(--gutter); bottom: 1rem; z-index: 2;
+  font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(245,242,233,.4);
+}
+
+/* Smalt filmband utan text */
+.band { position: relative; height: clamp(16rem, 34vw, 26rem); overflow: hidden; background: var(--ink); }
+.band video { width: 100%; height: 100%; object-fit: cover; }
+.band::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(8,18,13,.55), transparent 35%, transparent 65%, rgba(8,18,13,.55));
+}
 
 /* ---------- 13. Bento ------------------------------------- */
 .bento { display: grid; gap: 1px; background: var(--hair-soft); border: 1px solid var(--hair-soft); }

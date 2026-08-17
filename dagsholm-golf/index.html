@@ -115,7 +115,7 @@
 
 <!-- ===== HERO ===== -->
 <section class="hero" id="hero" data-theme="dark">
-  <div class="hero__canvas" aria-hidden="true"><span class="hero__ring"></span><span class="hero__ring"></span><span class="hero__ring"></span></div>
+  <div class="hero__media" id="heroMedia" aria-hidden="true"></div>
 
   <div class="wrap wrap--wide hero__inner">
     <p class="hero__kicker">Färgelanda · Dalsland · sedan 1991</p>
@@ -139,6 +139,11 @@
     <p class="hero__meta"><span>Par 72</span><span>18 hål</span><span>Skogs- och parkbana</span><span>Invigd 1991</span></p>
   </div>
 
+  <button class="vidctl" id="vidctl" aria-label="Pausa bakgrundsfilm">
+    <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/></svg>
+    <span id="vidctlText">Paus</span>
+  </button>
+
   <p class="hero__scroll"><span>Scrolla</span><i aria-hidden="true"></i></p>
 </section>
 
@@ -148,7 +153,7 @@
 </div>
 
 <!-- ===== KLUBBEN — LJUS ===== -->
-<section class="section t-light deco-grid" id="klubben" data-theme="light">
+<section class="section t-light" id="klubben" data-theme="light">
   <div class="wrap wrap--wide">
     <div class="intro__grid">
       <div>
@@ -188,8 +193,21 @@
   </div>
 </section>
 
+<!-- ===== FILMBAND — SOLNEDGÅNG ===== -->
+<section class="reel" aria-label="Stämningsfilm">
+  <div class="reel__frame" id="reelFrame">
+    <div class="reel__caption">
+      <div class="wrap wrap--wide">
+        <p class="reel__quote" data-reveal>Kvällsljus, arton hål och gott om tid.</p>
+        <p class="reel__by" data-reveal style="--d:.1s">Dagsholm Golfklubb · Färgelanda</p>
+      </div>
+    </div>
+    <p class="reel__note">Stämningsbild</p>
+  </div>
+</section>
+
 <!-- ===== BANAN — SKOGSGRÖN ===== -->
-<section class="section t-forest deco-glow" id="banan" data-theme="dark">
+<section class="section t-forest deco-mow" id="banan" data-theme="dark">
   <div class="wrap wrap--wide">
     <div class="head">
       <div>
@@ -251,8 +269,11 @@
   </div>
 </section>
 
+<!-- ===== SMALT FILMBAND ===== -->
+<div class="band" id="bandFrame" aria-hidden="true"></div>
+
 <!-- ===== MEDLEMSKAP — MÖRK ===== -->
-<section class="section t-dark deco-glow" id="medlemskap" data-theme="dark">
+<section class="section t-dark deco-mow" id="medlemskap" data-theme="dark">
   <div class="wrap wrap--wide">
     <div class="head">
       <div>
@@ -279,12 +300,15 @@
 </section>
 
 <!-- ===== FAQ — NATTBLÅ ===== -->
-<section class="section t-night deco-grid" id="faq" data-theme="dark">
+<section class="section t-night" id="faq" data-theme="dark">
   <div class="wrap wrap--narrow">
     <div class="head" style="display:block">
       <p class="eyebrow" data-reveal>Frågor &amp; svar</p>
       <h2 class="display" data-reveal>Bra att veta</h2>
     </div>
+    <p class="divider" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4l13 4.5L6 13"/><circle cx="6" cy="21" r="1.6" fill="currentColor" stroke="none"/></svg>
+    </p>
     <div class="faq" id="faqList"></div>
   </div>
 </section>

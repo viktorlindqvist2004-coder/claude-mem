@@ -31,7 +31,16 @@ export default function Navbar() {
         lifted ? "bg-canvas/70 backdrop-blur-md" : "bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-5 md:px-10">
+      {/* Before the bar gets its own background, the links sit directly on the
+          artwork — which runs from deep blue sky to bright golden haze. A top
+          scrim guarantees contrast without tinting the whole frame. */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-black/50 via-black/20 to-transparent transition-opacity duration-500 ${
+          lifted ? "opacity-0" : "opacity-100"
+        }`}
+      />
+
+      <nav className="relative mx-auto flex max-w-[1600px] items-center justify-between px-6 py-5 md:px-10">
         <button
           onClick={() => go("hero")}
           className={`display text-2xl transition-colors md:text-3xl ${

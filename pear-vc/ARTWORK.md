@@ -5,15 +5,32 @@ file in at the matching name and the scene picks it up on next load — no code
 change. Anything missing falls back to the drawn version in `lib/scenes.ts`, so
 the site is never broken by an absent file.
 
-| File                          | Where it appears              | Subject |
-| ----------------------------- | ----------------------------- | ------- |
-| `01-hero-walk.jpg`            | Hero                          | Robed figure walking a sunlit path |
-| `02-graft.jpg`                | "We build it"                 | Old hands grafting a pear scion |
-| `03-orchard.jpg`              | "We rank it"                  | Pear tree heavy with golden fruit |
-| `04-split-pear.jpg`           | "We share in what it earns"   | Hands holding a split golden pear |
-| `05-dome.jpg`                 | "No fees"                     | Chapel dome with an oculus |
-| `06-orchard-pale.jpg`         | FAQ background                | Pale misty pear tree |
-| `07-night-tending.jpg`        | Constellations                | Figure watering a sapling at night |
+| File                   | Where it appears            | Currently |
+| ---------------------- | --------------------------- | --------- |
+| `01-hero-walk.jpg`     | Hero                        | Crop — orchard rows under the canopy, warm horizon |
+| `02-graft.jpg`         | "We build it"               | Crop — the gnarled trunk against the far valley |
+| `03-orchard.jpg`       | "We rank it"                | Source painting, uncropped |
+| `04-split-pear.jpg`    | "We share in what it earns" | Crop — dense canopy of ripe fruit |
+| `05-dome.jpg`          | "No fees"                   | Crop — deep blue sky over the upper branches |
+| `06-orchard-pale.jpg`  | FAQ background              | Crop of the meadow, brightened and desaturated |
+| `07-night-tending.jpg` | Constellations              | Figure watering a sapling at night |
+
+## Why most of these are crops
+
+Only two paintings were generated before credits ran out. Rather than leave
+five scenes on the drawn fallbacks — which read as flat vector panels next to a
+photographic one and broke the sequence — the story now stages itself inside a
+single painted orchard, with each scene framing a different part of it. The
+camera moves through one place instead of cutting between five unrelated ones,
+which is closer to the "film you scroll through" brief than a mixed set was.
+
+Crops are cut from the 2048² source and resampled to 1600² (lanczos, light
+sharpen). The regions are in `scripts` history; re-cutting them is a few lines
+of `sharp`.
+
+Replacing any of them with purpose-made artwork is a drop-in: same filename,
+any aspect ratio. The subjects the sections were originally written for are
+below, and the copy still supports them.
 
 ## Format
 

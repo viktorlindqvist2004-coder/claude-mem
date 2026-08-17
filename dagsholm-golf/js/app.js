@@ -59,23 +59,34 @@ function video(src, { loop = true, onFail } = {}) {
   const url = m(src);
   if (!url) return null;
   const v = document.createElement('video');
-  v.src = url;
+  /* Ordningen spelar roll: preload måste sättas FÖRE src. Sätts den
+     efter avbryter webbläsaren laddningen som src redan startat, och
+     elementet fastnar på readyState 0 — play() gör då inget alls. */
   v.muted = true;
   v.loop = loop;
   v.playsInline = true;
   v.setAttribute('muted', '');
   v.setAttribute('playsinline', '');
   v.preload = 'none';
+  v.src = url;
   v.addEventListener('error', () => { v.remove(); onFail?.(v); }, { once: true });
   return v;
 }
 
+/** Börja hämta klippet på riktigt. preload räcker inte – load() krävs. */
+function wake(v) {
+  if (v.dataset.woke) return;
+  v.dataset.woke = '1';
+  v.preload = 'auto';
+  v.load();
+}
+
 /* Spelar bara när ytan är i eller nära vyn – sparar batteri och data. */
-function playInView(el, onFirstPlay) {
+function playInView(el) {
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) { el.pause(); return; }
-      if (el.preload !== 'auto') { el.preload = 'auto'; el.load(); onFirstPlay?.(); }
+      wake(el);
       el.play().catch(() => {});
     });
   }, { rootMargin: '300px' });
@@ -100,10 +111,12 @@ function heroVideo() {
     clips.forEach((v, k) => {
       v.classList.toggle('is-on', k === i);
       if (k !== i) { v.pause(); return; }
-      v.preload = 'auto';
+      wake(v);
       try { v.currentTime = 0; } catch { /* inte laddad än */ }
       if (!paused) v.play().catch(() => {});
     });
+    /* förladda nästa klipp så bytet blir sömlöst */
+    if (clips.length > 1) wake(clips[(i + 1) % clips.length]);
   };
 
   const drop = (v) => {

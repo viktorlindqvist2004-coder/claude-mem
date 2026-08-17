@@ -18,6 +18,7 @@ plugin/data/
 plugin/data.backup/
 package-lock.json
 !salon-website/package-lock.json
+!pear-vc/package-lock.json
 !axion-studio/package-lock.json
 bun.lock
 !plugin/bun.lock

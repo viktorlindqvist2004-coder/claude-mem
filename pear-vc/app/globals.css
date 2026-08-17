@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@theme {
+  /* Core palette ------------------------------------------------------- */
+  --color-sky: #2575fc;
+  --color-sky-deep: #0f3fa8;
+  --color-sky-light: #6aa8ff;
+  --color-cyan: #35c9f0;
+  --color-canvas: #fbf9f5;
+  --color-canvas-dim: #efe9dd;
+  --color-gold: #e8b229;
+  --color-gold-deep: #b8791a;
+  --color-ink: #14161a;
+  --color-ink-soft: #4a4f57;
+
+  --font-sans: "Helvetica Neue", Helvetica, Inter, "Segoe UI", Arial, sans-serif;
+  --font-serif: "Times New Roman", Times, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --ease-portal: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  color-scheme: light;
+  --grid-line: color-mix(in srgb, var(--color-ink) 10%, transparent);
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  /* Lenis drives scrolling; native smooth scrolling would fight it. */
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Lenis ---------------------------------------------------------------- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Typography ----------------------------------------------------------- */
+.display {
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.88;
+  text-wrap: balance;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.classical {
+  font-family: var(--font-serif);
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+/* Scroll-reveal primitives — the "from" state lives in CSS so text never
+   flashes unstyled before GSAP takes over. */
+.reveal-line {
+  display: block;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translate3d(0, 0.5em, 0);
+  will-change: opacity, filter, transform;
+}
+.reveal-line.is-shown {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+/* Fine-line grid overlay ------------------------------------------------ */
+.grid-overlay {
+  background-image: linear-gradient(
+      to right,
+      var(--grid-line) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size, 88px) var(--grid-size, 88px);
+}
+
+/* Accessibility -------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-line {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}

@@ -6,9 +6,13 @@
    visa platshållare. Inget påhittat innehåll kan därför nå sidan.
    ============================================================= */
 
+/* ?v= bryter gamla webbläsarcachar. Höj siffran här, i index.html och i
+   de andra importerna om en utrullning måste slå igenom omedelbart.
+   Cache-Control i vercel.json revaliderar numera varje gång, så det
+   behövs normalt inte. */
 import { CLUB, STATS, HOLES, COURSE, GREENFEE, GREENFEE_NOTE, EXTRAS,
-         MEMBERSHIPS, MEMBERSHIP_NOTE, FACILITIES, RULES, FAQ, NEWS } from './data.js';
-import { m, HERO_CLIPS, REEL_CLIP, BAND_CLIP } from './media.js';
+         MEMBERSHIPS, MEMBERSHIP_NOTE, FACILITIES, RULES, FAQ, NEWS } from './data.js?v=2';
+import { m, HERO_CLIPS, REEL_CLIP, BAND_CLIP } from './media.js?v=2';
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

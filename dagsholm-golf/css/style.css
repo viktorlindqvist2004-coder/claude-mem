@@ -571,7 +571,13 @@ h3.display { font-size: var(--step-3); }
 
 /* ---------- 12. Filmband ---------------------------------- */
 .reel { position: relative; padding: 0; overflow: hidden; background: var(--ink); }
-.reel__frame { position: relative; height: clamp(26rem, 74svh, 46rem); overflow: hidden; isolation: isolate; }
+/* Gradienten ligger bakom filmen: kan klippet inte spelas (t.ex. iOS
+   strömsparläge) ser bandet fortfarande avsiktligt ut, inte trasigt. */
+.reel__frame {
+  position: relative; height: clamp(26rem, 74svh, 46rem);
+  overflow: hidden; isolation: isolate;
+  background: linear-gradient(200deg, #3A2A12, var(--moss) 45%, var(--ink));
+}
 .reel__frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .reel__frame::after {
   content: ''; position: absolute; inset: 0;
@@ -584,14 +590,21 @@ h3.display { font-size: var(--step-3); }
   letter-spacing: 0.2em; text-transform: uppercase; color: var(--brass-lt);
 }
 /* diskret upplysning om att filmen är stämningsbild */
+/* Uppe till höger – krockar annars med bylinen på smala skärmar. */
 .reel__note {
-  position: absolute; right: var(--gutter); bottom: 1rem; z-index: 2;
+  position: absolute; right: var(--gutter); top: 1.25rem; z-index: 2;
+  padding: 0.35rem 0.7rem; border-radius: 999px;
+  background: rgba(8,18,13,.45);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(245,242,233,.4);
+  text-transform: uppercase; color: rgba(245,242,233,.55);
 }
 
 /* Smalt filmband utan text */
-.band { position: relative; height: clamp(16rem, 34vw, 26rem); overflow: hidden; background: var(--ink); }
+.band {
+  position: relative; height: clamp(16rem, 34vw, 26rem); overflow: hidden;
+  background: linear-gradient(160deg, var(--moss), #3A2A12 60%, var(--ink));
+}
 .band video { width: 100%; height: 100%; object-fit: cover; }
 .band::after {
   content: ''; position: absolute; inset: 0;

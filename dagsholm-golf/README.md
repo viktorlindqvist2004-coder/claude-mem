@@ -1,7 +1,7 @@
-# Dagsholm Golf — webbplats
+# Dagsholm Golfklubb — webbplats
 
-Statisk, byggfri webbplats för Dagsholm Golf (18-hålsbana i Ellenö,
-Färgelanda kommun, södra Dalsland).
+Statisk, byggfri webbplats för Dagsholm Golfklubb (18-hålsbana i
+Färgelanda kommun, Dalsland).
 
 Ingen bundler, inga npm-beroenden i drift — bara `index.html`, en
 stylesheet och tre ES-moduler. Det gör den snabb att ladda, trivial att
@@ -41,7 +41,8 @@ Nästan allt redaktionellt bor i **`js/data.js`**:
 | --- | --- |
 | `CLUB` | namn, adress, telefon, e-post, koordinater |
 | `STATS` | nyckeltalen under introtexten |
-| `HOLES` | banguiden och scorekortet, hål 1–18 |
+| `HOLES` | banguiden och scorekortet, hål 1–18 (tom = av) |
+| `COURSE` | banöversikten som visas när `HOLES` är tom |
 | `GREENFEE` | prislistan, låg- och högsäsong |
 | `EXTRAS` | golfbil, vagn, hyrklubbor, ställplats … |
 | `MEMBERSHIPS` | medlemskapsnivåerna |
@@ -54,17 +55,21 @@ Kontaktuppgifter förekommer även som riktiga `tel:`- och `mailto:`-länkar
 i `index.html` och i JSON-LD-blocket i `<head>` — sök på telefonnumret om
 det ska bytas.
 
+### Slå på banguiden
+
+`HOLES` är **tom med flit**. Så länge den är tom visar sidan en
+banöversikt med enbart verifierade uppgifter — ingen hålspecifik data
+kan alltså hamna fel i publik text.
+
+Fyll i listan från klubbens officiella scorekort så renderas den
+interaktiva hålguiden och hela scorekortet automatiskt. Formatet står
+beskrivet i kommentaren direkt ovanför `HOLES` i `js/data.js`.
+
 ### ⚠ Innan sajten går live
 
-Två saker är ifyllda med rimliga utgångsvärden och bör stämmas av mot
-klubbens officiella uppgifter:
-
-1. **Banguiden (`HOLES`)** — hålnamn, längder och index är påhittade för
-   att visa upp funktionen. Ersätt med siffrorna från det officiella
-   scorekortet.
-2. **Priserna (`GREENFEE`, `EXTRAS`, `MEMBERSHIPS`)** — bygger på
-   offentligt tillgängliga uppgifter och kan vara inaktuella. Stäm av
-   mot årets prislista.
+**Priserna** (`GREENFEE`, `EXTRAS`, `MEMBERSHIPS`) bygger på offentligt
+tillgängliga uppgifter och kan vara inaktuella — stäm av mot årets
+prislista. Detsamma gäller `NEWS`, som innehåller exempelinlägg.
 
 Verifierat mot publika källor: 18 hål, par 72, skogs- och parkbana,
 ritad av Åke Persson, invigd 1991 (tidigare Färgelanda Golfklubb),

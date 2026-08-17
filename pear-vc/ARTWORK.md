@@ -32,6 +32,24 @@ Replacing any of them with purpose-made artwork is a drop-in: same filename,
 any aspect ratio. The subjects the sections were originally written for are
 below, and the copy still supports them.
 
+## Frame sequences
+
+`public/sequences/<name>/` holds a scroll-scrubbed shot — one image per frame,
+sorted numerically, so `0001.jpg … 0060.jpg` or `frame-1 … frame-60` both work.
+`SequenceSection` renders itself only when the directory has frames, so an
+empty one leaves no trace on the page.
+
+The page reads `sequences/cut/`. Export **40–90 frames** of a single continuous
+shot in which *the subject moves* — a hand opening a pear, light crossing a
+face. A pan or zoom over a still is not worth it here: the WebGL story canvas
+already does that transform live, at full resolution and no download cost. The
+frames only earn their bytes when the content itself changes.
+
+Aim for ~1400px on the long edge and JPEG ~70%. At 60 frames that is roughly
+3–5 MB, which the scrubber streams rather than preloading: it keeps a window of
+about 14 decoded frames around the current one and releases the rest, so memory
+stays flat instead of scaling with frame count.
+
 ## Format
 
 Roughly square (1:1) suits the story scenes best: the canvas cover-fits them,

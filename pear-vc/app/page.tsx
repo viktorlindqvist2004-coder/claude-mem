@@ -5,7 +5,9 @@ import Story from "@/components/Story";
 import Faq from "@/components/Faq";
 import Constellations from "@/components/Constellations";
 import Footer from "@/components/Footer";
+import SequenceSection from "@/components/SequenceSection";
 import { resolveSceneArt } from "@/lib/sceneAssets";
+import { resolveSequence } from "@/lib/sequenceAssets";
 import { STORY_ART_SLOTS } from "@/lib/scenes";
 
 /**
@@ -21,6 +23,8 @@ import { STORY_ART_SLOTS } from "@/lib/scenes";
 export default function Home() {
   const art = resolveSceneArt();
   const sceneImages = STORY_ART_SLOTS.map((slot) => art[slot]);
+  // Empty until frames are exported; the section removes itself when so.
+  const cutSequence = resolveSequence("cut");
 
   return (
     <>
@@ -30,6 +34,7 @@ export default function Home() {
 
       <main>
         <Story />
+        <SequenceSection frames={cutSequence} />
         <Faq artwork={art["06-orchard-pale"]} />
         <Constellations artwork={art["07-night-tending"]} />
         <Footer />

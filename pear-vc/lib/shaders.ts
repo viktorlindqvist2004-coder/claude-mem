@@ -51,12 +51,18 @@ vec2 uvCover(vec2 uv, float zoom, vec2 parallax, float texAspect) {
 }
 
 // Radial chromatic split — strongest mid-transition, invisible at rest.
+//
+// The shift is divided by zoom because uvCover divides the sampling
+// coordinates by it: a fixed step in texture space covers proportionally more
+// of the screen the further a scene is zoomed in, so without this the fringing
+// grows into rainbow moiré exactly when a scene is largest — worst on big
+// displays, and worst on detailed photographic scenes.
 vec3 sampleScene(
   sampler2D tex, float zoom, vec2 parallax, float aberration, float texAspect
 ) {
   vec2 uv = uvCover(vUv, zoom, parallax, texAspect);
   vec2 dir = vUv - 0.5;
-  vec2 shift = dir * aberration * 0.008;
+  vec2 shift = dir * aberration * 0.0022 / max(zoom, 0.001);
   return vec3(
     texture2D(tex, uv + shift).r,
     texture2D(tex, uv).g,

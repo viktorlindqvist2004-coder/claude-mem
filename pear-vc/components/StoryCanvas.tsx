@@ -276,9 +276,13 @@ export default function StoryCanvas({
       const portal = clamp01((f - PORTAL_START) / (1 - PORTAL_START));
 
       // Outgoing scene keeps drifting in, then accelerates as it is consumed.
-      const zoomA = 1 + f * 0.30 + portal * 0.55;
-      // Incoming scene settles from slightly over-scaled to rest.
-      const zoomB = 1.42 - 0.42 * portal;
+      // Kept gentle: a square texture already crops to the middle ~56% of a
+      // 16:9 viewport, so aggressive zoom on top of that magnifies the artwork
+      // hard enough to read as a mistake rather than as camera movement.
+      const zoomA = 1 + f * 0.16 + portal * 0.30;
+      // Incoming scene settles from slightly over-scaled to rest. Ends at
+      // exactly 1.0 so it matches the next unit's zoomA at f = 0.
+      const zoomB = 1.22 - 0.22 * portal;
 
       const texA = textures[index];
       const texB = textures[Math.min(SCENE_COUNT - 1, index + 1)];

@@ -70,7 +70,7 @@ function StorySection({
     align === "right"
       ? "bg-linear-to-l from-black/55 via-black/20 to-transparent"
       : align === "center"
-        ? "bg-linear-to-b from-transparent via-black/35 to-transparent"
+        ? "bg-linear-to-b from-black/15 via-black/50 to-black/15"
         : "bg-linear-to-r from-black/55 via-black/20 to-transparent";
 
   return (

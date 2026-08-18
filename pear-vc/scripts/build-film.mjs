@@ -32,23 +32,39 @@ const QUALITY = 4; // ffmpeg -q:v scale, 2 (best) – 31 (worst)
 
 function ffmpegPath() {
   const candidates = [
+    process.env.FFMPEG_PATH,
     path.join(ROOT, "node_modules", "ffmpeg-static", "ffmpeg"),
     path.join(ROOT, "..", "node_modules", "ffmpeg-static", "ffmpeg"),
-  ];
+  ].filter(Boolean);
   for (const candidate of candidates) {
     if (existsSync(candidate)) return candidate;
   }
   return "ffmpeg"; // fall back to whatever is on PATH
 }
 
-const shots = process.argv.slice(2);
+/**
+ * A shot may be suffixed `:head,tail` to drop that many cut frames from its
+ * start and end.
+ *
+ * Generated footage often needs this. A model given a flat image as a keyframe
+ * can decide the image is a painting and animate the wall around it — the shot
+ * is right in the middle and wrong at the edges. Trimming is the honest fix;
+ * regenerating costs credits and usually reintroduces the same idea.
+ */
+function parseShot(arg) {
+  const match = /^(.*?):(\d+),(\d+)$/.exec(arg);
+  if (!match) return { file: arg, head: 0, tail: 0 };
+  return { file: match[1], head: Number(match[2]), tail: Number(match[3]) };
+}
+
+const shots = process.argv.slice(2).map(parseShot);
 if (shots.length === 0) {
-  console.error("usage: build-film.mjs <shot1.mp4> [shot2.mp4 ...]");
+  console.error("usage: build-film.mjs <shot1.mp4[:head,tail]> [shot2.mp4 ...]");
   process.exit(1);
 }
-for (const shot of shots) {
-  if (!existsSync(shot)) {
-    console.error(`missing: ${shot}`);
+for (const { file } of shots) {
+  if (!existsSync(file)) {
+    console.error(`missing: ${file}`);
     process.exit(1);
   }
 }
@@ -59,7 +75,7 @@ mkdirSync(OUT, { recursive: true });
 
 let frameNumber = 0;
 
-shots.forEach((shot, index) => {
+shots.forEach(({ file, head, tail }, index) => {
   // Extract into a scratch dir first: ffmpeg's %d counter restarts per input,
   // and the sequence needs one continuous run of numbers across all shots.
   const scratch = path.join(OUT, `.shot-${index}`);
@@ -68,7 +84,7 @@ shots.forEach((shot, index) => {
   execFileSync(
     ffmpeg,
     [
-      "-i", shot,
+      "-i", file,
       "-vf", `fps=${FPS},scale=${WIDTH}:-2`,
       "-q:v", String(QUALITY),
       "-loglevel", "error",
@@ -77,15 +93,18 @@ shots.forEach((shot, index) => {
     { stdio: "inherit" }
   );
 
-  const cut = readdirSync(scratch).sort();
-  for (const file of cut) {
+  const all = readdirSync(scratch).sort();
+  const kept = all.slice(head, all.length - tail);
+
+  for (const name of kept) {
     frameNumber++;
-    const name = String(frameNumber).padStart(4, "0") + ".jpg";
-    renameSync(path.join(scratch, file), path.join(OUT, name));
+    const out = String(frameNumber).padStart(4, "0") + ".jpg";
+    renameSync(path.join(scratch, name), path.join(OUT, out));
   }
   rmSync(scratch, { recursive: true, force: true });
 
-  console.log(`shot ${index + 1}: ${cut.length} frames`);
+  const trimmed = head || tail ? ` (trimmed ${head}/${tail})` : "";
+  console.log(`shot ${index + 1}: ${kept.length} frames${trimmed}`);
 });
 
 console.log(`\n${frameNumber} frames → public/sequences/film/`);

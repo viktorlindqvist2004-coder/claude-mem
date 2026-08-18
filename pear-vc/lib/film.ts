@@ -80,8 +80,8 @@ export const FILM_CHAPTERS: FilmChapter[] = [
     align: "left",
   },
   {
-    at: 0.89,
-    until: 0.995,
+    at: 0.87,
+    until: 0.96,
     label: "",
     heading: "Start the season",
     body: "Applications are open year-round, and every one gets a real answer inside ten days.",

@@ -30,6 +30,13 @@ const WINDOW = 14;
 const LOOKAHEAD = 6;
 /** Concurrent decodes. Enough to stay ahead, few enough to not starve paint. */
 const MAX_IN_FLIGHT = 4;
+/**
+ * How hard the playhead chases the scroll, per second.
+ *
+ * Lower is smoother and laggier. At 6 the film settles about a fifth of a
+ * second behind a stopped finger, which reads as weight rather than delay.
+ */
+const DAMPING = 6;
 
 type Frames = {
   get(index: number): ImageBitmap | undefined;
@@ -161,7 +168,11 @@ export default function SequenceScrubber({
     const last = frames.length - 1;
     const reduced = prefersReducedMotion();
 
+    /** Where the scroll says we are, in frames — fractional. */
     let target = 0;
+    /** Where the playhead actually is, chasing `target`. */
+    let position = 0;
+    let requested = -1;
     let drawnIndex = -1;
     let dirty = true;
 
@@ -194,21 +205,38 @@ export default function SequenceScrubber({
           trigger: `#${triggerId}`,
           start: "top top",
           end: "bottom bottom",
+          // Keep the scroll's own position as a fraction of a frame. Rounding
+          // here instead would hand the damping a staircase to follow.
           onUpdate: (self) => {
-            const next = Math.round(self.progress * last);
-            if (next !== target) {
-              target = next;
-              store.request(target);
-            }
+            target = self.progress * last;
           },
         });
 
     // Reduced motion still gets the opening frame, just never a moving one.
-    store.request(reduced ? 0 : target);
+    store.request(0);
 
-    const render = () => {
+    const render = (_time: number, deltaTime: number) => {
       resize();
-      const frame = store.nearest(target);
+
+      if (reduced) {
+        position = target = 0;
+      } else {
+        // Exponential smoothing, framed in seconds so the feel does not change
+        // with refresh rate. The playhead chases the scroll rather than being
+        // pinned to it, which is what turns a flick into a glide instead of a
+        // jump — the film keeps moving for a moment after the finger stops.
+        const dt = Math.min(deltaTime, 100) / 1000;
+        position += (target - position) * (1 - Math.exp(-DAMPING * dt));
+        if (Math.abs(target - position) < 0.01) position = target;
+      }
+
+      const index = Math.round(position);
+      if (index !== requested) {
+        store.request(index);
+        requested = index;
+      }
+
+      const frame = store.nearest(index);
       if (!frame) return;
       if (!dirty && frame.index === drawnIndex) return;
       draw(frame.bitmap);

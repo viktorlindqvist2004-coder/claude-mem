@@ -31,14 +31,21 @@ export default function SmoothScroll({
     }
 
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t: number) => 1 - Math.pow(1 - t, 3),
+      // The page is mostly one long film, so scrolling is a transport control
+      // more than a way to get somewhere. A longer glide and a quintic ease
+      // give it the flywheel feel that suits that: it takes a moment to get
+      // going and coasts to a stop rather than tracking the wheel one-to-one.
+      duration: 1.5,
+      easing: (t: number) => 1 - Math.pow(1 - t, 5),
       smoothWheel: true,
       // Touch devices already have momentum scrolling; smoothing it again
       // makes the page feel detached from the finger.
       syncTouch: false,
-      touchMultiplier: 1.6,
-      wheelMultiplier: 1,
+      // Both multipliers are below 1 deliberately. A notch of wheel should
+      // advance the film a little, not throw it — the frames are the content,
+      // and at 1.0 a single flick skipped past most of a shot.
+      touchMultiplier: 1.1,
+      wheelMultiplier: 0.65,
     });
 
     setLenis(lenis);

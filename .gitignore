@@ -11,7 +11,9 @@ dist/
 .install-version
 .claude/settings.local.json
 .claude/agents/
-.claude/skills/
+.claude/skills/*
+!.claude/skills/design-dna/
+!.claude/skills/motion-design/
 .claude/plans/
 .claude/worktrees/
 plugin/data/

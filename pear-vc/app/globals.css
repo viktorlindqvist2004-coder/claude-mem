@@ -23,7 +23,11 @@
   --font-serif: "Times New Roman", Times, Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --ease-portal: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Signature curve; mirrors EASE_CSS in lib/motion.ts. */
+  --ease-signature: cubic-bezier(0.33, 1, 0.68, 1);
+  --dur-quick: 180ms;
+  --dur-base: 420ms;
+  --dur-slow: 720ms;
 }
 
 :root {

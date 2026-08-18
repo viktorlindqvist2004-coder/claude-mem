@@ -27,7 +27,7 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-[var(--dur-base)] ease-[var(--ease-signature)] ${
         lifted ? "bg-canvas/70 backdrop-blur-md" : "bg-transparent"
       }`}
     >
@@ -35,7 +35,7 @@ export default function Navbar() {
           artwork — which runs from deep blue sky to bright golden haze. A top
           scrim guarantees contrast without tinting the whole frame. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-black/50 via-black/20 to-transparent transition-opacity duration-500 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-black/50 via-black/20 to-transparent transition-opacity duration-[var(--dur-base)] ease-[var(--ease-signature)] ${
           lifted ? "opacity-0" : "opacity-100"
         }`}
       />
@@ -65,7 +65,7 @@ export default function Navbar() {
           ))}
           <button
             onClick={() => go("apply")}
-            className="eyebrow rounded-full bg-ink px-5 py-2.5 text-canvas transition-transform hover:-translate-y-0.5"
+            className="eyebrow rounded-full bg-ink px-5 py-2.5 text-canvas transition-transform duration-[var(--dur-quick)] ease-[var(--ease-signature)] hover:-translate-y-0.5"
           >
             Apply
           </button>
@@ -80,12 +80,12 @@ export default function Navbar() {
           aria-label={open ? "Close menu" : "Open menu"}
         >
           <span
-            className={`h-px bg-current transition-all duration-300 ${
+            className={`h-px bg-current transition-all duration-[var(--dur-quick)] ${
               open ? "w-6 translate-y-[3.5px] rotate-45" : "w-6"
             }`}
           />
           <span
-            className={`h-px bg-current transition-all duration-300 ${
+            className={`h-px bg-current transition-all duration-[var(--dur-quick)] ${
               open ? "w-6 -translate-y-[3.5px] -rotate-45" : "w-4"
             }`}
           />
@@ -93,7 +93,7 @@ export default function Navbar() {
       </nav>
 
       <div
-        className={`overflow-hidden bg-canvas transition-[max-height] duration-500 md:hidden ${
+        className={`overflow-hidden bg-canvas transition-[max-height] duration-[var(--dur-base)] md:hidden ${
           open ? "max-h-72" : "max-h-0"
         }`}
       >

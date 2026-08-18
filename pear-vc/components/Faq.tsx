@@ -57,11 +57,11 @@ function FaqRow({
         <span className="eyebrow w-8 shrink-0 text-white/45">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <span className="display flex-1 text-[clamp(1.15rem,1.9vw,1.7rem)] transition-opacity group-hover:opacity-60">
+        <span className="display flex-1 text-[clamp(1.15rem,1.9vw,1.7rem)] transition-opacity duration-[var(--dur-quick)] ease-[var(--ease-signature)] group-hover:opacity-60">
           {question}
         </span>
         <span
-          className={`relative h-4 w-4 shrink-0 transition-transform duration-500 ${
+          className={`relative h-4 w-4 shrink-0 transition-transform duration-[var(--dur-base)] ${
             open ? "rotate-135" : ""
           }`}
           aria-hidden="true"
@@ -72,7 +72,7 @@ function FaqRow({
       </button>
 
       <div
-        className={`grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`grid transition-[grid-template-rows,opacity] duration-[var(--dur-base)] ease-[var(--ease-signature)] ${
           open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >

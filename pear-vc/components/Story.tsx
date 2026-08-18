@@ -144,13 +144,13 @@ export default function Story() {
         <div className="mt-9 flex flex-wrap items-center gap-3">
           <button
             onClick={() => scrollToSection("apply")}
-            className="eyebrow bg-white px-6 py-3 text-ink transition-transform hover:-translate-y-0.5"
+            className="eyebrow bg-white px-6 py-3 text-ink transition-transform duration-[var(--dur-quick)] ease-[var(--ease-signature)] hover:-translate-y-0.5"
           >
             Apply for funding
           </button>
           <button
             onClick={() => scrollToSection("terms")}
-            className="eyebrow border border-white/40 px-6 py-3 text-white transition-colors hover:bg-white/10"
+            className="eyebrow border border-white/40 px-6 py-3 text-white transition-colors duration-[var(--dur-quick)] ease-[var(--ease-signature)] hover:bg-white/10"
           >
             See the terms
           </button>

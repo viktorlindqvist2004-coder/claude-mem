@@ -95,19 +95,35 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
       className="relative z-10 bg-ink"
       style={{ height: `${filmHeightVh(frames.length)}vh` }}
     >
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <SequenceScrubber
-          frames={frames}
-          triggerId={SECTION_ID}
-          className="absolute inset-0 h-full w-full"
-        />
+      {/*
+        Two layouts, because a 16:9 film and a 9:19.5 phone cannot both be
+        satisfied. Filling a portrait screen with this footage means cropping
+        away more than half the width — the figure and the cloth, the pear and
+        its scaffold, all pushed off-frame. Showing the frame whole instead
+        leaves bands above and below.
+
+        So on a phone the film stops pretending to be a background: it is a
+        16:9 stage in the upper part of the screen with the copy beneath it,
+        where the black is layout rather than damage. From `md` up, where the
+        viewport is close enough to the footage's own shape, it goes back to
+        full-bleed with the copy laid over it.
+      */}
+      <div className="sticky top-0 flex h-screen w-full flex-col overflow-hidden md:block">
+        <div className="relative mt-16 aspect-video w-full shrink-0 md:absolute md:inset-0 md:mt-0 md:aspect-auto md:h-full">
+          <SequenceScrubber
+            frames={frames}
+            triggerId={SECTION_ID}
+            className="absolute inset-0 h-full w-full"
+          />
+        </div>
 
         {/* The footage runs from deep blue to bright linen, so a fixed scrim
             would be wrong half the time. This one is weak and directional —
-            enough to seat the type, not enough to grey the picture. */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-black/55 via-black/10 to-black/40" />
+            enough to seat the type, not enough to grey the picture. It is only
+            needed where the type sits on the picture. */}
+        <div className="pointer-events-none absolute inset-0 hidden bg-linear-to-r from-black/55 via-black/10 to-black/40 md:block" />
 
-        <div ref={rootRef} className="relative h-full">
+        <div ref={rootRef} className="relative flex-1 md:h-full">
           {FILM_CHAPTERS.map((chapter) => (
             <div
               key={chapter.heading}
@@ -123,14 +139,14 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
                   }
                 >
                   {chapter.label && (
-                    <p className="mb-6">
+                    <p className="mb-4 md:mb-6">
                       <span className="chip">{chapter.label}</span>
                     </p>
                   )}
                   <h2 className="display text-[clamp(1.9rem,3.4vw,3.4rem)] text-white">
                     {chapter.heading}
                   </h2>
-                  <p className="mt-6 text-sm leading-relaxed text-white/80 md:text-[0.95rem]">
+                  <p className="mt-4 text-sm leading-relaxed text-white/80 md:mt-6 md:text-[0.95rem]">
                     {chapter.body}
                   </p>
                 </div>

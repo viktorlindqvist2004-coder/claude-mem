@@ -37,6 +37,15 @@ const MAX_IN_FLIGHT = 4;
  * second behind a stopped finger, which reads as weight rather than delay.
  */
 const DAMPING = 6;
+/**
+ * How far cover-fit may magnify a frame past contain-fit.
+ *
+ * 1.3 keeps a 16:9 frame nearly whole on a tall phone while still filling a
+ * landscape window edge to edge.
+ */
+const MAX_OVERSCAN = 1.3;
+/** Painted where a capped frame does not reach the canvas edge. */
+const MATTE = "#14161a";
 
 type Frames = {
   get(index: number): ImageBitmap | undefined;
@@ -173,7 +182,8 @@ export default function SequenceScrubber({
     /** Where the playhead actually is, chasing `target`. */
     let position = 0;
     let requested = -1;
-    let drawnIndex = -1;
+    /** What is currently on the canvas: base frame plus blend amount. */
+    let drawnSignature = "";
     let dirty = true;
 
     const resize = () => {
@@ -188,15 +198,36 @@ export default function SequenceScrubber({
     resize();
     window.addEventListener("resize", resize);
 
-    /** Cover-fit: fill the viewport, crop the overflow, never letterbox. */
-    const draw = (bitmap: ImageBitmap) => {
-      const scale = Math.max(
+    /**
+     * Fit the frame to the canvas, cropping — but only so far.
+     *
+     * Plain cover-fit is right on a landscape screen, where the frame's 16:9
+     * and the viewport's aspect nearly agree. On a phone held upright it is
+     * ruinous: covering a 9:19.5 viewport with a 16:9 frame magnifies it well
+     * past double, and the reader sees a narrow column out of the middle of
+     * every shot. Whole compositions — the figure and the cloth, the pear and
+     * the scaffold — end up off-screen.
+     *
+     * So cover is capped at MAX_OVERSCAN times contain. Where the two agree
+     * nothing changes; where they diverge the frame stays nearer its true
+     * framing and the leftover is painted, which the section's scrim absorbs.
+     */
+    const draw = (bitmap: ImageBitmap, alpha = 1) => {
+      const cover = Math.max(
         canvas.width / bitmap.width,
         canvas.height / bitmap.height
       );
+      const contain = Math.min(
+        canvas.width / bitmap.width,
+        canvas.height / bitmap.height
+      );
+      const scale = Math.min(cover, contain * MAX_OVERSCAN);
+
       const w = bitmap.width * scale;
       const h = bitmap.height * scale;
+      ctx.globalAlpha = alpha;
       ctx.drawImage(bitmap, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+      ctx.globalAlpha = 1;
     };
 
     const trigger = reduced
@@ -230,17 +261,42 @@ export default function SequenceScrubber({
         if (Math.abs(target - position) < 0.01) position = target;
       }
 
-      const index = Math.round(position);
-      if (index !== requested) {
-        store.request(index);
-        requested = index;
+      const base = Math.floor(position);
+      const frac = position - base;
+
+      if (base !== requested) {
+        store.request(base);
+        requested = base;
       }
 
-      const frame = store.nearest(index);
-      if (!frame) return;
-      if (!dirty && frame.index === drawnIndex) return;
-      draw(frame.bitmap);
-      drawnIndex = frame.index;
+      const under = store.nearest(base);
+      if (!under) return;
+
+      // The film is cut at 7fps but scrolled at whatever rate the reader
+      // chooses, so at a slow scroll each frame would hold for tens of pixels
+      // and the motion would read as a series of steps. Cross-dissolving into
+      // the next frame by the playhead's fractional part fills those gaps: the
+      // picture changes every rendered frame instead of every seventh of a
+      // second of footage. Cheaper than shipping more frames, and it smooths
+      // the slow scrolling that shipping more frames would not.
+      // Only blend when the frame under the playhead is the real one. If
+      // `nearest` had to substitute a distant frame, dissolving it into
+      // base + 1 would mix two unrelated moments.
+      const over =
+        under.index === base && frac > 0.02 ? store.get(base + 1) : undefined;
+
+      const signature = `${under.index}:${over ? Math.round(frac * 60) : "-"}`;
+      if (!dirty && signature === drawnSignature) return;
+
+      // Clear first: a capped frame may not reach every edge, and without this
+      // the uncovered strip would keep whatever the previous frame left there.
+      ctx.fillStyle = MATTE;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      draw(under.bitmap);
+      if (over) draw(over, frac);
+
+      drawnSignature = signature;
       dirty = false;
     };
 

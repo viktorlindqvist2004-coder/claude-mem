@@ -94,8 +94,12 @@ export const FILM_CHAPTERS: FilmChapter[] = [
  *
  * Tied to frame count rather than fixed: a longer film needs more scroll to
  * play at the same rate, and pinning the rate is what keeps the whole thing
- * feeling like one continuous move instead of four shots at four speeds.
+ * feeling like one continuous move instead of eight shots at eight speeds.
+ *
+ * This is the coarse control over how fast the film plays — at 3.4 viewports
+ * per frame a full film is a long, deliberate scroll, and each frame holds
+ * long enough to be seen rather than flicking past.
  */
 export function filmHeightVh(frameCount: number): number {
-  return Math.min(900, Math.max(400, Math.round(frameCount * 2.2)));
+  return Math.min(1600, Math.max(400, Math.round(frameCount * 3.4)));
 }

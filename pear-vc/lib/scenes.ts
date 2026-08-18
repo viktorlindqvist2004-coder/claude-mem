@@ -678,7 +678,7 @@ const heroScene: ScenePainter = (ctx, S) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Scene 1 — "We build it": grafting a scion onto rootstock                    */
+/* Scene 1 — "We join early": grafting a scion onto rootstock                    */
 /* -------------------------------------------------------------------------- */
 
 const graftScene: ScenePainter = (ctx, S) => {
@@ -820,7 +820,7 @@ const graftScene: ScenePainter = (ctx, S) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Scene 2 — "We rank it": the orchard in full bearing                         */
+/* Scene 2 — "We measure out loud": the orchard in full bearing                         */
 /* -------------------------------------------------------------------------- */
 
 const orchardScene: ScenePainter = (ctx, S) => {
@@ -912,7 +912,7 @@ const orchardScene: ScenePainter = (ctx, S) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Scene 3 — "We share in what it earns": the split pear                       */
+/* Scene 3 — "We eat what we grow": the split pear                       */
 /* -------------------------------------------------------------------------- */
 
 const splitPearScene: ScenePainter = (ctx, S) => {

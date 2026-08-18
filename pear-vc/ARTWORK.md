@@ -8,10 +8,10 @@ the site is never broken by an absent file.
 | File                   | Where it appears            | Currently |
 | ---------------------- | --------------------------- | --------- |
 | `01-hero-walk.jpg`     | Hero                        | Crop — orchard rows under the canopy, warm horizon |
-| `02-graft.jpg`         | "We build it"               | Crop — the gnarled trunk against the far valley |
-| `03-orchard.jpg`       | "We rank it"                | Source painting, uncropped |
-| `04-split-pear.jpg`    | "We share in what it earns" | Crop — dense canopy of ripe fruit |
-| `05-dome.jpg`          | "No fees"                   | Crop — deep blue sky over the upper branches |
+| `02-graft.jpg`         | "We join early"               | Crop — the gnarled trunk against the far valley |
+| `03-orchard.jpg`       | "We measure out loud"                | Source painting, uncropped |
+| `04-split-pear.jpg`    | "We eat what we grow" | Crop — dense canopy of ripe fruit |
+| `05-dome.jpg`          | "Nothing up front"          | Crop — deep blue sky over the upper branches |
 | `06-orchard-pale.jpg`  | FAQ background              | Crop of the meadow, brightened and desaturated |
 | `07-night-tending.jpg` | Constellations              | Figure watering a sapling at night |
 

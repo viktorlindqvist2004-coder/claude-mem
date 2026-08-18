@@ -3,13 +3,13 @@ import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 
 export const metadata: Metadata = {
-  title: "pear. — The seed stage VC for founders who build the future",
+  title: "pear. — seed capital for the long season",
   description:
-    "Pear backs founders at the very beginning. No management fees, a share of the upside, and a decision within a week.",
+    "Pear writes first cheques before revenue, charges no management fee, and answers within a week.",
   openGraph: {
     title: "pear.",
     description:
-      "The seed stage VC for founders who build the future. No fees. A share of the upside.",
+      "Seed capital for people building something slow and large. No management fee; we are paid out of what the company earns.",
     type: "website",
   },
 };

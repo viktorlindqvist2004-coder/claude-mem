@@ -6,5 +6,23 @@
       "Read(./node_modules/**)",
       "Read(./.DS_Store)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "genjutsu": {
+      "source": {
+        "source": "github",
+        "repo": "AThevon/genjutsu"
+      }
+    },
+    "claude-video": {
+      "source": {
+        "source": "github",
+        "repo": "bradautomates/claude-video"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "genjutsu@genjutsu": true,
+    "watch@claude-video": true
   }
 }

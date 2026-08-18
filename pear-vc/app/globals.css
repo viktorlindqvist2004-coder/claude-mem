@@ -5,6 +5,12 @@
   --color-sky: #2575fc;
   --color-sky-deep: #0f3fa8;
   --color-sky-light: #6aa8ff;
+
+  /* The field: a flat, saturated blue that most of the page simply sits on.
+     Imagery is an event against it, not the constant backdrop. */
+  --color-field: #0a52e0;
+  --color-field-deep: #073da8;
+  --rule: rgba(255, 255, 255, 0.28);
   --color-cyan: #35c9f0;
   --color-canvas: #fbf9f5;
   --color-canvas-dim: #efe9dd;
@@ -56,10 +62,45 @@ html.lenis body {
 
 /* Typography ----------------------------------------------------------- */
 .display {
-  font-weight: 700;
-  letter-spacing: -0.045em;
-  line-height: 0.88;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  line-height: 1.06;
   text-wrap: balance;
+}
+
+/* A small uppercase mono chip, used to name a section rather than shout it. */
+.chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.28em 0.6em;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+/* Hairline structure with tick marks, drawn rather than decorative. */
+.rule-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--rule);
+}
+.rule-v::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--rule) 0 1px,
+    transparent 1px 64px
+  );
 }
 
 .eyebrow {

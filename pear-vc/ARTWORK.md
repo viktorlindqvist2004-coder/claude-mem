@@ -46,6 +46,13 @@ That first half is left clear of copy. The camera entering the drawing is the
 best thing in the film and it plays unaccompanied; the chapters are spaced
 around it, in `lib/film.ts`.
 
+Shot 8 starts from shot 7's real last frame rather than a keyframe that merely
+resembled it. Generated against the keyframe, it opened with the woman closer
+and shifted — she stepped back and began watering again, which read as a cut in
+the middle of a continuous move. Where a shot follows footage rather than
+another generation, the join has to be built from the frame that is actually
+there: extract it, upload it, use it as the next shot's start image.
+
 Shots 4 and 5 are trimmed — see the `:head,tail` suffix below.
 
 ## Building the sequence
@@ -59,7 +66,7 @@ edge to **1280px** (sources are 1344px, so it never upscales) and numbers every
 frame **continuously across all shots** — the scrubber must not be able to tell
 where one shot ends and the next begins.
 
-At 8 shots that is 411 frames, roughly 28 MB. The scrubber streams
+At 8 shots that is 410 frames, roughly 28 MB. The scrubber streams
 them: it keeps about 14 decoded frames around the current one and releases the
 rest, so memory stays flat regardless of length, and a fast flick degrades to a
 nearer frame instead of stalling.

@@ -159,34 +159,34 @@ export default function Story() {
 
       {/* ---- Scene 1 — field ------------------------------------------ */}
       <StorySection>
-        <Label>01 / Graft</Label>
-        <Heading>We build it</Heading>
+        <Label>01 / Rootstock</Label>
+        <Heading>We join early</Heading>
         <Body>
-          A graft only takes when the cut faces meet exactly. We join what you
-          are making to root systems that already hold — operators, first
-          customers, and capital that has weathered a winter.
+          A graft only takes where the cut faces meet exactly. We come in at
+          that seam — early enough to matter, close enough that our work shows
+          up in yours, and never so heavy that the join is what you feel.
         </Body>
       </StorySection>
 
       {/* ---- Scene 2 — full-bleed ------------------------------------- */}
       <StorySection variant="image">
-        <Label>02 / Yield</Label>
-        <Heading>We rank it</Heading>
+        <Label>02 / Season</Label>
+        <Heading>We measure out loud</Heading>
         <Body>
-          Every branch is measured against every other. We grade the fruit
-          honestly and in the open, so the strongest work gets the light — and
-          the rest gets the truth early enough to matter.
+          You will hear what we actually think, on a schedule, in writing.
+          Praise that is not load-bearing helps nobody, and a hard read
+          delivered in month four is worth more than a kind one in month ten.
         </Body>
       </StorySection>
 
       {/* ---- Scene 3 — field ------------------------------------------ */}
       <StorySection>
-        <Label>03 / Split</Label>
-        <Heading>We share in what it earns</Heading>
+        <Label>03 / Harvest</Label>
+        <Heading>We eat what we grow</Heading>
         <Body>
-          The pear is opened where everyone can see it. What the orchard earns
-          is divided the way it was grown — together, and on terms written down
-          before the first season.
+          Our return arrives the same way yours does and no sooner. That is
+          the whole alignment: if the orchard has a bad year, so do we, and
+          nothing in the paperwork lets us step around it.
         </Body>
       </StorySection>
 
@@ -199,10 +199,11 @@ export default function Story() {
         <div className="relative mx-auto grid w-full max-w-[1600px] items-center gap-12 lg:grid-cols-[1fr_minmax(0,30rem)]">
           <div className="max-w-md md:pl-10">
             <Label>04 / Terms</Label>
-            <Heading>No fees. A share of the upside.</Heading>
+            <Heading>Nothing up front</Heading>
             <Body>
-              We do not charge management fees. We are paid when you are — out
-              of what the company earns, never out of what it raises.
+              No management fee, for the life of the fund. We are paid out of
+              what the company earns, never out of what it raises — so the
+              money you bank stays money you can spend.
             </Body>
           </div>
           <TermsCard />

@@ -48,16 +48,16 @@ function FaqRow({
   onToggle: () => void;
 }) {
   return (
-    <div className="border-b border-ink/12">
+    <div className="border-b border-white/15">
       <button
         onClick={onToggle}
         aria-expanded={open}
         className="group flex w-full items-center gap-6 py-7 text-left md:gap-10"
       >
-        <span className="eyebrow w-8 shrink-0 text-ink/40">
+        <span className="eyebrow w-8 shrink-0 text-white/45">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <span className="display flex-1 text-[clamp(1.35rem,2.6vw,2.4rem)] transition-opacity group-hover:opacity-60">
+        <span className="display flex-1 text-[clamp(1.15rem,1.9vw,1.7rem)] transition-opacity group-hover:opacity-60">
           {question}
         </span>
         <span
@@ -66,8 +66,8 @@ function FaqRow({
           }`}
           aria-hidden="true"
         >
-          <span className="absolute top-1/2 left-0 h-px w-full bg-ink" />
-          <span className="absolute top-0 left-1/2 h-full w-px bg-ink" />
+          <span className="absolute top-1/2 left-0 h-px w-full bg-white" />
+          <span className="absolute top-0 left-1/2 h-full w-px bg-white" />
         </span>
       </button>
 
@@ -78,7 +78,7 @@ function FaqRow({
       >
         <div className="overflow-hidden">
           <div className="pb-8 pl-14 md:pl-18">
-            <p className="max-w-2xl text-base leading-relaxed text-ink-soft md:text-lg">
+            <p className="max-w-2xl text-sm leading-relaxed text-white/70 md:text-[0.95rem]">
               {answer}
             </p>
           </div>
@@ -94,15 +94,15 @@ export default function Faq({ artwork }: { artwork: string | null }) {
   return (
     <section
       id="faq"
-      className="relative z-10 overflow-hidden bg-canvas px-6 py-28 text-ink md:px-14 md:py-40"
+      className="relative z-10 overflow-hidden bg-field px-6 py-28 text-white md:px-14 md:py-40"
     >
       {/* Orchard behind the questions */}
       <ArtDecor
         src={artwork}
-        className="pointer-events-none absolute right-0 bottom-0 h-[85%] w-auto max-w-[60%] object-cover opacity-25 mix-blend-multiply [mask-image:linear-gradient(to_left,black,transparent)]"
+        className="pointer-events-none absolute right-0 bottom-0 h-[85%] w-auto max-w-[60%] object-cover opacity-20 [mask-image:linear-gradient(to_left,black,transparent)]"
         fallback={
           <svg
-            className="pointer-events-none absolute -right-24 bottom-0 h-[85%] w-auto text-ink/[0.05]"
+            className="pointer-events-none absolute -right-24 bottom-0 h-[85%] w-auto text-white/[0.07]"
             viewBox="0 0 400 500"
             fill="currentColor"
             aria-hidden="true"
@@ -116,14 +116,14 @@ export default function Faq({ artwork }: { artwork: string | null }) {
       />
 
       <div className="relative mx-auto max-w-[1200px]">
-        <RevealText as="p" className="eyebrow mb-6 text-ink/50" stagger={0}>
-          Asked before signing
+        <RevealText as="p" className="mb-6" stagger={0}>
+          <span className="chip">Read this first</span>
         </RevealText>
         <RevealText
           as="h2"
-          className="display mb-16 text-[clamp(2.5rem,6vw,5.5rem)] md:mb-24"
+          className="display mb-16 max-w-3xl text-[clamp(1.7rem,2.9vw,3rem)] md:mb-24"
         >
-          Questions we would ask us
+          The parts people ask about twice
         </RevealText>
 
         <div>

@@ -2,10 +2,11 @@ import Navbar from "@/components/Navbar";
 import StoryCanvas from "@/components/StoryCanvas";
 import HudOverlay from "@/components/HudOverlay";
 import Story from "@/components/Story";
+import FilmSequence from "@/components/FilmSequence";
+import Terms from "@/components/Terms";
 import Faq from "@/components/Faq";
 import Constellations from "@/components/Constellations";
 import Footer from "@/components/Footer";
-import SequenceSection from "@/components/SequenceSection";
 import { resolveSceneArt } from "@/lib/sceneAssets";
 import { resolveSequence } from "@/lib/sequenceAssets";
 import { STORY_ART_SLOTS } from "@/lib/scenes";
@@ -13,28 +14,43 @@ import { STORY_ART_SLOTS } from "@/lib/scenes";
 /**
  * Page composition.
  *
- * StoryCanvas is fixed behind everything and renders scenes 0–4 as the reader
- * scrolls through `#story`. Once the story ends the remaining sections carry
- * their own opaque backgrounds and simply scroll over it.
+ * The story is told one of two ways, decided here at build time by whether the
+ * film's frames have been exported:
  *
- * Which scene artwork exists is resolved here, on the server, so the client
- * only ever requests files that are actually there.
+ * - **With frames**, `FilmSequence` runs the whole story as a single scrubbed
+ *   shot sequence and the copy is laid over it. This is the intended form: the
+ *   motion lives in the footage, and the joins between shots are content
+ *   rather than effects.
+ * - **Without frames**, the earlier arrangement stands in — a fixed WebGL
+ *   canvas moving through stills behind ordinary sections. It reads as a
+ *   camera over photographs, which is the best a still can do, and it keeps
+ *   the site whole while the footage is being made.
+ *
+ * Both paths share everything below the story, so only the telling changes.
  */
 export default function Home() {
   const art = resolveSceneArt();
   const sceneImages = STORY_ART_SLOTS.map((slot) => art[slot]);
-  // Empty until frames are exported; the section removes itself when so.
-  const cutSequence = resolveSequence("cut");
+  const film = resolveSequence("film");
+  const hasFilm = film.length > 0;
 
   return (
     <>
       <Navbar />
-      <StoryCanvas sceneImages={sceneImages} />
+
+      {!hasFilm && <StoryCanvas sceneImages={sceneImages} />}
       <HudOverlay />
 
       <main>
-        <Story />
-        <SequenceSection frames={cutSequence} />
+        {hasFilm ? (
+          <>
+            <FilmSequence frames={film} />
+            <Terms />
+          </>
+        ) : (
+          <Story />
+        )}
+
         <Faq artwork={art["06-orchard-pale"]} />
         <Constellations artwork={art["07-night-tending"]} />
         <Footer />

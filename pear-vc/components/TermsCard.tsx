@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/scroll";
+import { EASE, STAGGER } from "@/lib/motion";
 
 type Metric = {
   label: string;
@@ -85,8 +86,8 @@ export default function TermsCard() {
       gsap.to(proxy, {
         v: 1,
         duration: 1.6,
-        ease: "power2.out",
-        stagger: 0.08,
+        ease: EASE,
+        stagger: STAGGER.line,
         onUpdate: () =>
           setCounts(METRICS.map((m, i) => Math.round(proxy[i].v * m.value))),
         scrollTrigger: { trigger: card, start: "top 85%", once: true },

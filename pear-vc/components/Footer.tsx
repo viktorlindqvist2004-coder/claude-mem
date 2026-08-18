@@ -70,7 +70,7 @@ export default function Footer() {
                   />
                   <button
                     type="submit"
-                    className="eyebrow shrink-0 bg-white px-6 py-3 text-ink transition-transform hover:-translate-y-0.5"
+                    className="eyebrow shrink-0 bg-white px-6 py-3 text-ink transition-transform duration-[var(--dur-quick)] ease-[var(--ease-signature)] hover:-translate-y-0.5"
                   >
                     Send
                   </button>
@@ -85,7 +85,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="eyebrow text-white/60 transition-colors hover:text-white"
+                  className="eyebrow text-white/60 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-signature)] hover:text-white"
                 >
                   {social.label} ↗
                 </a>

@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { prefersReducedMotion } from "@/lib/scroll";
+import { DURATION, EASE, STAGGER } from "@/lib/motion";
 
 type RevealTextProps = {
   as?: ElementType;
@@ -29,7 +30,7 @@ export default function RevealText({
   children,
   className = "",
   delay = 0,
-  stagger = 0.09,
+  stagger = STAGGER.line,
   start = "top 82%",
 }: RevealTextProps) {
   const ref = useRef<HTMLElement>(null);
@@ -63,7 +64,7 @@ export default function RevealText({
       gsap.set(targets, {
         opacity: 0,
         yPercent: 60,
-        filter: "blur(14px)",
+        filter: "blur(10px)",
         willChange: "transform, opacity, filter",
       });
 
@@ -71,8 +72,8 @@ export default function RevealText({
         opacity: 1,
         yPercent: 0,
         filter: "blur(0px)",
-        duration: 1.1,
-        ease: "power3.out",
+        duration: DURATION.slow,
+        ease: EASE,
         stagger,
         delay,
         clearProps: "willChange",

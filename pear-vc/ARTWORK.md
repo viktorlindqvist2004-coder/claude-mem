@@ -18,7 +18,7 @@ tree as the fallback (`StoryCanvas`). `app/page.tsx` picks between them at
 build time on whether `public/sequences/film/` has frames, so the site stays
 whole when the footage is absent.
 
-## The nine shots
+## The eight shots
 
 Each shot's **end frame is the next shot's start frame**, which is what makes
 the joins invisible. Generated with `veo3_1_lite` at 8s, 1344×768, silent —
@@ -33,24 +33,25 @@ was chosen over cheaper ones.
 | 4 | Hands split the pear; the sky between the halves expands | Empty blue field |
 | 5 | Crane down from the sky onto a colossal pear under scaffolding | Scaffolded pear |
 | 6 | A craftsman steps onto the scaffold and raises a drawing to the lens | Drawing held square |
-| 7 | The camera travels into the drawing until the paper is all there is | Sepia workshop plate |
-| 8 | Pull back; the paper washes out to blue, revealing a figure and a sapling | Figure and sapling |
-| 9 | Glide in on one pear until it glows inside a ring of light | Luminous pear |
+| 7 | Into the drawing, then out of it as the paper washes to sky | Figure and sapling |
+| 8 | Glide in on one pear until it glows inside a ring of light | Luminous pear |
 
-Shots 6 and 7 replaced a single earlier shot that pushed straight from the
-scaffold into a drawing. It read as a dissolve rather than a move, because
-nothing in frame motivated it. Giving the drawing to a person who holds it up
-is what makes the camera's move into it legible.
+Shot 7 does in one take what two shots did before, and does it better. The
+earlier pair pushed into the drawing and then out of a *different* drawing —
+the end frame was a separately generated plate that merely resembled the one
+the craftsman holds, so the camera arrived somewhere it had not been going.
+Doing the whole move in a single generation keeps one drawing throughout.
 
-Shot 7 carries no copy. The move into the drawing is the best thing in the film
-and it plays unaccompanied; the chapters are spaced around it, in `lib/film.ts`.
+That first half is left clear of copy. The camera entering the drawing is the
+best thing in the film and it plays unaccompanied; the chapters are spaced
+around it, in `lib/film.ts`.
 
 Shots 4 and 5 are trimmed — see the `:head,tail` suffix below.
 
 ## Building the sequence
 
 ```bash
-node scripts/build-film.mjs shot1.mp4 shot2.mp4 … shot9.mp4
+node scripts/build-film.mjs shot1.mp4 shot2.mp4 … shot8.mp4
 ```
 
 Shots go in story order. The script cuts frames at **7 fps**, scales the long
@@ -58,7 +59,7 @@ edge to **1280px** (sources are 1344px, so it never upscales) and numbers every
 frame **continuously across all shots** — the scrubber must not be able to tell
 where one shot ends and the next begins.
 
-At 9 shots that is 467 frames, roughly 30 MB. The scrubber streams
+At 8 shots that is 411 frames, roughly 28 MB. The scrubber streams
 them: it keeps about 14 decoded frames around the current one and releases the
 rest, so memory stays flat regardless of length, and a fast flick degrades to a
 nearer frame instead of stalling.

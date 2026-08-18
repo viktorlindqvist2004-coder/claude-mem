@@ -40,10 +40,10 @@ const DAMPING = 6;
 /**
  * How far cover-fit may magnify a frame past contain-fit.
  *
- * 1.3 keeps a 16:9 frame nearly whole on a tall phone while still filling a
- * landscape window edge to edge.
+ * 1.5 lets the phone's 4:3 stage fill edge to edge — that needs 1.33 — while
+ * still refusing the 2.8x a full-height portrait crop would ask for.
  */
-const MAX_OVERSCAN = 1.3;
+const MAX_OVERSCAN = 1.5;
 /** Painted where a capped frame does not reach the canvas edge. */
 const MATTE = "#14161a";
 

@@ -98,18 +98,22 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
       {/*
         Two layouts, because a 16:9 film and a 9:19.5 phone cannot both be
         satisfied. Filling a portrait screen with this footage means cropping
-        away more than half the width — the figure and the cloth, the pear and
-        its scaffold, all pushed off-frame. Showing the frame whole instead
-        leaves bands above and below.
+        away more than half the width; showing the frame whole leaves a strip
+        a quarter of the screen tall with a void beneath it. Neither is the
+        page.
 
-        So on a phone the film stops pretending to be a background: it is a
-        16:9 stage in the upper part of the screen with the copy beneath it,
-        where the black is layout rather than damage. From `md` up, where the
-        viewport is close enough to the footage's own shape, it goes back to
+        The phone gets a 4:3 stage instead. That asks for a 25% crop — mild
+        enough that compositions survive — and gives the film a third of the
+        screen rather than a quarter, with the copy directly beneath it as one
+        block rather than floating in the leftover. From `md` up, where the
+        viewport is close to the footage's own shape, it goes back to
         full-bleed with the copy laid over it.
+
+        A genuinely right phone version means footage cut at 9:16. This is the
+        best arrangement of the footage that exists.
       */}
-      <div className="sticky top-0 flex h-screen w-full flex-col overflow-hidden md:block">
-        <div className="relative mt-16 aspect-video w-full shrink-0 md:absolute md:inset-0 md:mt-0 md:aspect-auto md:h-full">
+      <div className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden md:block">
+        <div className="relative aspect-4/3 w-full shrink-0 md:absolute md:inset-0 md:aspect-auto md:h-full">
           <SequenceScrubber
             frames={frames}
             triggerId={SECTION_ID}
@@ -123,7 +127,7 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
             needed where the type sits on the picture. */}
         <div className="pointer-events-none absolute inset-0 hidden bg-linear-to-r from-black/55 via-black/10 to-black/40 md:block" />
 
-        <div ref={rootRef} className="relative flex-1 md:h-full">
+        <div ref={rootRef} className="relative h-[42vh] shrink-0 md:h-full">
           {FILM_CHAPTERS.map((chapter) => (
             <div
               key={chapter.heading}

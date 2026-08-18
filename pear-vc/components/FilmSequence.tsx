@@ -122,9 +122,11 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
                       : "max-w-md md:ml-[6%]"
                   }
                 >
-                  <p className="mb-6">
-                    <span className="chip">{chapter.label}</span>
-                  </p>
+                  {chapter.label && (
+                    <p className="mb-6">
+                      <span className="chip">{chapter.label}</span>
+                    </p>
+                  )}
                   <h2 className="display text-[clamp(1.9rem,3.4vw,3.4rem)] text-white">
                     {chapter.heading}
                   </h2>

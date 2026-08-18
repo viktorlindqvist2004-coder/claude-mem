@@ -23,40 +23,68 @@ export type FilmChapter = {
 };
 
 /**
- * Four shots, so each occupies a quarter of the scroll. Chapters are inset
- * within their quarter to leave the transitions clear.
+ * Eight shots, so each occupies an eighth of the scroll. Chapters are inset
+ * within their shot to leave the transitions clear.
+ *
+ * Not every shot carries copy. Two of the joins — the scaffolded pear
+ * flattening into a drawing, and the drawing washing out into sky — are the
+ * best things in the film, and they play unaccompanied.
  */
 export const FILM_CHAPTERS: FilmChapter[] = [
   {
     at: 0.0,
-    until: 0.19,
+    until: 0.095,
     label: "Pear · Seed stage",
     heading: "Plant early. Tend patiently.",
     body: "We back founders at the very beginning — and stay in the orchard until the fruit sets.",
     align: "left",
   },
   {
-    at: 0.28,
-    until: 0.46,
+    at: 0.14,
+    until: 0.235,
     label: "01 / Rootstock",
     heading: "We join early",
     body: "A graft only takes where the cut faces meet exactly. We come in at that seam — early enough to matter, close enough that our work shows up in yours, and never so heavy that the join is what you feel.",
     align: "left",
   },
   {
-    at: 0.53,
-    until: 0.71,
+    at: 0.265,
+    until: 0.36,
     label: "02 / Season",
     heading: "We measure out loud",
     body: "You will hear what we actually think, on a schedule, in writing. Praise that is not load-bearing helps nobody, and a hard read delivered in month four is worth more than a kind one in month ten.",
     align: "right",
   },
   {
-    at: 0.78,
-    until: 0.97,
+    at: 0.39,
+    until: 0.485,
     label: "03 / Harvest",
     heading: "We eat what we grow",
     body: "Our return arrives the same way yours does and no sooner. That is the whole alignment: if the orchard has a bad year, so do we, and nothing in the paperwork lets us step around it.",
+    align: "left",
+  },
+  {
+    at: 0.515,
+    until: 0.61,
+    label: "04 / Workshop",
+    heading: "We build it with you",
+    body: "Money is the least of what we bring. Our people sit in your sprints, your hiring loops and your worst weeks — not to take the wheel, but because advice given from a distance is only ever a guess.",
+    align: "right",
+  },
+  {
+    at: 0.765,
+    until: 0.86,
+    label: "05 / Selection",
+    heading: "A short list, on purpose",
+    body: "We make a handful of investments a year and decline nearly everything else. That is not taste for its own sake — it is the only honest way to promise the attention described above.",
+    align: "left",
+  },
+  {
+    at: 0.89,
+    until: 0.995,
+    label: "",
+    heading: "Start the season",
+    body: "Applications are open year-round, and every one gets a real answer inside ten days.",
     align: "left",
   },
 ];

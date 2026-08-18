@@ -21,7 +21,7 @@ export default function Terms() {
       <div className="relative mx-auto grid w-full max-w-[1600px] items-center gap-12 lg:grid-cols-[1fr_minmax(0,30rem)]">
         <div className="max-w-md md:pl-10">
           <RevealText as="p" className="mb-6" stagger={0}>
-            <span className="chip">04 / Terms</span>
+            <span className="chip">06 / Terms</span>
           </RevealText>
           <RevealText
             as="h2"

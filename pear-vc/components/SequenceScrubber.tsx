@@ -37,14 +37,7 @@ const MAX_IN_FLIGHT = 4;
  * second behind a stopped finger, which reads as weight rather than delay.
  */
 const DAMPING = 6;
-/**
- * How far cover-fit may magnify a frame past contain-fit.
- *
- * 1.5 lets the phone's 4:3 stage fill edge to edge — that needs 1.33 — while
- * still refusing the 2.8x a full-height portrait crop would ask for.
- */
-const MAX_OVERSCAN = 1.5;
-/** Painted where a capped frame does not reach the canvas edge. */
+/** Painted under each frame; cover-fit reaches every edge, so it rarely shows. */
 const MATTE = "#14161a";
 
 type Frames = {
@@ -199,29 +192,24 @@ export default function SequenceScrubber({
     window.addEventListener("resize", resize);
 
     /**
-     * Fit the frame to the canvas, cropping — but only so far.
+     * Cover-fit: fill the canvas, crop the overflow, never letterbox.
      *
-     * Plain cover-fit is right on a landscape screen, where the frame's 16:9
-     * and the viewport's aspect nearly agree. On a phone held upright it is
-     * ruinous: covering a 9:19.5 viewport with a 16:9 frame magnifies it well
-     * past double, and the reader sees a narrow column out of the middle of
-     * every shot. Whole compositions — the figure and the cloth, the pear and
-     * the scaffold — end up off-screen.
+     * On a phone this crops away most of the width, and there is no arrangement
+     * of a 16:9 frame that avoids it while still filling a 9:19.5 screen. Both
+     * alternatives were built and both were worse: contained, the film is a
+     * strip across a quarter of the screen; boxed at 4:3 it is a picture on a
+     * page rather than the page. Filling it is the design, and the crop is what
+     * filling it costs until the footage is cut for portrait.
      *
-     * So cover is capped at MAX_OVERSCAN times contain. Where the two agree
-     * nothing changes; where they diverge the frame stays nearer its true
-     * framing and the leftover is painted, which the section's scrim absorbs.
+     * The crop is centred. Most shots put their subject near the middle, which
+     * is the only reason a centre crop survives at all — see ARTWORK.md on
+     * composing new shots with this in mind.
      */
     const draw = (bitmap: ImageBitmap, alpha = 1) => {
-      const cover = Math.max(
+      const scale = Math.max(
         canvas.width / bitmap.width,
         canvas.height / bitmap.height
       );
-      const contain = Math.min(
-        canvas.width / bitmap.width,
-        canvas.height / bitmap.height
-      );
-      const scale = Math.min(cover, contain * MAX_OVERSCAN);
 
       const w = bitmap.width * scale;
       const h = bitmap.height * scale;

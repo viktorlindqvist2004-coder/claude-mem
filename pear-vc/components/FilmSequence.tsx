@@ -96,43 +96,41 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
       style={{ height: `${filmHeightVh(frames.length)}vh` }}
     >
       {/*
-        Two layouts, because a 16:9 film and a 9:19.5 phone cannot both be
-        satisfied. Filling a portrait screen with this footage means cropping
-        away more than half the width; showing the frame whole leaves a strip
-        a quarter of the screen tall with a void beneath it. Neither is the
-        page.
+        One layout at every width: the film full-bleed, the copy laid over it.
 
-        The phone gets a 4:3 stage instead. That asks for a 25% crop — mild
-        enough that compositions survive — and gives the film a third of the
-        screen rather than a quarter, with the copy directly beneath it as one
-        block rather than floating in the leftover. From `md` up, where the
-        viewport is close to the footage's own shape, it goes back to
-        full-bleed with the copy laid over it.
+        A phone pays for that — filling a 9:19.5 screen with a 16:9 frame crops
+        away most of the width. Two ways of avoiding the crop were built and
+        both were worse. Contained, the film is a strip across a quarter of the
+        screen with a void beneath it. Boxed at 4:3, it becomes a picture on a
+        page rather than the page itself, and the copy sitting under it in its
+        own band reads as a caption. Neither is the thing the film is for.
 
-        A genuinely right phone version means footage cut at 9:16. This is the
-        best arrangement of the footage that exists.
+        Cutting the footage at 9:16 is the only real fix. Short of that,
+        filling the screen is the design and the crop is its price.
       */}
-      <div className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden md:block">
-        <div className="relative aspect-4/3 w-full shrink-0 md:absolute md:inset-0 md:aspect-auto md:h-full">
-          <SequenceScrubber
-            frames={frames}
-            triggerId={SECTION_ID}
-            className="absolute inset-0 h-full w-full"
-          />
-        </div>
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        <SequenceScrubber
+          frames={frames}
+          triggerId={SECTION_ID}
+          className="absolute inset-0 h-full w-full"
+        />
 
         {/* The footage runs from deep blue to bright linen, so a fixed scrim
-            would be wrong half the time. This one is weak and directional —
-            enough to seat the type, not enough to grey the picture. It is only
-            needed where the type sits on the picture. */}
-        <div className="pointer-events-none absolute inset-0 hidden bg-linear-to-r from-black/55 via-black/10 to-black/40 md:block" />
+            would be wrong half the time. Directional and weak on wide screens,
+            where the copy has a quiet side to sit on; heavier from the bottom
+            on a phone, where the crop leaves it nowhere quiet and the type has
+            to hold against whatever the middle of the frame is doing. */}
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-black/10 md:bg-linear-to-r md:from-black/55 md:via-black/10 md:to-black/40" />
 
-        <div ref={rootRef} className="relative h-[42vh] shrink-0 md:h-full">
+        <div ref={rootRef} className="relative h-full">
           {FILM_CHAPTERS.map((chapter) => (
             <div
               key={chapter.heading}
               data-chapter
-              className="pointer-events-none absolute inset-0 flex items-center px-6 opacity-0 md:px-14"
+              // On a phone the copy sits low, in the heavy end of the scrim,
+              // rather than across the middle of the picture. On wide screens
+              // it centres as before.
+              className="pointer-events-none absolute inset-0 flex items-end px-6 pb-20 opacity-0 md:items-center md:px-14 md:pb-0"
             >
               <div className="mx-auto w-full max-w-[1600px]">
                 <div

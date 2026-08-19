@@ -32,6 +32,8 @@ export default function Home() {
   const art = resolveSceneArt();
   const sceneImages = STORY_ART_SLOTS.map((slot) => art[slot]);
   const film = resolveSequence("film");
+  // Same film at 720px, for canvases too small to justify decoding 1280px.
+  const filmSmall = resolveSequence("film-sm");
   const hasFilm = film.length > 0;
 
   return (
@@ -44,7 +46,7 @@ export default function Home() {
       <main>
         {hasFilm ? (
           <>
-            <FilmSequence frames={film} />
+            <FilmSequence frames={film} framesSmall={filmSmall} />
             <Terms />
           </>
         ) : (

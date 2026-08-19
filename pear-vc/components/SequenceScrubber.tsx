@@ -144,13 +144,24 @@ function createFrameStore(urls: string[]): Frames {
   };
 }
 
+/**
+ * Above this canvas width, in device pixels, the full-size frames are worth
+ * their decode cost. Below it they are not: a phone canvas is around 780px
+ * wide, and decoding 1280px frames to draw them there — twice per drawn frame,
+ * since adjacent frames are blended — is the whole reason the scrub lagged.
+ */
+const SMALL_SET_BELOW = 980;
+
 export default function SequenceScrubber({
   frames,
+  framesSmall,
   className = "",
   triggerId,
 }: {
   /** Frame URLs in order. Renders nothing when empty. */
   frames: string[];
+  /** Same film at a smaller width, used when the canvas is small. */
+  framesSmall?: string[];
   className?: string;
   /** Element whose scroll span drives the sequence. */
   triggerId: string;
@@ -166,8 +177,19 @@ export default function SequenceScrubber({
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const store = createFrameStore(frames);
-    const last = frames.length - 1;
+    // Chosen once, from the canvas as laid out. Re-picking on resize would mean
+    // discarding a warm store mid-scroll; a rotated phone draws slightly
+    // softer frames instead, which no one will notice against a rebuffer.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const useSmall =
+      framesSmall !== undefined &&
+      framesSmall.length === frames.length &&
+      canvas.clientWidth * dpr < SMALL_SET_BELOW;
+
+    const source = useSmall ? framesSmall : frames;
+
+    const store = createFrameStore(source);
+    const last = source.length - 1;
     const reduced = prefersReducedMotion();
 
     /** Where the scroll says we are, in frames — fractional. */
@@ -180,7 +202,6 @@ export default function SequenceScrubber({
     let dirty = true;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.round(canvas.clientWidth * dpr);
       const height = Math.round(canvas.clientHeight * dpr);
       if (canvas.width === width && canvas.height === height) return;
@@ -296,7 +317,7 @@ export default function SequenceScrubber({
       window.removeEventListener("resize", resize);
       store.dispose();
     };
-  }, [frames, triggerId]);
+  }, [frames, framesSmall, triggerId]);
 
   if (frames.length === 0) return null;
 

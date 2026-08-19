@@ -21,14 +21,26 @@ import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
-const OUT = path.join(ROOT, "public", "sequences", "film");
+const SEQUENCES = path.join(ROOT, "public", "sequences");
 
 /** Frames cut per second of footage. */
 const FPS = 7;
-/** Long edge of an exported frame. Sources are 1344px, so this never upscales. */
-const WIDTH = 1280;
 /** JPEG quality. These are soft painterly frames; they take compression well. */
 const QUALITY = 4; // ffmpeg -q:v scale, 2 (best) – 31 (worst)
+
+/**
+ * Two sizes of the same film.
+ *
+ * A phone draws the film into a canvas around 780px wide, but a browser decodes
+ * whatever it is given — so serving 1280px frames there means decoding roughly
+ * 2.7x the pixels needed, twice per drawn frame because adjacent frames are
+ * blended. That is the whole cost of the scrub on a phone, and it shows up as
+ * lag. The small set exists to remove it; the scrubber picks by canvas size.
+ */
+const SIZES = [
+  { dir: "film", width: 1280 },
+  { dir: "film-sm", width: 720 },
+];
 
 function ffmpegPath() {
   const candidates = [
@@ -70,41 +82,47 @@ for (const { file } of shots) {
 }
 
 const ffmpeg = ffmpegPath();
-rmSync(OUT, { recursive: true, force: true });
-mkdirSync(OUT, { recursive: true });
 
-let frameNumber = 0;
+for (const { dir, width } of SIZES) {
+  const out = path.join(SEQUENCES, dir);
+  rmSync(out, { recursive: true, force: true });
+  mkdirSync(out, { recursive: true });
 
-shots.forEach(({ file, head, tail }, index) => {
-  // Extract into a scratch dir first: ffmpeg's %d counter restarts per input,
-  // and the sequence needs one continuous run of numbers across all shots.
-  const scratch = path.join(OUT, `.shot-${index}`);
-  mkdirSync(scratch, { recursive: true });
+  let frameNumber = 0;
 
-  execFileSync(
-    ffmpeg,
-    [
-      "-i", file,
-      "-vf", `fps=${FPS},scale=${WIDTH}:-2`,
-      "-q:v", String(QUALITY),
-      "-loglevel", "error",
-      path.join(scratch, "%04d.jpg"),
-    ],
-    { stdio: "inherit" }
-  );
+  shots.forEach(({ file, head, tail }, index) => {
+    // Extract into a scratch dir first: ffmpeg's %d counter restarts per input,
+    // and the sequence needs one continuous run of numbers across all shots.
+    const scratch = path.join(out, `.shot-${index}`);
+    mkdirSync(scratch, { recursive: true });
 
-  const all = readdirSync(scratch).sort();
-  const kept = all.slice(head, all.length - tail);
+    execFileSync(
+      ffmpeg,
+      [
+        "-i", file,
+        "-vf", `fps=${FPS},scale=${width}:-2`,
+        "-q:v", String(QUALITY),
+        "-loglevel", "error",
+        path.join(scratch, "%04d.jpg"),
+      ],
+      { stdio: "inherit" }
+    );
 
-  for (const name of kept) {
-    frameNumber++;
-    const out = String(frameNumber).padStart(4, "0") + ".jpg";
-    renameSync(path.join(scratch, name), path.join(OUT, out));
-  }
-  rmSync(scratch, { recursive: true, force: true });
+    const all = readdirSync(scratch).sort();
+    const kept = all.slice(head, all.length - tail);
 
-  const trimmed = head || tail ? ` (trimmed ${head}/${tail})` : "";
-  console.log(`shot ${index + 1}: ${kept.length} frames${trimmed}`);
-});
+    for (const name of kept) {
+      frameNumber++;
+      const target = String(frameNumber).padStart(4, "0") + ".jpg";
+      renameSync(path.join(scratch, name), path.join(out, target));
+    }
+    rmSync(scratch, { recursive: true, force: true });
 
-console.log(`\n${frameNumber} frames → public/sequences/film/`);
+    if (width === SIZES[0].width) {
+      const trimmed = head || tail ? ` (trimmed ${head}/${tail})` : "";
+      console.log(`shot ${index + 1}: ${kept.length} frames${trimmed}`);
+    }
+  });
+
+  console.log(`${frameNumber} frames at ${width}px → public/sequences/${dir}/`);
+}

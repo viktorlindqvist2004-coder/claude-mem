@@ -28,7 +28,13 @@ const DRIFT = 30;
  * no hands, no cloth, no cut. Here the motion is in the footage, and the page
  * does nothing to it except decide which frame you are looking at.
  */
-export default function FilmSequence({ frames }: { frames: string[] }) {
+export default function FilmSequence({
+  frames,
+  framesSmall,
+}: {
+  frames: string[];
+  framesSmall: string[];
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -118,6 +124,7 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
         <div className="relative aspect-4/5 w-full shrink-0 md:absolute md:inset-0 md:aspect-auto md:h-full">
           <SequenceScrubber
             frames={frames}
+            framesSmall={framesSmall}
             triggerId={SECTION_ID}
             className="absolute inset-0 h-full w-full"
           />

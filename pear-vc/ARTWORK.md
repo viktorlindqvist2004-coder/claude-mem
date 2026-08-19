@@ -85,12 +85,26 @@ Compose with the copy in mind. Chapters sit **left** on most shots and
 **right** on shot 3 — keep the subject off that side and leave some quiet
 space.
 
-Compose for the phone too. The page is full-bleed at every width, so a portrait
-screen shows roughly the middle **45%** of each frame and nothing else. A
-subject placed near an edge is simply absent there. Everything that matters
+Compose for the phone too. Portrait shows a band out of the middle of each
+frame, and how wide that band is depends on how much of the screen height the
+film takes:
+
+| Stage on a 390×844 phone | Height | Width visible |
+| --- | --- | --- |
+| Full-bleed | 844px | **26%** |
+| 4:5 (current) | 488px | **47%** |
+| 4:3 | 293px | **75%** |
+
+The page uses 4:5, letterboxed in the page's own ink. Full-bleed was tried and
+is what "too zoomed in" means — a quarter of the frame is not a composition.
+Anything shorter stops reading as a film and starts reading as a picture with
+a caption under it.
+
+So a subject placed near an edge is absent on a phone. Everything that matters
 belongs in the central half; the sides are for air. Cutting the shots again at
-9:16 is the only way around this, and nothing in the page needs to change to
-use them — a second sequence and a source-set is all it would take.
+9:16 removes the whole problem and needs no change here — a second sequence and
+a source-set is all it takes. At 42 credits per 8s shot that is 336 for the
+set.
 
 ## Still scenes
 

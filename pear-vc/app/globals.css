@@ -159,3 +159,23 @@ html.lenis body {
   background: var(--color-gold);
   color: var(--color-ink);
 }
+
+/* --------------------------------------------------------------------------
+   The film's scroll span.
+
+   `--film-vh` is set on the element from the frame count, so the film always
+   plays at one rate per frame. Phones need a longer span for the same footage:
+   Lenis leaves touch to the browser's own momentum (smoothing it again makes
+   the page feel detached from the finger), so a flick is undamped and covers
+   far more of the film than a wheel notch ever does. Stretching the span is
+   what slows it back down, and it costs nothing — the frames are unchanged.
+   -------------------------------------------------------------------------- */
+.film-section {
+  height: calc(var(--film-vh) * 1vh);
+}
+
+@media (max-width: 767px) {
+  .film-section {
+    height: calc(var(--film-vh) * 1.75vh);
+  }
+}

@@ -92,37 +92,49 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
   return (
     <section
       id={SECTION_ID}
-      className="relative z-10 bg-ink"
-      style={{ height: `${filmHeightVh(frames.length)}vh` }}
+      className="film-section relative z-10 bg-ink"
+      style={
+        { "--film-vh": filmHeightVh(frames.length) } as React.CSSProperties
+      }
     >
       {/*
-        One layout at every width: the film full-bleed, the copy laid over it.
+        The film fills the screen on a wide viewport and is letterboxed on a
+        phone, with the copy over the picture either way.
 
-        A phone pays for that — filling a 9:19.5 screen with a 16:9 frame crops
-        away most of the width. Two ways of avoiding the crop were built and
-        both were worse. Contained, the film is a strip across a quarter of the
-        screen with a void beneath it. Boxed at 4:3, it becomes a picture on a
-        page rather than the page itself, and the copy sitting under it in its
-        own band reads as a caption. Neither is the thing the film is for.
+        Portrait is a dial, not a choice between two things. Filling a 9:19.5
+        screen with a 16:9 frame shows only the middle **26%** of each shot —
+        that is the "too zoomed in" — and the less of the height the film takes,
+        the more of its width survives. A 4:5 stage shows about 47%, nearly
+        double, and still reads as a widescreen film in a letterbox rather than
+        a picture pasted on a page, which is what a short stage with the copy
+        beneath it looked like.
 
-        Cutting the footage at 9:16 is the only real fix. Short of that,
-        filling the screen is the design and the crop is its price.
+        The matte is the page's own ink, so the bands are letterboxing rather
+        than damage, and the copy sits on the picture as it does everywhere
+        else. Cutting the shots at 9:16 is the only way to have both, and needs
+        no change here.
       */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <SequenceScrubber
-          frames={frames}
-          triggerId={SECTION_ID}
-          className="absolute inset-0 h-full w-full"
-        />
+      <div className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden md:block">
+        <div className="relative aspect-4/5 w-full shrink-0 md:absolute md:inset-0 md:aspect-auto md:h-full">
+          <SequenceScrubber
+            frames={frames}
+            triggerId={SECTION_ID}
+            className="absolute inset-0 h-full w-full"
+          />
+        </div>
 
         {/* The footage runs from deep blue to bright linen, so a fixed scrim
             would be wrong half the time. Directional and weak on wide screens,
             where the copy has a quiet side to sit on; heavier from the bottom
             on a phone, where the crop leaves it nowhere quiet and the type has
             to hold against whatever the middle of the frame is doing. */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-black/10 md:bg-linear-to-r md:from-black/55 md:via-black/10 md:to-black/40" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/25 to-black/5 md:bg-linear-to-r md:from-black/55 md:via-black/10 md:to-black/40" />
 
-        <div ref={rootRef} className="relative h-full">
+        {/* Absolute in portrait so it does not take part in the flex column —
+            as a sibling with height it pushed the letterboxed stage out of
+            centre. On wide screens the container is a block and this is just
+            a full-height layer over the picture. */}
+        <div ref={rootRef} className="absolute inset-0 md:relative md:h-full">
           {FILM_CHAPTERS.map((chapter) => (
             <div
               key={chapter.heading}
@@ -130,7 +142,7 @@ export default function FilmSequence({ frames }: { frames: string[] }) {
               // On a phone the copy sits low, in the heavy end of the scrim,
               // rather than across the middle of the picture. On wide screens
               // it centres as before.
-              className="pointer-events-none absolute inset-0 flex items-end px-6 pb-20 opacity-0 md:items-center md:px-14 md:pb-0"
+              className="pointer-events-none absolute inset-0 flex items-end px-6 pb-[13vh] opacity-0 md:items-center md:px-14 md:pb-0"
             >
               <div className="mx-auto w-full max-w-[1600px]">
                 <div

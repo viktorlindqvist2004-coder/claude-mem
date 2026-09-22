@@ -45,6 +45,53 @@ knowable.**
 
 ---
 
+## 2b. The hum
+
+Every light fitting in the building is its own positional emitter. Not a room tone, not a
+looping ambience bed with "fluorescent hum" baked into it — **one sound object per fixture**,
+at the fixture, falling off with distance.
+
+This is a few hundred emitters and it is worth every one of them.
+
+**What it is.** A mains ballast at 100 Hz with its second and fourth harmonics, plus a thin
+whine up at 8–12 kHz that only becomes audible within about four metres. Quiet: a single
+bulkhead should be inaudible from fifteen metres and unmistakable from three.
+
+**Detune every fixture.** Each one sits a few cents off 100 Hz, seeded from its position and
+fixed for the life of the game. A wing with twenty bulkheads then beats against itself, and
+the beat pattern is *different in every wing* — which means the building has an audible
+fingerprint per location, and players learn it without ever being told there is anything to
+learn.
+
+**What it buys, in order of how much it matters:**
+
+1. **Silence becomes locatable.** When a fitting dies, a sound stops in a specific place. A
+   player twenty metres away registers the change before they register the darkness.
+2. **It masks.** The hum sits right where footsteps and cloth movement sit. Something can
+   cross a wing behind you and the hum eats the first two steps, which is exactly the margin
+   the Presence needs.
+3. **It gives the EXIT blackout its teeth.** When every red fitting in the building goes out
+   at once, the loudest thing that happens is that a sound the crew had completely stopped
+   hearing for four nights **stops**. Four seconds of true silence, then the hum comes back
+   on before the light does — a fraction of a second of hearing the building before you can
+   see it.
+4. **Failing fixtures are free characterisation.** One in about twelve buzzes irregularly:
+   louder, with a cycling rattle, dropping out for half a second at a time. Players will
+   learn which ones and use them as landmarks, and then one night a fixture they know will be
+   silent.
+
+**Implementation.** One `Sound` per fixture, `RollOffMode = InverseTapered`, `RollOffMaxDistance`
+about 16 m, in a dedicated `SoundGroup` so the whole circuit can be ducked or killed as one.
+Stream the emitters with their fixtures — a wing that has not loaded should not be humming.
+Cap concurrently audible emitters per player at around 24 by distance; the rest are muted, not
+destroyed, so nothing pops when the player turns.
+
+**The mix rule that keeps it from becoming noise:** the hum is the *floor* of the mix, not a
+layer in it. Everything else in the game is mixed relative to it, and if a player consciously
+notices the hum during ordinary play, it is 3 dB too loud.
+
+---
+
 ## 3. The Night Manager's voice
 
 The single most important asset in the project. Cast it like a radio play, not like a
@@ -97,11 +144,11 @@ A continuous positional bed, per zone:
 | Zone | Bed |
 | --- | --- |
 | Atrium | Large-room tone, rain on glass, a distant escalator motor, the ventilation fundamental at ~48 Hz |
-| Retail floor | Fluorescent ballast hum, the specific 100 Hz buzz of a tube about to fail |
+| Retail floor | Carried almost entirely by the per-fixture hum above, not by a bed |
 | Supermarket | Chest freezer compressors cycling on and off on independent timers |
 | Back of house | Dead, carpeted, close. Doors thud rather than ring. |
 | Basement | Water, a pump, and a long reverb tail that does not match the room's size |
-| Neon wings | Transformer buzz per sign, detuned slightly between units so a long wing beats against itself. Killing a wing's neon removes a sound the player did not know was there. |
+| Neon wings | A trading unit's sign adds a transformer buzz an octave up from the ballast hum — brighter, edgier, and audible from further away. Eleven of them in the building, so each one is a landmark you can hear before you see. |
 | Floor 3 | **Nothing.** No bed at all. The only place in the game with true silence, and it should be alarming. |
 
 `SoundService` reverb is set per zone (`Enum.ReverbType.Hallway`, `.Room`, `.ConcertHall`

@@ -61,24 +61,41 @@ photoreal set is the fastest way to make an environment look like a toy.
 
 ## 3. The light sources, and there are only five
 
-### 1. Neon shopfront signage — the primary source
-Saturated glass tube, magenta, cyan, amber, green, hot pink. They buzz. They are thirty years
-old, so some letters are dead, some flicker on a bad transformer, and one of them has been
-reading **"P ARMACY"** since 1994.
+**The mall at night is red.** When the general lighting goes off at 21:00 the building drops
+onto its emergency circuit, and the emergency circuit is red: EXIT signs at every stair and
+fire door, and caged red bulkhead fittings every eleven metres down every wing and around
+every balcony. That is the light the crew works by. It is dim, it is uniform, it is the
+colour of a darkroom, and after ten minutes it stops looking like safety lighting and starts
+looking like the inside of something.
 
-**Each wing has a dominant hue** so the crew can navigate and, more importantly, *talk*:
-"I'm in the pink bit", "meet me where it goes green". This is free world-building and it is
-the single most useful thing you can do for four people trying to find each other in the dark
-over voice chat.
+Red also does two things no other choice does. It is the worst possible light to identify
+anything by — every surface goes to the same muddy monochrome, and a figure at forty metres
+is a shape and nothing more. And it makes the few remaining colours in the building precious.
 
-### 2. Red EXIT signs — the constant
-On the emergency circuit, so they are **always on**, everywhere, at every stair and fire
-door. They are the mall's grammar: however lost you are, there is always a small red glow
-somewhere, and you can always get out.
+### 1. The red emergency circuit — the primary source
+Caged bulkheads every 11 m per wing, EXIT signs every 22 m, all on battery-backed supply, all
+at low output. Approximately 2000 K equivalent, deeply saturated, heavy falloff — a bulkhead
+lights a 4 m pool of floor and nothing else. Between the pools it is genuinely black.
 
-Which is precisely why killing them once, for four seconds, on one night, is the largest
-scare in the game. Something that has been true for four nights stops being true. Spend it
-once.
+They are the mall's grammar: however lost you are, there is a small red glow somewhere, and
+you can always get out. Which is precisely why killing them once, for four seconds, on one
+night, is the largest scare in the game. Something that has been true for four nights stops
+being true. Spend it once.
+
+**And they hum.** See [`06-audio-direction.md`](06-audio-direction.md) — every fixture is its
+own positional emitter, and that decision does more work than it sounds like it should.
+
+### 2. Neon shopfront signage — the rarity
+Eleven units in a building of a hundred and sixty-eight still trade, and their signs are the
+only saturated colour in the place: magenta, cyan, amber, green, hot pink. Thirty years old,
+so some letters are dead, some flicker on a failing transformer, and one has been reading
+**"P ARMACY"** since 1994.
+
+Because they are rare, each one is an event — a landmark visible from the far end of a wing,
+a place the crew names and navigates by, and the only spot in a hundred metres where you can
+see what colour something actually is. **Each wing still has a dominant hue** so the crew can
+talk to each other ("I'm in the pink bit", "meet me where it goes green"), but that hue now
+appears once or twice in a wing rather than forty times.
 
 ### 3. The things that are never switched off
 Vending machine displays, the chest freezers in the supermarket, an ATM screen, a fire alarm
@@ -187,11 +204,17 @@ Atmosphere.Decay   = Color3.fromRGB(88, 92, 106)
 what it is for:
 
 ```lua
-Bloom.Intensity = 0.9   Bloom.Size = 30   Bloom.Threshold = 1.2
-ColorCorrection.Saturation = -0.05  -- keep the neon saturated; desaturate everything else
-ColorCorrection.Contrast   =  0.22  -- crush the blacks; that is where the game lives
+Bloom.Intensity = 0.75  Bloom.Size = 30   Bloom.Threshold = 1.35
+ColorCorrection.Saturation = -0.05  -- keep the red and the neon saturated
+ColorCorrection.Contrast   =  0.24  -- crush the blacks; that is where the game lives
 DepthOfField.FarIntensity  =  0.12  DepthOfField.FocusDistance = 22
 ```
+
+**Red is easy to overdo and easy to blow out.** The fixtures must stay *dim*: a bulkhead is a
+source you can look straight at without squinting, and its pool of floor should be barely
+enough to walk by. If the corridor is legible end to end, the lights are too bright. The test
+is simple — stand at one end of a wing with the torch off and you should not be able to tell
+where it ends.
 
 Plus the screen-space overlay layer, authored as `ImageLabel`s since Roblox has no custom
 post: fine grain at 5 %, vignette at 22 %, and a lens-dirt streak that only catches when a
@@ -206,7 +229,7 @@ there is no night-vision mode, and the darkness is the product.
 
 | Night | State |
 | --- | --- |
-| **1** | Neon and EXIT only, work lights in the crew's areas. Warm islands in a cold void. The most "normal" the mall ever looks. |
+| **1** | The red circuit, a handful of neon, work lights in the crew's areas. Warm islands in a red void. The most "normal" the mall ever looks, which is not very. |
 | **2** | Fashion floor retail spots are on — hard white pools with absolute black between them, and a lot of glass. |
 | **3** | **Everything on.** The one night the mall is lit like a mall, and it is over-lit, sickly, and colour-temperature-inconsistent shop to shop. Inverting the palette inverts the fear. |
 | **4** | Mains gone. Neon dead, EXIT signs running on battery and dimming over the night, storm light at 6500 K through the atrium glass. Torch and red, and nothing else. |

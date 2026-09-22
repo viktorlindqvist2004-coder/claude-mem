@@ -112,6 +112,40 @@ Config.WAGES = {
 	TAG_FOUND = 0,
 }
 
+-- ─── Signage and its hum ────────────────────────────────────────────────────
+-- The mall runs on its red emergency circuit at night. Every fitting is its own
+-- positional emitter: one Sound per fixture, at the fixture. A few hundred of
+-- them, and worth every one -- see docs/06-audio-direction.md.
+Config.SIGNAGE = {
+	BULKHEAD_SPACING = 11, -- metres, per wing and around the balconies
+	EXIT_SPACING = 22,
+	BULKHEAD_HEIGHT = 2.62,
+	EXIT_HEIGHT = 2.3,
+	RED = Color3.fromRGB(255, 28, 22),
+	-- Dim. A bulkhead lights a 4 m pool of floor and nothing else. If a wing is
+	-- legible end to end with the torch off, these are too bright.
+	BULKHEAD_BRIGHTNESS = 1.35,
+	BULKHEAD_RANGE = 9,
+	EXIT_BRIGHTNESS = 0.85,
+	EXIT_RANGE = 7,
+}
+
+Config.HUM = {
+	FUNDAMENTAL_HZ = 100,
+	-- Each fixture sits a few cents off, seeded from its position and fixed for
+	-- the life of the game, so every wing beats against itself differently and
+	-- the building has an audible fingerprint per location.
+	DETUNE_CENTS = 9,
+	ROLLOFF_MAX_DISTANCE = 16,
+	AUDIBLE_FROM = 15, -- inaudible beyond this, unmistakable inside three
+	-- One fixture in twelve buzzes irregularly. Players use them as landmarks,
+	-- and then one night a fixture they know is silent.
+	FAILING_FIXTURE_RATIO = 1 / 12,
+	-- The hum is the floor of the mix, not a layer in it. If a player
+	-- consciously notices it during ordinary play, it is 3 dB too loud.
+	MAX_AUDIBLE_EMITTERS_PER_PLAYER = 24,
+}
+
 -- ─── Dread ──────────────────────────────────────────────────────────────────
 -- See docs/10-fear-design.md. The Presence watches and never approaches until
 -- Night 5; the resolution rule guarantees the player's own act of looking is what

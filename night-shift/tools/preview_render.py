@@ -544,63 +544,91 @@ def build_atrium():
     build_clock()
 
 
-def build_clock():
-    """Northmoor Station's platform clock, 1904, on a plinth in the atrium.
+SEGMENTS = {
+    "0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc",
+    "5": "afgcd", "6": "afgedc", "7": "abc", "8": "abcdefg", "9": "abfgcd",
+    " ": "", "-": "g", "8f": "abcdefg",
+}
 
-    The one object in the building that still looks cared for, and the only
-    thing lit well enough to read at a distance. It says 3:33."""
+# Segment geometry in digit-local units: (dx, dy, w, h) with the digit 1 wide,
+# 2 tall, centred on its own origin.
+SEG_GEOM = {
+    "a": (0.00, 0.92, 0.72, 0.15),
+    "b": (0.40, 0.48, 0.15, 0.78),
+    "c": (0.40, -0.48, 0.15, 0.78),
+    "d": (0.00, -0.92, 0.72, 0.15),
+    "e": (-0.40, -0.48, 0.15, 0.78),
+    "f": (-0.40, 0.48, 0.15, 0.78),
+    "g": (0.00, 0.00, 0.72, 0.15),
+}
+
+
+def seven_segment(text, centre, digit_h=1.05, gap=0.30, depth=0.07,
+                  lit=(2.9, 0.055, 0.035), unlit=(0.030, 0.006, 0.005)):
+    """A 1986 LED display. Unlit segments stay faintly visible, which is what
+    makes a seven-segment panel read as a device rather than as a texture."""
+    cx, cy, cz = centre
+    scale = digit_h / 2.0
+    digit_w = 1.10 * scale
+
+    slots = [(ch, i) for i, ch in enumerate(text)]
+    total = sum(0.42 * digit_w if ch == ":" else digit_w for ch, _ in slots)
+    total += gap * (len(slots) - 1)
+    x = cx - total / 2
+
+    for ch, _ in slots:
+        if ch == ":":
+            for dy in (0.42, -0.42):
+                box([x + 0.21 * digit_w, cy + dy * scale, cz],
+                    [0.15 * scale, 0.15 * scale, depth], "sign", emissive=lit)
+            x += 0.42 * digit_w + gap
+            continue
+        on = SEGMENTS.get(ch, "")
+        for seg, (dx, dy, w, h) in SEG_GEOM.items():
+            box([x + digit_w / 2 + dx * scale, cy + dy * scale, cz],
+                [max(w, 0.02) * scale, max(h, 0.02) * scale, depth],
+                "sign", emissive=lit if seg in on else unlit)
+        x += digit_w + gap
+
+
+def build_clock():
+    """The Great Clock: a 1904 Northmoor Station movement, cased in, with a
+    1986 seven-segment display bolted to the front of it.
+
+    Nobody has seen the numbers change since 1998. They read 03:33."""
     cx, cz = 0.0, 0.0
 
-    # Stepped stone plinth and a tapered column.
-    box([cx, 0.22, cz], [7.0, 0.44, 7.0], "stone")
-    box([cx, 0.62, cz], [6.0, 0.40, 6.0], "stone")
-    cyl([cx, 2.10, cz], 1, 1.25, 2.60, "stone")
-    cyl([cx, 3.50, cz], 1, 1.55, 0.26, "brass")
+    # Stepped stone plinth.
+    box([cx, 0.22, cz], [7.4, 0.44, 7.4], "stone")
+    box([cx, 0.62, cz], [6.2, 0.40, 6.2], "stone")
+    box([cx, 1.05, cz], [5.0, 0.48, 5.0], "stone")
 
-    # The drum, with a cornice above and below.
-    cyl([cx, 3.75, cz], 1, 1.80, 0.22, "brass")
-    cyl([cx, 5.85, cz], 1, 1.72, 4.00, "brass")
-    cyl([cx, 7.95, cz], 1, 1.92, 0.26, "brass")
-    cyl([cx, 8.35, cz], 1, 1.35, 0.55, "brass")
-    cyl([cx, 8.85, cz], 1, 0.42, 0.70, "brass")
+    # Iron column supporting the case, with a collar.
+    cyl([cx, 2.55, cz], 1, 0.62, 2.60, "metal")
+    cyl([cx, 3.82, cz], 1, 0.95, 0.22, "brass")
 
-    # Two dials, facing up and down the atrium.
+    # The case. Square, brass-edged, with the 1904 movement inside it.
+    box([cx, 5.75, cz], [5.2, 3.6, 3.0], "metal")
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl([cx + sx * 2.55, 5.75, cz + sz * 1.45], 1, 0.13, 3.6, "brass")
+    box([cx, 7.68, cz], [5.7, 0.30, 3.5], "brass")
+    box([cx, 3.90, cz], [5.7, 0.26, 3.5], "brass")
+    cyl([cx, 8.10, cz], 1, 0.9, 0.55, "brass")
+    cyl([cx, 8.62, cz], 1, 0.28, 0.55, "brass")
+
+    # Display panels, one each way along the atrium.
     for face in (-1, 1):
-        zf = cz + face * 1.74
-        cy = 5.95
-        cyl([cx, cy, zf + face * 0.05], 2, 1.62, 0.22, "brass")   # bezel
-        cyl([cx, cy, zf + face * 0.16], 2, 1.44, 0.05, "dial",
-            emissive=(0.115, 0.110, 0.098))                        # internally lit
-        cyl([cx, cy, zf + face * 0.20], 2, 0.13, 0.06, "hand")     # centre boss
+        zf = cz + face * 1.52
+        box([cx, 5.80, zf], [4.7, 2.5, 0.16], "hand")          # recessed panel
+        box([cx, 5.80, zf + face * 0.07], [4.9, 2.7, 0.10], "metal")  # bezel
+        seven_segment("03:33", [cx, 5.80, zf - face * 0.09], digit_h=1.55, gap=0.22)
+        # The maker's plate sits behind this panel, and nobody has taken it off.
 
-        # Chapter ring: twelve markers, the quarters heavier.
-        for hour in range(12):
-            th = hour * 30.0
-            r = 1.22
-            px = cx + math.sin(math.radians(th)) * r * face
-            py = cy + math.cos(math.radians(th)) * r
-            major = hour % 3 == 0
-            obox([px, py, zf + face * 0.20],
-                 (0.15 if major else 0.075, 0.40 if major else 0.22, 0.05),
-                 rot_z(-th * face), "hand")
-
-        # 3:33. The hour hand has moved more than half way past the three,
-        # which is the detail that makes a clock face read as a time.
-        for ang, length, width, off in ((106.5, 0.92, 0.115, 0.34),
-                                        (198.0, 1.26, 0.075, 0.51)):
-            a_ = ang * face
-            dx = math.sin(math.radians(a_)) * off
-            dy = math.cos(math.radians(a_)) * off
-            obox([cx + dx, cy + dy, zf + face * 0.24],
-                 (width, length, 0.045), rot_z(-a_), "hand")
-
-        # Two shielded lamps on the bezel, washing the dial. Nothing else in
-        # the atrium is lit like this.
-        for sx in (-1, 1):
-            light([cx + sx * 1.15, cy + 1.55, zf + face * 1.05],
-                  (255, 240, 214), 5.0, 9.0)
-            box([cx + sx * 1.15, cy + 1.62, zf + face * 1.05], [0.22, 0.16, 0.5], "metal")
-
+    # The display is the only real light in the atrium, so it spills red on
+    # everything near it — including the crew when they walk up to read it.
+    for face in (-1, 1):
+        light([cx, 5.80, cz + face * 2.6], RED, 9.0, 22.0)
 
 def build_atrium_dressing():
     """Escalators, shopfronts and a glazed lift.

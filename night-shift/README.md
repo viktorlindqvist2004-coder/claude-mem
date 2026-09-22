@@ -28,6 +28,8 @@ skeleton the vertical slice will be built on.
 | [`docs/07-technical-architecture.md`](docs/07-technical-architecture.md) | Rojo/Luau structure, services, networking, anti-cheat. |
 | [`docs/09-the-investigation.md`](docs/09-the-investigation.md) | The mystery: seven suspects, twenty-two clues, the detective, and how you win. |
 | [`docs/10-fear-design.md`](docs/10-fear-design.md) | Dread, the Presence, eyes in the dark, and the thirty startles. |
+| [`docs/11-direction-log.md`](docs/11-direction-log.md) | **Every piece of direction given, and how it was resolved. Outranks the other docs.** |
+| [`docs/12-the-strike.md`](docs/12-the-strike.md) | The digital clock, and the night it strikes thirty-three times. |
 | [`docs/08-roadmap.md`](docs/08-roadmap.md) | Milestones from greybox to soft launch. |
 
 ## Naming: original → shipping

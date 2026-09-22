@@ -24,7 +24,7 @@ forever and it will always, always need people on nights.
 | **1930** | **Elias Wren**, nineteen, is hired as an assistant stationmaster. Winding the clock is his job. It takes eleven minutes, every night, by hand. |
 | **1971** | Northmoor Station closes. The last service is the 03:33 night train south. Wren tells the last passengers to mind the step. Then he stays to wind the clock. He is found the next morning at the foot of it. The clock had been wound. |
 | **1971–1986** | The clock sits in a council storage yard under a tarpaulin. Two night watchmen resign. |
-| **1986** | Developer **Eric Halvard** buys the movement at auction and installs it in the atrium of his new mall, Northlight Galleria, as its centrepiece. Opening day, November. |
+| **1986** | Developer **Eric Halvard** buys the movement at auction and installs it in the atrium of his new mall as its centrepiece — but does not restore it. It is 1986 and he wants the place to look modern, so the movement is cased in and a **seven-segment LED display** is bolted to the front of the housing. The dedication plate ends up behind that panel. Opening day, November. |
 | **1987** | Vale signs the directory amendment removing Floor 3. She has been on it. |
 | **Spring 1989** | A night manager post is created and filled for six weeks by **Ivor Kask**, paid in cash, no address on file. Kask files the first written complaint about "the man on the tannoy after closing", then resigns by letter. The post is deleted and never refilled. Halvard — in Oslo that week — signs the complaint off as a prank. Centre manager **Margaret Vale** has a lock fitted on the PA room on 14 April. The lock is later found fitted from the inside. |
 | **1991** | The atrium fountain is drained and capped. Staff continue to report hearing it. |
@@ -39,6 +39,31 @@ forever and it will always, always need people on nights.
 | **Now (2026)** | **Lantern Staffing** — *"We fill the hours nobody wants"* — places your crew on a five-night trial. **DS Ruth Calder**, fifty, still has the file, and an alert on the night-staffing contract. |
 
 ---
+
+## 2b. The Great Clock
+
+What everyone sees is a **1986 digital display**: four red seven-segment digits and a
+colon, about 2.4 m across, in a dark panel on the front of a brass and iron housing on a
+stone plinth in the middle of the atrium. It reads **03:33**.
+
+What is inside the housing is a **1904 turret movement from Northmoor Station**, which
+Halvard bought at auction and never restored, because a Victorian dial did not suit a mall
+that had just opened. He cased it in and bolted the future to the front of it.
+
+**The dedication plate naming Elias Wren is behind that panel.** This is why Malik's tape
+says he could not read it, and why getting it off on Night 5 is an act rather than a
+glance.
+
+A friendly modern surface bolted over something old that nobody ever dealt with. The mall
+did to the clock precisely what the Night Manager does to himself, and neither of them
+knows it.
+
+Every other display in the building runs off the same master clock — the tills, the time
+clock, the vending machines, the camera room timestamps. They can all be made to agree at
+once, which is worse than any of them alone.
+
+The clock's own chapter, and the thirty-three strikes, are in
+[`12-the-strike.md`](12-the-strike.md).
 
 ## 3. The mall
 
@@ -63,7 +88,8 @@ painted cinderblock behind every staff door. Nothing has been refurbished since 
 including the signage font.
 
 The building's tells, in order of subtlety:
-1. Clocks. Every clock in the building reads 3:33 if you look at it twice.
+1. Displays. Every display in the building reads 03:33 if you look at it twice — the
+   tills, the time clock, the vending machines, the microwave in the staff room.
 2. The fountain, running, when the fountain has been dry since 1991.
 3. Corridors whose length does not match the floor plan on the wall.
 4. A shop that is on the wrong side of the atrium from where it was an hour ago.
@@ -376,7 +402,7 @@ Attention. They are worth it.
 
 ---
 
-### Tape 5 — ELIAS WREN. Inside the clock movement. Night 5, requires all four tags.
+### Tape 5 — ELIAS WREN. Inside the clock housing, behind the display panel. Night 5, requires all four tags.
 *(not a dictaphone. A station PA reel, 1971. Rain on a canopy. Announcement chimes.)*
 
 > "*(chimes)* Attention, please. The zero-three-three-three service to the south is the

@@ -80,6 +80,8 @@ MAT = {
     "plant": (0.10, 0.14, 0.09), "brass": (0.36, 0.28, 0.13),
     "sign": (0.26, 0.03, 0.03), "trim": (0.24, 0.235, 0.23),
     "block": (0.25, 0.245, 0.235),  # painted cinderblock, back of house
+    "dial": (0.74, 0.72, 0.66), "hand": (0.045, 0.042, 0.040),
+    "stone": (0.29, 0.285, 0.275),
     "sky": (0.0, 0.0, 0.0),  # not shaded: rays that hit this see the night
     "shelf": (0.20, 0.19, 0.18), "rack": (0.26, 0.24, 0.22),
     "counter": (0.22, 0.21, 0.20), "sheet": (0.40, 0.39, 0.37),
@@ -89,10 +91,46 @@ MAT = {
 boxes, lights = [], []
 
 
+# kind: 0 = axis-aligned box, 1 = cylinder, 2 = oriented box.
+# A mall is boxes. A 1904 turret clock is not, so the renderer grew two more
+# primitives: without them the dial cannot be round and the hands cannot point
+# at 3:33, which is the one thing in this game that has to be unmistakable.
+
 def box(centre, size, mat, emissive=None, floor=False):
     c, s = np.asarray(centre, float), np.maximum(np.asarray(size, float), 0.02)
-    boxes.append((c - s / 2, c + s / 2, np.array(MAT[mat]), mat,
-                  np.array(emissive or (0.0, 0.0, 0.0)), floor))
+    boxes.append([c - s / 2, c + s / 2, np.array(MAT[mat]), mat,
+                  np.array(emissive or (0.0, 0.0, 0.0)), floor, 0, None])
+
+
+def cyl(centre, axis, radius, length, mat, emissive=None, floor=False):
+    """Axis-aligned cylinder. axis is 0/1/2 for x/y/z."""
+    c = np.asarray(centre, float)
+    ext = np.full(3, radius, float)
+    ext[axis] = length / 2
+    boxes.append([c - ext, c + ext, np.array(MAT[mat]), mat,
+                  np.array(emissive or (0.0, 0.0, 0.0)), floor, 1,
+                  (axis, c, float(radius), length / 2)])
+
+
+def rot_x(deg):
+    r = math.radians(deg)
+    cs, sn = math.cos(r), math.sin(r)
+    return np.array([[1.0, 0.0, 0.0], [0.0, cs, -sn], [0.0, sn, cs]])
+
+
+def rot_z(deg):
+    r = math.radians(deg)
+    cs, sn = math.cos(r), math.sin(r)
+    return np.array([[cs, -sn, 0.0], [sn, cs, 0.0], [0.0, 0.0, 1.0]])
+
+
+def obox(centre, size, R, mat, emissive=None, floor=False):
+    """Oriented box. R maps local axes into world."""
+    c = np.asarray(centre, float)
+    he = np.maximum(np.asarray(size, float), 0.02) / 2
+    world = np.abs(R) @ he
+    boxes.append([c - world, c + world, np.array(MAT[mat]), mat,
+                  np.array(emissive or (0.0, 0.0, 0.0)), floor, 2, (c, he, R)])
 
 
 def light(pos, rgb, intensity, radius):
@@ -499,24 +537,156 @@ def build_atrium():
             bulkhead([-void_w / 2 + void_w * (i + 0.5) / 6, y + BULKHEAD_HEIGHT - 0.2,
                       void_d / 2 + 0.3], [0, 0, -1])
 
-    box([0, 0.28, 12], [9.4, 0.56, 9.4], "trim")
-    box([0, 0.60, 12], [8.0, 0.16, 8.0], "metal")
+    # The capped fountain, dry since 1991.
+    cyl([0, 0.30, 12], 1, 4.7, 0.60, "trim")
+    cyl([0, 0.62, 12], 1, 4.0, 0.16, "metal")
 
-    box([0, 1.4, 0], [6.2, 2.8, 6.2], "trim")
-    box([0, 2.9, 0], [5.0, 0.28, 5.0], "metal")
-    box([0, 5.9, 0], [4.4, 5.6, 1.7], "brass")
-    box([0, 6.3, -0.92], [3.4, 3.4, 0.14], "trim", emissive=(0.055, 0.05, 0.04))
-    box([0, 6.3, -1.0], [0.10, 2.3, 0.05], "metal")
-    box([0, 6.3, -1.0], [1.7, 0.10, 0.05], "metal")
-    box([0, 9.0, 0], [4.9, 0.5, 2.0], "brass")
+    build_clock()
+
+
+def build_clock():
+    """Northmoor Station's platform clock, 1904, on a plinth in the atrium.
+
+    The one object in the building that still looks cared for, and the only
+    thing lit well enough to read at a distance. It says 3:33."""
+    cx, cz = 0.0, 0.0
+
+    # Stepped stone plinth and a tapered column.
+    box([cx, 0.22, cz], [7.0, 0.44, 7.0], "stone")
+    box([cx, 0.62, cz], [6.0, 0.40, 6.0], "stone")
+    cyl([cx, 2.10, cz], 1, 1.25, 2.60, "stone")
+    cyl([cx, 3.50, cz], 1, 1.55, 0.26, "brass")
+
+    # The drum, with a cornice above and below.
+    cyl([cx, 3.75, cz], 1, 1.80, 0.22, "brass")
+    cyl([cx, 5.85, cz], 1, 1.72, 4.00, "brass")
+    cyl([cx, 7.95, cz], 1, 1.92, 0.26, "brass")
+    cyl([cx, 8.35, cz], 1, 1.35, 0.55, "brass")
+    cyl([cx, 8.85, cz], 1, 0.42, 0.70, "brass")
+
+    # Two dials, facing up and down the atrium.
+    for face in (-1, 1):
+        zf = cz + face * 1.74
+        cy = 5.95
+        cyl([cx, cy, zf + face * 0.05], 2, 1.62, 0.22, "brass")   # bezel
+        cyl([cx, cy, zf + face * 0.16], 2, 1.44, 0.05, "dial",
+            emissive=(0.115, 0.110, 0.098))                        # internally lit
+        cyl([cx, cy, zf + face * 0.20], 2, 0.13, 0.06, "hand")     # centre boss
+
+        # Chapter ring: twelve markers, the quarters heavier.
+        for hour in range(12):
+            th = hour * 30.0
+            r = 1.22
+            px = cx + math.sin(math.radians(th)) * r * face
+            py = cy + math.cos(math.radians(th)) * r
+            major = hour % 3 == 0
+            obox([px, py, zf + face * 0.20],
+                 (0.15 if major else 0.075, 0.40 if major else 0.22, 0.05),
+                 rot_z(-th * face), "hand")
+
+        # 3:33. The hour hand has moved more than half way past the three,
+        # which is the detail that makes a clock face read as a time.
+        for ang, length, width, off in ((106.5, 0.92, 0.115, 0.34),
+                                        (198.0, 1.26, 0.075, 0.51)):
+            a_ = ang * face
+            dx = math.sin(math.radians(a_)) * off
+            dy = math.cos(math.radians(a_)) * off
+            obox([cx + dx, cy + dy, zf + face * 0.24],
+                 (width, length, 0.045), rot_z(-a_), "hand")
+
+        # Two shielded lamps on the bezel, washing the dial. Nothing else in
+        # the atrium is lit like this.
+        for sx in (-1, 1):
+            light([cx + sx * 1.15, cy + 1.55, zf + face * 1.05],
+                  (255, 240, 214), 5.0, 9.0)
+            box([cx + sx * 1.15, cy + 1.62, zf + face * 1.05], [0.22, 0.16, 0.5], "metal")
+
+
+def build_atrium_dressing():
+    """Escalators, shopfronts and a glazed lift.
+
+    Stacked grey decks with nothing on them read as a car park. What says
+    shopping centre is the diagonal of an escalator, lit glass at every level,
+    and something moving vertically through the void."""
+    void_w, void_d = ATRIUM_W * 0.66, ATRIUM_D * 0.58
+    rng = np.random.default_rng(4041)
 
     for i in range(8):
         bulkhead([-ATRIUM_W / 2 + 4 + i * (ATRIUM_W - 8) / 7, BULKHEAD_HEIGHT + 0.6,
                   -ATRIUM_D / 2 + 0.5], [0, 0, 1])
 
+    # Criss-crossing escalators, the single most mall-shaped object there is.
+    rise = FLOOR_TO_FLOOR
+    run = 11.0
+    ang = math.degrees(math.atan2(rise, run))
+    slope = math.hypot(rise, run)
+    for lvl in range(3):
+        y0 = lvl * FLOOR_TO_FLOOR
+        for side in (-1, 1):
+            x = side * 8.5
+            z0 = -void_d / 2 + 3.0 if (lvl % 2 == 0) == (side > 0) else void_d / 2 - 3.0
+            zdir = 1 if z0 < 0 else -1
+            cz = z0 + zdir * run / 2
+            cy = y0 + rise / 2
+            R = rot_x(-ang * zdir)
+            obox([x, cy, cz], (1.35, 0.42, slope), R, "metal")
+            for e in (-1, 1):
+                obox([x + e * 0.98, cy + 0.52, cz], (0.14, 1.06, slope), R, "glass")
+                obox([x + e * 0.98, cy + 1.08, cz], (0.30, 0.14, slope), R, "rail")
+            # Comb plates top and bottom, and the machine pit under each.
+            box([x, y0 + 0.06, z0], [2.6, 0.30, 1.6], "metal")
+            box([x, y0 + rise + 0.06, z0 + zdir * run], [2.6, 0.30, 1.6], "metal")
+
+    # A glazed panoramic lift, and the car sitting between floors.
+    lx, lz = -void_w / 2 + 3.2, 0.0
+    for e in (-1, 1):
+        cyl([lx + e * 1.7, ATRIUM_H / 2, lz], 1, 0.22, ATRIUM_H, "metal")
+        cyl([lx, ATRIUM_H / 2, lz + e * 1.7], 1, 0.22, ATRIUM_H, "metal")
+    box([lx, 7.4, lz], [3.0, 2.4, 3.0], "glass")
+    box([lx, 6.25, lz], [3.2, 0.22, 3.2], "metal")
+    box([lx, 8.65, lz], [3.2, 0.22, 3.2], "metal")
+    light([lx, 8.2, lz], (250, 238, 214), 4.0, 12.0)
+
+    # Feature columns at the void corners, floor to roof.
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl([sx * (void_w / 2 + 1.5), ATRIUM_H / 2, sz * (void_d / 2 + 1.5)],
+                1, 0.65, ATRIUM_H, "trim")
+
+    # Shopfronts facing the void on every level, so there is lit glass at every
+    # height instead of a blank deck edge.
+    for lvl in range(3):
+        y = lvl * FLOOR_TO_FLOOR
+        for sz in (-1, 1):
+            edge = sz * (void_d / 2 + 1.2)
+            t = -void_w / 2 + 2.0
+            while t < void_w / 2 - 4.0:
+                w = float(rng.uniform(5.0, 9.5))
+                lit = rng.random() < 0.55
+                box([t + w / 2, y + 3.55, edge], [w, 0.9, 0.7], "front")
+                for e in (-1, 1):
+                    box([t + w / 2 + e * w / 2, y + 1.7, edge], [0.7, 3.4, 0.8], "front")
+                box([t + w / 2, y + 1.6, edge + sz * 2.2], [w - 0.8, 3.0, 0.4], "wall")
+                if lit:
+                    light([t + w / 2, y + 2.4, edge + sz * 1.3],
+                          (248, 236, 210) if rng.random() < 0.6 else (220, 228, 244),
+                          2.6, 10.0)
+                    hue = (255, 120, 70) if rng.random() < 0.5 else (90, 200, 255)
+                    box([t + w / 2, y + 3.55, edge - sz * 0.42],
+                        [w * 0.62, 0.42, 0.10], "sign",
+                        emissive=tuple(1.1 * v / 255 for v in hue))
+                t += w + float(rng.uniform(0.3, 1.4))
+
+    # Hanging banners from the roof structure, which fills the empty upper air.
+    for i in range(5):
+        x = -void_w / 2 + (i + 0.5) * void_w / 5
+        box([x, ATRIUM_H - 3.4, 0.0], [2.6, 5.4, 0.12], "hoard")
+        box([x, ATRIUM_H - 0.75, 0.0], [2.8, 0.14, 0.3], "metal")
+
 
 def build():
     build_atrium()
+    build_atrium_dressing()
     for fid, y, fitted in FLOORS:
         for key in "NESW":
             build_wing(fid, key, y, fitted and (fid, key) in WINGS, y == 0.0)
@@ -525,6 +695,79 @@ def build():
 
 
 # ── Renderer ────────────────────────────────────────────────────────────────
+
+def _prim_span(orig, dirs, prim):
+    """Entry and exit distance for any primitive, plus the AABB slab lows so
+    box normals can still be recovered from the winning axis."""
+    kind = prim[6]
+    if kind == 0:
+        return _slabs(orig, dirs, prim[0], prim[1])
+
+    if kind == 2:
+        c, he, R = prim[7]
+        lo_o = (orig - c) @ R
+        lo_d = dirs @ R
+        tmin, tmax, lo = _slabs(lo_o, lo_d, -he, he)
+        return tmin, tmax, lo
+
+    axis, c, r, hl = prim[7]
+    i, j = [(1, 2), (0, 2), (0, 1)][axis]
+    oi, oj = orig[..., i] - c[i], orig[..., j] - c[j]
+    di, dj = dirs[..., i], dirs[..., j]
+
+    A = di * di + dj * dj
+    B = 2 * (oi * di + oj * dj)
+    C = oi * oi + oj * oj - r * r
+    with np.errstate(divide="ignore", invalid="ignore"):
+        disc = B * B - 4 * A * C
+        sq = np.sqrt(np.maximum(disc, 0.0))
+        t0 = (-B - sq) / (2 * A)
+        t1 = (-B + sq) / (2 * A)
+    parallel = A < 1e-12
+    inside = C <= 0.0
+    t0 = np.where(parallel, np.where(inside, -1e9, 1e9), t0)
+    t1 = np.where(parallel, np.where(inside, 1e9, -1e9), t1)
+    t0 = np.where(disc < 0, 1e9, t0)
+    t1 = np.where(disc < 0, -1e9, t1)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        inv = 1.0 / dirs[..., axis]
+        ca = (c[axis] - hl - orig[..., axis]) * inv
+        cb = (c[axis] + hl - orig[..., axis]) * inv
+    ta, tb = np.minimum(ca, cb), np.maximum(ca, cb)
+
+    tmin = np.maximum(t0, ta)
+    tmax = np.minimum(t1, tb)
+    lo = np.zeros(orig.shape[:-1] + (3,)) if orig.ndim > 1 else np.zeros(3)
+    return tmin, tmax, lo
+
+
+def _prim_normal(prim, P, dirs, axis_win):
+    """Surface normal at the hit points of one primitive."""
+    kind = prim[6]
+    if kind == 0:
+        nrm = np.zeros((len(axis_win), 3))
+        nrm[np.arange(len(axis_win)), axis_win] = 1.0
+        return nrm * -np.sign(dirs[np.arange(len(axis_win)), axis_win])[:, None]
+
+    if kind == 2:
+        c, he, R = prim[7]
+        local = (P - c) @ R
+        k = np.argmax(np.abs(local) / he, axis=1)
+        sgn = np.sign(local[np.arange(len(k)), k])
+        return R[:, k].T * sgn[:, None]
+
+    axis, c, r, hl = prim[7]
+    local = P - c
+    on_cap = np.abs(local[:, axis]) > hl - 1e-3
+    nrm = local.copy()
+    nrm[:, axis] = 0.0
+    norm = np.linalg.norm(nrm, axis=1)
+    nrm = nrm / np.maximum(norm, 1e-9)[:, None]
+    cap = np.zeros((len(P), 3))
+    cap[:, axis] = np.sign(local[:, axis])
+    return np.where(on_cap[:, None], cap, nrm)
+
 
 def _slabs(orig, dirs, bmin, bmax):
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -537,7 +780,7 @@ def _slabs(orig, dirs, bmin, bmax):
 def screen_rect(b, eye, cam, w, h):
     """Pixel bounds a box can possibly cover, or None if it cannot be seen."""
     fwd, right, up, scale, aspect = cam
-    bmin, bmax = b[0], b[1]
+    bmin, bmax = b[0], b[1]  # conservative AABB, valid for every primitive kind
     corners = np.array([[bmin[0] if i & 1 else bmax[0],
                          bmin[1] if i & 2 else bmax[1],
                          bmin[2] if i & 4 else bmax[2]] for i in range(8)])
@@ -575,7 +818,7 @@ def trace_primary(eye, dirs, geom, cam, w, h, max_t=400.0):
         x0, x1, y0, y1 = rect
         sel = (np.arange(y0, y1 + 1)[:, None] * w + np.arange(x0, x1 + 1)[None, :]).ravel()
         sd = dirs[sel]
-        tmin, tmax, lo = _slabs(eye, sd, b[0], b[1])
+        tmin, tmax, lo = _prim_span(np.broadcast_to(eye, sd.shape), sd, b)
         hit = (tmax >= np.maximum(tmin, 1e-4)) & (tmin > 1e-4) & (tmin < best[sel])
         if not hit.any():
             continue
@@ -592,7 +835,7 @@ def trace(orig, dirs, geom, max_t=400.0):
     idx = np.full(n, -1, np.int32)
     axis = np.zeros(n, np.int32)
     for i, b in enumerate(geom):
-        tmin, tmax, lo = _slabs(orig, dirs, b[0], b[1])
+        tmin, tmax, lo = _prim_span(orig, dirs, b)
         hit = (tmax >= np.maximum(tmin, 1e-4)) & (tmin > 1e-4) & (tmin < best)
         if not hit.any():
             continue
@@ -605,7 +848,7 @@ def trace(orig, dirs, geom, max_t=400.0):
 def occluded(orig, dirs, dist, geom):
     out = np.zeros(orig.shape[0], bool)
     for b in geom:
-        tmin, tmax, _ = _slabs(orig, dirs, b[0], b[1])
+        tmin, tmax, _ = _prim_span(orig, dirs, b)
         out |= (tmax >= np.maximum(tmin, 1e-3)) & (tmin > 1e-3) & (tmin < dist)
     return out
 
@@ -662,19 +905,16 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
     N = np.zeros((n, 3))
     bmins, bmaxs = np.zeros((n, 3)), np.ones((n, 3))
 
-    for i, (bmin, bmax, alb, mat, emi, flr) in enumerate(geom):
+    for i, prim in enumerate(geom):
         m = idx == i
         if not m.any():
             continue
+        bmin, bmax, alb, mat, emi, flr = prim[0], prim[1], prim[2], prim[3], prim[4], prim[5]
         albedo[m], emissive[m], is_floor[m] = alb, emi, flr
         is_sky[m] = mat == "sky"
         mats[m] = MAT_ID.get(mat, 9)
         bmins[m], bmaxs[m] = bmin, bmax
-        a = axis[m]
-        nrm = np.zeros((int(m.sum()), 3))
-        nrm[np.arange(len(a)), a] = 1.0
-        nrm *= -np.sign(dirs[m][np.arange(len(a)), a])[:, None]
-        N[m] = nrm
+        N[m] = _prim_normal(prim, P[m], dirs[m], axis[m])
 
     albedo = surface(P, N, mats, albedo, bmins, bmaxs)
     BMIN, BMAX = bb

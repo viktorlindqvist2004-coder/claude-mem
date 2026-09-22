@@ -564,7 +564,7 @@ SEG_GEOM = {
 
 
 def seven_segment(text, centre, digit_h=1.05, gap=0.30, depth=0.07,
-                  lit=(2.9, 0.055, 0.035), unlit=(0.030, 0.006, 0.005)):
+                  lit=(1.15, 0.030, 0.022), unlit=(0.012, 0.002, 0.002)):
     """A 1986 LED display. Unlit segments stay faintly visible, which is what
     makes a seven-segment panel read as a device rather than as a texture."""
     cx, cy, cz = centre
@@ -622,13 +622,13 @@ def build_clock():
         zf = cz + face * 1.52
         box([cx, 5.80, zf], [4.7, 2.5, 0.16], "hand")          # recessed panel
         box([cx, 5.80, zf + face * 0.07], [4.9, 2.7, 0.10], "metal")  # bezel
-        seven_segment("03:33", [cx, 5.80, zf - face * 0.09], digit_h=1.55, gap=0.22)
+        seven_segment("03:33", [cx, 5.80, zf - face * 0.09], digit_h=1.15, gap=0.20)
         # The maker's plate sits behind this panel, and nobody has taken it off.
 
     # The display is the only real light in the atrium, so it spills red on
     # everything near it — including the crew when they walk up to read it.
     for face in (-1, 1):
-        light([cx, 5.80, cz + face * 2.6], RED, 9.0, 22.0)
+        light([cx, 5.20, cz + face * 5.0], RED, 3.4, 18.0)
 
 def build_atrium_dressing():
     """Escalators, shopfronts and a glazed lift.
@@ -651,13 +651,13 @@ def build_atrium_dressing():
     for lvl in range(3):
         y0 = lvl * FLOOR_TO_FLOOR
         for side in (-1, 1):
-            x = side * 8.5
+            x = side * 13.0
             z0 = -void_d / 2 + 3.0 if (lvl % 2 == 0) == (side > 0) else void_d / 2 - 3.0
             zdir = 1 if z0 < 0 else -1
             cz = z0 + zdir * run / 2
             cy = y0 + rise / 2
             R = rot_x(-ang * zdir)
-            obox([x, cy, cz], (1.35, 0.42, slope), R, "metal")
+            obox([x, cy, cz], (1.15, 0.34, slope), R, "metal")
             for e in (-1, 1):
                 obox([x + e * 0.98, cy + 0.52, cz], (0.14, 1.06, slope), R, "glass")
                 obox([x + e * 0.98, cy + 1.08, cz], (0.30, 0.14, slope), R, "rail")

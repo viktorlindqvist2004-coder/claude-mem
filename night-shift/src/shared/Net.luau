@@ -2,7 +2,7 @@
 --[[
 	Net — the remotes, in one place.
 
-	Six of them, and that is deliberate. Everything the client is allowed to know
+	Eight of them, and that is deliberate. Everything the client is allowed to know
 	arrives through `Sync`; everything the client is allowed to ask for goes out
 	through `Torch` or `Ask`. Nothing else crosses the boundary, because anything
 	the client can say, a cheater can say.
@@ -18,6 +18,8 @@ local NAMES = {
 	"Sheet", -- server → client: open a document (the rule sheet, a tape, the case file)
 	"Torch", -- client → server: torch on/off
 	"Ask", -- client → server: use the walkie on whatever question is open
+	"Look", -- client → server: the camera, at 15 Hz, bounded and checked
+	"Sprint", -- client → server: hold to run
 }
 
 local Net = {}

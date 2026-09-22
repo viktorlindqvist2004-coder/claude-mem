@@ -14,48 +14,108 @@
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Net = require(Shared.Net)
 local Places = require(Shared.Places)
 
 local AttentionService = require(script.AttentionService)
 local Case = require(script.Case)
+local Gaze = require(script.Gaze)
 local Hud = require(script.Hud)
 local Shift = require(script.Shift)
 local World = require(script.World)
 
 -- ── Torch ───────────────────────────────────────────────────────────────────
 --[[
-	One each, on the character, so the crew can see each other's beams down a
-	corridor. The client asks; the server decides. 2900 K, because a pure white
-	beam reads as a game asset rather than as a torch somebody is holding.
+	One each, and it points where the player is looking rather than where their
+	character happens to be walking. That means it lives on its own emitter part
+	that the server drives from Gaze, not on the head — in third person the head
+	faces the direction of travel, and a torch that will not point at the thing
+	you are staring at is worse than no torch.
+
+	The emitter is a real part in the workspace, so the rest of the crew see the
+	beam and can tell which way somebody is facing from a corridor away. 2900 K,
+	because a pure white beam reads as a game asset rather than as a torch
+	somebody is holding.
 ]]
-local function torchFor(player: Player): SpotLight?
+local torches: { [Player]: { emitter: BasePart, light: SpotLight, on: boolean } } = {}
+
+local function torchFor(player: Player)
+	local existing = torches[player]
+	if existing and existing.emitter.Parent then
+		return existing
+	end
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head") :: BasePart?
 	if not head then
 		return nil
 	end
-	local light = head:FindFirstChild("Torch") :: SpotLight?
-	if not light then
-		light = Instance.new("SpotLight")
-		light.Name = "Torch"
-		light.Face = Enum.NormalId.Front
-		light.Color = Config.FLASHLIGHT.COLOR
-		light.Angle = Config.FLASHLIGHT.WIDE.angle
-		light.Range = Config.FLASHLIGHT.WIDE.range * Places.METRE
-		light.Brightness = 0
-		light.Shadows = true
-		light.Parent = head
-	end
-	return light
+
+	local emitter = Instance.new("Part")
+	emitter.Name = `Torch_{player.Name}`
+	emitter.Size = Vector3.new(0.2, 0.2, 0.2)
+	emitter.Anchored = true
+	emitter.CanCollide = false
+	emitter.CanQuery = false
+	emitter.CastShadow = false
+	emitter.Transparency = 1
+	emitter.CFrame = head.CFrame
+	emitter.Parent = workspace
+
+	local light = Instance.new("SpotLight")
+	light.Name = "Beam"
+	light.Face = Enum.NormalId.Front
+	light.Color = Config.FLASHLIGHT.COLOR
+	light.Angle = Config.FLASHLIGHT.WIDE.angle
+	light.Range = Config.FLASHLIGHT.WIDE.range * Places.METRE
+	light.Brightness = 0
+	light.Shadows = true
+	light.Parent = emitter
+
+	local record = { emitter = emitter, light = light, on = false }
+	torches[player] = record
+	return record
 end
 
+RunService.Heartbeat:Connect(function()
+	for _, player in Players:GetPlayers() do
+		local record = torchFor(player)
+		if not record then
+			continue
+		end
+		local from, look = Gaze.of(player)
+		if from and look then
+			-- A little below and ahead of the eye, so the beam reads as held
+			-- rather than as coming out of the player's forehead.
+			record.emitter.CFrame = CFrame.lookAt(from + Vector3.new(0, -0.6, 0), from + look * 10)
+		end
+	end
+end)
+
 Hud.onTorch(function(player, on)
-	local light = torchFor(player)
-	if light then
-		light.Brightness = if on then Config.FLASHLIGHT.WIDE.brightness else 0
+	local record = torchFor(player)
+	if record then
+		record.on = on
+		record.light.Brightness = if on then Config.FLASHLIGHT.WIDE.brightness else 0
+	end
+end)
+
+--[[
+	Walking and running. A default Roblox character moves at 16 studs a second,
+	which at this project's scale — 1 stud is 0.3 m — is 4.8 m/s, a sprint. The
+	whole game is paced around corridors being long, so the walk is a walk and
+	running is something you choose and can be heard doing.
+]]
+local WALK, RUN = 7, 13
+
+Net.get().Sprint.OnServerEvent:Connect(function(player, running)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.WalkSpeed > 0 then
+		humanoid.WalkSpeed = if running == true then RUN else WALK
 	end
 end)
 
@@ -71,12 +131,23 @@ end
 
 Players.PlayerAdded:Connect(function(player)
 	updateCrewSize()
-	player.CharacterAdded:Connect(function()
+	player.CharacterAdded:Connect(function(character)
 		task.wait(0.2)
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = WALK
+		end
 		torchFor(player)
 	end)
 end)
-Players.PlayerRemoving:Connect(updateCrewSize)
+Players.PlayerRemoving:Connect(function(player)
+	local record = torches[player]
+	if record then
+		record.emitter:Destroy()
+		torches[player] = nil
+	end
+	updateCrewSize()
+end)
 updateCrewSize()
 
 AttentionService.tierChanged:connect(function(tier: string)

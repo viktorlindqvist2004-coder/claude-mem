@@ -27,6 +27,7 @@ local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
 local AttentionService = require(script.Parent.AttentionService)
+local Gaze = require(script.Parent.Gaze)
 local Hud = require(script.Parent.Hud)
 local World = require(script.Parent.World)
 
@@ -93,31 +94,25 @@ local function buildWalker(point: { number }, colour: Color3?): Walker
 	return { model = model, root = root, limbs = limbs, seen = false, frozenUntil = 0 }
 end
 
--- Is anyone looking at it? A cone, and a raycast, and nothing the client says.
+--[[
+	Is anyone looking at it? Through Gaze, so this is the player's camera and not
+	the direction their character happens to be walking — in third person those
+	are usually opposite, and getting this wrong would invert the whole night.
+]]
 local function observed(walker: Walker): boolean
 	for _, player in Players:GetPlayers() do
 		if downed[player] then
 			continue
 		end
 		local character = player.Character
-		local head = character and character:FindFirstChild("Head") :: BasePart?
-		if not head then
+		if not character then
 			continue
 		end
-		local to = walker.root.Position - head.Position
-		local distance = to.Magnitude
-		if distance > 70 * METRE then
+		local from = Gaze.of(player)
+		if not from or (walker.root.Position - from).Magnitude > 70 * METRE then
 			continue
 		end
-		local angle = math.deg(math.acos(math.clamp(to.Unit:Dot(head.CFrame.LookVector), -1, 1)))
-		if angle > Config.OBSERVATION.FRUSTUM_FOV_DEGREES / 2 then
-			continue
-		end
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { character :: Instance, walker.model }
-		local hit = workspace:Raycast(head.Position, to, params)
-		if not hit then
+		if Gaze.sees(player, walker.root.Position, { character, walker.model }) then
 			return true
 		end
 	end

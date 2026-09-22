@@ -516,6 +516,43 @@ end)
 
 -- ── Input ───────────────────────────────────────────────────────────────────
 
+--[[
+	The camera, sent up at fifteen a second. The server decides whether to
+	believe it — a camera that is not near this player's own head is thrown away
+	— and three systems ask it whether we can see something: the mannequins
+	freeze under it, the Presence is removed by it, and the eyes are only ever
+	visible just outside it.
+]]
+local lastLook = 0
+RunService.Heartbeat:Connect(function()
+	local now = os.clock()
+	if now - lastLook < 1 / 15 then
+		return
+	end
+	lastLook = now
+	local cam = workspace.CurrentCamera
+	if cam then
+		remotes.Look:FireServer(cam.CFrame)
+	end
+end)
+
+local running = false
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or running then
+		return
+	end
+	if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+		running = true
+		remotes.Sprint:FireServer(true)
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+		running = false
+		remotes.Sprint:FireServer(false)
+	end
+end)
+
 local torchOn = false
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
@@ -538,5 +575,5 @@ end)
 -- glazing out on the brightest quality settings.
 Lighting.ExposureCompensation = -0.15
 
-showHint("[F] torch    [E] interact    [Q] walkie    [X] put it down", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [X] put it down", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

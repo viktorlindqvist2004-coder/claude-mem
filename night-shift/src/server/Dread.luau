@@ -31,6 +31,7 @@ local ScareCatalog = require(Shared.ScareCatalog)
 
 local Atmos = require(script.Parent.Atmos)
 local AttentionService = require(script.Parent.AttentionService)
+local Gaze = require(script.Parent.Gaze)
 local Hud = require(script.Parent.Hud)
 local Power = require(script.Parent.Power)
 local World = require(script.Parent.World)
@@ -77,8 +78,7 @@ end
 
 -- Somewhere the player is not looking, far enough away to be a shape and not a
 -- man, and with a wall between it and them at the moment it is removed.
-local function pickPresenceSpot(from: BasePart): CFrame?
-	local look = from.CFrame.LookVector
+local function pickPresenceSpot(from: BasePart, look: Vector3): CFrame?
 	for _ = 1, 12 do
 		local angle = math.rad(
 			math.random(Config.PRESENCE.SPAWN_ANGLE_MIN_DEGREES, Config.PRESENCE.SPAWN_ANGLE_MAX_DEGREES)
@@ -117,7 +117,8 @@ local function showPresence(player: Player)
 	if not from then
 		return
 	end
-	local spot = pickPresenceSpot(from)
+	local _, look = Gaze.of(player)
+	local spot = pickPresenceSpot(from, look or from.CFrame.LookVector)
 	if not spot then
 		return
 	end
@@ -147,58 +148,63 @@ end
 	spheres at 1.62 m with a 6 cm gap, because that is where eyes are.
 ]]
 local function showEyes(player: Player)
-	local from = head(player)
-	if not from then
+	local eye, look = Gaze.of(player)
+	if not eye or not look then
 		return
 	end
-	local look = from.CFrame.LookVector
+	--[[
+		Off to one side of where they are looking, between eight and twenty
+		degrees: inside the spill at the edge of the beam, outside the part of
+		the frame the eye is actually resolving.
+	]]
 	local angle = math.rad(math.random(Config.EYES.VISIBLE_ANGLE_MIN_DEGREES, Config.EYES.VISIBLE_ANGLE_MAX_DEGREES))
 		* (if math.random() < 0.5 then -1 else 1)
 	local distance = math.random(6, 16) * METRE
 	local direction = (CFrame.Angles(0, angle, 0) * CFrame.new(look * distance)).Position
-	local at = from.Position + Vector3.new(direction.X, 0, direction.Z)
+	local at = eye + Vector3.new(direction.X, 0, direction.Z)
 	at = Vector3.new(at.X, Config.EYES.HEIGHT_METRES * METRE, at.Z)
 
 	local model = Instance.new("Model")
 	model.Name = "Eyes"
 	model.Parent = World.nodes()
 
-	local facing = CFrame.lookAt(at, Vector3.new(from.Position.X, at.Y, from.Position.Z))
+	local facing = CFrame.lookAt(at, Vector3.new(eye.X, at.Y, eye.Z))
 	for _, side in { -1, 1 } do
-		local eye = Instance.new("Part")
-		eye.Shape = Enum.PartType.Ball
-		eye.Size = Vector3.new(0.028, 0.028, 0.028) * METRE
-		eye.CFrame = facing * CFrame.new(side * 0.032 * METRE, 0, 0)
-		eye.Anchored = true
-		eye.CanCollide = false
-		eye.CanQuery = false
-		eye.CastShadow = false
-		eye.Color = Color3.fromRGB(198, 196, 190)
-		eye.Material = Enum.Material.Glass
-		eye.Reflectance = 1
-		eye.Parent = model
+		local ball = Instance.new("Part")
+		ball.Shape = Enum.PartType.Ball
+		ball.Size = Vector3.new(0.028, 0.028, 0.028) * METRE
+		ball.CFrame = facing * CFrame.new(side * 0.032 * METRE, 0, 0)
+		ball.Anchored = true
+		ball.CanCollide = false
+		ball.CanQuery = false
+		ball.CastShadow = false
+		ball.Color = Color3.fromRGB(198, 196, 190)
+		ball.Material = Enum.Material.Glass
+		-- Retroreflective, never emissive. Aim straight at them and there is
+		-- nothing there, because there never was anything there.
+		ball.Reflectance = 1
+		ball.Parent = model
 	end
 
-	-- They blink, and then they are not there.
 	task.spawn(function()
 		local lifetime = math.random(30, 70) / 10
 		local elapsed = 0
 		while elapsed < lifetime and model.Parent do
-			local wait = math.random(
+			local gap = math.random(
 				Config.EYES.BLINK_INTERVAL_MIN * 10,
 				Config.EYES.BLINK_INTERVAL_MAX * 10
 			) / 10
-			task.wait(math.min(wait, lifetime - elapsed))
-			elapsed += wait
-			for _, eye in model:GetChildren() do
-				if eye:IsA("BasePart") then
-					eye.Transparency = 1
+			task.wait(math.min(gap, lifetime - elapsed))
+			elapsed += gap
+			for _, ball in model:GetChildren() do
+				if ball:IsA("BasePart") then
+					ball.Transparency = 1
 				end
 			end
 			task.wait(Config.EYES.BLINK_SECONDS)
-			for _, eye in model:GetChildren() do
-				if eye:IsA("BasePart") then
-					eye.Transparency = 0
+			for _, ball in model:GetChildren() do
+				if ball:IsA("BasePart") then
+					ball.Transparency = 0
 				end
 			end
 		end
@@ -298,16 +304,21 @@ function Dread.start()
 			RunService.Heartbeat:Wait()
 			local part, owner = presencePart, presenceOwner
 			if part and owner then
-				local from = head(owner)
-				if not from or not part.Parent then
+				local from = Gaze.of(owner)
+				local angle = Gaze.angleTo(owner, part.Position)
+				if not from or not angle or not part.Parent then
 					clearPresence()
-				else
-					local to = (part.Position - from.Position)
-					local distance = to.Magnitude
-					local angle = math.deg(math.acos(math.clamp(to.Unit:Dot(from.CFrame.LookVector), -1, 1)))
-					if angle < Config.PRESENCE.RESOLVE_ANGLE_DEGREES or distance < Config.PRESENCE.DESPAWN_DISTANCE * METRE then
-						clearPresence()
-					end
+				elseif
+					angle < Config.PRESENCE.RESOLVE_ANGLE_DEGREES
+					or (part.Position - from).Magnitude < Config.PRESENCE.DESPAWN_DISTANCE * METRE
+				then
+					--[[
+						Removed, this frame. Not faded: a fade is a thing the
+						player can watch happening and therefore a thing they can
+						prove. Gone one frame before the eye can resolve it is a
+						thing they can only argue about.
+					]]
+					clearPresence()
 				end
 			end
 		end

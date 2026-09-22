@@ -190,6 +190,38 @@ for every minute past the half hour so the platform knew how long they had.
 
 ---
 
+## "bygg klart hela spelet ... och gör det spelbart"
+
+> *"jag vill att du lägger till ALLT, alla detaljer inredning musik, ljud allt! spelet
+> ska stå färdigt så man kan spela"*
+
+**Resolved.** All five nights run. Press Play and Night 1 starts; finish it and Night 2
+starts; the fifth ends with seven names on a wall and one answer.
+
+- The engine is `src/server/Shift.luau`. A night is data — objectives, a `build`, and
+  beats keyed to the shift clock — so `Shift.begin(4)` and `Shift.seek(3.55)` both work
+  and no beat is a chained `task.wait`.
+- `src/server/Nights/Night1..5.luau` are the five nights.
+- Interior: every room is dressed. Lockers with a coat that has not moved since 1998, a
+  rota for a week that has not happened, six monitors of which two are noise, a key board
+  with four hooks empty, a window bay of mannequins you count twice, a car park with
+  puddles and a palisade fence.
+- Sound: `src/shared/SoundBank.luau` is every noise in the game as a named slot. Each slot
+  points at audio that ships inside the Roblox client, so it is audible with no uploads;
+  changing an `id` swaps in the real recording and nothing else changes. One hum emitter
+  per red fitting, detuned a few cents from a hash of its own position.
+- Light is still one colour. 34 lights in the whole building.
+
+## Layout complaints, and what was actually wrong
+
+> *"jag gillar inte alls layouten ... allt ser likadant ut ... MYCKET mindre ljus"*
+
+Beyond the rebuild into rooms, six rooms were intersecting each other or the service
+corridor: the stockroom's east wall stood inside the corridor and sealed it, the
+supermarket sat on top of the north arm, the corridor's atrium door opened onto ten
+metres of nothing, and the Floor 3 stair ran into the underside of its own slab. Every
+room now tiles against the corridor's west face or the arm it opens off.
+
 ## Standing constraints
 
 - **Roblox Studio is the build target.** Everything here is written to be built there.
@@ -201,9 +233,13 @@ for every minute past the half hour so the platform knew how long they had.
 - **Nothing supernatural is shown on screen** — only results, always with a mundane
   explanation available.
 
-## Not yet built in Studio
+## What is built
 
-Everything. The repository holds design, layout data, a greybox generator and an offline
-previewer. No Roblox place file exists yet. The order of work is in
-[`08-roadmap.md`](08-roadmap.md); the next real step is running the greybox in Studio and
-walking it in the dark.
+All five nights, playable start to finish, on the greybox. See
+[`16-playing-it.md`](16-playing-it.md) for how to run it, the controls, and how to skip
+to any beat.
+
+What is *not* built is the art: the greybox is untextured boxes, and the sound is
+placeholder slots pointed at Roblox's own built-in audio. Both are one-for-one swaps —
+`SurfaceAppearance` on the parts, an asset id per slot in `SoundBank` — and neither
+changes a line of game code.

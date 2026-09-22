@@ -750,6 +750,13 @@ local function build()
 	local old = Workspace:FindFirstChild("Mall")
 	if old then old:Destroy() end
 
+	-- The baseplate that comes with a new place is a 2048-stud slab straight
+	-- through the middle of the building, so it goes.
+	for _, name in { "Baseplate", "SpawnLocation" } do
+		local obj = Workspace:FindFirstChild(name)
+		if obj then obj:Destroy() end
+	end
+
 	root = Instance.new("Folder")
 	root.Name = "Mall"
 	root.Parent = Workspace

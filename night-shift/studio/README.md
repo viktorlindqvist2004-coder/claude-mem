@@ -5,10 +5,11 @@
 No Rojo. No Git. No install. Nothing to set up.
 
 1. Open **Roblox Studio** and make a new place (**Baseplate** is fine).
-2. **Delete the baseplate part.** The mall builds at the origin and you do not want a
-   grey slab through the middle of it.
-3. **View → Command Bar** to open the command bar along the bottom.
-4. Open `BuildMall.lua`, select all, copy, paste into the command bar, press **Enter**.
+2. **View → Command Bar** to open the command bar along the bottom.
+3. Open `BuildMall.lua`, select all, copy, paste into the command bar, press **Enter**.
+
+The script deletes the default baseplate itself — it is a 2048-stud slab straight through
+the middle of the building.
 
 It builds the whole building — four floors, twelve wings, the units with their interiors,
 the service corridors, the atrium with escalators and a lift, the roof structure, and the

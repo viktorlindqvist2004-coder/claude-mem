@@ -643,6 +643,50 @@ def build_clock():
     for face in (-1, 1):
         light([cx, 5.20, cz + face * 5.0], RED, 1.7, 12.0)
 
+def build_roof_structure():
+    """Trusses and glazing bars under the roof glazing.
+
+    Glazing on its own reads as a hole with sky in it: there is nothing for the
+    eye to take as a roof, and anything hanging below it appears to float. The
+    structure is what makes it a building with a glass roof rather than a
+    building with no roof."""
+    y = ATRIUM_H - 0.55
+
+    # Atrium: primary trusses across the short span, at 4.4 m centres.
+    for i in range(9):
+        z = -ATRIUM_D / 2 + (i + 0.5) * ATRIUM_D / 9
+        box([0, y, z], [ATRIUM_W + 1.0, 0.34, 0.55], "metal")
+        box([0, y - 1.25, z], [ATRIUM_W + 1.0, 0.26, 0.38], "metal")
+        for k in range(15):
+            x = -ATRIUM_W / 2 + (k + 0.5) * ATRIUM_W / 15
+            box([x, y - 0.62, z], [0.16, 1.25, 0.16], "metal")
+
+    # Secondary glazing bars running the other way.
+    for k in range(13):
+        x = -ATRIUM_W / 2 + (k + 0.5) * ATRIUM_W / 13
+        box([x, y + 0.42, 0], [0.18, 0.22, ATRIUM_D], "metal")
+
+    # Perimeter upstand where the glazing meets the building.
+    for sz in (-1, 1):
+        box([0, y + 0.1, sz * ATRIUM_D / 2], [ATRIUM_W + 1.2, 1.5, 0.7], "trim")
+    for sx in (-1, 1):
+        box([sx * ATRIUM_W / 2, y + 0.1, 0], [0.7, 1.5, ATRIUM_D + 1.2], "trim")
+
+    # Wing slots: the same in miniature, every 3.6 m down each wing.
+    for key in "NESW":
+        fwd, right = DIRS[key]
+        origin = fwd * (ATRIUM_D / 2 if key in "NS" else ATRIUM_W / 2)
+        centre = origin + fwd * (WING_LEN / 2) + np.array([0, y, 0])
+        n_bars = int(WING_LEN // 3.6)
+        for i in range(n_bars + 1):
+            along = fwd * (-WING_LEN / 2 + 3.6 * i)
+            size = np.abs(right * (VOID_W + 1.2) + np.array([0, 0.30, 0]) + fwd * 0.34) + 1e-6
+            box(centre + along, size, "metal")
+        for e in (-1, 1):
+            size = np.abs(right * 0.6 + np.array([0, 1.3, 0]) + fwd * WING_LEN) + 1e-6
+            box(centre + right * (e * (HALF_VOID + 0.55)) + np.array([0, 0.1, 0]), size, "trim")
+
+
 def build_atrium_dressing():
     """Escalators, shopfronts and a glazed lift.
 
@@ -721,13 +765,16 @@ def build_atrium_dressing():
     # Hanging banners from the roof structure, which fills the empty upper air.
     for i in range(5):
         x = -void_w / 2 + (i + 0.5) * void_w / 5
-        box([x, ATRIUM_H - 3.4, 0.0], [2.6, 5.4, 0.12], "hoard")
-        box([x, ATRIUM_H - 0.75, 0.0], [2.8, 0.14, 0.3], "metal")
+        box([x, ATRIUM_H - 4.2, 0.0], [2.6, 5.4, 0.12], "hoard")
+        box([x, ATRIUM_H - 1.45, 0.0], [2.8, 0.14, 0.3], "metal")
+        for e in (-1, 1):  # hangers up to the truss
+            box([x + e * 1.2, ATRIUM_H - 1.05, 0.0], [0.07, 0.9, 0.07], "metal")
 
 
 def build():
     build_atrium()
     build_atrium_dressing()
+    build_roof_structure()
     for fid, y, fitted in FLOORS:
         for key in "NESW":
             build_wing(fid, key, y, fitted and (fid, key) in WINGS, y == 0.0)
@@ -1021,7 +1068,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
     return col + haze
 
 
-def render(name, eye, target, fov=62.0, w=800, h=450, torch_on=False):
+def render(name, eye, target, fov=62.0, w=1280, h=720, torch_on=False):
     eye = np.asarray(eye, float)
     fwd = np.asarray(target, float) - eye
     fwd /= np.linalg.norm(fwd)
@@ -1080,14 +1127,16 @@ def render(name, eye, target, fov=62.0, w=800, h=450, torch_on=False):
     col = np.clip(col, 0, 1) ** (1 / 2.2)
 
     img = Image.fromarray((col * 255).astype(np.uint8))
-    bloom = Image.fromarray((np.clip((col - 0.70) * 2.4, 0, 1) * 255).astype(np.uint8))
-    bloom = bloom.filter(ImageFilter.GaussianBlur(w / 70))
-    arr = np.asarray(img, float) + np.asarray(bloom, float) * 0.42
+    # Bloom was an 11-pixel blur laid over the whole frame at 42%, which is
+    # most of why everything looked soft. Tighter, higher threshold, weaker.
+    bloom = Image.fromarray((np.clip((col - 0.84) * 3.0, 0, 1) * 255).astype(np.uint8))
+    bloom = bloom.filter(ImageFilter.GaussianBlur(w / 190))
+    arr = np.asarray(img, float) + np.asarray(bloom, float) * 0.26
 
     yy, xx = np.mgrid[0:h, 0:w]
     r = np.sqrt(((xx / w - 0.5) * 2) ** 2 + ((yy / h - 0.5) * 2) ** 2) / 1.42
-    arr *= (1 - 0.44 * r**2)[:, :, None]
-    arr += np.random.default_rng(11).normal(0, 3.4, arr.shape)
+    arr *= (1 - 0.34 * r**2)[:, :, None]
+    arr += np.random.default_rng(11).normal(0, 2.0, arr.shape)
 
     path = f"/home/user/claude-mem/night-shift/previews/{name}.png"
     Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8)).save(path)

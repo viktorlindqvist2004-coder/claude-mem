@@ -564,7 +564,7 @@ SEG_GEOM = {
 
 
 def seven_segment(text, centre, digit_h=1.05, gap=0.30, depth=0.07,
-                  lit=(1.15, 0.030, 0.022), unlit=(0.012, 0.002, 0.002)):
+                  lit=(2.0, 0.050, 0.035), unlit=(0.010, 0.002, 0.002)):
     """A 1986 LED display. Unlit segments stay faintly visible, which is what
     makes a seven-segment panel read as a device rather than as a texture."""
     cx, cy, cz = centre
@@ -617,18 +617,25 @@ def build_clock():
     cyl([cx, 8.10, cz], 1, 0.9, 0.55, "brass")
     cyl([cx, 8.62, cz], 1, 0.28, 0.55, "brass")
 
-    # Display panels, one each way along the atrium.
+    # Display panels, one each way along the atrium. Layered front to back from
+    # the viewer: bezel frame, segments, backing plate. Getting that order wrong
+    # puts a solid metal plate over the numbers.
     for face in (-1, 1):
         zf = cz + face * 1.52
-        box([cx, 5.80, zf], [4.7, 2.5, 0.16], "hand")          # recessed panel
-        box([cx, 5.80, zf + face * 0.07], [4.9, 2.7, 0.10], "metal")  # bezel
-        seven_segment("03:33", [cx, 5.80, zf - face * 0.09], digit_h=1.15, gap=0.20)
-        # The maker's plate sits behind this panel, and nobody has taken it off.
+        box([cx, 5.80, zf], [4.7, 2.5, 0.14], "hand")                 # backing
+        seven_segment("03:33", [cx, 5.80, zf + face * 0.11], digit_h=1.15, gap=0.20)
+
+        # The bezel is a frame, not a plate.
+        for dy in (1.34, -1.34):
+            box([cx, 5.80 + dy, zf + face * 0.16], [5.0, 0.22, 0.14], "metal")
+        for dx in (2.39, -2.39):
+            box([cx + dx, 5.80, zf + face * 0.16], [0.22, 2.9, 0.14], "metal")
+        # The maker's plate sits behind the backing, and nobody has taken it off.
 
     # The display is the only real light in the atrium, so it spills red on
     # everything near it — including the crew when they walk up to read it.
     for face in (-1, 1):
-        light([cx, 5.20, cz + face * 5.0], RED, 3.4, 18.0)
+        light([cx, 5.20, cz + face * 5.0], RED, 1.7, 12.0)
 
 def build_atrium_dressing():
     """Escalators, shopfronts and a glazed lift.

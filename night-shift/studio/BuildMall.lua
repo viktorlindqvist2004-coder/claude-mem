@@ -1,13 +1,23 @@
 --[[
 	Northlight Galleria — one-file builder.
 
-	Paste this whole thing into the Roblox Studio COMMAND BAR (View -> Command
-	Bar) in edit mode and press Enter. It builds the entire mall, sets up the
-	lighting and the night sky, and leaves it in Workspace so you can save it.
+	HOW TO RUN IT
 
-	No Rojo, no Git, no install. Run it again to rebuild; it clears first.
+	  1. In the Explorer, right-click ServerStorage -> Insert Object ->
+	     ModuleScript. Rename it to exactly:  BuildMall
+	  2. Double-click it to open, select all (Ctrl/Cmd+A), and paste this file
+	     over the top.
+	  3. Click the command bar at the bottom of the Studio window and run this
+	     ONE line:
 
-	To remove it:  workspace:FindFirstChild("Mall"):Destroy()
+	         require(game.ServerStorage.BuildMall)()
+
+	The command bar is a single-line box, which is why the script goes in a
+	ModuleScript and the command bar only gets the one line that calls it.
+
+	Run that line again any time to rebuild -- it clears the old one first.
+
+	To remove it:  workspace.Mall:Destroy()
 
 	This is a GREYBOX. Untextured parts at correct scale, so you can walk the
 	building and judge whether it is the right size and the right darkness
@@ -792,4 +802,6 @@ local function build()
 		#root:GetDescendants(), lightCount))
 end
 
-build()
+-- Returning the function rather than calling it means `require(...)()` can be
+-- run over and over; a plain require would only ever execute once per session.
+return build

@@ -5,19 +5,30 @@
 No Rojo. No Git. No install. Nothing to set up.
 
 1. Open **Roblox Studio** and make a new place (**Baseplate** is fine).
-2. **View → Command Bar** to open the command bar along the bottom.
-3. Open `BuildMall.lua`, select all, copy, paste into the command bar, press **Enter**.
+2. In the **Explorer** panel on the right, right-click **ServerStorage** →
+   **Insert Object** → **ModuleScript**.
+3. Rename it to exactly **`BuildMall`**.
+4. Double-click it to open it, select all (**⌘A** / Ctrl+A), and paste this whole file
+   over the top. Close the tab.
+5. Click the **command bar** — the single-line box along the bottom of the Studio window
+   that says *"Execute a command with ⌘⏎"* — and run this one line:
 
-The script deletes the default baseplate itself — it is a 2048-stud slab straight through
-the middle of the building.
+```lua
+require(game.ServerStorage.BuildMall)()
+```
+
+Press **⌘ + Enter** (Ctrl+Enter on Windows) or click **Run**.
+
+**Why not just paste the whole script into the command bar?** It is a single-line box, and
+a 790-line paste usually gets truncated or silently dropped. The ModuleScript holds the
+code; the command bar only gets the one line that calls it.
 
 It builds the whole building — four floors, twelve wings, the units with their interiors,
 the service corridors, the atrium with escalators and a lift, the roof structure, and the
-Great Clock reading `03:33` — sets the night lighting, and puts cloud in the sky.
+Great Clock reading `03:33` — deletes the default baseplate, sets the night lighting, and
+puts cloud in the sky. It prints a part count when it finishes, and takes up to a minute.
 
-It prints a part count when it finishes. Takes up to a minute.
-
-**Run it again** to rebuild; it clears the old one first. **To remove it:**
+Run the same line again to rebuild; it clears the old one first. To remove it:
 
 ```lua
 workspace.Mall:Destroy()

@@ -192,6 +192,142 @@ local function chair(x, y, z)
 	P("SeatPost", V(0.09, 0.45, 0.09), at(x, y + 0.22, z), C.metal)
 end
 
+-- ── Fittings ────────────────────────────────────────────────────────────────
+--[[
+	The small stuff. A greybox with no clutter in it reads as a diagram, and a
+	diagram is not frightening: you need shelves with things on them so that one
+	thing can be missing, and you need six chairs so that one of them can be
+	pulled out. Everything below exists so that something can later be wrong
+	with it.
+]]
+
+local function box(x, y, z, w, h, d, colour)
+	return P("Box", V(w, h, d), at(x, y + h / 2, z), colour or C.wood)
+end
+
+local function boxStack(x, y, z, count, seed)
+	local rng = Random.new(seed)
+	local cy = y
+	for _ = 1, count do
+		local w = rng:NextNumber(0.35, 0.55)
+		local h = rng:NextNumber(0.22, 0.34)
+		local b = P("Carton", V(w, h, w * 0.8), at(x + rng:NextNumber(-0.05, 0.05), cy + h / 2, z), C.wood)
+		b.Orientation = Vector3.new(0, rng:NextNumber(-8, 8), 0)
+		cy += h
+	end
+end
+
+-- A4 on a wall: notices, rotas, the safety poster nobody has read since 1991.
+local function paper(x, y, z, facing, colour)
+	local w, d = 0.21, 0.02
+	if facing == "x" then
+		w, d = 0.02, 0.21
+	end
+	return P("Paper", V(w, 0.297, d), at(x, y, z), colour or Color3.fromRGB(196, 190, 170))
+end
+
+local function sign(x, y, z, w, h, facing, colour, name)
+	local sx, sz = w, 0.04
+	if facing == "x" then
+		sx, sz = 0.04, w
+	end
+	local s = P(name or "Sign", V(sx, h, sz), at(x, y, z), colour or C.trim)
+	return s
+end
+
+local function bench(x, y, z, alongX)
+	local seat = alongX and V(1.8, 0.08, 0.45) or V(0.45, 0.08, 1.8)
+	P("BenchSeat", seat, at(x, y + 0.44, z), C.wood)
+	for i = -1, 1, 2 do
+		local ox = alongX and i * 0.75 or 0
+		local oz = alongX and 0 or i * 0.75
+		P("BenchLeg", V(0.08, 0.44, 0.35), at(x + ox, y + 0.22, z + oz), C.metal)
+	end
+end
+
+local function planter(x, y, z)
+	P("Planter", V(1.0, 0.55, 1.0), at(x, y + 0.27, z), C.trim)
+	P("Soil", V(0.86, 0.06, 0.86), at(x, y + 0.57, z), Color3.fromRGB(38, 34, 30))
+	-- Dead since the fountain was capped.
+	for i = 0, 4 do
+		local a = i * 1.3
+		P("Stem", V(0.03, 0.55, 0.03),
+			at(x + math.cos(a) * 0.2, y + 0.85, z + math.sin(a) * 0.2), Color3.fromRGB(58, 52, 40))
+	end
+end
+
+local function litterBin(x, y, z)
+	P("LitterBin", V(0.45, 0.85, 0.45), at(x, y + 0.42, z), C.metal)
+	P("LitterLid", V(0.5, 0.06, 0.5), at(x, y + 0.88, z), C.trim)
+end
+
+local function trolley(x, y, z, turn)
+	local t = P("Trolley", V(0.55, 0.55, 0.9), at(x, y + 0.6, z), C.metal)
+	t.Orientation = Vector3.new(0, turn or 0, 0)
+	local h = P("TrolleyHandle", V(0.55, 0.04, 0.04), at(x, y + 0.95, z + 0.45), C.trim)
+	h.Orientation = Vector3.new(0, turn or 0, 0)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			P("Castor", V(0.08, 0.14, 0.08), at(x + sx * 0.22, y + 0.07, z + sz * 0.38), C.dark)
+		end
+	end
+end
+
+-- A garment on a rail: a slab with a shoulder line. At three metres in red
+-- light, a slab with a shoulder line is a coat.
+local function garment(x, y, z, colour)
+	P("Garment", V(0.36, 0.9, 0.12), at(x, y - 0.55, z), colour or C.fabric)
+	P("Shoulder", V(0.4, 0.06, 0.14), at(x, y - 0.12, z), colour or C.fabric)
+	P("Hanger", V(0.02, 0.12, 0.02), at(x, y - 0.03, z), C.metal)
+end
+
+--[[
+	A mannequin. Torso, head, two legs, no arms, because the unarmed ones are the
+	ones that read wrong, and on Night 2 these are the whole game.
+]]
+local function mannequin(x, y, z, turn, colour)
+	local c = colour or Color3.fromRGB(196, 190, 178)
+	local parts = {
+		P("MannequinBase", V(0.34, 0.04, 0.34), at(x, y + 0.02, z), C.metal),
+		P("MannequinLeg", V(0.13, 0.86, 0.15), at(x - 0.08, y + 0.47, z), c),
+		P("MannequinLeg", V(0.13, 0.86, 0.15), at(x + 0.08, y + 0.47, z), c),
+		P("MannequinTorso", V(0.38, 0.62, 0.22), at(x, y + 1.2, z), c),
+		P("MannequinNeck", V(0.08, 0.1, 0.08), at(x, y + 1.56, z), c),
+		P("MannequinHead", V(0.17, 0.24, 0.2), at(x, y + 1.72, z), c),
+	}
+	for _, part in parts do
+		part.Orientation = Vector3.new(0, turn or 0, 0)
+	end
+end
+
+-- Ceiling grid, sprinklers and the speakers the tape comes out of.
+local function ceilingKit(cx, cz, w, d, y, h, seed)
+	local rng = Random.new(seed)
+	local step = 1.2
+	local i = 0
+	local gx = cx - w / 2 + step
+	while gx < cx + w / 2 - 0.3 do
+		P("GridT", V(0.05, 0.04, d - 0.4), at(gx, y + h - 0.03, cz), C.trim)
+		gx += step
+		i += 1
+	end
+	local gz = cz - d / 2 + step
+	while gz < cz + d / 2 - 0.3 do
+		P("GridT", V(w - 0.4, 0.04, 0.05), at(cx, y + h - 0.03, gz), C.trim)
+		gz += step
+	end
+	for _ = 1, math.max(1, math.floor(w * d / 22)) do
+		local sx = cx + rng:NextNumber(-w / 2 + 1, w / 2 - 1)
+		local sz = cz + rng:NextNumber(-d / 2 + 1, d / 2 - 1)
+		P("Sprinkler", V(0.07, 0.09, 0.07), at(sx, y + h - 0.1, sz), C.metal)
+	end
+end
+
+local function speakerGrille(x, y, z)
+	P("CeilingSpeaker", V(0.34, 0.1, 0.34), at(x, y, z), C.trim)
+	P("SpeakerGrille", V(0.28, 0.02, 0.28), at(x, y - 0.06, z), C.dark)
+end
+
 -- ── The building ────────────────────────────────────────────────────────────
 
 local ATRIUM_W, ATRIUM_D, ATRIUM_H = 22, 18, 8.4
@@ -203,25 +339,45 @@ local FLOOR1 = 4.4
 	Named rooms. Positions are metres from the clock. Kept in one table so the
 	whole plan can be read at a glance and moved without hunting through code.
 ]]
+local SERVICE_X = -22
+local SERVICE_WEST = SERVICE_X - SERVICE_W / 2 -- every back-of-house room's east face
+local ARM_HALF = MALL_W / 2
+
+--[[
+	The stairwell up to Floor 3. It is a hole through the balcony slab, the
+	atrium glazing and the Floor 3 screed, and all three are built around it.
+]]
+local SHAFT = { x0 = -10, x1 = -8, z0 = 3, z1 = 9 }
+
 local ROOMS = {
 	-- name, cx, cz, w, d, y, h, doors
-	{ "StaffRoom", -26, 15, 6.0, 5.0, 0, 2.5, { { "E", 0, 1.1 } } },
-	{ "SecurityOffice", -26, 9, 5.0, 4.2, 0, 2.5, { { "E", 0, 1.1 } } },
-	{ "CameraRoom", -26, 3.5, 5.0, 4.2, 0, 2.5, { { "E", 0, 1.1 } } },
-	{ "CustodialStore", -25, -2, 3.6, 3.0, 0, 2.5, { { "E", 0, 1.0 } } },
-	{ "Stockroom", -26.5, -9, 9.0, 7.0, 0, 2.9, { { "E", 0, 1.4 }, { "N", 2, 1.1 } } },
-	{ "LoadingDock", -27, -19, 11.0, 8.0, 0, 3.4, { { "N", 0, 2.6 } } },
-	{ "Supermarket", 0, 24, 16.0, 12.0, 0, 3.2, { { "S", 0, 3.2 } } },
-	{ "Fashion", 24, 4, 11.0, 9.0, 0, 3.2, { { "W", 0, 3.0 } } },
-	{ "FoodCourt", 0, 24, 14.0, 10.0, FLOOR1, 2.9, { { "S", 0, 3.0 } } },
-	{ "PlantRoom", -24, 6, 7.0, 5.5, -4.2, 2.4, { { "E", 0, 1.1 } } },
-	{ "ElectricalCupboard", -24, 0, 3.2, 2.6, -4.2, 2.4, { { "E", 0, 1.0 } } },
+	-- Back of house: east face flush with the service corridor's west wall.
+	{ "StaffRoom", SERVICE_WEST - 3.0, 15, 6.0, 5.0, 0, 2.5, { { "E", 0, 1.1 } } },
+	{ "SecurityOffice", SERVICE_WEST - 2.5, 9, 5.0, 4.2, 0, 2.5, { { "E", 0, 1.1 } } },
+	{ "CameraRoom", SERVICE_WEST - 2.5, 3.5, 5.0, 4.2, 0, 2.5, { { "E", 0, 1.1 } } },
+	{ "CustodialStore", SERVICE_WEST - 1.8, -2, 3.6, 3.0, 0, 2.5, { { "E", 0, 1.0 } } },
+	{ "Stockroom", SERVICE_WEST - 4.5, -9, 9.0, 7.0, 0, 2.9, { { "E", 0, 1.4 } } },
+	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 3.4, { { "E", 0, 2.6 } } },
+	-- Shop floor: east face flush with the west side of the north arm.
+	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 3.2, { { "E", 0, 3.2 } } },
+	-- South face flush with the north side of the east arm.
+	{ "Fashion", 23, ARM_HALF + 4.5, 11.0, 9.0, 0, 3.2, { { "S", 0, 3.0 } } },
+	-- First floor: south face flush with the atrium's north balcony.
+	{ "FoodCourt", 0, ATRIUM_D / 2 + 5.0, 14.0, 10.0, FLOOR1, 2.9, { { "S", 0, 3.0 } } },
+	-- Basement.
+	{ "PlantRoom", SERVICE_WEST - 3.5, -6, 7.0, 5.5, -4.2, 2.4, { { "E", 0, 1.1 } } },
+	{ "ElectricalCupboard", SERVICE_WEST - 1.6, -13, 3.2, 2.6, -4.2, 2.4, { { "E", 0, 1.0 } } },
 }
 
 local function buildAtrium()
 	local w, d, h = ATRIUM_W, ATRIUM_D, ATRIUM_H
 	P("Atrium_Floor", V(w, 0.3, d), at(0, -0.15, 0), C.floor)
-	P("Atrium_Roof", V(w, 0.3, d), at(0, h + 0.15, 0), C.glass)
+
+	-- The roof glazing, in three pieces so the Floor 3 stairwell passes through it.
+	P("Atrium_Roof", V(SHAFT.x0 - (-w / 2), 0.3, d), at((-w / 2 + SHAFT.x0) / 2, h + 0.15, 0), C.glass)
+	P("Atrium_Roof", V(w / 2 - SHAFT.x1, 0.3, d), at((SHAFT.x1 + w / 2) / 2, h + 0.15, 0), C.glass)
+	P("Atrium_Roof", V(SHAFT.x1 - SHAFT.x0, 0.3, SHAFT.z0 - (-d / 2)),
+		at((SHAFT.x0 + SHAFT.x1) / 2, h + 0.15, (-d / 2 + SHAFT.z0) / 2), C.glass)
 
 	-- Walls, with the two mall arms and the service door cut out of them.
 	wallWithDoors(d / 2, -w / 2, w / 2, "x", 0, h, { { "N", 0, MALL_W } }, "N", C.wall)
@@ -245,12 +401,54 @@ local function buildAtrium()
 		P("Step", V(1.6, 0.16, 0.34), at(-w / 2 + 2.2, i * (FLOOR1 / 14), -d / 2 + 2.0 + i * 0.34), C.trim)
 	end
 
-	-- The dry fountain, capped since 1991.
+	-- Balustrade to the stair, so it reads as a stair and not as a ramp of slabs.
+	for i = 0, 13 do
+		P("StairRail", V(0.06, 0.9, 0.34),
+			at(-w / 2 + 3.1, i * (FLOOR1 / 14) + 0.5, -d / 2 + 2.0 + i * 0.34), C.metal)
+	end
+	P("StairHandrail", V(0.06, 0.06, 5.0), at(-w / 2 + 3.1, FLOOR1 / 2 + 0.95, -d / 2 + 4.3), C.trim)
+
+	-- The dry fountain, capped since 1991, with the pump grille still in it.
 	P("FountainKerb", V(4.2, 0.5, 4.2), at(0, 0.25, 5.5), C.trim)
 	P("FountainCap", V(3.6, 0.14, 3.6), at(0, 0.55, 5.5), C.metal)
+	P("FountainGrille", V(0.8, 0.03, 0.8), at(0, 0.63, 5.5), C.dark)
+	for _, sx in { -1, 1 } do
+		bench(sx * 3.6, 0, 5.5, false)
+		planter(sx * 6.4, 0, 5.5)
+	end
 
+	--[[
+		The directory. Twenty-two units listed, eleven of them crossed through,
+		and no third floor on it at all. Rule 3 is about a floor that is not on
+		this board, and the board is the first thing you walk past.
+	]]
+	P("DirectoryBoard", V(1.6, 2.1, 0.12), at(-w / 2 + 1.2, 1.15, -1.0), C.panel)
+	P("DirectoryFace", V(1.44, 1.9, 0.03), at(-w / 2 + 1.28, 1.2, -1.0), Color3.fromRGB(38, 40, 46))
+	for i = 0, 15 do
+		P("DirectoryLine", V(0.02, 0.05, 1.0),
+			at(-w / 2 + 1.31, 1.95 - i * 0.11, -1.0), Color3.fromRGB(128, 124, 116))
+	end
+
+	-- Seasonal stock that was never taken down, and a trolley bay by the doors.
+	P("BannerHanger", V(w - 4, 0.08, 0.08), at(0, h - 1.2, -2), C.metal)
+	for i = -1, 1 do
+		P("Banner", V(1.4, 2.6, 0.04), at(i * 3.4, h - 2.6, -2), Color3.fromRGB(64, 48, 44))
+	end
+	trolley(-w / 2 + 2.4, 0, d / 2 - 2.2, 34)
+	trolley(-w / 2 + 3.4, 0, d / 2 - 2.4, 20)
+	litterBin(w / 2 - 1.6, 0, -d / 2 + 2.2)
+	litterBin(-w / 2 + 1.6, 0, d / 2 - 4.0)
+
+	-- Floor banding, so the terrazzo is not one flat grey field.
+	for i = -4, 4 do
+		P("FloorBand", V(0.5, 0.02, d - 0.6), at(i * 2.4, 0.01, 0), Color3.fromRGB(78, 76, 74))
+	end
+
+	speakerGrille(0, h - 0.9, -4)
+	speakerGrille(0, h - 0.9, 6)
 	exitSign(-w / 2 + 0.4, 2.2, -d / 2 + 2)
 	bulkhead(0, h - 0.6, -4, 9)
+	bulkhead(0, h - 0.6, 6, 9)
 end
 
 --[[
@@ -358,18 +556,94 @@ local function mallArm(axis, length, entries)
 				P("Shopfront", size(w, WALL, MALL_H), pos(mid, side * half, MALL_H / 2), C.wall)
 				local mode = rng:NextInteger(1, 3)
 				if mode == 1 then
+					-- Shut, and has been for years. The fascia name is still up.
 					P("Shutter", size(w - 0.5, 0.12, 2.3), pos(mid, side * (half - 0.2), 1.15), C.shutter)
+					for k = 0, 9 do
+						P("ShutterSlat", size(w - 0.56, 0.03, 0.18),
+							pos(mid, side * (half - 0.28), 0.12 + k * 0.23), C.trim)
+					end
 				elseif mode == 2 then
+					-- Half up, with the window below it. These are the ones Rule
+					-- 11 is about, and the ones you can see into.
 					P("Shutter", size(w - 0.5, 0.12, 1.2), pos(mid, side * (half - 0.2), 1.75), C.shutter)
 					P("DarkGlass", size(w - 0.5, 0.08, 1.1), pos(mid, side * (half - 0.2), 0.6), C.glass)
+					P("WindowSill", size(w - 0.5, 0.24, 0.1), pos(mid, side * (half - 0.16), 0.08), C.trim)
+					P("Mullion", size(0.07, 0.14, 1.1), pos(mid, side * (half - 0.2), 0.6), C.trim)
+					-- Something left in the window, so there is a reason to look.
+					local leftovers = rng:NextInteger(1, 3)
+					for k = 1, leftovers do
+						P("WindowStock", size(0.5, 0.4, 0.5),
+							pos(mid - 0.8 + k * 0.7, side * (half - 0.6), 0.25), C.wood)
+					end
 				else
+					-- Boarded. Somebody flyposted it and somebody scraped it off.
 					P("Hoarding", size(w - 0.5, 0.1, 2.3), pos(mid, side * (half - 0.2), 1.15), C.trim)
+					P("ToLet", size(0.5, 0.03, 0.36), pos(mid, side * (half - 0.26), 1.7),
+						Color3.fromRGB(180, 176, 162))
 				end
+				-- The fascia: a dead sign box above every unit, unlit since the
+				-- building went onto the emergency circuit at night.
+				P("FasciaBox", size(w - 0.3, 0.42, 0.55), pos(mid, side * (half - 0.2), MALL_H - 0.35), C.panel)
+				P("FasciaFace", size(w - 0.6, 0.06, 0.34), pos(mid, side * (half - 0.42), MALL_H - 0.35),
+					Color3.fromRGB(46, 44, 42))
 				P("Pilaster", size(0.4, 0.5, MALL_H), pos(t, side * half, MALL_H / 2), C.trim)
 			end
 			t += w
 		end
 	end
+
+	-- Street furniture down the middle, so the arm is not a clear run.
+	local f = 5.0
+	local flip = 1
+	while f < length - 3 do
+		if flip > 0 then
+			local bx = (axis == "N") and 1.9 or start + f
+			local bz = (axis == "N") and start + f or 1.9
+			bench(bx, 0, bz, axis == "E")
+			litterBin(
+				(axis == "N") and -1.9 or start + f + 1.2,
+				0,
+				(axis == "N") and start + f + 1.2 or -1.9)
+		else
+			local px = (axis == "N") and -1.9 or start + f
+			local pz = (axis == "N") and start + f or -1.9
+			planter(px, 0, pz)
+		end
+		flip = -flip
+		f += 6.5
+	end
+
+	-- Ceiling: grid, sprinklers, the speakers the tape comes out of, and a
+	-- hanging wayfinding sign you can read from the atrium.
+	local g = 4.0
+	while g < length - 1 do
+		P("GridT", size(0.05, MALL_W - 0.4, 0.04), pos(g, 0, MALL_H - 0.03), C.trim)
+		g += 1.2
+	end
+	local sp = 8.0
+	while sp < length - 2 do
+		speakerGrille(
+			(axis == "N") and 0 or start + sp,
+			MALL_H - 0.12,
+			(axis == "N") and start + sp or 0)
+		sp += 11.0
+	end
+	P("WayfindBoard", size(0.1, 2.4, 0.5), pos(6.0, 0, MALL_H - 0.75), C.panel)
+	P("WayfindFace", size(0.06, 2.2, 0.38), pos(6.0, 0, MALL_H - 0.75), Color3.fromRGB(40, 42, 48))
+
+	-- Floor banding, so the run does not read as one grey ribbon.
+	local fb = 2.0
+	while fb < length do
+		P("FloorBand", size(0.4, MALL_W - 0.3, 0.02), pos(fb, 0, 0.01), Color3.fromRGB(78, 76, 74))
+		fb += 3.2
+	end
+	-- A trolley somebody abandoned at the far end, which is the first thing you
+	-- see down the arm and the first thing you go to look at.
+	trolley(
+		(axis == "N") and 1.2 or start + length - 3,
+		0,
+		(axis == "N") and start + length - 3 or 1.2,
+		41)
 
 	-- One bulkhead every eight metres or so, and nothing else.
 	local t = 3.0
@@ -388,187 +662,495 @@ end
 	where the game spends most of its time and where Rule 4 lives.
 ]]
 local function serviceCorridor()
-	local x = -22
-	local z0, z1 = -22, 18
-	local len = z1 - z0
+	local x = SERVICE_X
+	local z0, z1 = -30, 18
+	local mid = (z0 + z1) / 2
 	local h = SERVICE_H
 
-	P("Service_Floor", V(SERVICE_W, 0.3, len), at(x, -0.15, (z0 + z1) / 2), C.floor)
-	P("Service_Ceiling", V(SERVICE_W, 0.3, len), at(x, h + 0.15, (z0 + z1) / 2), C.ceiling)
+	-- Stairwell down to the basement: a hole in the corridor floor at the south end.
+	local sz0, sz1 = -29.5, -23.5
 
-	-- East wall, opening into the atrium's west door.
-	wallWithDoors(x + SERVICE_W / 2, z0, z1, "z", 0, h, { { "E", 3 - (z0 + z1) / 2, 1.4 } }, "E", C.block)
-	-- West wall, openings into every room on that side.
+	P("Service_Floor", V(SERVICE_W, 0.3, z1 - sz1), at(x, -0.15, (sz1 + z1) / 2), C.floor)
+	P("Service_Ceiling", V(SERVICE_W, 0.3, z1 - z0), at(x, h + 0.15, mid), C.ceiling)
+
+	-- East wall, with the one opening that leads through to the atrium.
+	wallWithDoors(x + SERVICE_W / 2, z0, z1, "z", 0, h, { { "E", 3 - mid, 1.4 } }, "E", C.block)
+	-- West wall, an opening into every ground-floor room behind it.
 	local doors = {}
 	for _, r in ROOMS do
 		if r[6] == 0 and r[2] < x then
-			table.insert(doors, { "W", r[3] - (z0 + z1) / 2, r[8][1][3] })
+			table.insert(doors, { "W", r[3] - mid, r[8][1][3] })
 		end
 	end
 	wallWithDoors(x - SERVICE_W / 2, z0, z1, "z", 0, h, doors, "W", C.block)
 	P("Service_EndN", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, z1), C.block)
-	P("Service_EndS", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, z0), C.block)
 
-	-- One bare fitting every fourteen metres, and most of them are dead.
-	bulkhead(x, h - 0.25, 12, 5)
-	bulkhead(x, h - 0.25, -4, 5)
-	P("DeadFitting", V(0.3, 0.1, 0.3), at(x, h - 0.25, 4), C.trim)
-	P("DeadFitting", V(0.3, 0.1, 0.3), at(x, h - 0.25, -14), C.trim)
-	exitSign(x, 2.15, z0 + 1)
+	--[[
+		The link through to the atrium. Ten metres of blockwork at right angles
+		to everything else, so the two halves of the building never line up in
+		your head and you always come out of it facing the wrong way.
+	]]
+	local lx0, lx1 = x + SERVICE_W / 2, -ATRIUM_W / 2
+	P("Link_Floor", V(lx1 - lx0, 0.3, SERVICE_W), at((lx0 + lx1) / 2, -0.15, 3), C.floor)
+	P("Link_Ceiling", V(lx1 - lx0, 0.3, SERVICE_W), at((lx0 + lx1) / 2, h + 0.15, 3), C.ceiling)
+	wallRun(3 + SERVICE_W / 2, lx0, lx1, "x", 0, h, C.block)
+	wallRun(3 - SERVICE_W / 2, lx0, lx1, "x", 0, h, C.block)
+	bulkhead((lx0 + lx1) / 2, h - 0.25, 3, 5)
 
-	-- Stair down to the basement, at the south end.
+	-- One bare fitting every dozen metres or so, and most of them are dead.
+	bulkhead(x, h - 0.25, 13, 5)
+	bulkhead(x, h - 0.25, -3, 5)
+	bulkhead(x, h - 0.25, -19, 5)
+	P("DeadFitting", V(0.3, 0.1, 0.3), at(x, h - 0.25, 5), C.trim)
+	P("DeadFitting", V(0.3, 0.1, 0.3), at(x, h - 0.25, -11), C.trim)
+	exitSign(x + 0.9, 2.15, 17)
+
+	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do
-		P("Step", V(1.4, 0.16, 0.34), at(x, -i * (4.2 / 14), -18 - i * 0.34), C.trim)
+		P("Step", V(1.4, 0.16, 0.34), at(x, -i * (4.2 / 14), sz1 - 0.2 - i * 0.34), C.trim)
 	end
-	P("Basement_Floor", V(SERVICE_W, 0.3, 14), at(x, -4.35, -6), C.floor)
-	P("Basement_Ceiling", V(SERVICE_W, 0.3, 14), at(x, -4.2 + 2.4 + 0.15, -6), C.ceiling)
-	wallWithDoors(x + SERVICE_W / 2, -13, 1, "z", -4.2, 2.4, {}, "E", C.block)
-	wallWithDoors(x - SERVICE_W / 2, -13, 1, "z", -4.2, 2.4,
-		{ { "W", 6 - (-6), 1.1 }, { "W", 0 - (-6), 1.0 } }, "W", C.block)
-	bulkhead(x, -4.2 + 2.1, -2, 5)
+	-- The shaft the stair falls through, in full height.
+	for _, sx in { -1, 1 } do
+		P("Shaft", V(WALL, 4.2, sz1 - sz0), at(x + sx * SERVICE_W / 2, -2.1, (sz0 + sz1) / 2), C.block)
+	end
+	P("Shaft_End", V(SERVICE_W + 0.5, 4.2, WALL), at(x, -2.1, sz0), C.block)
+
+	-- Basement corridor. Lower, colder, and the only way to the fuse box.
+	local by, bh = -4.2, 2.4
+	local bz0, bz1 = sz0, 2
+	local bmid = (bz0 + bz1) / 2
+	P("Basement_Floor", V(SERVICE_W, 0.3, bz1 - bz0), at(x, by - 0.15, bmid), C.floor)
+	P("Basement_Ceiling", V(SERVICE_W, 0.3, sz1 - bz1), at(x, by + bh + 0.15, (bz1 + sz1) / 2), C.ceiling)
+	wallWithDoors(x + SERVICE_W / 2, bz0, bz1, "z", by, bh, {}, "E", C.block)
+	local bdoors = {}
+	for _, r in ROOMS do
+		if r[6] == by then
+			table.insert(bdoors, { "W", r[3] - bmid, r[8][1][3] })
+		end
+	end
+	wallWithDoors(x - SERVICE_W / 2, bz0, bz1, "z", by, bh, bdoors, "W", C.block)
+	P("Basement_EndN", V(SERVICE_W + 0.5, bh, WALL), at(x, by + bh / 2, bz1), C.block)
+	bulkhead(x, by + bh - 0.3, -9, 5)
 end
 
 -- ── Room dressing, one function per story beat ──────────────────────────────
 
+--[[
+	The staff room. Everything about Night 1 hangs off one sheet of A4 taped
+	inside a locker door, so the rest of this room exists to make that sheet look
+	like it belongs: four lockers, a kettle that has boiled dry, a rota from a
+	week that has not happened yet, and a chair pulled out.
+]]
 local function dressStaffRoom(cx, cz, y)
-	-- Nora's rules are taped inside the locker door. Everything about Night 1
-	-- hangs off this one prop.
 	for i = 0, 3 do
 		locker(cx - 2.2 + i * 0.95, y, cz + 2.2)
 	end
 	local sheet = P("RuleSheet", V(0.42, 0.6, 0.02), at(cx - 2.2, y + 1.3, cz + 1.92), Color3.fromRGB(196, 188, 164))
 	sheet.Name = "RuleSheet"
+	P("LockerTape", V(0.06, 0.04, 0.02), at(cx - 2.2, y + 1.62, cz + 1.9), Color3.fromRGB(210, 206, 190))
+
+	-- The table, and a chair pushed back from it as though somebody stood up.
 	desk(cx + 1.2, y, cz - 1.2, 1.8, 0.8)
 	chair(cx + 1.2, y, cz - 0.2)
-	P("Kettle", V(0.22, 0.28, 0.22), at(cx + 1.9, y + 0.88, cz - 1.2), C.metal)
-	P("Noticeboard", V(1.6, 1.0, 0.06), at(cx, y + 1.5, cz - 2.4), C.wood)
+	local pulled = P("Seat", V(0.5, 0.07, 0.5), at(cx + 0.3, y + 0.45, cz - 2.0), C.fabric)
+	pulled.Orientation = Vector3.new(0, 28, 0)
+	P("SeatBack", V(0.5, 0.55, 0.07), at(cx + 0.3, y + 0.75, cz - 2.2), C.fabric).Orientation = Vector3.new(0, 28, 0)
+	P("SeatPost", V(0.09, 0.45, 0.09), at(cx + 0.3, y + 0.22, cz - 2.0), C.metal)
+
+	-- Worktop, kettle, four mugs, one of them still out.
+	P("Worktop", V(2.4, 0.06, 0.6), at(cx + 1.6, y + 0.9, cz - 2.1), C.trim)
+	P("Cupboard", V(2.4, 0.85, 0.58), at(cx + 1.6, y + 0.45, cz - 2.1), C.wood)
+	P("Kettle", V(0.22, 0.28, 0.22), at(cx + 1.9, y + 1.07, cz - 2.1), C.metal)
+	P("Sink", V(0.5, 0.04, 0.4), at(cx + 2.5, y + 0.92, cz - 2.1), C.metal)
+	P("Tap", V(0.04, 0.26, 0.04), at(cx + 2.5, y + 1.05, cz - 2.3), C.metal)
+	for i = 0, 3 do
+		P("Mug", V(0.09, 0.1, 0.09), at(cx + 0.9 + i * 0.18, y + 0.99, cz - 2.0), Color3.fromRGB(180, 176, 168))
+	end
+
+	-- The noticeboard. This week's rota is on it, and it has this week's names.
+	P("Noticeboard", V(1.8, 1.1, 0.06), at(cx, y + 1.5, cz - 2.4), C.wood)
+	P("NoticeFrame", V(1.9, 1.2, 0.03), at(cx, y + 1.5, cz - 2.45), C.trim)
+	for i = 0, 5 do
+		paper(cx - 0.6 + (i % 3) * 0.6, y + 1.75 - math.floor(i / 3) * 0.42, cz - 2.36, "z")
+	end
+	P("FireNotice", V(0.25, 0.35, 0.02), at(cx + 0.78, y + 1.5, cz - 2.36), Color3.fromRGB(150, 44, 36))
+
+	-- Coat hooks, and one coat that has been on the same hook since 1998.
+	P("HookRail", V(1.2, 0.06, 0.06), at(cx - 1.8, y + 1.8, cz - 2.4), C.metal)
+	P("Coat", V(0.42, 1.0, 0.16), at(cx - 1.8, y + 1.25, cz - 2.3), Color3.fromRGB(48, 46, 52))
+	litterBin(cx + 2.6, y, cz + 1.4)
+
 	-- The time clock. You clock in here at 22:00, and Rule 1 is about it.
 	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(cx + 2.7, y + 1.4, cz - 1.0), C.metal)
 	clock.Name = "TimeClock"
 	P("TimeClockFace", V(0.24, 0.16, 0.03), at(cx + 2.7, y + 1.46, cz - 1.1), RED, Enum.Material.Neon)
+	P("CardRack", V(0.5, 0.3, 0.06), at(cx + 2.7, y + 1.0, cz - 1.05), C.wood)
+	for i = 0, 3 do
+		P("ClockCard", V(0.09, 0.22, 0.01), at(cx + 2.53 + i * 0.11, y + 1.0, cz - 1.12), Color3.fromRGB(206, 200, 182))
+	end
+
+	ceilingKit(cx, cz, 6.0, 5.0, y, 2.5, 4101)
 	bulkhead(cx, y + 2.2, cz, 5)
 end
 
+--[[
+	The camera room. Six monitors, four of which work, a PA rack, and the speaker
+	his voice comes out of. On Night 4 one player sits in this chair and talks the
+	others through the dark, and monitor three comes up, and there is no camera
+	three.
+]]
 local function dressCameraRoom(cx, cz, y)
-	-- Where the Night Manager's voice comes through, and where a player sits on
-	-- Night 4 guiding the others.
 	desk(cx, y, cz - 1.2, 3.4, 0.9)
 	chair(cx, y, cz - 0.3)
+	P("DeskReturn", V(0.9, 0.06, 1.4), at(cx + 1.9, y + 0.74, cz - 0.6), C.wood)
+
 	for i = 0, 5 do
 		local mx = cx - 1.4 + (i % 3) * 1.4
 		local my = y + 1.25 + math.floor(i / 3) * 0.75
 		P("Monitor", V(0.6, 0.45, 0.1), at(mx, my, cz - 1.9), C.panel)
-		P("MonitorGlass", V(0.52, 0.37, 0.03), at(mx, my, cz - 1.84), Color3.fromRGB(26, 30, 34))
+		local glass = P("MonitorGlass", V(0.52, 0.37, 0.03), at(mx, my, cz - 1.84), Color3.fromRGB(26, 30, 34))
+		-- Two of them are just noise, and have been for years.
+		if i == 1 or i == 4 then
+			glass.Color = Color3.fromRGB(54, 58, 62)
+			glass.Material = Enum.Material.Neon
+			bulb(glass, Color3.fromRGB(40, 60, 70), 0.12, 1.6)
+		end
+		P("MonitorNumber", V(0.06, 0.06, 0.01), at(mx - 0.22, my - 0.24, cz - 1.82), C.trim)
 	end
+
+	-- The rack: a switcher, four recorders, and a shelf of tapes going back years.
+	P("Rack", V(0.7, 1.9, 0.6), at(cx - 2.0, y + 0.95, cz - 1.7), C.dark)
+	for i = 0, 5 do
+		P("RackUnit", V(0.62, 0.16, 0.02), at(cx - 2.0, y + 0.5 + i * 0.26, cz - 1.38), C.metal)
+		P("RackLed", V(0.03, 0.03, 0.02), at(cx - 2.24, y + 0.5 + i * 0.26, cz - 1.36), RED, Enum.Material.Neon)
+	end
+	P("TapeShelf", V(1.4, 0.05, 0.28), at(cx + 1.6, y + 1.7, cz - 2.0), C.trim)
+	for i = 0, 11 do
+		P("Cassette", V(0.02, 0.11, 0.2), at(cx + 1.05 + i * 0.1, y + 1.8, cz - 2.0), Color3.fromRGB(38, 36, 34))
+	end
+
 	local pa = P("PASpeaker", V(0.4, 0.28, 0.2), at(cx, y + 2.2, cz + 1.9), C.trim)
 	pa.Name = "PASpeaker"
+	P("PAGrille", V(0.32, 0.2, 0.03), at(cx, y + 2.2, cz + 1.78), C.dark)
 	P("Radio", V(0.3, 0.18, 0.2), at(cx + 1.2, y + 0.88, cz - 1.2), C.metal)
+	P("Mug", V(0.09, 0.1, 0.09), at(cx + 0.8, y + 0.83, cz - 0.9), Color3.fromRGB(180, 176, 168))
+	P("Logbook", V(0.3, 0.04, 0.42), at(cx - 1.0, y + 0.8, cz - 0.95), Color3.fromRGB(58, 54, 74))
+
+	ceilingKit(cx, cz, 5.0, 4.2, y, 2.5, 4102)
 	bulkhead(cx, y + 2.2, cz + 0.5, 4.5)
 end
 
+--[[
+	Walt's office. He was night security here from 1994 and his keys were never
+	returned, so four of the hooks on his board are empty and his jacket is still
+	over the back of the chair.
+]]
 local function dressSecurityOffice(cx, cz, y)
 	desk(cx, y, cz, 2.0, 0.9)
 	chair(cx, y, cz + 0.9)
+	P("Jacket", V(0.44, 0.5, 0.1), at(cx, y + 0.95, cz + 1.12), Color3.fromRGB(38, 40, 48))
+
 	P("Filing", V(0.6, 1.3, 0.7), at(cx - 1.8, y + 0.65, cz - 1.2), C.metal)
 	P("Filing", V(0.6, 1.3, 0.7), at(cx - 1.8, y + 0.65, cz + 0.2), C.metal)
-	-- Walt's board. His name tag comes back here on Night 5.
+	for i = 0, 2 do
+		P("DrawerFront", V(0.56, 0.36, 0.03), at(cx - 1.5, y + 0.3 + i * 0.42, cz - 1.2), C.trim)
+		P("DrawerFront", V(0.56, 0.36, 0.03), at(cx - 1.5, y + 0.3 + i * 0.42, cz + 0.2), C.trim)
+	end
+	-- One drawer is open, and has been since somebody went through it in 1998.
+	P("OpenDrawer", V(0.56, 0.34, 0.5), at(cx - 1.25, y + 1.14, cz + 0.2), C.metal)
+
+	-- The key board. Four hooks are empty and the labels under them are still there.
 	P("KeyBoard", V(1.2, 0.8, 0.05), at(cx + 2.2, y + 1.5, cz), C.wood)
+	for i = 0, 11 do
+		local kx = cx + 1.75 + (i % 6) * 0.18
+		local ky = y + 1.72 - math.floor(i / 6) * 0.34
+		P("KeyHook", V(0.02, 0.06, 0.03), at(kx, ky, cz - 0.03), C.metal)
+		if i % 3 ~= 0 then
+			P("Key", V(0.03, 0.14, 0.01), at(kx, ky - 0.1, cz - 0.04), Color3.fromRGB(168, 156, 120))
+		end
+		P("KeyLabel", V(0.1, 0.04, 0.01), at(kx, ky - 0.21, cz - 0.03), Color3.fromRGB(196, 190, 170))
+	end
+
+	P("Kettle", V(0.2, 0.26, 0.2), at(cx + 1.8, y + 0.87, cz - 1.6), C.metal)
+	P("Fan", V(0.3, 0.3, 0.12), at(cx - 0.9, y + 1.5, cz - 1.7), C.metal)
+	litterBin(cx + 1.6, y, cz + 1.5)
+	ceilingKit(cx, cz, 5.0, 4.2, y, 2.5, 4103)
 	bulkhead(cx, y + 2.2, cz, 4.5)
 end
 
+--[[
+	The stockroom. Four bays of racking, a cage trolley, a rolling ladder and the
+	1998 stock book on its lectern. Rule 4 lives in here: at 01:45 something calls
+	a player's name from between the racks, and the racks are close enough
+	together that you cannot see down more than one aisle at a time.
+]]
 local function dressStockroom(cx, cz, y)
 	for i = 0, 3 do
 		shelfRun(cx - 3.2 + i * 2.2, y, cz, 5.0, false)
+		-- Cartons on the racking, unevenly, with gaps.
+		for j = 0, 4 do
+			if (i + j) % 3 ~= 0 then
+				boxStack(cx - 3.2 + i * 2.2, y + 1.9, cz - 2.0 + j * 1.0, 2, 900 + i * 17 + j)
+			end
+		end
 	end
 	P("Pallet", V(1.2, 0.15, 1.0), at(cx + 3.4, y + 0.08, cz - 2.2), C.wood)
 	P("Pallet", V(1.2, 0.15, 1.0), at(cx + 3.4, y + 0.24, cz - 2.2), C.wood)
+	boxStack(cx + 3.4, y + 0.32, cz - 2.2, 4, 7711)
 	P("StockCage", V(1.0, 1.7, 0.8), at(cx + 3.4, y + 0.85, cz + 1.4), C.metal)
+	P("CageDoor", V(0.96, 1.6, 0.03), at(cx + 3.4, y + 0.85, cz + 1.02), C.trim)
+
+	-- The rolling ladder, left where somebody left it.
+	P("LadderRail", V(0.06, 2.2, 0.06), at(cx + 1.2, y + 1.1, cz + 2.9), C.metal)
+	P("LadderRail", V(0.06, 2.2, 0.06), at(cx + 1.7, y + 1.1, cz + 2.9), C.metal)
+	for i = 0, 5 do
+		P("Rung", V(0.56, 0.04, 0.2), at(cx + 1.45, y + 0.3 + i * 0.32, cz + 2.9), C.metal)
+	end
+
+	-- The 1998 stock book. In the margin, in pencil: "17. always 17."
+	P("Lectern", V(0.6, 1.05, 0.4), at(cx + 3.2, y + 0.52, cz + 3.0), C.wood)
+	P("StockBook", V(0.4, 0.05, 0.3), at(cx + 3.2, y + 1.08, cz + 3.0), Color3.fromRGB(180, 172, 150))
+
 	-- The tape deck. Playing a cassette takes time and makes noise.
 	local deck = P("TapeDeck", V(0.5, 0.2, 0.3), at(cx - 3.8, y + 0.95, cz + 2.6), C.metal)
 	deck.Name = "TapeDeck"
 	P("DeckBench", V(1.2, 0.08, 0.6), at(cx - 3.8, y + 0.85, cz + 2.6), C.wood)
+	P("DeckLed", V(0.03, 0.02, 0.02), at(cx - 3.95, y + 1.0, cz + 2.45), RED, Enum.Material.Neon)
+	ceilingKit(cx, cz, 9.0, 7.0, y, 2.9, 4104)
 	bulkhead(cx, y + 2.6, cz, 6)
 end
 
+--[[
+	The supermarket. Five bays, three checkouts and a freezer cabinet that cycles.
+	Nora's lane is number one. Her tape is in the drawer and on Night 5 her tag
+	goes back on the belt.
+]]
 local function dressSupermarket(cx, cz, y)
 	for i = 0, 4 do
 		shelfRun(cx, y, cz - 4.0 + i * 2.0, 11.0, true)
+		-- Stock on the shelves, with holes in it.
+		for j = 0, 9 do
+			if (i * 3 + j) % 4 ~= 0 then
+				local bx = cx - 5.0 + j * 1.1
+				P("Facing", V(0.9, 0.3, 0.6), at(bx, y + 1.05, cz - 4.0 + i * 2.0), Color3.fromRGB(96, 90, 82))
+				P("Facing", V(0.9, 0.3, 0.6), at(bx, y + 1.55, cz - 4.0 + i * 2.0), Color3.fromRGB(88, 84, 78))
+			end
+		end
+		P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.0 + i * 2.0), C.trim)
 	end
-	-- Nora's checkout. Her tape is in the drawer and her tag comes back here.
+
 	for i = 0, 2 do
 		local tx = cx - 4.5 + i * 4.5
 		P("CheckoutBelt", V(2.6, 0.9, 0.8), at(tx, y + 0.45, cz + 5.0), C.trim)
+		P("BeltTop", V(2.4, 0.04, 0.55), at(tx, y + 0.92, cz + 5.0), C.dark)
 		P("Till", V(0.4, 0.3, 0.4), at(tx + 1.0, y + 1.05, cz + 5.0), C.metal)
+		P("TillScreen", V(0.3, 0.22, 0.03), at(tx + 1.0, y + 1.3, cz + 4.82), C.panel)
+		P("LaneNumber", V(0.18, 0.22, 0.03), at(tx, y + 2.0, cz + 5.4), RED, Enum.Material.Neon)
+		P("LanePost", V(0.05, 0.9, 0.05), at(tx, y + 1.5, cz + 5.4), C.metal)
+		P("Divider", V(0.1, 0.7, 1.6), at(tx - 1.5, y + 0.35, cz + 5.0), C.metal)
 	end
+
 	local checkout = P("CheckoutOne", V(0.5, 0.1, 0.5), at(cx - 4.5, y + 0.95, cz + 5.0), C.trim)
 	checkout.Name = "CheckoutOne"
-	P("Freezer", V(2.4, 1.1, 1.0), at(cx + 6.2, y + 0.55, cz - 3.0), C.metal)
+	P("DrawerLip", V(0.44, 0.05, 0.3), at(cx - 4.5, y + 0.88, cz + 4.78), C.metal)
+
+	local freezer = P("Freezer", V(2.4, 1.1, 1.0), at(cx + 6.2, y + 0.55, cz - 3.0), C.metal)
+	freezer.Name = "Freezer"
 	P("FreezerGlass", V(2.2, 0.06, 0.9), at(cx + 6.2, y + 1.12, cz - 3.0), C.glass)
-	bulkhead(cx, y + 2.9, cz, 8)
-	bulkhead(cx - 5, y + 2.9, cz - 4, 6)
+	P("FreezerFrost", V(2.2, 0.02, 0.9), at(cx + 6.2, y + 1.15, cz - 3.0), Color3.fromRGB(120, 130, 140))
+
+	-- Baskets, a trolley bay, and a spill cone over nothing.
+	for i = 0, 4 do
+		P("Basket", V(0.44, 0.16, 0.34), at(cx + 6.6, y + 0.08 + i * 0.16, cz + 4.0), Color3.fromRGB(70, 66, 62))
+	end
+	trolley(cx + 5.4, y, cz + 4.6, 12)
+	trolley(cx + 5.4, y, cz + 3.4, -6)
+	P("SpillCone", V(0.3, 0.5, 0.3), at(cx - 2.0, y + 0.25, cz + 2.6), Color3.fromRGB(180, 96, 30))
+
+	speakerGrille(cx, y + 3.05, cz)
+	ceilingKit(cx, cz, 16.0, 12.0, y, 3.2, 4105)
+	bulkhead(cx - 4, y + 2.9, cz + 2, 7)
 end
 
+--[[
+	Fashion. Rails, a window bay with four mannequins in it, and the mirror wall
+	that Rule 5 says is fine. Rule 5 is crossed out.
+]]
 local function dressFashion(cx, cz, y)
 	for i = 0, 3 do
-		P("Rail", V(2.2, 0.07, 0.07), at(cx - 3.0 + i * 2.0, y + 1.5, cz - 1.5), C.metal)
-		P("RailPost", V(0.07, 1.5, 0.07), at(cx - 3.0 + i * 2.0, y + 0.75, cz - 1.5), C.metal)
+		local rx = cx - 3.0 + i * 2.0
+		P("Rail", V(2.2, 0.07, 0.07), at(rx, y + 1.5, cz - 1.5), C.metal)
+		P("RailPost", V(0.07, 1.5, 0.07), at(rx - 1.0, y + 0.75, cz - 1.5), C.metal)
+		P("RailPost", V(0.07, 1.5, 0.07), at(rx + 1.0, y + 0.75, cz - 1.5), C.metal)
+		P("RailFoot", V(0.5, 0.05, 0.5), at(rx - 1.0, y + 0.03, cz - 1.5), C.metal)
+		P("RailFoot", V(0.5, 0.05, 0.5), at(rx + 1.0, y + 0.03, cz - 1.5), C.metal)
+		for j = 0, 8 do
+			garment(rx - 0.95 + j * 0.24, y + 1.5, cz - 1.5,
+				(j % 4 == 0) and Color3.fromRGB(78, 46, 46) or C.fabric)
+		end
 	end
-	-- The mirror wall outside the fitting rooms. Rule 5 was struck out for a
-	-- reason.
+
+	-- The window bay, facing the arm. Four of them, and you count them twice.
+	for i = 0, 3 do
+		P("Plinth", V(0.6, 0.12, 0.6), at(cx - 3.0 + i * 2.0, y + 0.06, cz - 3.8), C.trim)
+		mannequin(cx - 3.0 + i * 2.0, y + 0.12, cz - 3.8, 180 + i * 6,
+			(i == 2) and Color3.fromRGB(188, 178, 170) or nil)
+	end
+	-- One of them wears a red collar. On Night 2 there is a name tag on it.
+	P("RedCollar", V(0.2, 0.06, 0.2), at(cx + 1.0, y + 1.68, cz - 3.8), Color3.fromRGB(150, 36, 30))
+
 	P("MirrorWall", V(4.0, 2.2, 0.08), at(cx, y + 1.3, cz + 4.3), Color3.fromRGB(58, 62, 70))
-	for i = 0, 2 do
+	local mirror = P("MirrorFace", V(3.9, 2.1, 0.03), at(cx, y + 1.3, cz + 4.24), Color3.fromRGB(88, 94, 106))
+	mirror.Reflectance = 0.5
+	for i = 0, 3 do
 		P("FittingRoom", V(1.2, 2.2, 1.2), at(cx - 3.5 + i * 1.4, y + 1.1, cz + 3.6), C.fabric)
+		P("Curtain", V(1.16, 2.0, 0.05), at(cx - 3.5 + i * 1.4, y + 1.0, cz + 3.0), Color3.fromRGB(62, 54, 50))
+		P("CurtainRail", V(1.3, 0.05, 0.05), at(cx - 3.5 + i * 1.4, y + 2.05, cz + 3.0), C.metal)
 	end
+
 	P("Counter", V(2.0, 0.95, 0.8), at(cx + 3.6, y + 0.48, cz + 2.5), C.wood)
+	P("CounterTop", V(2.1, 0.06, 0.86), at(cx + 3.6, y + 0.98, cz + 2.5), C.trim)
+	P("Till", V(0.4, 0.3, 0.4), at(cx + 3.6, y + 1.16, cz + 2.5), C.metal)
+	P("Bags", V(0.4, 0.2, 0.3), at(cx + 4.3, y + 1.08, cz + 2.5), Color3.fromRGB(150, 146, 138))
+
+	ceilingKit(cx, cz, 11.0, 9.0, y, 3.2, 4106)
 	bulkhead(cx, y + 2.9, cz, 7)
 end
 
+--[[
+	The dock. Concrete, a roller shutter to the car park, the bins, and a pump
+	truck that has been in the way since before any of this.
+]]
 local function dressLoadingDock(cx, cz, y)
-	P("DockShutter", V(4.0, 3.0, 0.15), at(cx, y + 1.5, cz - 4.0), C.shutter)
+	local shutter = P("DockShutter", V(4.0, 3.0, 0.15), at(cx, y + 1.5, cz - 4.0), C.shutter)
+	for i = 0, 11 do
+		P("ShutterSlat", V(3.96, 0.2, 0.04), at(cx, y + 0.2 + i * 0.25, cz - 3.9), C.trim)
+	end
+	P("StripCurtain", V(3.8, 2.6, 0.06), at(cx, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
+
 	P("Bin", V(1.2, 1.2, 1.0), at(cx - 3.5, y + 0.6, cz + 2.0), C.trim)
 	P("Bin", V(1.2, 1.2, 1.0), at(cx - 2.0, y + 0.6, cz + 2.0), C.trim)
+	P("BinLid", V(1.24, 0.08, 1.04), at(cx - 3.5, y + 1.24, cz + 2.0), C.dark)
+	P("BinLid", V(1.24, 0.08, 1.04), at(cx - 2.0, y + 1.24, cz + 2.0), C.dark)
 	for i = 0, 3 do
 		P("Pallet", V(1.2, 0.15, 1.0), at(cx + 3.0, y + 0.08 + i * 0.16, cz), C.wood)
 	end
-	exitSign(cx, y + 2.4, cz - 3.6)
-	bulkhead(cx, y + 3.1, cz, 7)
+	boxStack(cx + 3.0, y + 0.64, cz, 3, 3301)
+
+	-- The pump truck, and a fire point nobody has checked since 1996.
+	P("PumpTruck", V(0.7, 0.16, 1.6), at(cx + 1.2, y + 0.1, cz + 2.6), Color3.fromRGB(120, 60, 30))
+	P("PumpHandle", V(0.08, 1.1, 0.08), at(cx + 1.2, y + 0.65, cz + 3.4), C.metal)
+	P("FirePoint", V(0.5, 0.7, 0.1), at(cx - 4.8, y + 1.2, cz + 3.5), Color3.fromRGB(140, 40, 32))
+	P("Extinguisher", V(0.16, 0.5, 0.16), at(cx - 4.8, y + 0.3, cz + 3.4), Color3.fromRGB(150, 44, 36))
+	P("DockEdge", V(11.0, 0.12, 0.3), at(cx, y + 0.06, cz - 3.5), Color3.fromRGB(170, 150, 60))
+
+	bulkhead(cx, y + 3.0, cz, 8)
 end
 
+--[[
+	The electrical cupboard. A fuse board, a conduit run, and water on the floor
+	four and a half metres below the nearest tap. Night 1 ends here.
+]]
 local function dressElectricalCupboard(cx, cz, y)
-	-- Night 1 ends here: the fuse box, and Nora's name tag beside it.
 	local box = P("FuseBox", V(0.7, 0.9, 0.25), at(cx, y + 1.4, cz - 1.15), C.metal)
 	box.Name = "FuseBox"
 	P("FuseBoxDoor", V(0.66, 0.84, 0.04), at(cx, y + 1.4, cz - 1.0), C.trim)
+	for i = 0, 5 do
+		P("Fuse", V(0.07, 0.12, 0.03), at(cx - 0.24 + (i % 3) * 0.24, y + 1.55 - math.floor(i / 3) * 0.26, cz - 1.02), C.dark)
+	end
 	P("Conduit", V(0.09, 2.2, 0.09), at(cx + 1.2, y + 1.1, cz - 1.2), C.metal)
-	P("StandingWater", V(2.8, 0.03, 2.2), at(cx, y + 0.02, cz), Color3.fromRGB(30, 34, 38))
-	bulkhead(cx, y + 2.2, cz + 0.6, 4)
+	P("Conduit", V(0.09, 2.2, 0.09), at(cx - 1.2, y + 1.1, cz - 1.2), C.metal)
+	P("ConduitRun", V(2.4, 0.09, 0.09), at(cx, y + 2.2, cz - 1.2), C.metal)
+	P("DangerSign", V(0.22, 0.28, 0.02), at(cx + 0.5, y + 1.6, cz - 1.02), Color3.fromRGB(180, 160, 40))
+	P("MeterBank", V(0.5, 0.6, 0.2), at(cx - 1.0, y + 1.3, cz - 1.15), C.metal)
+
+	local water = P("StandingWater", V(2.8, 0.03, 2.2), at(cx, y + 0.02, cz), Color3.fromRGB(30, 34, 38))
+	water.Reflectance = 0.4
+	water.Material = Enum.Material.Glass
+	water.CanCollide = false
+	P("FloorDrain", V(0.24, 0.02, 0.24), at(cx + 1.1, y + 0.03, cz + 0.8), C.dark)
+	bulkhead(cx, y + 2.1, cz, 3.5)
 end
 
+--[[
+	The plant room. The building's lungs: an air handler, a pump set, pipework
+	and a generator that on Night 4 somebody has to start in the dark.
+]]
 local function dressPlantRoom(cx, cz, y)
 	P("AHU", V(2.6, 1.8, 1.6), at(cx - 1.4, y + 0.9, cz), C.metal)
+	P("AHUPanel", V(1.2, 0.9, 0.04), at(cx - 1.4, y + 1.1, cz - 0.82), C.trim)
 	P("Duct", V(0.9, 0.9, 5.0), at(cx - 1.4, y + 1.9, cz), C.metal)
+	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 1.9, cz - 1.8), C.trim)
+	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 1.9, cz + 1.8), C.trim)
 	P("Pump", V(0.8, 0.9, 0.8), at(cx + 2.0, y + 0.45, cz - 1.5), C.metal)
+	P("PumpMotor", V(0.45, 0.45, 0.7), at(cx + 2.0, y + 1.1, cz - 1.5), Color3.fromRGB(70, 82, 78))
 	P("Pipework", V(0.14, 0.14, 5.0), at(cx + 2.4, y + 1.9, cz), C.metal)
+	P("Pipework", V(0.1, 0.1, 5.0), at(cx + 2.7, y + 1.7, cz), C.metal)
+	P("ValveWheel", V(0.34, 0.06, 0.34), at(cx + 2.4, y + 1.6, cz + 0.6), C.trim)
+	P("Gauge", V(0.14, 0.14, 0.05), at(cx + 2.2, y + 1.4, cz - 0.9), Color3.fromRGB(190, 188, 180))
+	P("Generator", V(1.6, 1.0, 0.9), at(cx + 1.6, y + 0.5, cz + 1.8), Color3.fromRGB(86, 90, 82))
+	P("GeneratorPanel", V(0.4, 0.3, 0.04), at(cx + 1.6, y + 0.8, cz + 1.3), C.panel)
+	P("PullCord", V(0.03, 0.4, 0.03), at(cx + 2.3, y + 0.9, cz + 1.4), Color3.fromRGB(150, 140, 110))
 	bulkhead(cx, y + 2.1, cz, 5)
 end
 
+--[[
+	The custodial store. Where the mop is, and on Night 2 where Lo's tape is.
+]]
 local function dressCustodial(cx, cz, y)
 	P("MopBucket", V(0.5, 0.4, 0.4), at(cx - 0.9, y + 0.2, cz), C.trim)
-	P("MopHandle", V(0.06, 1.4, 0.06), at(cx - 0.9, y + 1.1, cz - 0.2), C.wood)
+	P("MopWringer", V(0.5, 0.2, 0.2), at(cx - 0.9, y + 0.48, cz - 0.16), C.metal)
+	local handle = P("MopHandle", V(0.06, 1.4, 0.06), at(cx - 0.9, y + 1.1, cz - 0.2), C.wood)
+	handle.Name = "MopHandle"
+	P("MopHead", V(0.24, 0.2, 0.14), at(cx - 0.9, y + 0.42, cz - 0.2), Color3.fromRGB(150, 146, 134))
 	P("Shelf", V(2.8, 0.06, 0.5), at(cx, y + 1.5, cz + 1.2), C.trim)
-	bulkhead(cx, y + 2.2, cz, 4)
+	P("Shelf", V(2.8, 0.06, 0.5), at(cx, y + 1.0, cz + 1.2), C.trim)
+	for i = 0, 7 do
+		P("Bottle", V(0.11, 0.3, 0.11), at(cx - 1.2 + i * 0.34, y + 1.68, cz + 1.2), Color3.fromRGB(78, 88, 76))
+	end
+	for i = 0, 4 do
+		P("SpareTube", V(0.05, 0.05, 0.9), at(cx - 1.0 + i * 0.12, y + 1.06, cz + 1.2), Color3.fromRGB(180, 176, 168))
+	end
+	P("Cart", V(0.6, 0.9, 1.0), at(cx + 1.1, y + 0.45, cz - 0.6), C.metal)
+	P("WetSign", V(0.3, 0.5, 0.3), at(cx + 1.2, y + 0.25, cz + 0.8), Color3.fromRGB(180, 96, 30))
+	bulkhead(cx, y + 2.1, cz, 3.5)
 end
 
+--[[
+	The food court, on the balcony level. Six tables, a servery that closed in
+	1996, and a menu board with the prices still on it.
+]]
 local function dressFoodCourt(cx, cz, y)
 	for i = 0, 2 do
 		for j = 0, 1 do
-			P("Table", V(1.0, 0.06, 1.0), at(cx - 4 + i * 4, y + 0.74, cz - 2 + j * 4), C.trim)
+			local tx, tz = cx - 4 + i * 4, cz - 2 + j * 4
+			P("TableTop", V(1.0, 0.06, 1.0), at(tx, y + 0.74, tz), C.trim)
+			P("TableLeg", V(0.1, 0.72, 0.1), at(tx, y + 0.36, tz), C.metal)
+			P("TableFoot", V(0.5, 0.04, 0.5), at(tx, y + 0.02, tz), C.metal)
 			for _, s in { -1, 1 } do
-				chair(cx - 4 + i * 4 + s * 0.9, y, cz - 2 + j * 4)
+				chair(tx + s * 0.9, y, tz)
 			end
 		end
 	end
-	P("ServeryCounter", V(10.0, 1.1, 0.9), at(cx, y + 0.55, cz - 4.2), C.trim)
+	-- One chair is up on a table, the way they leave them, and one is not.
+	P("UpturnedChair", V(0.5, 0.07, 0.5), at(cx + 4, y + 0.82, cz + 2), C.fabric)
+	P("UpturnedLegs", V(0.45, 0.4, 0.45), at(cx + 4, y + 1.05, cz + 2), C.metal)
+
+	P("ServeryCounter", V(10.0, 1.1, 0.9), at(cx, y + 0.55, cz + 4.2), C.trim)
+	P("ServeryTop", V(10.2, 0.06, 1.0), at(cx, y + 1.13, cz + 4.2), C.metal)
+	P("MenuBoard", V(3.6, 1.0, 0.06), at(cx, y + 2.1, cz + 4.6), C.panel)
+	for i = 0, 8 do
+		P("MenuLine", V(0.9, 0.05, 0.02), at(cx - 1.2 + (i % 3) * 1.2, y + 2.4 - math.floor(i / 3) * 0.26, cz + 4.55),
+			Color3.fromRGB(150, 146, 136))
+	end
+	P("DrinksFridge", V(1.0, 1.9, 0.7), at(cx + 5.4, y + 0.95, cz + 4.0), C.metal)
+	P("FridgeGlass", V(0.9, 1.6, 0.04), at(cx + 5.4, y + 1.0, cz + 3.66), C.glass)
+	P("TrayStack", V(0.5, 0.3, 0.4), at(cx - 4.4, y + 1.28, cz + 4.2), Color3.fromRGB(120, 96, 60))
+	P("Condiments", V(0.5, 0.3, 0.4), at(cx + 2.2, y + 1.28, cz + 4.2), C.trim)
+	litterBin(cx - 5.4, y, cz + 3.6)
+
+	speakerGrille(cx, y + 2.75, cz)
+	ceilingKit(cx, cz, 14.0, 10.0, y, 2.9, 4107)
 	bulkhead(cx, y + 2.6, cz, 8)
 end
 
@@ -592,16 +1174,27 @@ local function buildFloorThree()
 	local y, h = FLOOR1 + 4.6, 3.2
 	local w, d = 26, 20
 
-	P("F3_Floor", V(w, 0.3, d), at(0, y - 0.15, 0), C.floor)
+	-- The screed, in four pieces, because the stair has to come up through it.
+	P("F3_Floor", V(SHAFT.x0 - (-w / 2), 0.3, d), at((-w / 2 + SHAFT.x0) / 2, y - 0.15, 0), C.floor)
+	P("F3_Floor", V(w / 2 - SHAFT.x1, 0.3, d), at((SHAFT.x1 + w / 2) / 2, y - 0.15, 0), C.floor)
+	P("F3_Floor", V(SHAFT.x1 - SHAFT.x0, 0.3, SHAFT.z0 - (-d / 2)),
+		at((SHAFT.x0 + SHAFT.x1) / 2, y - 0.15, (-d / 2 + SHAFT.z0) / 2), C.floor)
+	P("F3_Floor", V(SHAFT.x1 - SHAFT.x0, 0.3, d / 2 - SHAFT.z1),
+		at((SHAFT.x0 + SHAFT.x1) / 2, y - 0.15, (SHAFT.z1 + d / 2) / 2), C.floor)
 	P("F3_Ceiling", V(w, 0.3, d), at(0, y + h + 0.15, 0), C.ceiling)
 	wallWithDoors(d / 2, -w / 2, w / 2, "x", y, h, { { "N", 0, 1.2 } }, "N", C.block)
 	wallWithDoors(-d / 2, -w / 2, w / 2, "x", y, h, {}, "S", C.block)
 	wallWithDoors(w / 2, -d / 2, d / 2, "z", y, h, {}, "E", C.block)
 	wallWithDoors(-w / 2, -d / 2, d / 2, "z", y, h, { { "W", 0, 1.2 } }, "W", C.block)
 
-	-- The stair up, behind the food court. Nobody remarks on it being there.
+	--[[
+		The stair up. It leaves the atrium balcony at the north-west corner and
+		climbs south, out over the void and through the glazing. Nobody remarks
+		on it being there, and Rule 3 says there is nothing at the top of it.
+	]]
+	local sx = (SHAFT.x0 + SHAFT.x1) / 2
 	for i = 0, 15 do
-		P("F3_Step", V(1.5, 0.16, 0.32), at(-9, FLOOR1 + i * (4.6 / 16), 9 + i * 0.32), C.trim)
+		P("F3_Step", V(1.5, 0.16, 0.32), at(sx, FLOOR1 + (i + 1) * (4.6 / 16), 8.5 - i * 0.32), C.trim)
 	end
 
 	--[[
@@ -615,14 +1208,53 @@ local function buildFloorThree()
 	local mic = P("Microphone", V(0.1, 0.5, 0.1), at(9, y + 1.05, 5.6), C.metal)
 	mic.Name = "Microphone"
 	P("MicBase", V(0.3, 0.06, 0.3), at(9, y + 0.8, 5.6), C.metal)
+	--[[
+		The rota wall. Every week since 1986, signed off in the same mark. This
+		week is already typed, and the crew's names are on it. It is the single
+		worst object in the game and it is a sheet of A4.
+	]]
 	for i = 0, 5 do
 		P("Rota", V(0.6, 0.85, 0.03), at(7.0 + (i % 3) * 1.4, y + 1.9 - math.floor(i / 3) * 0.95, 8.4),
 			Color3.fromRGB(186, 180, 158))
 	end
+	for i = 0, 17 do
+		paper(7.2 + (i % 6) * 0.42, y + 2.35 - math.floor(i / 6) * 0.34, 8.42, "z",
+			Color3.fromRGB(172, 166, 148))
+	end
+	P("Filing", V(0.6, 1.3, 0.7), at(11.2, y + 0.65, 4.4), C.metal)
+	P("CoatStand", V(0.1, 1.8, 0.1), at(6.6, y + 0.9, 4.2), C.metal)
+	P("CoatStandFoot", V(0.5, 0.05, 0.5), at(6.6, y + 0.02, 4.2), C.metal)
+	-- A wall clock with no hands on it. Nobody in this room needs one.
+	P("WallClock", V(0.34, 0.34, 0.06), at(9, y + 2.2, 8.4), Color3.fromRGB(196, 192, 182))
+	P("Chair", V(0.5, 0.07, 0.5), at(9, y + 0.45, 7.2), C.fabric)
+	P("Ashtray", V(0.14, 0.04, 0.14), at(8.3, y + 0.8, 6.2), Color3.fromRGB(150, 146, 138))
+	P("Telephone", V(0.24, 0.12, 0.2), at(9.8, y + 0.84, 6.2), C.dark)
+
 	local plate = P("DoorSign", V(0.7, 0.2, 0.04), at(5.9, y + 2.1, 6), C.trim)
 	plate.Name = "DoorSign_NightManager"
 
-	-- No bulkhead out on the floor. Floor 3 is not lit and never has been.
+	--[[
+		Out on the floor: bare screed, the units that were removed from the
+		directory in 1987, and nothing else. No signage, no fittings, no sound.
+		The absence is the point — this is the only room in the building where
+		the hum stops.
+	]]
+	for i = 0, 3 do
+		P("StudTrack", V(6.0, 0.08, 0.08), at(-8 + i * 0.0, y + 0.04, -6 + i * 3.0), C.metal)
+	end
+	for i = 0, 5 do
+		P("Stud", V(0.08, 3.0, 0.08), at(-11 + i * 1.2, y + 1.5, -6), C.metal)
+	end
+	P("Screed", V(24, 0.02, 18), at(0, y + 0.01, 0), Color3.fromRGB(96, 94, 90))
+	P("Dustsheet", V(3.0, 0.04, 2.4), at(3, y + 0.03, -6), Color3.fromRGB(122, 118, 110))
+	P("PaintTin", V(0.3, 0.32, 0.3), at(4.4, y + 0.16, -4.6), C.metal)
+	-- Four unit doorways, blocked off, with the numbers still screwed to them.
+	for i = 0, 3 do
+		P("DeadUnit", V(1.6, 2.2, 0.12), at(-10 + i * 5.0, y + 1.1, 9.8), C.block)
+		P("UnitNumber", V(0.14, 0.18, 0.02), at(-10 + i * 5.0, y + 2.0, 9.7), Color3.fromRGB(180, 176, 166))
+	end
+
+	-- One fitting, in the office, and none out on the floor.
 	bulkhead(9, y + 2.4, 6, 4)
 end
 
@@ -640,7 +1272,17 @@ local function buildPoliceRoom()
 	chair(ox - 0.6, y, oz + 1.0)
 	chair(ox + 0.6, y, oz + 1.0)
 	P("Recorder", V(0.3, 0.1, 0.22), at(ox + 0.5, y + 0.83, oz), C.metal)
+	P("RecorderSpool", V(0.08, 0.02, 0.08), at(ox + 0.44, y + 0.89, oz), C.dark)
+	P("RecorderSpool", V(0.08, 0.02, 0.08), at(ox + 0.58, y + 0.89, oz), C.dark)
 	P("CaseFile", V(0.3, 0.05, 0.42), at(ox - 0.4, y + 0.8, oz), Color3.fromRGB(176, 150, 96))
+	P("Jug", V(0.14, 0.2, 0.14), at(ox + 0.1, y + 0.88, oz - 0.3), Color3.fromRGB(198, 200, 204))
+	P("Glass", V(0.07, 0.1, 0.07), at(ox + 0.32, y + 0.83, oz - 0.3), Color3.fromRGB(190, 196, 204))
+	P("Ashtray", V(0.14, 0.04, 0.14), at(ox - 0.1, y + 0.8, oz + 0.3), Color3.fromRGB(150, 146, 138))
+	-- A door with a wired window in it, and a mirror that is not a mirror.
+	P("InterviewDoor", V(0.9, 2.05, 0.08), at(ox, y + 1.02, oz - 2.2), C.wood)
+	P("DoorWindow", V(0.26, 0.4, 0.03), at(ox, y + 1.6, oz - 2.16), Color3.fromRGB(160, 168, 180))
+	local oneway = P("Observation", V(1.6, 0.9, 0.04), at(ox - 2.48, y + 1.5, oz), Color3.fromRGB(110, 118, 130))
+	oneway.Reflectance = 0.45
 
 	-- The board. Seven names, and the crew put the evidence under one of them.
 	local board = P("CaseBoard", V(3.2, 1.8, 0.08), at(ox, y + 1.5, oz + 2.1), Color3.fromRGB(96, 78, 58))
@@ -661,20 +1303,50 @@ end
 	there since 1998.
 ]]
 local function buildExterior()
-	P("Tarmac", V(40, 0.3, 26), at(-30, -0.16, -34), Color3.fromRGB(46, 46, 48))
-	P("StaffDoor", V(1.2, 2.1, 0.15), at(-27, 1.05, -23.1), C.metal)
-	exitSign(-27, 2.5, -23.4)
+	P("Tarmac", V(40, 0.3, 26), at(-30, -0.16, -35), Color3.fromRGB(46, 46, 48))
+	-- The staff door is in the loading dock's south wall. It is how you come in
+	-- at ten and, five nights later, how you get out.
+	local door = P("StaffDoor", V(1.2, 2.1, 0.15), at(-31, 1.05, -22), C.metal)
+	door.Name = "StaffDoor"
+	exitSign(-31, 2.5, -22.3)
 
 	for i = 0, 3 do
-		P("Bay", V(0.12, 0.02, 5.0), at(-40 + i * 3.0, 0.02, -34), Color3.fromRGB(120, 118, 110))
+		P("Bay", V(0.12, 0.02, 5.0), at(-40 + i * 3.0, 0.02, -35), Color3.fromRGB(120, 118, 110))
 	end
 	-- Walt's car. It has been in the same bay for twenty-eight years.
-	P("CarBody", V(1.8, 0.9, 4.2), at(-37, 0.65, -34), Color3.fromRGB(58, 62, 68))
-	P("CarRoof", V(1.6, 0.7, 2.2), at(-37, 1.4, -34.2), Color3.fromRGB(52, 56, 62))
+	local car = P("CarBody", V(1.8, 0.9, 4.2), at(-37, 0.65, -35), Color3.fromRGB(58, 62, 68))
+	car.Name = "WaltsCar"
+	P("CarRoof", V(1.6, 0.7, 2.2), at(-37, 1.4, -35.2), Color3.fromRGB(52, 56, 62))
 
-	local lamp = P("CarParkLamp", V(0.5, 0.2, 0.5), at(-34, 6.0, -30), Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
-	P("LampPost", V(0.18, 6.0, 0.18), at(-34, 3.0, -30), C.metal)
+	local lamp = P("CarParkLamp", V(0.5, 0.2, 0.5), at(-34, 6.0, -31), Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
+	P("LampPost", V(0.18, 6.0, 0.18), at(-34, 3.0, -31), C.metal)
 	bulb(lamp, Color3.fromRGB(255, 172, 80), 1.2, 14)
+
+	-- Walt's wheels, his windows, and twenty-eight years of weather on them.
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			P("Wheel", V(0.25, 0.6, 0.6), at(-37 + sx * 0.85, 0.3, -35 + sz * 1.4), C.dark)
+		end
+	end
+	P("Windscreen", V(1.5, 0.5, 0.1), at(-37, 1.3, -36.2), Color3.fromRGB(44, 48, 54))
+	P("Rear", V(1.5, 0.5, 0.1), at(-37, 1.3, -33.9), Color3.fromRGB(44, 48, 54))
+
+	-- Puddles, because it has been raining on this car park since 1998.
+	for i = 0, 5 do
+		local pud = P("Puddle", V(2.4 + i * 0.4, 0.02, 1.6), at(-44 + i * 4.2, 0.03, -33 + (i % 3) * 3.0),
+			Color3.fromRGB(26, 28, 32))
+		pud.Reflectance = 0.5
+		pud.CanCollide = false
+	end
+
+	-- Palisade fence along the far side, and one trolley that got out.
+	for i = 0, 25 do
+		P("Palisade", V(0.08, 2.2, 0.08), at(-50 + i * 1.6, 1.1, -47), C.metal)
+	end
+	P("FenceRail", V(40, 0.08, 0.08), at(-30, 2.0, -47), C.metal)
+	P("FenceRail", V(40, 0.08, 0.08), at(-30, 0.5, -47), C.metal)
+	trolley(-24, 0, -40, 63)
+	P("Kerb", V(40, 0.14, 0.3), at(-30, 0.07, -22.4), Color3.fromRGB(122, 118, 112))
 end
 
 -- ── Lighting ────────────────────────────────────────────────────────────────
@@ -775,7 +1447,7 @@ function Greybox.build()
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "StaffEntrance"
 	spawn.Size = Vector3.new(st(2), st(0.3), st(2))
-	spawn.CFrame = at(-26, 0.15, 14)
+	spawn.CFrame = at(SERVICE_WEST - 3.0, 0.15, 14)
 	spawn.Anchored = true
 	spawn.Neutral = true
 	spawn.Transparency = 1

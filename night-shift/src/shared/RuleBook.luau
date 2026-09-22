@@ -24,7 +24,7 @@ local RuleBook = {}
 RuleBook.SHEET_HEADER = "RULES FOR NIGHT STAFF"
 RuleBook.SHEET_FOOTER = "keep this here. don't take it home. — N."
 
-RuleBook.RULES: { Rule } = {
+RuleBook.RULES = {
 	{
 		id = "clock_in",
 		number = "1",
@@ -148,7 +148,7 @@ RuleBook.RULES: { Rule } = {
 
 -- The Night Manager's insertions. Each one argues for compliance with him, and
 -- each one appears the night before it matters.
-RuleBook.FORGED: { Rule } = {
+RuleBook.FORGED = {
 	{
 		id = "forged_red_collar",
 		number = "12b",

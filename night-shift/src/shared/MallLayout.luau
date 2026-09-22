@@ -46,7 +46,7 @@ export type Floor = {
 	note: string,
 }
 
-MallLayout.FLOORS: { Floor } = {
+MallLayout.FLOORS = {
 	{ id = "LG", name = "Lower Ground", elevation = -4.6, hasWings = false, fitOut = false,
 		note = "Loading dock, plant rooms, electrical cupboard, staff corridor, the dry fountain's pump room." },
 	{ id = "G", name = "Ground", elevation = 0, hasWings = true, fitOut = true,
@@ -117,7 +117,7 @@ MallLayout.WING = {
 ]]
 export type UnitKind = "anchor" | "large" | "standard" | "small" | "kiosk"
 
-MallLayout.UNIT_KINDS: { { kind: UnitKind, minWidth: number, maxWidth: number, weight: number } } = {
+MallLayout.UNIT_KINDS = {
 	{ kind = "anchor", minWidth = 24.0, maxWidth = 31.0, weight = 0.10 },
 	{ kind = "large", minWidth = 17.0, maxWidth = 23.0, weight = 0.17 },
 	{ kind = "standard", minWidth = 11.0, maxWidth = 16.0, weight = 0.33 },
@@ -130,7 +130,7 @@ MallLayout.UNIT_KINDS: { { kind: UnitKind, minWidth: number, maxWidth: number, w
 export type UnitState =
 	"trading" | "darkGlass" | "shutterHalf" | "shutterDown" | "hoarded" | "stripped"
 
-MallLayout.UNIT_STATES: { { state: UnitState, weight: number } } = {
+MallLayout.UNIT_STATES = {
 	{ state = "darkGlass", weight = 0.30 },
 	{ state = "shutterHalf", weight = 0.16 },
 	{ state = "shutterDown", weight = 0.20 },
@@ -253,7 +253,7 @@ local function wing(floor: FloorId, direction: Direction, name: string, hue: str
 end
 
 -- Twelve retail wings, 14 units each: 168 on the directory. Eleven still trade.
-MallLayout.WINGS: { Wing } = {
+MallLayout.WINGS = {
 	wing("G", "North", "North Mall", "magenta", { 255, 60, 190 }, 2),
 	wing("G", "East", "East Mall", "cyan", { 40, 220, 255 }, 3),
 	wing("G", "South", "South Mall", "amber", { 255, 170, 40 }, 2),

@@ -38,7 +38,7 @@ export type Scare = {
 	oncePerGame: boolean,
 }
 
-ScareCatalog.STARTLES: { Scare } = {
+ScareCatalog.STARTLES = {
 	-- ── Structural ────────────────────────────────────────────────────────────
 	{ id = "fascia", class = "Startle", channel = "structural", size = "large", fromNight = 1, oncePerGame = false,
 		name = "The fascia",

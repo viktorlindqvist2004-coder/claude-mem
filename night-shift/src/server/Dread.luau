@@ -1,0 +1,382 @@
+--!strict
+--[[
+	Dread — the thing that makes the building feel occupied.
+
+	Four instruments, and hard gates between them so they never stack:
+
+	  the Presence   a partial silhouette, at distance, never where you are
+	                 looking, removed by your own act of looking at it
+	  the eyes       retroreflective, in the spill at the edge of the torch,
+	                 gone when you aim straight at them
+	  the crossing   something passing a far doorway in under a second
+	  the startle    five a night, two of them large, and never within ninety
+	                 seconds of each other
+
+	The resolution rule is the whole design: the player's own act of looking is
+	what takes it away. It is never a fade — the silhouette goes behind a real
+	occluder, one frame before the eye can resolve it. That way nobody can ever
+	prove it was there, and everybody knows it was.
+
+	Nothing here is supernatural. It is a shape, a reflection, and a noise. Every
+	single one has a boring explanation and the game never offers one.
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Places = require(Shared.Places)
+local ScareCatalog = require(Shared.ScareCatalog)
+
+local Atmos = require(script.Parent.Atmos)
+local AttentionService = require(script.Parent.AttentionService)
+local Hud = require(script.Parent.Hud)
+local Power = require(script.Parent.Power)
+local World = require(script.Parent.World)
+
+local Dread = {}
+Dread.night = 1
+
+local METRE = Places.METRE
+local running = false
+local startlesLeft = Config.DREAD.STARTLES_PER_NIGHT
+local largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
+local lastStartle = 0
+local lastPresence = 0
+local presencePart: BasePart? = nil
+local presenceOwner: Player? = nil
+
+-- ── Bits and pieces ─────────────────────────────────────────────────────────
+
+local function root(player: Player): BasePart?
+	local character = player.Character
+	return character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+end
+
+local function head(player: Player): BasePart?
+	local character = player.Character
+	return character and character:FindFirstChild("Head") :: BasePart?
+end
+
+local function isAlone(player: Player): boolean
+	local a = root(player)
+	if not a then
+		return false
+	end
+	for _, other in Players:GetPlayers() do
+		if other ~= player then
+			local b = root(other)
+			if b and (b.Position - a.Position).Magnitude < 18 * METRE then
+				return false
+			end
+		end
+	end
+	return true
+end
+
+-- Somewhere the player is not looking, far enough away to be a shape and not a
+-- man, and with a wall between it and them at the moment it is removed.
+local function pickPresenceSpot(from: BasePart): CFrame?
+	local look = from.CFrame.LookVector
+	for _ = 1, 12 do
+		local angle = math.rad(
+			math.random(Config.PRESENCE.SPAWN_ANGLE_MIN_DEGREES, Config.PRESENCE.SPAWN_ANGLE_MAX_DEGREES)
+		) * (if math.random() < 0.5 then -1 else 1)
+		local distance = math.random(Config.PRESENCE.SPAWN_DISTANCE_MIN, Config.PRESENCE.SPAWN_DISTANCE_MAX) * METRE
+		local direction = (CFrame.Angles(0, angle, 0) * CFrame.new(look * distance)).Position
+		local target = from.Position + Vector3.new(direction.X, 0, direction.Z)
+
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { from.Parent :: Instance }
+		-- It has to be standing on something, and there has to be floor under it.
+		local down = workspace:Raycast(target + Vector3.new(0, 6 * METRE, 0), Vector3.new(0, -14 * METRE, 0), params)
+		if down then
+			return CFrame.lookAt(down.Position + Vector3.new(0, 0.9 * METRE, 0), from.Position)
+		end
+	end
+	return nil
+end
+
+local function clearPresence()
+	if presencePart then
+		presencePart:Destroy()
+		presencePart = nil
+	end
+	presenceOwner = nil
+end
+
+--[[
+	The silhouette. A slab, not a model: at twenty-five metres in a red-lit
+	corridor, the outline is the only thing that carries, and an outline that is
+	slightly wrong is worth more than a character that is slightly right.
+]]
+local function showPresence(player: Player)
+	local from = head(player) or root(player)
+	if not from then
+		return
+	end
+	local spot = pickPresenceSpot(from)
+	if not spot then
+		return
+	end
+	clearPresence()
+
+	local part = Instance.new("Part")
+	part.Name = "Presence"
+	part.Size = Vector3.new(0.55 * METRE, 1.82 * METRE, 0.3 * METRE)
+	part.CFrame = spot * CFrame.new(0, 0, 0)
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CastShadow = false
+	part.Color = Color3.fromRGB(6, 6, 7)
+	part.Material = Enum.Material.SmoothPlastic
+	part.Parent = World.nodes()
+
+	presencePart = part
+	presenceOwner = player
+	lastPresence = os.clock()
+end
+
+-- ── Eyes ────────────────────────────────────────────────────────────────────
+--[[
+	Retroreflective, never emissive. They are visible in the edge of the beam and
+	in the spill; aim straight at them and there is nothing there. Two small
+	spheres at 1.62 m with a 6 cm gap, because that is where eyes are.
+]]
+local function showEyes(player: Player)
+	local from = head(player)
+	if not from then
+		return
+	end
+	local look = from.CFrame.LookVector
+	local angle = math.rad(math.random(Config.EYES.VISIBLE_ANGLE_MIN_DEGREES, Config.EYES.VISIBLE_ANGLE_MAX_DEGREES))
+		* (if math.random() < 0.5 then -1 else 1)
+	local distance = math.random(6, 16) * METRE
+	local direction = (CFrame.Angles(0, angle, 0) * CFrame.new(look * distance)).Position
+	local at = from.Position + Vector3.new(direction.X, 0, direction.Z)
+	at = Vector3.new(at.X, Config.EYES.HEIGHT_METRES * METRE, at.Z)
+
+	local model = Instance.new("Model")
+	model.Name = "Eyes"
+	model.Parent = World.nodes()
+
+	local facing = CFrame.lookAt(at, Vector3.new(from.Position.X, at.Y, from.Position.Z))
+	for _, side in { -1, 1 } do
+		local eye = Instance.new("Part")
+		eye.Shape = Enum.PartType.Ball
+		eye.Size = Vector3.new(0.028, 0.028, 0.028) * METRE
+		eye.CFrame = facing * CFrame.new(side * 0.032 * METRE, 0, 0)
+		eye.Anchored = true
+		eye.CanCollide = false
+		eye.CanQuery = false
+		eye.CastShadow = false
+		eye.Color = Color3.fromRGB(198, 196, 190)
+		eye.Material = Enum.Material.Glass
+		eye.Reflectance = 1
+		eye.Parent = model
+	end
+
+	-- They blink, and then they are not there.
+	task.spawn(function()
+		local lifetime = math.random(30, 70) / 10
+		local elapsed = 0
+		while elapsed < lifetime and model.Parent do
+			local wait = math.random(
+				Config.EYES.BLINK_INTERVAL_MIN * 10,
+				Config.EYES.BLINK_INTERVAL_MAX * 10
+			) / 10
+			task.wait(math.min(wait, lifetime - elapsed))
+			elapsed += wait
+			for _, eye in model:GetChildren() do
+				if eye:IsA("BasePart") then
+					eye.Transparency = 1
+				end
+			end
+			task.wait(Config.EYES.BLINK_SECONDS)
+			for _, eye in model:GetChildren() do
+				if eye:IsA("BasePart") then
+					eye.Transparency = 0
+				end
+			end
+		end
+		model:Destroy()
+	end)
+end
+
+-- ── Startles ────────────────────────────────────────────────────────────────
+
+local function fireStartle(player: Player, large: boolean)
+	local at = root(player)
+	if not at then
+		return
+	end
+	lastStartle = os.clock()
+	startlesLeft -= 1
+	if large then
+		largeLeft -= 1
+	end
+
+	-- Pick something from the catalogue that fits where the player is standing.
+	local pool = {}
+	for _, scare in ScareCatalog.STARTLES do
+		if (scare.size == "large") == large and scare.fromNight <= Dread.night then
+			table.insert(pool, scare)
+		end
+	end
+	local scare = if #pool > 0 then pool[math.random(1, #pool)] else nil
+
+	--[[
+		The silence ramp. Nobody notices it and it roughly doubles the startle,
+		which is why the loudest moment does not have to be the loudest sound.
+	]]
+	Atmos.setMuzak(false)
+	task.wait(Config.STARTLE_MIX.FULL_CUT_SECONDS)
+
+	Hud.effect("startle", {
+		shake = if large then 1.0 else 0.45,
+		flash = large,
+		large = large,
+		label = scare and scare.name or nil,
+	})
+
+	-- Something real does it: a fitting goes, a bin goes over, a shutter drops.
+	local nearest, best = nil, math.huge
+	for _, fitting in World.all("Bulkhead") do
+		local d = (fitting.Position - at.Position).Magnitude
+		if d < best then
+			nearest, best = fitting, d
+		end
+	end
+	if nearest and best < 24 * METRE then
+		Power.douse(nearest, large and 22 or 7)
+	end
+	Atmos.distantFall({
+		(at.Position.X / METRE) + math.random(-14, 14),
+		at.Position.Y / METRE,
+		(at.Position.Z / METRE) + math.random(-14, 14),
+	})
+
+	task.delay(Config.STARTLE_MIX.DUCK_SECONDS, function()
+		if Power.on then
+			Atmos.setMuzak(true)
+		end
+	end)
+end
+
+-- ── The director ────────────────────────────────────────────────────────────
+
+local function weight(player: Player): number
+	local w = 1.0
+	if isAlone(player) then
+		w *= Config.DREAD.WEIGHT_ALONE
+	end
+	if not Power.on then
+		w *= Config.DREAD.WEIGHT_DARK_AND_OFF_TASK
+	end
+	return w
+end
+
+function Dread.start()
+	if running then
+		return
+	end
+	running = true
+	startlesLeft = Config.DREAD.STARTLES_PER_NIGHT
+	largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
+	lastStartle = os.clock() + Config.DREAD.OPENING_QUIET_SECONDS
+
+	--[[
+		The presence resolution loop, at 15 Hz. This is the one piece of the game
+		that has to be exactly right: the moment the player's view comes within
+		nine degrees, it is gone — and gone means removed, this frame, not faded.
+	]]
+	task.spawn(function()
+		while running do
+			RunService.Heartbeat:Wait()
+			local part, owner = presencePart, presenceOwner
+			if part and owner then
+				local from = head(owner)
+				if not from or not part.Parent then
+					clearPresence()
+				else
+					local to = (part.Position - from.Position)
+					local distance = to.Magnitude
+					local angle = math.deg(math.acos(math.clamp(to.Unit:Dot(from.CFrame.LookVector), -1, 1)))
+					if angle < Config.PRESENCE.RESOLVE_ANGLE_DEGREES or distance < Config.PRESENCE.DESPAWN_DISTANCE * METRE then
+						clearPresence()
+					end
+				end
+			end
+		end
+	end)
+
+	-- The slow loop: one thing at a time, with gates between them.
+	task.spawn(function()
+		while running do
+			task.wait(math.random(9, 17))
+			local players = Players:GetPlayers()
+			if #players == 0 then
+				continue
+			end
+
+			-- Weighted pick. Splitting up is the trigger, and it always has been.
+			local total, pick = 0, nil
+			for _, player in players do
+				total += weight(player)
+			end
+			local roll = math.random() * total
+			for _, player in players do
+				roll -= weight(player)
+				if roll <= 0 then
+					pick = player
+					break
+				end
+			end
+			if not pick then
+				continue
+			end
+
+			local now = os.clock()
+			local sinceStartle = now - lastStartle
+			local sincePresence = now - lastPresence
+			local roll2 = math.random()
+
+			if
+				startlesLeft > 0
+				and sinceStartle > Config.DREAD.STARTLE_GLOBAL_COOLDOWN
+				and sincePresence > Config.DREAD.STARTLE_AFTER_PRESENCE_COOLDOWN
+				and roll2 < 0.35
+			then
+				fireStartle(pick, largeLeft > 0 and math.random() < 0.4)
+			elseif roll2 < 0.6 and sincePresence > 30 then
+				showPresence(pick)
+			elseif roll2 < 0.82 then
+				showEyes(pick)
+			else
+				-- A build-up that resolves into nothing. Free, and the most
+				-- valuable thing in the catalogue.
+				local at = root(pick)
+				if at then
+					Atmos.distantFall({
+						(at.Position.X / METRE) + math.random(-20, 20),
+						at.Position.Y / METRE,
+						(at.Position.Z / METRE) + math.random(-20, 20),
+					})
+				end
+			end
+
+			-- Doing your job is camouflage; standing still in the dark is too.
+			AttentionService.add(-0.5)
+		end
+	end)
+end
+
+function Dread.stop()
+	running = false
+	clearPresence()
+end
+
+return Dread

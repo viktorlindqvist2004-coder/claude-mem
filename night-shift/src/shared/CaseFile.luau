@@ -35,7 +35,7 @@ export type Suspect = {
 	eliminationKind: string?,
 }
 
-CaseFile.SUSPECTS: { Suspect } = {
+CaseFile.SUSPECTS = {
 	{
 		id = "wren",
 		name = "Elias Wren",
@@ -104,7 +104,7 @@ export type Clue = {
 	location: string,
 }
 
-CaseFile.CLUES: { Clue } = {
+CaseFile.CLUES = {
 	{ id = "C01", night = 1, name = "Opening-day cassette, 1986", detail = "Eric Halvard addressing the opening. He mispronounces \"galleria\".", location = "Management corridor" },
 	{ id = "C02", night = 1, name = "Rules for Night Staff", detail = "Slanted ballpoint that skips. Two rules struck through by the same hand.", location = "Staff room locker" },
 	{ id = "C03", night = 1, name = "Shift log, 14 Nov 1998", detail = "Four clock-ins at 22:00. No clock-outs.", location = "Time clock" },
@@ -132,7 +132,7 @@ CaseFile.CLUES: { Clue } = {
 -- The clues that actually support the answer. Calder accepts an accusation of Wren
 -- backed by any three of these; she has no set of three for anybody else, which is
 -- what makes working down the board a bad strategy rather than a forbidden one.
-CaseFile.SUPPORTING: { [SuspectId]: { string } } = {
+CaseFile.SUPPORTING = {
 	wren = { "C18", "C19", "C21", "C22" },
 	halvard = {},
 	walt = {},

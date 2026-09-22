@@ -84,8 +84,8 @@ local function bulkhead(position: Vector3, facing: Vector3, parent: Instance)
 
 	local pl = Instance.new("PointLight")
 	pl.Color = MallLayout.EXIT_SIGN.color
-	pl.Range = s(9)
-	pl.Brightness = 1.35
+	pl.Range = s(MallLayout.EXIT_SIGN.bulkheadRange)
+	pl.Brightness = MallLayout.EXIT_SIGN.bulkheadBrightness
 	pl.Shadows = false
 	pl.Parent = fitting
 end
@@ -205,11 +205,11 @@ local function buildWing(w: MallLayout.Wing, origin: Vector3, forward: Vector3, 
 	end
 
 	-- The red circuit: bulkheads every 11 m, EXIT signs every 22 m.
-	local bulkSpacing = s(MallLayout.EXIT_SIGN.spacingAlongWing / 2)
+	local bulkSpacing = s(MallLayout.EXIT_SIGN.bulkheadSpacing)
 	for i = 0, math.floor(length / bulkSpacing) do
 		local t = -length / 2 + bulkSpacing * i
 		for _, side in { -1, 1 } do
-			bulkhead(at(side * (walkOut - 0.6), s(2.62), t).Position, -right * side, model)
+			bulkhead(at(side * (walkOut - 0.6), s(MallLayout.EXIT_SIGN.bulkheadHeight), t).Position, -right * side, model)
 		end
 	end
 

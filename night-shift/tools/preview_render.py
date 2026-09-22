@@ -34,7 +34,7 @@ WING_LEN = 110.0
 VOID_W, WALKWAY_W, UNIT_DEPTH, SERVICE_W = 6.0, 5.0, 12.0, 2.4
 UNITS_PER_SIDE = 7
 EXIT_SPACING, EXIT_HEIGHT = 22.0, 2.3
-BULKHEAD_SPACING, BULKHEAD_HEIGHT = 11.0, 2.62
+BULKHEAD_SPACING, BULKHEAD_HEIGHT = 8.0, 2.62
 
 HALF_VOID = VOID_W / 2                       # 3.0
 WALK_OUT = HALF_VOID + WALKWAY_W             # 8.0  shopfront line
@@ -96,7 +96,7 @@ def exit_sign(pos, facing, scale=1.0):
     light(np.asarray(pos) + n * 0.30, RED, 0.85, 7.0)
 
 
-def bulkhead(pos, facing, intensity=1.35):
+def bulkhead(pos, facing, intensity=2.4):
     """Red emergency bulkhead. Dim, caged, and it hums."""
     n = np.asarray(facing, float)
     size = (0.34 * abs(n[2]) + 0.16, 0.20, 0.34 * abs(n[0]) + 0.16)
@@ -170,7 +170,7 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
             if (i + side) % 3 != 0:
                 continue
             bulkhead(at(side * (UNIT_OUT + 0.45), SERVICE_CEILING - 0.25, t),
-                     -right * side, intensity=0.55)
+                     -right * side, intensity=1.1)
 
     box(centre + fwd * (WING_LEN / 2) + np.array([0, soffit / 2, 0]),
         d(SERV_OUT * 2, soffit, 0.6), "wall")
@@ -268,21 +268,32 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
     exit_sign(at(0, EXIT_HEIGHT, WING_LEN / 2 - 0.5), -fwd)
 
 
+SKY = (150, 168, 205)
+
+
 def build_wing_roof(key):
-    """Glazing over the void slot, sixteen metres up."""
+    """Glazing over the void slot, sixteen metres up, and the night sky
+    behind it. Faint and cold: the only light in the building that arrives
+    from above, and the reason the void reads as open rather than as ceiling."""
     fwd, right = DIRS[key]
     origin = fwd * (ATRIUM_D / 2 if key in "NS" else ATRIUM_W / 2)
     centre = origin + fwd * (WING_LEN / 2) + np.array([0, ATRIUM_H, 0])
     size = np.abs(right * VOID_W + np.array([0, 0.4, 0]) + fwd * WING_LEN) + 1e-6
-    box(centre, size, "glass")
+    box(centre, size, "glass", emissive=(0.055, 0.066, 0.088))
     for e in (-1, 1):
         box(centre + right * (e * (HALF_VOID + 0.3)),
             np.abs(right * 0.6 + np.array([0, 0.9, 0]) + fwd * WING_LEN) + 1e-6, "trim")
+    for i in range(int(WING_LEN // 12) + 1):
+        light(centre + fwd * (-WING_LEN / 2 + 12 * i) - np.array([0, 1.0, 0]),
+              SKY, 9.0, 26.0)
 
 
 def build_atrium():
     box([0, -SLAB / 2, 0], [ATRIUM_W, SLAB, ATRIUM_D], "floor", floor=True)
-    box([0, ATRIUM_H, 0], [ATRIUM_W, 0.4, ATRIUM_D], "glass")
+    box([0, ATRIUM_H, 0], [ATRIUM_W, 0.4, ATRIUM_D], "glass", emissive=(0.055, 0.066, 0.088))
+    for ix in (-1, 0, 1):
+        for iz in (-1, 1):
+            light([ix * 17, ATRIUM_H - 1.2, iz * 11], SKY, 16.0, 34.0)
 
     void_w, void_d = ATRIUM_W * 0.66, ATRIUM_D * 0.58
     dx, dz = (ATRIUM_W - void_w) / 4, (ATRIUM_D - void_d) / 4
@@ -404,7 +415,7 @@ def surface(P, N, mats, albedo, bmins, bmaxs):
 MAT_ID = {"floor": 0, "ceiling": 1}
 
 
-def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True):
+def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=None):
     n = dirs.shape[0]
     t, idx, axis = trace(orig, dirs, geom)
     hit = idx >= 0
@@ -448,7 +459,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True):
             continue
         contrib = li / (dist2[near] + 2.0) * ndl
 
-        if shadows:
+        if shadows and (eye is None or np.linalg.norm(lp - eye) < 48):
             sel = np.nonzero(np.all(BMIN - lr < lp, 1) & np.all(BMAX + lr > lp, 1))[0]
             sub = np.nonzero(near)[0][lively]
             sh = occluded(P[sub] + N[sub] * 6e-3, L[lively], dist[lively] - 0.02,
@@ -475,7 +486,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True):
         if m.any():
             rd = dirs[m] - 2 * np.einsum("ij,ij->i", dirs[m], N[m])[:, None] * N[m]
             rc = shade(P[m] + N[m] * 2e-3, rd, geom, lit, bb, torch,
-                       bounce=False, shadows=False)
+                       bounce=False, shadows=False, eye=eye)
             col[m] = col[m] * 0.80 + rc * 0.30
 
     haze = np.zeros((n, 3))
@@ -489,7 +500,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True):
     return col + haze
 
 
-def render(name, eye, target, fov=62.0, w=960, h=540, torch_on=False):
+def render(name, eye, target, fov=62.0, w=880, h=495, torch_on=False):
     eye = np.asarray(eye, float)
     fwd = np.asarray(target, float) - eye
     fwd /= np.linalg.norm(fwd)
@@ -539,7 +550,7 @@ def render(name, eye, target, fov=62.0, w=960, h=540, torch_on=False):
     tor = (eye, fwd, np.array([1.0, 0.83, 0.66]), 34.0,
            math.cos(math.radians(30))) if torch_on else None
 
-    col = shade(orig, dirs, keep, lit, (BMIN, BMAX), tor).reshape(h, w, 3)
+    col = shade(orig, dirs, keep, lit, (BMIN, BMAX), tor, eye=eye).reshape(h, w, 3)
 
     col = np.clip(col, 0, None)
     col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14)
@@ -566,12 +577,13 @@ if __name__ == "__main__":
     print(f"scene: {len(boxes)} boxes, {len(lights)} lights", flush=True)
 
     EYE = 1.68
-    # Ground floor, looking down the North Mall. Sixteen metres of open width
-    # and three floors of balcony above the void.
-    render("01_the_wing", [2.2, EYE, 24], [0.6, EYE + 1.9, 128], fov=70)
-    # Standing at the balustrade on Floor 1, looking down into the void.
-    render("02_the_void", [4.6, 5.2 + EYE, 46], [1.0, 1.2, 62], fov=68)
-    # The service corridor behind the units. The opposite of the mall.
-    render("03_service", [21.2, EYE, 30], [21.2, EYE - 0.12, 96], fov=58, torch_on=True)
-    # The atrium and the Great Clock.
-    render("04_atrium", [0, EYE, -17], [0, 7.0, 2], fov=76)
+    # Ground floor, standing in the void, looking down the wing and up through
+    # three floors of balcony to the roof glazing sixteen metres above.
+    render("01_the_wing", [0.8, EYE, 26], [0.2, EYE + 7.5, 86], fov=76)
+    # Floor 1, at the balustrade, looking down into the void and along the wing.
+    render("02_the_void", [4.4, 5.2 + EYE, 44], [0.0, -0.4, 66], fov=72)
+    # The service corridor behind the units, on a torch. The opposite of the
+    # mall in every dimension.
+    render("03_service", [21.2, EYE, 34], [21.25, EYE - 0.10, 98], fov=56, torch_on=True)
+    # The atrium and the Great Clock, from the ground floor looking up.
+    render("04_atrium", [0, EYE, -17.5], [0, 8.0, 1], fov=80)

@@ -198,6 +198,15 @@ end
 MallLayout.EXIT_SIGN = {
 	height = 2.3, -- above finished floor
 	spacingAlongWing = 22, -- one every 22 m, plus both ends
+	-- Caged red bulkheads carry the actual working light, every 8 m. That is
+	-- close spacing, and it has to be: the public volume is 16 m wide and 16 m
+	-- tall, and a bulkhead only lights about 4 m of floor in it.
+	bulkheadSpacing = 8,
+	bulkheadHeight = 2.62,
+	bulkheadBrightness = 2.4,
+	bulkheadRange = 9,
+	-- Back of house gets one bare fitting every 14 m, and most are dead.
+	serviceFittingSpacing = 14,
 	color = Color3.fromRGB(255, 25, 25),
 	lightRange = 6,
 	lightBrightness = 1.1,

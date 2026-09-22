@@ -117,14 +117,15 @@ Config.WAGES = {
 -- positional emitter: one Sound per fixture, at the fixture. A few hundred of
 -- them, and worth every one -- see docs/06-audio-direction.md.
 Config.SIGNAGE = {
-	BULKHEAD_SPACING = 11, -- metres, per wing and around the balconies
+	BULKHEAD_SPACING = 8, -- metres, per wing and around the balconies
 	EXIT_SPACING = 22,
 	BULKHEAD_HEIGHT = 2.62,
 	EXIT_HEIGHT = 2.3,
 	RED = Color3.fromRGB(255, 28, 22),
-	-- Dim. A bulkhead lights a 4 m pool of floor and nothing else. If a wing is
-	-- legible end to end with the torch off, these are too bright.
-	BULKHEAD_BRIGHTNESS = 1.35,
+	-- A bulkhead lights about 4 m of floor in a space 16 m wide and 16 m tall,
+	-- so they sit close together and still leave most of the volume black. If a
+	-- wing is legible end to end with the torch off, these are too bright.
+	BULKHEAD_BRIGHTNESS = 2.4,
 	BULKHEAD_RANGE = 9,
 	EXIT_BRIGHTNESS = 0.85,
 	EXIT_RANGE = 7,

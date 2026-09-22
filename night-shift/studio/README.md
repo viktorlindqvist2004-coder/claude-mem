@@ -5,13 +5,11 @@
 No Rojo. No Git. No install. Nothing to set up.
 
 1. Open **Roblox Studio** and make a new place (**Baseplate** is fine).
-2. In the **Explorer** panel on the right, right-click **ServerStorage** →
-   **Insert Object** → **ModuleScript**.
-3. Rename it to exactly **`BuildMall`**.
-4. Double-click it to open it, select all (**⌘A** / Ctrl+A), and paste this whole file
-   over the top. Close the tab.
-5. Click the **command bar** — the single-line box along the bottom of the Studio window
-   that says *"Execute a command with ⌘⏎"* — and run this one line:
+2. In the **Explorer** panel, right-click **ServerStorage** → **Insert from File…**
+3. Choose **`BuildMall.rbxmx`**. A ModuleScript called `BuildMall` appears inside
+   ServerStorage with all 808 lines already in it.
+4. Click the **command bar** — the box along the bottom of the Studio window that says
+   *"Execute a command with ⌘⏎"* — clear whatever is in it, and run this one line:
 
 ```lua
 require(game.ServerStorage.BuildMall)()
@@ -19,9 +17,14 @@ require(game.ServerStorage.BuildMall)()
 
 Press **⌘ + Enter** (Ctrl+Enter on Windows) or click **Run**.
 
-**Why not just paste the whole script into the command bar?** It is a single-line box, and
-a 790-line paste usually gets truncated or silently dropped. The ModuleScript holds the
-code; the command bar only gets the one line that calls it.
+**Do not paste `BuildMall.lua` into the script editor by hand.** Eight hundred lines
+through the clipboard gets silently truncated — the module ends up half written, the call
+fails on a function that is not there, and nothing appears to happen. The `.rbxmx` cannot
+be truncated. Regenerate it after editing the Lua with:
+
+```bash
+python3 build_rbxmx.py
+```
 
 It builds the whole building — four floors, twelve wings, the units with their interiors,
 the service corridors, the atrium with escalators and a lift, the roof structure, and the

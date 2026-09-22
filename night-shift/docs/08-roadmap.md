@@ -12,6 +12,7 @@ running on a phone**, so both are proven in Milestone 1, before any content is b
 - [x] Systems design and night-by-night breakdown
 - [x] Art and audio direction
 - [x] Technical architecture and repo skeleton
+- [x] The investigation: suspects, clue table, the detective, the accusation
 - [ ] Reference boards: mall photography, lighting, mannequins, the clock
 - [ ] Greybox the full mall at correct scale, walkable end to end
 - [ ] Block out the muzak loop with temp music so Rule 2 is testable
@@ -29,6 +30,7 @@ The whole game proven on one night.
 - [ ] Walkie + proximity voice + subtitles
 - [ ] The Night 1 Contradiction, start to finish
 - [ ] NORA's tag, Tape 1, and the tape deck
+- [ ] Case file: clue pickup and logging, the voice log, Calder's Night 1 phone call
 - [ ] Final-quality art pass on **one corridor, the basement, and the atrium only**
 - [ ] Quality tiers implemented and measured on a real mid-range phone
 
@@ -43,6 +45,8 @@ prompted.
 - [ ] Forged rules and the handwriting tell
 - [ ] Four-station customer detection, tells, and the mall re-edit consequence
 - [ ] Tags LO and WALT, tapes 2 and 3, tag passives
+- [ ] The paper trail: filing cabinet, lost property, payroll ledger, staff photograph
+- [ ] The police debrief scene and Calder's argument for Walt
 - [ ] Fashion floor and supermarket art pass
 
 ---
@@ -53,7 +57,9 @@ prompted.
 - [ ] Floor 3, the office, the rota wall
 - [ ] Full closing routine, the four shades, the clock-winding finale
 - [ ] The Night Manager entity: beam-only rendering and chase behaviour
-- [ ] Both endings + the soft fail
+- [ ] The case board, the accusation, and every outcome branch
+- [ ] The dedication plate behind the dial
+- [ ] Both endings + the wrong-accusation endings + the soft fail
 
 ---
 
@@ -85,8 +91,14 @@ prompted.
 
 ## Open questions
 
-1. **Voice cast.** The Night Manager carries the game. Budget for a real actor and cast
+1. **Voice cast.** The Night Manager carries the game — and the mystery now rests on his
+   vocabulary, so the railway phrasing has to be in the script from the first recorded line,
+   not sprinkled on later. Calder is the second largest part. Budget for real actors and cast
    before M4, not during it.
+1b. **Mystery playtesting is its own workstream.** The calibration target (under 15 % solve
+   it unaided on the first attempt, ~60 % by the second) can only be measured with crews who
+   have never seen the doc, and it will take several rounds of moving clues between nights.
+   Start it the moment Nights 1–3 are playable, not at M5.
 2. **Music licensing.** The muzak loop must be original and work-for-hire — a
    twenty-eight-year tape loop cannot be a library track we do not own.
 3. **Roblox voice chat availability** varies by account age and verification. The
@@ -96,3 +108,7 @@ prompted.
    photoreal to stylised-realist.
 5. **Does Part 1 launch alone, or with Part 2 announced?** The credits hook is much
    stronger if there is something to click.
+6. **Spoiler containment.** The answer will be on YouTube within a day of launch. Design for
+   it: the pleasure has to be in *running* the investigation with friends, not in the reveal
+   — which is why the accusation demands three supporting clues rather than just a name.
+   Cold Case mode (a new file, a new answer) is the long-term response.

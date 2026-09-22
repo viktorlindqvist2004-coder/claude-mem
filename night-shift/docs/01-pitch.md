@@ -3,7 +3,8 @@
 > **Genre** Co-op survival horror, 1–4 players, first person
 > **Platform** Roblox (PC, console, mobile)
 > **Length** ~75 minutes across five nights, built to be replayed
-> **Hook** Two authorities tell you two different things. Only one of them wants you to leave.
+> **Hook** Two authorities tell you two different things, four people vanished in 1998, and
+> you win by working out who took them.
 
 ## The pitch
 
@@ -24,6 +25,10 @@ night onward, new lines appear in handwriting that is not hers.
 The whole game is one question: **which of them do you believe, and can you prove it
 before 6:00?**
 
+And underneath it, a second one. Four members of staff disappeared here on 14 November 1998
+and the file was never closed. The detective who caught that case as a probationer is still
+holding it, and on the fifth night you have to tell her who did it — and be right.
+
 ## What you actually do
 
 - **Work.** Every night has a real task list. Doing your job is not filler — it is
@@ -35,6 +40,10 @@ before 6:00?**
   and live with it — the choice carries forward to Night 5.
 - **Talk.** Proximity voice in person, walkie-talkie across floors. The walkie is loud,
   and loud is dangerous.
+- **Investigate.** Twenty-two clues across five nights — a payroll ledger, an undated
+  complaint, a postcard in lost property, an auction receipt, a plate behind the clock face
+  — and seven names on a corkboard, of which six look better than the answer. One of the six
+  is the police's own theory.
 
 ## The five nights
 
@@ -43,8 +52,8 @@ before 6:00?**
 3. **Night Customers** — the mall is open. Some of the customers are not people.
 4. **Blackout** — the floor plan stops holding still, and one of you has to navigate
    from the camera room.
-5. **Closing** — run the closing routine that was never finished in 1998, and let four
-   people go home.
+5. **Closing** — name him to the police, run the closing routine that was never finished in
+   1998, and let four people go home.
 
 ## Why it works
 

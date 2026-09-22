@@ -5,19 +5,26 @@
 ## 1. Core loop
 
 ```
-Lobby  →  Clock in (22:00)  →  Shift  →  06:00  →  Payroll  →  Upgrades  →  next night
-                                  ↑                    │
-                                  └── soft fail ───────┘
+Lobby → Clock in (22:00) → Shift → 06:00 → Payroll → Police debrief → next night
+                              ↑                 │
+                              └── soft fail ────┘
 ```
+
+The between-nights beat is an interview room at Northmoor Police, not a shop. Wages and
+upgrades move to a phone menu; the corkboard gets the screen time.
 
 Within a shift:
 
 ```
 read the task board  →  work  →  something is wrong  →  check the rules
    →  obey or test  →  consequence  →  back to work (or to the tape deck)
+   →  and somewhere in a drawer, a piece of paper from 1989
 ```
 
-The second line is the game. The first line is the cover story.
+The second line is the game. The first line is the cover story. The third line is how you
+win: the crew is running a twenty-eight-year-old missing-persons investigation while
+pretending to mop. **Surviving to 06:00 on Night 5 is not a win. Naming him is.**
+See [`09-the-investigation.md`](09-the-investigation.md).
 
 ---
 
@@ -210,8 +217,13 @@ the jamming shutter at unit 14, he reminds you to clock in.
   not be there: **NORA — CHECKOUT**. Power returns the instant it is picked up, and every
   light in the basement comes on at once, which is far worse than the dark was.
 
-**Ends:** "Good work tonight. You're a good fit here." 06:00, shutters up.
-**Tape 1** in the checkout drawer.
+**Ends:** "Good work tonight. You're a good fit here." 06:00, shutters up. On the way out
+the crew's phone rings: **DS Ruth Calder**, Northmoor Police, who has had this file since
+1998 and has been waiting twenty-eight years for someone to walk back out of that building.
+The case file opens.
+
+**Tape 1** in the checkout drawer. **Clues:** the opening-day cassette (C01), the rule sheet
+as a handwriting exemplar (C02), the 1998 shift log — four clock-ins, no clock-outs (C03).
 
 ---
 
@@ -244,7 +256,10 @@ Attention, not with time.
 mannequins active, and **LO's tag is gone.** Leave her out → the tag is around her neck,
 and she watches the crew for the rest of the night without ever moving again.
 
-**Tape 2** on the mannequin. **Seeds Floor 3:** one window mannequin is posed looking up.
+**Tape 2** on the mannequin. **Clues:** the 1989 payroll ledger and its six-week night
+manager post (C05), the 1989 staff photograph with one face out of focus in every copy
+(C06), Lo's pencil note in the stock book (C07), and the first forged line on the sheet
+(C09). **Seeds Floor 3:** one window mannequin is posed looking up.
 
 ---
 
@@ -279,8 +294,14 @@ knows exactly what they did.
 - **05:00** — first direct attack on the list: *"That paper in the staff room is
   twenty-eight years old. Bin it."* **The Contradiction.**
 
-**Tape 3.** **Seeds Floor 3:** a customer asks directions to a unit the 1998 directory puts
-on the third floor.
+**Tape 3.** **Clues — this is the paper night.** The filing cabinet in the back office holds
+the undated 1989 complaint (C10), the lock invoice that dates it to 14 April 1989 (C11),
+Halvard's margin note *"Was in Oslo all week"* (C12), and Walt's personnel record with a
+1994 start date (C15). The lost property drawer holds a postcard from Gothenburg signed
+*Ivor* (C13), and it is extremely easy to walk past.
+
+**Seeds Floor 3:** a customer asks directions to a unit the 1998 directory puts on the third
+floor.
 
 ---
 
@@ -313,7 +334,11 @@ or flashlight, never both.
   already typed, with the crew's names on it. **The Contradiction.** Outside the door,
   dropped: **MALIK — STOCKROOM**.
 
-**Tape 4.**
+**Tape 4** — which gets as far as the mechanism and runs out before the name.
+**Clues:** the rota wall, signed off every week since 1986 by the same mark (C16); the 1987
+directory amendment removing Floor 3, signed M. Vale (C17); the 1986 auction receipt, lot 41,
+Northmoor Station (C18); and the PA logbook in the camera room, with entries at eleven-minute
+intervals every night for forty years (C19).
 
 ---
 
@@ -335,10 +360,19 @@ Clock ticks for the first time in twenty-eight years, and it ticks the wrong way
 3. **Bring down the main entrance shutter.** Requires every living crew member pulling at
    the same time. Solo: the winch, manually, for 30 exposed seconds.
 
+**Then the accusation.** At **05:00** the crew radios Calder from the security office and
+the case board opens: seven suspects, and three evidence slots that have to be filled with
+clues they actually found. In a full crew it is a nomination and a vote, and the shift clock
+pauses for it, deliberately — the argument is the best four minutes in the game. Calder tests
+the case, pushes back once if it does not hold, and then gives them the name over the radio.
+
 **Then the clock.** 05:59. One player winds the hands from 3:33 forward to 6:00 — **40
 seconds, locked in place, cannot defend themselves.** Everyone else holds the Night Manager
 off with Focus beams. He is only ever a silhouette inside a beam; outside the beams there is
 nothing there, which is the point.
+
+**The name is spoken into the PA** as the hands come round. Outcomes, including what
+accusing Walt or Nora costs, are in [`09-the-investigation.md`](09-the-investigation.md).
 
 **Everything returns:** Night 1's rules still apply, mannequins stand in the corridors,
 false voices on the walkie, and his voice is no longer coming out of the speakers.
@@ -347,8 +381,9 @@ false voices on the walkie, and his voice is no longer coming out of the speaker
 Striking the movement snaps every clock in the building to 3:33 and costs the crew 90
 seconds of total darkness. You finish a shift. You do not smash one.
 
-**True ending** with all nine collectibles: reach the microphone on Floor 3 and say **Elias
-Wren**. See the story bible.
+**True ending:** the correct accusation *plus* all nine collectibles, which lets the crew
+play his own 1971 reel back to him through the PA instead of speaking the name. See the
+story bible.
 
 ---
 
@@ -357,8 +392,11 @@ Wren**. See the story bible.
 Finite content is a slow death on Roblox. Three additions that do not damage the story:
 
 - **Seeded nights.** The active rule set, the anomaly pool and which Contradiction fires are
-  drawn from a larger table per seed. Two crews compare notes and disagree, which is exactly
-  the conversation the game wants people to have.
+  drawn from a larger table per seed. Clue *locations* rotate from a pool of three each, and
+  one wrong suspect gains extra circumstantial support per run — so two crews go down
+  different wrong roads and disagree about the answer afterwards, which is exactly the
+  conversation the game wants people to have. **The culprit never rotates.** A whodunnit with
+  a shuffled answer is a slot machine.
 - **Overtime mode.** Unlocked after the first completion. One endless night, rules added
   every in-game hour, leaderboard by hours survived. Cosmetics only.
 - **Night modifiers** for repeat runs: *Understaffed* (solo rules with a full crew),

@@ -24,16 +24,19 @@ forever and it will always, always need people on nights.
 | **1930** | **Elias Wren**, nineteen, is hired as an assistant stationmaster. Winding the clock is his job. It takes eleven minutes, every night, by hand. |
 | **1971** | Northmoor Station closes. The last service is the 03:33 night train south. Wren tells the last passengers to mind the step. Then he stays to wind the clock. He is found the next morning at the foot of it. The clock had been wound. |
 | **1971–1986** | The clock sits in a council storage yard under a tarpaulin. Two night watchmen resign. |
-| **1986** | Developer **Erik Halvard** buys the movement at auction and installs it in the atrium of his new mall, Northlight Galleria, as its centrepiece. Opening day, November. |
-| **1989** | First written complaint about "the man on the tannoy after closing". Payroll has no night manager on the books. Halvard signs it off as a prank and installs a lock on the PA room. The lock is later found fitted from the inside. |
+| **1986** | Developer **Eric Halvard** buys the movement at auction and installs it in the atrium of his new mall, Northlight Galleria, as its centrepiece. Opening day, November. |
+| **1987** | Vale signs the directory amendment removing Floor 3. She has been on it. |
+| **Spring 1989** | A night manager post is created and filled for six weeks by **Ivor Kask**, paid in cash, no address on file. Kask files the first written complaint about "the man on the tannoy after closing", then resigns by letter. The post is deleted and never refilled. Halvard — in Oslo that week — signs the complaint off as a prank. Centre manager **Margaret Vale** has a lock fitted on the PA room on 14 April. The lock is later found fitted from the inside. |
 | **1991** | The atrium fountain is drained and capped. Staff continue to report hearing it. |
+| **1992** | A postcard from Kask, postmarked Gothenburg, ends up in the Galleria's lost property drawer and stays there. |
 | **1994** | **Walt** joins as night security. |
 | **1996** | **Nora** joins on checkout. She begins keeping a list. |
 | **1997** | **Lo** (custodial) and **Malik** (stockroom) join within four months of each other. The four of them work the same rotation. |
 | **Aug–Nov 1998** | The four record five cassettes between them, mostly without each other's knowledge. Nora's list grows to thirteen rules, two crossed out, one torn away. |
 | **14 Nov 1998, 03:33** | Walt cuts power to the clock and opens the movement to stop it. It stops. So does everything else. All four are logged as clocking in at 22:00 and never clocking out. The mall opens as normal at 09:00 and nobody can say what is wrong with it. |
+| **15 Nov 1998** | Northmoor Police attend. The probationer on the callout is twenty-two-year-old **Ruth Calder**. The investigation concludes, on the evidence available, that Walt was responsible and left. Margaret Vale redates the incident report. The file is never closed. |
 | **1999–2026** | Northlight Galleria trades on, slowly emptying. Units go dark and are not re-let. The night cleaning contract changes hands nine times. The clock reads 3:33. |
-| **Now (2026)** | **Lantern Staffing** — *"We fill the hours nobody wants"* — places your crew on a five-night trial. |
+| **Now (2026)** | **Lantern Staffing** — *"We fill the hours nobody wants"* — places your crew on a five-night trial. **DS Ruth Calder**, fifty, still has the file, and an alert on the night-staffing contract. |
 
 ---
 
@@ -99,8 +102,12 @@ station clerk who knows what time it is and cannot bear to say it.
 | 4 | He is on the walkie while the walkie is off. He repeats a sentence one of the players said three minutes earlier, in their voice, then continues in his own. |
 | 5 | No processing at all. He is not coming out of speakers. He is in the room, and the only thing that still sounds like a PA is the word "attention". |
 
-**His real name is Elias Wren,** and he has not heard it since 1971. Saying it is the
-true ending.
+**His real name is Elias Wren,** and he has not heard it since 1971.
+
+**Nothing in the game ever states this.** It is the answer to the mystery, and the crew has
+to reach it from the evidence — see [`09-the-investigation.md`](09-the-investigation.md).
+The one thing he does every single night, in a shopping centre, is talk like a railway
+announcer, and for four nights nobody notices.
 
 ---
 
@@ -146,6 +153,44 @@ on Tape 4 and the reason the crew can finish the job.
 before him.**
 
 ---
+
+## 5b. The living
+
+The four are the story. These four are the *case*, and three of them look guiltier than the
+answer does.
+
+### DS RUTH CALDER — Northmoor Police
+Fifty. In 1998 she was the twenty-two-year-old probationer on the callout, and she has never
+let the file go. Dry, tired, competent, and wrong. She contacts the crew after Night 1
+because the night-staffing contract changed hands and for the first time in twenty-eight
+years somebody went in and came out.
+
+She holds the 1998 working theory — that Walt did something to the other three and ran —
+and she defends it well, because on the evidence available to a police officer it is the
+correct conclusion. Convincing her otherwise is the last thing the crew has to do.
+
+She never solves it. She corroborates, argues, pulls records, and is the reason evidence
+from outside one building can enter a game set entirely inside it.
+
+### ERIC HALVARD — Developer, 1943–1994
+Built the Galleria, bought the clock, signed the 1989 complaint off as a prank from a hotel
+in Oslo, and died of a stroke in his own food court in 1994. The tidiest available villain
+and not the answer. His recorded voice exists on an opening-day cassette, and it sounds
+nothing like the PA.
+
+### MARGARET VALE — Centre Manager, 1986–1998
+Eighty-one now, in a care home in Northmoor, entirely lucid. Buried the complaints, fitted
+the lock, redated the 1998 incident report, kept the rota running after four people vanished
+off it, and in 1987 took Floor 3 off the directory because she had been on it. Guilty of
+eleven years of cover-up and nothing else, and the only person in the story who will simply
+tell you the truth if asked.
+
+### IVOR KASK — "Night Manager", six weeks in 1989
+On the payroll for six weeks in spring 1989, paid in cash, no address, and out of focus in
+every copy of the staff photograph. Looks exactly like the answer. Is, in fact, the first
+witness — he filed the complaint and then he left, which is more than anyone else managed.
+There is a postcard from him in the lost property drawer, Gothenburg, 1992, and finding it
+is one of the better small moments in the game.
 
 ## 6. Rules for Night Staff
 
@@ -323,7 +368,9 @@ Attention. They are worth it.
 > can't finish a shift by smashing the clock, you finish a shift by — *(a sound; a long
 > pause; much quieter)*
 >
-> Nora. Nora, if you get this. Your list. Number thirteen. Finish number thirteen.
+>  Nora. Nora, if you get this. Your list. Number thirteen. Finish number thirteen.
+>
+> And get the plate off the clock. The name's on the pl—
 >
 > *(the tape runs out)*"
 
@@ -386,7 +433,12 @@ something that has spent fifty-five years unable to go off shift.
 
 ## 9. Endings
 
-### Standard — "Closing Time"
+> **The win condition is the accusation.** Getting to 06:00 is not enough; the crew has to
+> name him, to a detective, with evidence. The full design is in
+> [`09-the-investigation.md`](09-the-investigation.md), including the seven suspects and
+> what each wrong answer costs.
+
+### Standard — "Closing Time" *(correct accusation)*
 The hands reach 6:00 and the clock strikes for the first time since 1971. The fluorescents
 go out in banks, back of house first. Dawn comes through the atrium glass, which is filthy,
 and that detail matters — this is not a beautiful sunrise, it is an ordinary grey morning
@@ -396,20 +448,26 @@ raises a hand. They walk out.
 Last shot: the PA indicator light outside an empty office on a floor that does not exist,
 still lit.
 
-### True — "Elias Wren" *(all four tags, all five tapes)*
-Before winding the clock, the crew can reach the office and use the microphone. One
-player speaks his name into it. The PA carries it to every speaker in a building with no
-power.
+### True — "Elias Wren" *(correct accusation, all four tags, all five tapes)*
+Naming him correctly wins. Naming him correctly while holding Tape 5 does something else.
 
-He answers once, in a voice with nothing management about it:
+Instead of speaking the name, the crew put his own 1971 reel through the PA. He hears
+himself say *"somebody's got to keep it open"* in a voice that still had somewhere to be.
 
-> "…Nobody's called me that in a long while."
-
-Then the clock strikes six on its own, and the crew do not have to hold anything off while
-it does. The four at the entrance are five. He is at the back, in a stationmaster's coat,
+He does not fight that. There is nothing to hold off for forty seconds, and the clock
+strikes six on its own. The four at the entrance are five. He is at the back, in a stationmaster's coat,
 and he waits for the others to go first, because that is what you do at the end of a shift.
 
 The PA light is off.
+
+### Wrong accusation
+He takes it as a resignation letter and does not accept it. Accusing Halvard, Kask, Vale or
+"the building" restarts Night 5, harder — he knows you are guessing now. Accusing **Walt or
+Nora** is the worst ending in the game: you have accused a missing person of their own
+disappearance, in a building that files paperwork, and their shade does not leave with the
+others.
+
+Evidence is never lost on a restart. The mystery converges; it does not reset.
 
 ### Soft fail — "3:33"
 If 6:00 passes with the routine unfinished, every clock in the building snaps to 3:33,

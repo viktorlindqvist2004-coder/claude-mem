@@ -5,6 +5,8 @@ that closed to the public in 1998 and has never, technically, closed since.
 
 Five nights. A list of handwritten rules from 1998. A manager you only ever hear.
 
+You win by working out who he is, and telling the police — with evidence.
+
 **Status:** pre-production. Design and story are being written first; the Roblox
 build follows. Nothing in `src/` is shipping code yet — it is the architectural
 skeleton the vertical slice will be built on.
@@ -20,6 +22,7 @@ skeleton the vertical slice will be built on.
 | [`docs/05-art-direction.md`](docs/05-art-direction.md) | How to get genuinely realistic visuals out of Roblox. |
 | [`docs/06-audio-direction.md`](docs/06-audio-direction.md) | Voice, music-as-mechanic, mix. |
 | [`docs/07-technical-architecture.md`](docs/07-technical-architecture.md) | Rojo/Luau structure, services, networking, anti-cheat. |
+| [`docs/09-the-investigation.md`](docs/09-the-investigation.md) | The mystery: seven suspects, twenty-two clues, the detective, and how you win. |
 | [`docs/08-roadmap.md`](docs/08-roadmap.md) | Milestones from greybox to soft launch. |
 
 ## Naming: original → shipping
@@ -39,6 +42,10 @@ The concept was written in Swedish. Everything ships in English.
 | — (new) | **Northmoor**, the town |
 | — (new) | **Lantern Staffing**, the agency that places you |
 | — (new) | **Elias Wren**, the name on the clock |
+| — (new) | **DS Ruth Calder**, Northmoor Police |
+| — (new) | **Eric Halvard**, the developer |
+| — (new) | **Margaret Vale**, centre manager 1986–1998 |
+| — (new) | **Ivor Kask**, "night manager" for six weeks in 1989 |
 
 ## Layout
 

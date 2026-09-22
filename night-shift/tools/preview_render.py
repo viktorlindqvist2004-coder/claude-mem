@@ -222,9 +222,14 @@ def build_interior(at, d, side, right, t, width, kind, state, rng, model_lat, so
         d(0.8, 1.0, rng.uniform(2.0, 3.6)), "counter")
 
     if state == "trading":
-        # A unit that still trades has left something on inside.
-        light(at(model_lat + side * 4.5, 2.6, t), (255, 232, 196), 3.4, 11.0)
-        box(at(model_lat + side * 4.5, soffit - 0.9, t), d(2.2, 0.12, 3.0), "trim")
+        # A unit that still trades has left the display lighting on.
+        light(at(model_lat + side * 4.0, 2.7, t), (255, 232, 196), 5.2, 14.0)
+        box(at(model_lat + side * 4.0, soffit - 0.9, t), d(2.4, 0.12, 3.2), "trim")
+    elif rng.random() < 0.62:
+        # Everything else keeps a security light burning at the back, which is
+        # why you can see the racks at all.
+        light(at(model_lat + side * rng.uniform(6.0, 9.5), 2.5, t),
+              (236, 232, 222), 1.5, 9.0)
 
 
 # ── The wing ────────────────────────────────────────────────────────────────
@@ -339,15 +344,17 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
             elif state == "shutter_half":
                 box(at(lat - side * 0.30, glass_h * 0.70 + 0.35, t),
                     d(0.16, glass_h * 0.60, width - 0.9), "shutter")
-                box(at(lat - side * 0.32, glass_h * 0.20, t),
-                    d(0.10, glass_h * 0.40, width - 0.9), "glass")
+                nm = max(1, int(width // 2.6))
+                for m in range(nm):
+                    box(at(lat - side * 0.34, glass_h * 0.20,
+                           t + (m / nm - 0.42) * (width - 0.9)),
+                        d(0.12, glass_h * 0.40, 0.10), "metal")
             elif state == "hoarded":
                 box(at(lat - side * 0.28, glass_h / 2 + 0.2, t),
                     d(0.14, glass_h, width - 0.9), "hoard")
             else:
-                # Glazing you can see through, with mullions every 2.5 m or so.
-                box(at(lat - side * 0.32, glass_h / 2 + 0.2, t),
-                    d(0.10, glass_h, width - 0.9), "glass")
+                # No pane. At night the glass is invisible and the interior is
+                # what you see; the mullions and sill do the framing.
                 n_mul = max(1, int(width // 2.6))
                 for m in range(n_mul):
                     box(at(lat - side * 0.36, glass_h / 2 + 0.2,
@@ -366,10 +373,9 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
     # ATM lobby. This is what stops a mall reading as a corridor.
     for kt in (-WING_LEN * 0.34, -WING_LEN * 0.02, WING_LEN * 0.27):
         kt += float(rng.uniform(-4, 4))
-        klat = float(rng.uniform(-1.0, 1.0)) * (HALF_VOID - 1.2)
-        box(at(klat, 1.25, kt), d(3.0, 2.5, 4.4), "trim")
-        box(at(klat, 2.62, kt), d(4.2, 0.24, 5.6), "metal")
-        box(at(klat, 1.55, kt), d(3.16, 1.5, 4.56), "glass")
+        klat = float(rng.choice([-1, 1])) * float(rng.uniform(HALF_VOID + 1.4, WALK_OUT - 2.4))
+        box(at(klat, 1.05, kt), d(2.6, 2.1, 3.8), "trim")
+        box(at(klat, 2.30, kt), d(3.6, 0.20, 4.8), "metal")
 
     # ── A seating court where the mall widens out, roughly halfway down.
     court = float(rng.uniform(-0.1, 0.25)) * WING_LEN
@@ -784,7 +790,7 @@ if __name__ == "__main__":
     EYE = 1.68
     # Ground floor, standing in the void, looking down the wing and up through
     # three floors of balcony to the roof glazing sixteen metres above.
-    render("01_the_wing", [0.8, EYE, 26], [0.2, EYE + 7.5, 86], fov=76)
+    render("01_the_wing", [-1.9, EYE, 25], [-0.4, EYE + 5.2, 92], fov=74)
     # Floor 1, at the balustrade, looking down into the void and along the wing.
     render("02_the_void", [4.4, 5.2 + EYE, 44], [0.0, -0.4, 66], fov=72)
     # The service corridor behind the units, on a torch. The opposite of the

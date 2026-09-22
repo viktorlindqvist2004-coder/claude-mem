@@ -119,6 +119,18 @@ def bulkhead(pos, facing, intensity=2.4):
     light(np.asarray(pos) + n * 0.26, RED, intensity, 9.0)
 
 
+def downlight(pos, dead=False, rgb=RED, intensity=1.9):
+    """Recessed in the soffit, pointing down. A pool on the floor reads as
+    lighting; a red rectangle on a wall reads as a sign."""
+    box(pos, (0.42, 0.14, 0.42), "metal")
+    if dead:
+        box(np.asarray(pos) - np.array([0, 0.06, 0]), (0.30, 0.05, 0.30), "trim")
+        return
+    box(np.asarray(pos) - np.array([0, 0.06, 0]), (0.30, 0.05, 0.30), "sign",
+        emissive=tuple(0.62 * v / 255.0 for v in rgb))
+    light(np.asarray(pos) - np.array([0, 0.35, 0]), rgb, intensity, 8.5)
+
+
 def neon_sign(pos, facing, rgb):
     n = np.asarray(facing, float)
     size = (3.4 * abs(n[2]) + 0.12, 0.42, 3.4 * abs(n[0]) + 0.12)
@@ -225,11 +237,18 @@ def build_interior(at, d, side, right, t, width, kind, state, rng, model_lat, so
         # A unit that still trades has left the display lighting on.
         light(at(model_lat + side * 4.0, 2.7, t), (255, 232, 196), 5.2, 14.0)
         box(at(model_lat + side * 4.0, soffit - 0.9, t), d(2.4, 0.12, 3.2), "trim")
-    elif rng.random() < 0.62:
-        # Everything else keeps a security light burning at the back, which is
-        # why you can see the racks at all.
-        light(at(model_lat + side * rng.uniform(6.0, 9.5), 2.5, t),
-              (236, 232, 222), 1.5, 9.0)
+    elif rng.random() < 0.78:
+        # Everything else keeps a security light burning at the back. This is
+        # the main ambient in a closed mall, and because every unit is a
+        # different width with a different lamp in a different place, it is
+        # what stops one stretch of the wing looking like the next.
+        warm = rng.random()
+        tint = ((248, 236, 208) if warm > 0.55 else
+                (222, 230, 244) if warm > 0.2 else (236, 232, 222))
+        for _ in range(int(rng.integers(1, 3))):
+            light(at(model_lat + side * rng.uniform(4.5, 10.0), rng.uniform(2.2, 2.9),
+                     t + rng.uniform(-0.3, 0.3) * width),
+                  tint, float(rng.uniform(0.9, 2.6)), 10.0)
 
 
 # ── The wing ────────────────────────────────────────────────────────────────
@@ -407,10 +426,22 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
 
     # ── The red circuit. Bulkheads carry the working light; EXIT signs mark
     # actual exits and nothing else — there were far too many of them before.
-    for i in range(int(WING_LEN // BULKHEAD_SPACING) + 1):
-        t = -WING_LEN / 2 + BULKHEAD_SPACING * i
-        for side in (-1, 1):
-            bulkhead(at(side * (WALK_OUT - 0.55), BULKHEAD_HEIGHT, t), -right * side)
+    # Downlights in the soffit, at irregular intervals, and roughly a third of
+    # them dead. Nothing here is on a fixed pitch.
+    for side in (-1, 1):
+        t = -WING_LEN / 2 + float(rng.uniform(1.5, 5.0))
+        while t < WING_LEN / 2 - 1.5:
+            lat = side * float(rng.uniform(HALF_VOID + 1.1, WALK_OUT - 1.1))
+            dead = bool(rng.random() < 0.34)
+            downlight(at(lat, soffit - 0.14, t), dead=dead,
+                      intensity=float(rng.uniform(1.3, 2.6)))
+            t += float(rng.uniform(4.5, 11.0))
+
+    # A handful of wall bulkheads, at structural points only.
+    for i in range(3):
+        t = (-0.36 + i * 0.36) * WING_LEN + float(rng.uniform(-5, 5))
+        side = int(rng.choice([-1, 1]))
+        bulkhead(at(side * (WALK_OUT - 0.55), BULKHEAD_HEIGHT, t), -right * side)
     for t, side in ((-WING_LEN / 2 + 2.0, 1), (0.0, -1), (WING_LEN / 2 - 2.0, 1)):
         exit_sign(at(side * (WALK_OUT - 0.5), EXIT_HEIGHT, t), -right * side)
     exit_sign(at(0, EXIT_HEIGHT + 0.9, WING_LEN / 2 - 1.2), -fwd)

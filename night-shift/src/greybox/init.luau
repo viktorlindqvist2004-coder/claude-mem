@@ -77,6 +77,19 @@ local function exitSign(position: Vector3, facing: Vector3, parent: Instance)
 	light.Parent = sign
 end
 
+local function bulkhead(position: Vector3, facing: Vector3, parent: Instance)
+	-- Red emergency bulkhead. Dim, caged, and it hums -- see Config.HUM.
+	local fitting = part("Bulkhead", Vector3.new(1.4, 1.0, 0.6),
+		CFrame.lookAt(position, position + facing), MallLayout.EXIT_SIGN.color, parent)
+
+	local pl = Instance.new("PointLight")
+	pl.Color = MallLayout.EXIT_SIGN.color
+	pl.Range = s(9)
+	pl.Brightness = 1.35
+	pl.Shadows = false
+	pl.Parent = fitting
+end
+
 local function neonSign(position: Vector3, facing: Vector3, hue: Color3, parent: Instance)
 	local sign = part("NeonSign", Vector3.new(9, 1.6, 0.3), CFrame.lookAt(position, position + facing), hue, parent)
 
@@ -89,10 +102,16 @@ local function neonSign(position: Vector3, facing: Vector3, hue: Color3, parent:
 end
 
 --[[
-	One wing: a corridor with unit blocks either side, running `forward` from
-	`origin` (the atrium edge), at the given floor elevation.
+	One wing. Not a corridor — a 6 m void slot down the centre with 5 m walkways
+	either side, units behind those, and the service corridor behind the units:
+
+	    6 m void  |  5 m walkway  |  12 m unit  |  2.4 m service
+
+	The void is open from the ground floor to the roof glazing sixteen metres up,
+	so three floors of balcony overlook every point of the ground floor. Back of
+	house is the opposite: 2.4 m wide, 2.45 m ceiling, cinderblock.
 ]]
-local function buildWing(w: MallLayout.Wing, origin: Vector3, forward: Vector3, parent: Instance)
+local function buildWing(w: MallLayout.Wing, origin: Vector3, forward: Vector3, isGround: boolean, parent: Instance)
 	local cfg = MallLayout.WING
 	local model = Instance.new("Model")
 	model.Name = w.name
@@ -100,80 +119,107 @@ local function buildWing(w: MallLayout.Wing, origin: Vector3, forward: Vector3, 
 
 	local right = Vector3.new(forward.Z, 0, -forward.X)
 	local length = s(cfg.length)
-	local corridor = s(cfg.corridorWidth)
-	local unitDepth = s(cfg.unitDepth)
-	local ceiling = s(MallLayout.RETAIL_CEILING)
+	local halfVoid = s(cfg.voidWidth) / 2
+	local walkOut = s(cfg.voidWidth / 2 + cfg.walkwayWidth)
+	local unitOut = walkOut + s(cfg.unitDepth)
+	local servOut = unitOut + s(cfg.serviceWidth)
+	local soffit = s(MallLayout.RETAIL_CEILING)
+	local servCeil = s(MallLayout.SERVICE_CEILING)
 	local slab = s(MallLayout.SLAB_THICKNESS)
-	local totalWidth = corridor + unitDepth * 2
 
 	local centre = origin + forward * (length / 2)
 	local orient = CFrame.lookAt(Vector3.zero, forward).Rotation
 
-	-- Slab and ceiling run the full width, including under the units.
-	part("Slab", Vector3.new(totalWidth, slab, length),
-		CFrame.new(centre - Vector3.new(0, slab / 2, 0)) * orient, COLOR.slab, model)
-	part("Ceiling", Vector3.new(totalWidth, slab, length),
-		CFrame.new(centre + Vector3.new(0, ceiling, 0)) * orient, COLOR.ceiling, model)
-
-	-- Shopfronts. A fitted-out floor gets unit bays; Floor 3 is a bare shell.
-	local floorDef: MallLayout.Floor? = nil
-	for _, f in MallLayout.FLOORS do
-		if f.id == w.floor then
-			floorDef = f
-		end
+	local function at(lateral: number, height: number, along: number?): CFrame
+		return CFrame.new(centre + right * lateral + forward * (along or 0) + Vector3.new(0, height, 0)) * orient
 	end
 
-	if floorDef and floorDef.fitOut then
-		local frontage = length / cfg.unitsPerSide
-		local tradingLeft = w.tradingUnits
-
-		for side = -1, 1, 2 do
-			local lateral = right * (side * (corridor / 2))
-			for i = 1, cfg.unitsPerSide do
-				local along = forward * (-length / 2 + frontage * (i - 0.5))
-				local bayCentre = centre + along + lateral
-
-				part("Shopfront", Vector3.new(0.6, ceiling, frontage),
-					CFrame.new(bayCentre + Vector3.new(0, ceiling / 2, 0)) * orient, COLOR.shopfront, model)
-				part("Glazing", Vector3.new(0.2, ceiling * 0.8, frontage * 0.86),
-					CFrame.new(bayCentre + Vector3.new(0, ceiling * 0.45, 0) - right * (side * 0.4)) * orient,
-					COLOR.glazing, model)
-
-				-- Eleven units in the whole building are still trading.
-				if tradingLeft > 0 and i % 3 == 1 then
-					tradingLeft -= 1
-					neonSign(bayCentre + Vector3.new(0, ceiling * 0.86, 0) - right * (side * 0.9),
-						-right * side, w.hueColor, model)
-				end
+	-- Decks. The ground floor is solid across; above it the void is open and only
+	-- the walkways and units have floor.
+	if isGround then
+		part("Slab", Vector3.new(servOut * 2, slab, length), at(0, -slab / 2), COLOR.slab, model)
+	else
+		local strip = servOut - halfVoid
+		for _, side in { -1, 1 } do
+			part("Deck", Vector3.new(strip, slab, length),
+				at(side * (halfVoid + strip / 2), -slab / 2), COLOR.slab, model)
+		end
+		-- Two bridges across the void: the crew can cross, and be exposed doing it.
+		for _, t in { -length * 0.22, length * 0.30 } do
+			part("Bridge", Vector3.new(halfVoid * 2, slab, s(3.2)), at(0, -slab / 2, t), COLOR.slab, model)
+			for _, e in { -1, 1 } do
+				part("BridgeRail", Vector3.new(halfVoid * 2, s(1.12), 0.35),
+					at(0, s(0.56), t + e * s(1.6)), COLOR.balustrade, model)
 			end
-
-			-- Outer wall of the unit block.
-			part("OuterWall", Vector3.new(0.6, ceiling, length),
-				CFrame.new(centre + right * (side * (corridor / 2 + unitDepth)) + Vector3.new(0, ceiling / 2, 0)) * orient,
-				COLOR.wall, model)
+		end
+		-- Balustrade along the void.
+		for _, side in { -1, 1 } do
+			part("Balustrade", Vector3.new(0.35, s(1.12), length), at(side * halfVoid, s(0.56)), COLOR.balustrade, model)
+			part("Handrail", Vector3.new(0.75, 0.35, length), at(side * halfVoid, s(1.14)), COLOR.balustrade, model)
 		end
 	end
 
-	-- End cap.
-	part("EndWall", Vector3.new(totalWidth, ceiling, 0.6),
-		CFrame.new(centre + forward * (length / 2) + Vector3.new(0, ceiling / 2, 0)) * orient, COLOR.wall, model)
+	-- Soffit over the walkways and units. The void has no ceiling at all.
+	for _, side in { -1, 1 } do
+		local strip = servOut - halfVoid
+		part("Soffit", Vector3.new(strip, slab, length), at(side * (halfVoid + strip / 2), soffit), COLOR.ceiling, model)
+		part("OuterWall", Vector3.new(0.6, soffit, length), at(side * servOut, soffit / 2), COLOR.wall, model)
+		part("UnitBackWall", Vector3.new(0.5, servCeil, length), at(side * unitOut, servCeil / 2), COLOR.wall, model)
+		part("ServiceCeiling", Vector3.new(s(cfg.serviceWidth), slab, length),
+			at(side * (unitOut + s(cfg.serviceWidth) / 2), servCeil), COLOR.ceiling, model)
+	end
 
-	-- EXIT signs down the corridor, alternating sides, plus one at the far end.
-	-- Floor 3 gets none: no units, no signage, no red glow, no sound.
-	if not (floorDef and floorDef.fitOut) then
+	part("EndWall", Vector3.new(servOut * 2, soffit, 0.6), at(0, soffit / 2, length / 2), COLOR.wall, model)
+
+	if not w.fitted then
 		return
 	end
 
+	-- Shopfronts, and a back door into the service corridor behind each unit.
+	local frontage = length / cfg.unitsPerSide
+	local glassH = soffit - s(1.1)
+	local trading = w.tradingUnits
+
+	for _, side in { -1, 1 } do
+		for i = 1, cfg.unitsPerSide do
+			local t = -length / 2 + frontage * (i - 0.5)
+			local lat = side * walkOut
+			local isTrading = trading > 0 and i % 3 == 1
+			if isTrading then
+				trading -= 1
+			end
+
+			part("Fascia", Vector3.new(0.75, s(1.1), frontage), at(lat, soffit - s(0.55), t), COLOR.shopfront, model)
+			for _, e in { -1, 1 } do
+				part("Pilaster", Vector3.new(0.9, glassH, 0.6),
+					at(lat, glassH / 2 + s(0.2), t + e * frontage / 2), COLOR.shopfront, model)
+			end
+			part("Glazing", Vector3.new(0.2, glassH, frontage - s(0.8)),
+				at(lat - side * 0.35, glassH / 2 + s(0.2), t), COLOR.glazing, model)
+			part("BackDoor", Vector3.new(0.3, s(2.05), s(0.95)), at(side * (unitOut - s(0.2)), s(1.02), t), COLOR.escalator, model)
+
+			if isTrading then
+				neonSign(at(lat - side * 0.9, soffit - s(0.62), t).Position, -right * side, w.hueColor, model)
+			end
+		end
+	end
+
+	-- The red circuit: bulkheads every 11 m, EXIT signs every 22 m.
+	local bulkSpacing = s(MallLayout.EXIT_SIGN.spacingAlongWing / 2)
+	for i = 0, math.floor(length / bulkSpacing) do
+		local t = -length / 2 + bulkSpacing * i
+		for _, side in { -1, 1 } do
+			bulkhead(at(side * (walkOut - 0.6), s(2.62), t).Position, -right * side, model)
+		end
+	end
+
 	local spacing = s(MallLayout.EXIT_SIGN.spacingAlongWing)
-	local signHeight = s(MallLayout.EXIT_SIGN.height)
-	local count = math.floor(length / spacing)
-	for i = 0, count do
+	for i = 0, math.floor(length / spacing) do
 		local side = if i % 2 == 0 then 1 else -1
-		local along = forward * (-length / 2 + spacing * i)
-		exitSign(centre + along + right * (side * (corridor / 2 - 1)) + Vector3.new(0, signHeight, 0),
+		exitSign(at(side * (walkOut - 0.5), s(MallLayout.EXIT_SIGN.height), -length / 2 + spacing * i).Position,
 			-right * side, model)
 	end
-	exitSign(centre + forward * (length / 2 - 1) + Vector3.new(0, signHeight, 0), -forward, model)
+	exitSign(at(0, s(MallLayout.EXIT_SIGN.height), length / 2 - 0.5).Position, -forward, model)
 end
 
 local function buildAtrium(parent: Instance)
@@ -325,7 +371,7 @@ function Greybox.build()
 		if floor.fitOut then
 			for _, w in MallLayout.wingsOn(floor.id) do
 				local d = directions[w.direction]
-				buildWing(w, d.edge + Vector3.new(0, y, 0), d.forward, floorFolder)
+				buildWing(w, d.edge + Vector3.new(0, y, 0), d.forward, floor.id == "G", floorFolder)
 			end
 		else
 			-- Floor 3. Bare screed, no units, no signage, no sound.
@@ -337,8 +383,9 @@ function Greybox.build()
 					hue = "none",
 					hueColor = Color3.new(0, 0, 0),
 					tradingUnits = 0,
+					fitted = false,
 				}
-				buildWing(shell, d.edge + Vector3.new(0, y, 0), d.forward, floorFolder)
+				buildWing(shell, d.edge + Vector3.new(0, y, 0), d.forward, false, floorFolder)
 			end
 		end
 	end

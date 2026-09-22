@@ -2,17 +2,20 @@
 """
 preview_render.py — offline previews of the Northlight Galleria.
 
-Builds the geometry described by MallLayout.luau, dresses it with the fixtures
-and clutter a real mall corridor carries, and path-traces it with the art
-direction's lighting model: no general lighting, a red emergency circuit, rare
-neon, shadow-casting lights, contact darkening, procedural surface grime, a
-polished floor, dusty haze, ACES tone mapping, bloom, grain, vignette.
+Builds the geometry described by MallLayout.luau, dresses it, and path-traces it
+with the art direction's lighting model: no general lighting, a red emergency
+circuit, rare neon, shadow-casting lights, contact darkening, procedural grime,
+a polished floor, dusty haze, ACES tone mapping, bloom, grain, vignette.
 
-This is NOT the game and it is not a screenshot. It is a way to judge scale,
-density and lighting before Roblox Studio is involved. It renders boxes, so it
-will never be photoreal — photoreal comes from PBR materials in Studio. What it
-can tell you is whether the space is the right size and the right darkness, and
-whether there is enough in it.
+A wing is not a corridor. Down the centre of every wing runs a 6 m void slot,
+open from the ground floor to the roof glazing sixteen metres up, with 5 m
+walkways either side and three floors of balcony looking down into it. Behind
+the units runs the service corridor: 2.4 m wide, 2.45 m ceiling, cinderblock.
+The contrast between the two is the point.
+
+This is NOT the game and not a screenshot. It renders boxes, so it will never be
+photoreal — that comes from PBR materials in Studio. What it can tell you is
+whether the space is the right size and the right darkness.
 
     pip install numpy pillow
     python3 tools/preview_render.py
@@ -25,16 +28,21 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 # ── Layout, in metres. Mirrors src/shared/MallLayout.luau ───────────────────
-FLOOR_TO_FLOOR, RETAIL_CEILING, SLAB = 4.6, 3.2, 0.4
-ATRIUM_W, ATRIUM_D, ATRIUM_H = 60.0, 40.0, 16.0
-WING_LEN, CORRIDOR_W, UNIT_DEPTH, UNITS_PER_SIDE = 110.0, 9.0, 12.0, 7
+FLOOR_TO_FLOOR, RETAIL_CEILING, SLAB, SERVICE_CEILING = 5.2, 4.4, 0.45, 2.45
+ATRIUM_W, ATRIUM_D, ATRIUM_H = 60.0, 40.0, 16.6
+WING_LEN = 110.0
+VOID_W, WALKWAY_W, UNIT_DEPTH, SERVICE_W = 6.0, 5.0, 12.0, 2.4
+UNITS_PER_SIDE = 7
 EXIT_SPACING, EXIT_HEIGHT = 22.0, 2.3
 BULKHEAD_SPACING, BULKHEAD_HEIGHT = 11.0, 2.62
 
-FLOORS = [("G", 0.0, True), ("F1", 4.6, True), ("F2", 9.2, True), ("F3", 13.8, False)]
+HALF_VOID = VOID_W / 2                       # 3.0
+WALK_OUT = HALF_VOID + WALKWAY_W             # 8.0  shopfront line
+UNIT_OUT = WALK_OUT + UNIT_DEPTH             # 20.0 back-of-unit wall
+SERV_OUT = UNIT_OUT + SERVICE_W              # 22.4 outer envelope
 
-# Eleven units still trade. Everything else is shuttered or hoarded, and the
-# whole building runs on the red emergency circuit.
+FLOORS = [("G", 0.0, True), ("F1", 5.2, True), ("F2", 10.4, True), ("F3", 15.6, False)]
+
 WINGS = {
     ("G", "N"): ((255, 60, 190), 2), ("G", "E"): ((40, 220, 255), 3),
     ("G", "S"): ((255, 170, 40), 2), ("G", "W"): ((80, 255, 140), 1),
@@ -54,20 +62,14 @@ DIRS = {
 RED = (255, 28, 22)
 
 MAT = {
-    "floor": (0.21, 0.205, 0.20),
-    "ceiling": (0.15, 0.148, 0.145),
-    "wall": (0.28, 0.275, 0.265),
-    "front": (0.19, 0.185, 0.18),
-    "glass": (0.035, 0.038, 0.045),
-    "shutter": (0.16, 0.16, 0.165),
-    "hoard": (0.23, 0.22, 0.20),
-    "metal": (0.30, 0.30, 0.31),
-    "rail": (0.34, 0.34, 0.35),
-    "seat": (0.17, 0.155, 0.14),
-    "plant": (0.10, 0.14, 0.09),
-    "brass": (0.36, 0.28, 0.13),
-    "sign": (0.26, 0.03, 0.03),
-    "trim": (0.24, 0.235, 0.23),
+    "floor": (0.215, 0.21, 0.205), "ceiling": (0.15, 0.148, 0.145),
+    "wall": (0.28, 0.275, 0.265), "front": (0.19, 0.185, 0.18),
+    "glass": (0.035, 0.038, 0.045), "shutter": (0.16, 0.16, 0.165),
+    "hoard": (0.23, 0.22, 0.20), "metal": (0.30, 0.30, 0.31),
+    "rail": (0.34, 0.34, 0.35), "seat": (0.17, 0.155, 0.14),
+    "plant": (0.10, 0.14, 0.09), "brass": (0.36, 0.28, 0.13),
+    "sign": (0.26, 0.03, 0.03), "trim": (0.24, 0.235, 0.23),
+    "block": (0.25, 0.245, 0.235),  # painted cinderblock, back of house
 }
 
 boxes, lights = [], []
@@ -85,181 +87,204 @@ def light(pos, rgb, intensity, radius):
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
-def exit_sign(pos, facing):
-    """Emergency circuit. Always on, everywhere. The mall's grammar."""
+def exit_sign(pos, facing, scale=1.0):
     n = np.asarray(facing, float)
-    lateral = 0.62
-    size = (lateral * abs(n[2]) + 0.10, 0.26, lateral * abs(n[0]) + 0.10)
+    w = 0.62 * scale
+    size = (w * abs(n[2]) + 0.10, 0.26 * scale, w * abs(n[0]) + 0.10)
     box(np.asarray(pos) + n * 0.05, size, "sign", emissive=(1.55, 0.055, 0.04))
-    box(pos, (size[0] + 0.07, 0.34, size[2] + 0.07), "metal")
+    box(pos, (size[0] + 0.07, 0.34 * scale, size[2] + 0.07), "metal")
     light(np.asarray(pos) + n * 0.30, RED, 0.85, 7.0)
 
 
-def bulkhead(pos, facing):
+def bulkhead(pos, facing, intensity=1.35):
     """Red emergency bulkhead. Dim, caged, and it hums."""
     n = np.asarray(facing, float)
     size = (0.34 * abs(n[2]) + 0.16, 0.20, 0.34 * abs(n[0]) + 0.16)
     box(np.asarray(pos) + n * 0.04, size, "sign", emissive=(0.95, 0.045, 0.035))
     box(pos, (size[0] + 0.09, 0.30, size[2] + 0.09), "metal")
-    light(np.asarray(pos) + n * 0.26, RED, 1.35, 9.0)
+    light(np.asarray(pos) + n * 0.26, RED, intensity, 9.0)
 
 
 def neon_sign(pos, facing, rgb):
-    """Rare. Eleven units in the whole building still trade."""
     n = np.asarray(facing, float)
     size = (3.4 * abs(n[2]) + 0.12, 0.42, 3.4 * abs(n[0]) + 0.12)
     e = tuple(1.25 * v / 255.0 for v in rgb)
     box(np.asarray(pos) + n * 0.06, size, "sign", emissive=e)
     box(pos, (size[0] + 0.5, 0.78, size[2] + 0.5), "trim")
-    light(np.asarray(pos) + n * 0.5, rgb, 3.0, 13.0)
+    light(np.asarray(pos) + n * 0.5, rgb, 3.2, 14.0)
 
 
-# ── Dressing ────────────────────────────────────────────────────────────────
+# ── The wing ────────────────────────────────────────────────────────────────
 
-def ceiling_detail(centre, fwd, right, y, length, width):
-    """Tile grid battens, linear diffuser troughs and air grilles."""
-    def d(w, h, l):
-        return np.abs(right * w + np.array([0, h, 0]) + fwd * l) + 1e-6
-
-    for i in range(int(length // 3.0) + 1):
-        along = fwd * (-length / 2 + 3.0 * i)
-        box(centre + along + [0, y - 0.06, 0], d(width, 0.09, 0.14), "trim")
-    for i in range(int(length // 7.0) + 1):
-        along = fwd * (-length / 2 + 3.5 + 7.0 * i)
-        box(centre + along + [0, y - 0.10, 0], d(1.1, 0.14, 0.55), "metal")
-    for side in (-1, 1):
-        box(centre + right * (side * (width / 2 - 0.35)) + [0, y - 0.07, 0],
-            d(0.5, 0.11, length), "trim")
-
-
-def corridor_dressing(centre, fwd, right, elevation, length):
-    """Benches, bins, planters, stanchions, trolleys, a directory totem."""
-    def d(w, h, l):
-        return np.abs(right * w + np.array([0, h, 0]) + fwd * l) + 1e-6
-
-    n = int(length // 11.0)
-    for i in range(n):
-        t = -length / 2 + 8.0 + 11.0 * i
-        along = fwd * t
-        side = 1 if i % 2 == 0 else -1
-        base = centre + along + [0, elevation, 0]
-
-        if i % 3 == 0:
-            seat = base + right * (side * 1.5)
-            box(seat + [0, 0.44, 0], d(0.62, 0.09, 2.0), "seat")
-            for e in (-0.8, 0.8):
-                box(seat + fwd * e + [0, 0.21, 0], d(0.5, 0.42, 0.10), "metal")
-        elif i % 3 == 1:
-            bin_p = base + right * (side * 1.9)
-            box(bin_p + [0, 0.42, 0], d(0.46, 0.84, 0.46), "metal")
-            box(bin_p + [0, 0.88, 0], d(0.52, 0.09, 0.52), "trim")
-        else:
-            pot = base + right * (side * 1.7)
-            box(pot + [0, 0.32, 0], d(0.95, 0.64, 0.95), "trim")
-            box(pot + [0, 0.95, 0], d(0.75, 0.66, 0.75), "plant")
-
-        if i % 2 == 0:
-            for e in (-1, 1):
-                box(base + right * (e * 3.1) + [0, 0.5, 0], d(0.10, 1.0, 0.10), "metal")
-
-    # A directory totem a third of the way down, and two abandoned trolleys.
-    tot = centre + fwd * (-length / 2 + length * 0.34) + [0, elevation, 0]
-    box(tot + [0, 1.05, 0], d(0.16, 2.1, 0.9), "trim")
-    box(tot + [0, 1.45, 0] + right * 0.09, d(0.06, 1.1, 0.72), "glass")
-
-    for k, (t, off) in enumerate(((-length * 0.18, -2.4), (length * 0.29, 2.7))):
-        tr = centre + fwd * t + right * off + [0, elevation, 0]
-        box(tr + [0, 0.52, 0], d(0.56, 0.64, 0.92), "metal")
-        box(tr + [0, 0.14, 0], d(0.5, 0.1, 0.86), "metal")
-
-
-# ── Wings ───────────────────────────────────────────────────────────────────
-
-def build_wing(floor_id, key, elevation, fitted):
+def build_wing(floor_id, key, elevation, fitted, is_ground):
     fwd, right = DIRS[key]
     origin = fwd * (ATRIUM_D / 2 if key in "NS" else ATRIUM_W / 2)
     centre = origin + fwd * (WING_LEN / 2) + np.array([0, elevation, 0])
-    total_w = CORRIDOR_W + UNIT_DEPTH * 2
 
     def d(w, h, l):
         return np.abs(right * w + np.array([0, h, 0]) + fwd * l) + 1e-6
 
-    box(centre - [0, SLAB / 2, 0], d(total_w, SLAB, WING_LEN), "floor", floor=True)
-    box(centre + [0, RETAIL_CEILING, 0], d(total_w, SLAB, WING_LEN), "ceiling")
-    box(centre + fwd * (WING_LEN / 2) + [0, RETAIL_CEILING / 2, 0],
-        d(total_w, RETAIL_CEILING, 0.6), "wall")
+    def at(lateral, height, along=0.0):
+        return centre + right * lateral + fwd * along + np.array([0, height, 0])
+
+    soffit = RETAIL_CEILING
+
+    # ── Decks. The ground floor is solid across; above it, the void is open and
+    # only the walkways and the units have floor.
+    if is_ground:
+        box(at(0, -SLAB / 2), d(SERV_OUT * 2, SLAB, WING_LEN), "floor", floor=True)
+    else:
+        for side in (-1, 1):
+            strip = (SERV_OUT - HALF_VOID)
+            box(at(side * (HALF_VOID + strip / 2), -SLAB / 2),
+                d(strip, SLAB, WING_LEN), "floor", floor=True)
+        # Two bridges across the void, so the crew can cross and be exposed.
+        for t in (-WING_LEN * 0.22, WING_LEN * 0.30):
+            box(at(0, -SLAB / 2, t), d(VOID_W, SLAB, 3.2), "floor", floor=True)
+            for e in (-1, 1):
+                box(at(0, 0.56, t + e * 1.6), d(VOID_W, 1.12, 0.10), "glass")
+                box(at(0, 1.14, t + e * 1.6), d(VOID_W, 0.10, 0.22), "rail")
+
+    # ── Soffit over each walkway and unit block; the void has no ceiling.
+    for side in (-1, 1):
+        strip = SERV_OUT - HALF_VOID
+        box(at(side * (HALF_VOID + strip / 2), soffit),
+            d(strip, 0.3, WING_LEN), "ceiling")
+
+    # ── Balustrade along the void, with the crew's-eye view straight down.
+    if not is_ground:
+        for side in (-1, 1):
+            box(at(side * HALF_VOID, 0.56), d(0.10, 1.12, WING_LEN), "glass")
+            box(at(side * HALF_VOID, 1.14), d(0.22, 0.10, WING_LEN), "rail")
+            box(at(side * HALF_VOID, 0.03), d(0.28, 0.16, WING_LEN), "trim")
+
+    # ── Outer envelope and the service corridor behind the units.
+    for side in (-1, 1):
+        box(at(side * SERV_OUT, soffit / 2), d(0.6, soffit, WING_LEN), "block")
+        box(at(side * UNIT_OUT, SERVICE_CEILING / 2), d(0.5, SERVICE_CEILING, WING_LEN), "block")
+        box(at(side * (UNIT_OUT + SERVICE_W / 2), SERVICE_CEILING),
+            d(SERVICE_W, 0.3, WING_LEN), "ceiling")
+        # Bare fittings back here, and most of them are dead.
+        for i in range(int(WING_LEN // 14) + 1):
+            t = -WING_LEN / 2 + 14 * i
+            if (i + side) % 3 != 0:
+                continue
+            bulkhead(at(side * (UNIT_OUT + 0.45), SERVICE_CEILING - 0.25, t),
+                     -right * side, intensity=0.55)
+
+    box(centre + fwd * (WING_LEN / 2) + np.array([0, soffit / 2, 0]),
+        d(SERV_OUT * 2, soffit, 0.6), "wall")
 
     if not fitted:
         return
 
-    ceiling_detail(centre, fwd, right, RETAIL_CEILING - SLAB / 2, WING_LEN, CORRIDOR_W)
-    corridor_dressing(centre, fwd, right, elevation, WING_LEN)
+    # ── Ceiling detail over the walkways.
+    for side in (-1, 1):
+        lat = side * (WALK_OUT + HALF_VOID) / 2
+        for i in range(int(WING_LEN // 3.0) + 1):
+            box(at(lat, soffit - 0.09, -WING_LEN / 2 + 3.0 * i),
+                d(WALKWAY_W, 0.10, 0.14), "trim")
+        for i in range(int(WING_LEN // 7.0) + 1):
+            box(at(lat, soffit - 0.13, -WING_LEN / 2 + 3.5 + 7.0 * i),
+                d(1.2, 0.16, 0.6), "metal")
 
+    # ── Shopfronts, shutters, hoardings, service doors.
     frontage = WING_LEN / UNITS_PER_SIDE
     rgb, trading = WINGS[(floor_id, key)]
     left = trading
 
     for side in (-1, 1):
-        lateral = right * (side * CORRIDOR_W / 2)
         for i in range(UNITS_PER_SIDE):
-            along = fwd * (-WING_LEN / 2 + frontage * (i + 0.5))
-            bay = centre + along + lateral
+            t = -WING_LEN / 2 + frontage * (i + 0.5)
+            lat = side * WALK_OUT
             is_trading = left > 0 and i % 3 == 0
             if is_trading:
                 left -= 1
 
-            # Shopfront: bulkhead over, pilasters either side, glazing recessed.
-            box(bay + [0, RETAIL_CEILING - 0.38, 0], d(0.75, 0.76, frontage), "front")
+            box(at(lat, soffit - 0.55, t), d(0.75, 1.10, frontage), "front")
             for e in (-1, 1):
-                box(bay + fwd * (e * frontage / 2) + [0, RETAIL_CEILING / 2, 0],
-                    d(0.85, RETAIL_CEILING, 0.55), "front")
+                box(at(lat, (soffit - 1.1) / 2 + 0.2, t + e * frontage / 2),
+                    d(0.9, soffit - 1.1, 0.6), "front")
 
-            glass_c = bay - right * (side * 0.30) + [0, 1.22, 0]
-            box(glass_c, d(0.12, 2.44, frontage - 0.75), "glass")
-            for m in (-0.28, 0.28):
-                box(bay - right * (side * 0.34) + fwd * (m * frontage) + [0, 1.22, 0],
-                    d(0.14, 2.44, 0.11), "metal")
-            box(bay - right * (side * 0.34) + [0, 0.11, 0], d(0.2, 0.22, frontage - 0.75), "trim")
+            glass_h = soffit - 1.1
+            box(at(lat - side * 0.32, glass_h / 2 + 0.2, t),
+                d(0.12, glass_h, frontage - 0.8), "glass")
+            for m in (-0.28, 0.0, 0.28):
+                box(at(lat - side * 0.36, glass_h / 2 + 0.2, t + m * frontage),
+                    d(0.14, glass_h, 0.11), "metal")
+            box(at(lat - side * 0.34, 0.12, t), d(0.22, 0.24, frontage - 0.8), "trim")
 
             if is_trading:
-                neon_sign(bay - right * (side * 0.82) + [0, RETAIL_CEILING - 0.42, 0],
-                          -right * side, rgb)
+                neon_sign(at(lat - side * 0.86, soffit - 0.62, t), -right * side, rgb)
             else:
-                # Shuttered, or hoarded over with vinyl. Some shutters are stuck
-                # part way, which is the most useful silhouette in the building.
                 mode = (i * 7 + int(abs(centre[0] + centre[2])) + side) % 3
                 if mode == 0:
-                    box(glass_c + [0, 0.62, 0], d(0.16, 1.2, frontage - 0.75), "shutter")
+                    box(at(lat - side * 0.32, glass_h * 0.72 + 0.2, t),
+                        d(0.16, glass_h * 0.56, frontage - 0.8), "shutter")
                 elif mode == 1:
-                    box(bay - right * (side * 0.30) + [0, 1.22, 0],
-                        d(0.16, 2.44, frontage - 0.75), "shutter")
+                    box(at(lat - side * 0.32, glass_h / 2 + 0.2, t),
+                        d(0.16, glass_h, frontage - 0.8), "shutter")
                 else:
-                    box(bay - right * (side * 0.30) + [0, 1.22, 0],
-                        d(0.14, 2.44, frontage - 0.75), "hoard")
+                    box(at(lat - side * 0.30, glass_h / 2 + 0.2, t),
+                        d(0.14, glass_h, frontage - 0.8), "hoard")
 
-        box(centre + right * (side * (CORRIDOR_W / 2 + UNIT_DEPTH)) + [0, RETAIL_CEILING / 2, 0],
-            d(0.6, RETAIL_CEILING, WING_LEN), "wall")
+            # Back door into the service corridor.
+            box(at(side * (UNIT_OUT - 0.2), 1.02, t), d(0.16, 2.05, 0.95), "metal")
 
-    # The red circuit: bulkheads every 11 m, EXIT signs every 22 m.
+    # ── Dressing, out on the walkways where people would actually put it.
+    n = int(WING_LEN // 11.0)
+    for i in range(n):
+        t = -WING_LEN / 2 + 8.0 + 11.0 * i
+        side = 1 if i % 2 == 0 else -1
+        lat = side * (HALF_VOID + 1.7)
+
+        if i % 3 == 0:
+            box(at(lat, 0.44, t), d(0.64, 0.09, 2.1), "seat")
+            for e in (-0.85, 0.85):
+                box(at(lat, 0.21, t + e), d(0.52, 0.42, 0.10), "metal")
+        elif i % 3 == 1:
+            box(at(lat, 0.42, t), d(0.46, 0.84, 0.46), "metal")
+            box(at(lat, 0.88, t), d(0.52, 0.09, 0.52), "trim")
+        else:
+            box(at(lat, 0.34, t), d(1.05, 0.68, 1.05), "trim")
+            box(at(lat, 1.02, t), d(0.82, 0.72, 0.82), "plant")
+
+    tot = -WING_LEN / 2 + WING_LEN * 0.34
+    box(at(HALF_VOID + 1.2, 1.1, tot), d(0.18, 2.2, 0.95), "trim")
+    box(at(HALF_VOID + 1.29, 1.52, tot), d(0.06, 1.15, 0.75), "glass")
+    for t, off in ((-WING_LEN * 0.18, -(WALK_OUT - 1.4)), (WING_LEN * 0.29, WALK_OUT - 1.9)):
+        box(at(off, 0.52, t), d(0.58, 0.64, 0.94), "metal")
+        box(at(off, 0.14, t), d(0.52, 0.10, 0.88), "metal")
+
+    # ── The red circuit.
     for i in range(int(WING_LEN // BULKHEAD_SPACING) + 1):
-        along = fwd * (-WING_LEN / 2 + BULKHEAD_SPACING * i)
+        t = -WING_LEN / 2 + BULKHEAD_SPACING * i
         for side in (-1, 1):
-            bulkhead(centre + along + right * (side * (CORRIDOR_W / 2 - 0.55))
-                     + [0, BULKHEAD_HEIGHT, 0], -right * side)
-
+            bulkhead(at(side * (WALK_OUT - 0.55), BULKHEAD_HEIGHT, t), -right * side)
     for i in range(int(WING_LEN // EXIT_SPACING) + 1):
         side = 1 if i % 2 == 0 else -1
-        along = fwd * (-WING_LEN / 2 + EXIT_SPACING * i)
-        exit_sign(centre + along + right * (side * (CORRIDOR_W / 2 - 0.5)) + [0, EXIT_HEIGHT, 0],
+        exit_sign(at(side * (WALK_OUT - 0.5), EXIT_HEIGHT, -WING_LEN / 2 + EXIT_SPACING * i),
                   -right * side)
-    exit_sign(centre + fwd * (WING_LEN / 2 - 0.5) + [0, EXIT_HEIGHT, 0], -fwd)
+    exit_sign(at(0, EXIT_HEIGHT, WING_LEN / 2 - 0.5), -fwd)
+
+
+def build_wing_roof(key):
+    """Glazing over the void slot, sixteen metres up."""
+    fwd, right = DIRS[key]
+    origin = fwd * (ATRIUM_D / 2 if key in "NS" else ATRIUM_W / 2)
+    centre = origin + fwd * (WING_LEN / 2) + np.array([0, ATRIUM_H, 0])
+    size = np.abs(right * VOID_W + np.array([0, 0.4, 0]) + fwd * WING_LEN) + 1e-6
+    box(centre, size, "glass")
+    for e in (-1, 1):
+        box(centre + right * (e * (HALF_VOID + 0.3)),
+            np.abs(right * 0.6 + np.array([0, 0.9, 0]) + fwd * WING_LEN) + 1e-6, "trim")
 
 
 def build_atrium():
     box([0, -SLAB / 2, 0], [ATRIUM_W, SLAB, ATRIUM_D], "floor", floor=True)
     box([0, ATRIUM_H, 0], [ATRIUM_W, 0.4, ATRIUM_D], "glass")
 
-    void_w, void_d = ATRIUM_W * 0.62, ATRIUM_D * 0.55
+    void_w, void_d = ATRIUM_W * 0.66, ATRIUM_D * 0.58
     dx, dz = (ATRIUM_W - void_w) / 4, (ATRIUM_D - void_d) / 4
 
     for _fid, y, _f in FLOORS:
@@ -271,38 +296,33 @@ def build_atrium():
         box([-(void_w / 2 + dx), y - SLAB / 2, 0], [dx * 2, SLAB, void_d], "floor", floor=True)
 
         for zz in (void_d / 2, -void_d / 2):
-            box([0, y + 0.52, zz], [void_w, 1.04, 0.10], "glass")
-            box([0, y + 1.07, zz], [void_w, 0.10, 0.22], "rail")
-            box([0, y + 0.02, zz], [void_w, 0.14, 0.26], "trim")
+            box([0, y + 0.56, zz], [void_w, 1.12, 0.10], "glass")
+            box([0, y + 1.14, zz], [void_w, 0.10, 0.22], "rail")
+            box([0, y + 0.03, zz], [void_w, 0.16, 0.28], "trim")
         for xx in (void_w / 2, -void_w / 2):
-            box([xx, y + 0.52, 0], [0.10, 1.04, void_d], "glass")
-            box([xx, y + 1.07, 0], [0.22, 0.10, void_d], "rail")
-            box([xx, y + 0.02, 0], [0.26, 0.14, void_d], "trim")
+            box([xx, y + 0.56, 0], [0.10, 1.12, void_d], "glass")
+            box([xx, y + 1.14, 0], [0.22, 0.10, void_d], "rail")
+            box([xx, y + 0.03, 0], [0.28, 0.16, void_d], "trim")
 
         for sx in (-1, 1):
             for sz in (-1, 1):
                 exit_sign([sx * (void_w / 2 - 1.4), y + EXIT_HEIGHT, sz * (void_d / 2 - 1.4)],
                           [-sx, 0, 0])
         for i in range(6):
-            t = -void_w / 2 + void_w * (i + 0.5) / 6
-            bulkhead([t, y + BULKHEAD_HEIGHT - 0.2, void_d / 2 + 0.3], [0, 0, -1])
+            bulkhead([-void_w / 2 + void_w * (i + 0.5) / 6, y + BULKHEAD_HEIGHT - 0.2,
+                      void_d / 2 + 0.3], [0, 0, -1])
 
-    # The capped fountain, dry since 1991.
     box([0, 0.28, 12], [9.4, 0.56, 9.4], "trim")
     box([0, 0.60, 12], [8.0, 0.16, 8.0], "metal")
 
-    # The Great Clock.
     box([0, 1.4, 0], [6.2, 2.8, 6.2], "trim")
     box([0, 2.9, 0], [5.0, 0.28, 5.0], "metal")
-    box([0, 5.7, 0], [4.4, 5.4, 1.7], "brass")
-    box([0, 6.1, -0.92], [3.4, 3.4, 0.14], "trim", emissive=(0.055, 0.05, 0.04))
-    box([0, 6.1, -1.0], [0.10, 2.3, 0.05], "metal")
-    box([0, 6.1, -1.0], [1.7, 0.10, 0.05], "metal")
-    box([0, 8.7, 0], [4.9, 0.5, 2.0], "brass")
+    box([0, 5.9, 0], [4.4, 5.6, 1.7], "brass")
+    box([0, 6.3, -0.92], [3.4, 3.4, 0.14], "trim", emissive=(0.055, 0.05, 0.04))
+    box([0, 6.3, -1.0], [0.10, 2.3, 0.05], "metal")
+    box([0, 6.3, -1.0], [1.7, 0.10, 0.05], "metal")
+    box([0, 9.0, 0], [4.9, 0.5, 2.0], "brass")
 
-    for i in range(4):
-        exit_sign([-void_w / 2 + 3 + i * (void_w - 6) / 3, EXIT_HEIGHT, -ATRIUM_D / 2 + 0.7],
-                  [0, 0, 1])
     for i in range(8):
         bulkhead([-ATRIUM_W / 2 + 4 + i * (ATRIUM_W - 8) / 7, BULKHEAD_HEIGHT + 0.6,
                   -ATRIUM_D / 2 + 0.5], [0, 0, 1])
@@ -312,7 +332,9 @@ def build():
     build_atrium()
     for fid, y, fitted in FLOORS:
         for key in "NESW":
-            build_wing(fid, key, y, fitted and (fid, key) in WINGS)
+            build_wing(fid, key, y, fitted and (fid, key) in WINGS, y == 0.0)
+    for key in "NESW":
+        build_wing_roof(key)
 
 
 # ── Renderer ────────────────────────────────────────────────────────────────
@@ -320,8 +342,7 @@ def build():
 def _slabs(orig, dirs, bmin, bmax):
     with np.errstate(divide="ignore", invalid="ignore"):
         inv = 1.0 / dirs
-        t1 = (bmin - orig) * inv
-        t2 = (bmax - orig) * inv
+        t1, t2 = (bmin - orig) * inv, (bmax - orig) * inv
     lo, hi = np.minimum(t1, t2), np.maximum(t1, t2)
     return lo.max(axis=1), hi.min(axis=1), lo
 
@@ -343,8 +364,6 @@ def trace(orig, dirs, geom, max_t=400.0):
 
 
 def occluded(orig, dirs, dist, geom):
-    """Any hit before the light: a shadow. This is what stops light bleeding
-    through walls, and it is the single biggest realism win in this renderer."""
     out = np.zeros(orig.shape[0], bool)
     for b in geom:
         tmin, tmax, _ = _slabs(orig, dirs, b[0], b[1])
@@ -358,38 +377,26 @@ def _hash(p):
 
 
 def surface(P, N, mats, albedo, bmins, bmaxs):
-    """Procedural grime. Tile grids, speckle, scuffs, and dirt where the floor
-    meets the wall — which is where 80% of perceived realism lives."""
     a = albedo.copy()
-
-    floor = mats == 0
-    if floor.any():
-        gx = np.abs((P[floor, 0] / 0.6) % 1.0 - 0.5)
-        gz = np.abs((P[floor, 2] / 0.6) % 1.0 - 0.5)
+    fl = mats == 0
+    if fl.any():
+        gx = np.abs((P[fl, 0] / 0.6) % 1.0 - 0.5)
+        gz = np.abs((P[fl, 2] / 0.6) % 1.0 - 0.5)
         line = np.clip((np.minimum(gx, gz) - 0.455) / 0.045, 0, 1)
-        speck = 0.84 + 0.32 * _hash(P[floor] * 37.0)
-        a[floor] *= ((1 - 0.5 * line) * speck)[:, None]
-
-    ceil = mats == 1
-    if ceil.any():
-        gx = np.abs((P[ceil, 0] / 0.6) % 1.0 - 0.5)
-        gz = np.abs((P[ceil, 2] / 0.6) % 1.0 - 0.5)
-        line = np.clip((np.minimum(gx, gz) - 0.44) / 0.06, 0, 1)
-        a[ceil] *= (1 - 0.42 * line)[:, None]
-
-    vert = mats >= 2
-    if vert.any():
-        h = P[vert, 1] - bmins[vert, 1]
+        a[fl] *= ((1 - 0.5 * line) * (0.84 + 0.32 * _hash(P[fl] * 37.0)))[:, None]
+    ce = mats == 1
+    if ce.any():
+        gx = np.abs((P[ce, 0] / 0.6) % 1.0 - 0.5)
+        gz = np.abs((P[ce, 2] / 0.6) % 1.0 - 0.5)
+        a[ce] *= (1 - 0.42 * np.clip((np.minimum(gx, gz) - 0.44) / 0.06, 0, 1))[:, None]
+    vt = mats >= 2
+    if vt.any():
+        h = P[vt, 1] - bmins[vt, 1]
         grime = np.clip(h / 0.55, 0, 1) * 0.45 + 0.55
         scuff = 1 - 0.13 * np.exp(-(((h - 0.92) / 0.14) ** 2))
-        noise = 0.88 + 0.24 * _hash(P[vert] * 11.0)
-        a[vert] *= (grime * scuff * noise)[:, None]
+        a[vt] *= (grime * scuff * (0.88 + 0.24 * _hash(P[vt] * 11.0)))[:, None]
 
-    # Contact darkening: within 35 cm of a box edge, in the two tangent axes.
-    to_min = P - bmins
-    to_max = bmaxs - P
-    edge = np.minimum(to_min, to_max)
-    edge = edge + np.abs(N) * 1e3
+    edge = np.minimum(P - bmins, bmaxs - P) + np.abs(N) * 1e3
     ao = np.clip(edge.min(axis=1) / 0.38, 0, 1) ** 0.55
     return a * (0.34 + 0.66 * ao)[:, None]
 
@@ -397,7 +404,7 @@ def surface(P, N, mats, albedo, bmins, bmaxs):
 MAT_ID = {"floor": 0, "ceiling": 1}
 
 
-def shade(orig, dirs, geom, lit, torch=None, bounce=True, shadows=True):
+def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True):
     n = dirs.shape[0]
     t, idx, axis = trace(orig, dirs, geom)
     hit = idx >= 0
@@ -409,19 +416,15 @@ def shade(orig, dirs, geom, lit, torch=None, bounce=True, shadows=True):
     is_floor = np.zeros(n, bool)
     mats = np.full(n, 9, np.int32)
     N = np.zeros((n, 3))
-    bmins = np.zeros((n, 3))
-    bmaxs = np.ones((n, 3))
+    bmins, bmaxs = np.zeros((n, 3)), np.ones((n, 3))
 
     for i, (bmin, bmax, alb, mat, emi, flr) in enumerate(geom):
         m = idx == i
         if not m.any():
             continue
-        albedo[m] = alb
-        emissive[m] = emi
-        is_floor[m] = flr
+        albedo[m], emissive[m], is_floor[m] = alb, emi, flr
         mats[m] = MAT_ID.get(mat, 9)
-        bmins[m] = bmin
-        bmaxs[m] = bmax
+        bmins[m], bmaxs[m] = bmin, bmax
         a = axis[m]
         nrm = np.zeros((int(m.sum()), 3))
         nrm[np.arange(len(a)), a] = 1.0
@@ -429,6 +432,7 @@ def shade(orig, dirs, geom, lit, torch=None, bounce=True, shadows=True):
         N[m] = nrm
 
     albedo = surface(P, N, mats, albedo, bmins, bmaxs)
+    BMIN, BMAX = bb
 
     for lp, lc, li, lr in lit:
         d = lp - P
@@ -439,28 +443,26 @@ def shade(orig, dirs, geom, lit, torch=None, bounce=True, shadows=True):
         dist = np.sqrt(dist2[near])
         L = d[near] / dist[:, None]
         ndl = np.clip(np.einsum("ij,ij->i", N[near], L), 0, 1)
-        lively = ndl > 0.002
+        lively = ndl > 0.003
         if not lively.any():
             continue
         contrib = li / (dist2[near] + 2.0) * ndl
 
         if shadows:
-            occ_geom = [b for b in geom
-                        if np.all(b[0] - lr < lp) and np.all(b[1] + lr > lp)]
-            sub = np.where(near)[0][lively]
-            sh = occluded(P[sub] + N[sub] * 6e-3, L[lively], dist[lively] - 0.02, occ_geom)
+            sel = np.nonzero(np.all(BMIN - lr < lp, 1) & np.all(BMAX + lr > lp, 1))[0]
+            sub = np.nonzero(near)[0][lively]
+            sh = occluded(P[sub] + N[sub] * 6e-3, L[lively], dist[lively] - 0.02,
+                          [geom[i] for i in sel])
             c = np.zeros(int(near.sum()))
             c[lively] = contrib[lively] * (~sh)
             contrib = c
-
         col[near] += albedo[near] * lc * contrib[:, None]
 
     if torch is not None:
         tp, td, tcol, ti, cut = torch
         d = tp - P
         dist2 = np.einsum("ij,ij->i", d, d)
-        dist = np.sqrt(dist2)
-        L = d / np.maximum(dist, 1e-6)[:, None]
+        L = d / np.maximum(np.sqrt(dist2), 1e-6)[:, None]
         ndl = np.clip(np.einsum("ij,ij->i", N, L), 0, 1)
         spot = np.clip((np.einsum("ij,j->i", -L, td) - cut) / (1 - cut), 0, 1) ** 1.7
         col += albedo * tcol * (ndl * spot * ti / (dist2 + 3.0))[:, None]
@@ -472,7 +474,8 @@ def shade(orig, dirs, geom, lit, torch=None, bounce=True, shadows=True):
         m = hit & is_floor
         if m.any():
             rd = dirs[m] - 2 * np.einsum("ij,ij->i", dirs[m], N[m])[:, None] * N[m]
-            rc = shade(P[m] + N[m] * 2e-3, rd, geom, lit, torch, bounce=False, shadows=False)
+            rc = shade(P[m] + N[m] * 2e-3, rd, geom, lit, bb, torch,
+                       bounce=False, shadows=False)
             col[m] = col[m] * 0.80 + rc * 0.30
 
     haze = np.zeros((n, 3))
@@ -486,7 +489,7 @@ def shade(orig, dirs, geom, lit, torch=None, bounce=True, shadows=True):
     return col + haze
 
 
-def render(name, eye, target, fov=62.0, w=1100, h=619, torch_on=False):
+def render(name, eye, target, fov=62.0, w=960, h=540, torch_on=False):
     eye = np.asarray(eye, float)
     fwd = np.asarray(target, float) - eye
     fwd /= np.linalg.norm(fwd)
@@ -494,14 +497,36 @@ def render(name, eye, target, fov=62.0, w=1100, h=619, torch_on=False):
     right /= np.linalg.norm(right)
     up = np.cross(right, fwd)
 
+    # Frustum cull on each box's bounding sphere.
+    half_ang = math.radians(fov) / 2 * 1.35 * (w / h)
+    cos_lim = math.cos(min(half_ang, math.radians(88)))
     keep = []
     for b in boxes:
         c = (b[0] + b[1]) / 2
+        r = float(np.linalg.norm(b[1] - b[0])) / 2
         v = c - eye
         dist = float(np.linalg.norm(v))
-        if dist < 150 and (float(np.dot(v, fwd)) > -14 or dist < 22):
+        if dist > 160:
+            continue
+        if dist < r + 6:
             keep.append(b)
-    lit = [l for l in lights if np.linalg.norm(l[0] - eye) < 130]
+            continue
+        if float(np.dot(v, fwd)) / dist < cos_lim - r / dist:
+            continue
+        keep.append(b)
+
+    lit = []
+    for lp, lc, li, lr in lights:
+        v = lp - eye
+        dist = float(np.linalg.norm(v))
+        if dist > 135:
+            continue
+        if dist > lr + 4 and float(np.dot(v, fwd)) / dist < cos_lim - (lr + 4) / dist:
+            continue
+        lit.append((lp, lc, li, lr))
+
+    BMIN = np.array([b[0] for b in keep])
+    BMAX = np.array([b[1] for b in keep])
     print(f"  {name}: {len(keep)} boxes, {len(lit)} lights", flush=True)
 
     scale = math.tan(math.radians(fov) / 2)
@@ -514,7 +539,7 @@ def render(name, eye, target, fov=62.0, w=1100, h=619, torch_on=False):
     tor = (eye, fwd, np.array([1.0, 0.83, 0.66]), 34.0,
            math.cos(math.radians(30))) if torch_on else None
 
-    col = shade(orig, dirs, keep, lit, tor).reshape(h, w, 3)
+    col = shade(orig, dirs, keep, lit, (BMIN, BMAX), tor).reshape(h, w, 3)
 
     col = np.clip(col, 0, None)
     col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14)
@@ -530,9 +555,8 @@ def render(name, eye, target, fov=62.0, w=1100, h=619, torch_on=False):
     arr *= (1 - 0.44 * r**2)[:, :, None]
     arr += np.random.default_rng(11).normal(0, 3.4, arr.shape)
 
-    out = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
     path = f"/home/user/claude-mem/night-shift/previews/{name}.png"
-    out.save(path)
+    Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8)).save(path)
     print(f"  -> {path}", flush=True)
 
 
@@ -542,8 +566,12 @@ if __name__ == "__main__":
     print(f"scene: {len(boxes)} boxes, {len(lights)} lights", flush=True)
 
     EYE = 1.68
-    render("01_the_wing", [1.1, EYE, 22], [0.2, EYE - 0.10, 130], fov=62)
-    render("02_the_atrium", [0, EYE, -16.5], [0, 6.2, 2], fov=74)
-    render("03_torch", [1.4, 4.6 + EYE, -36], [0.2, 4.6 + EYE - 0.14, -118],
-           fov=60, torch_on=True)
-    render("04_exit", [2.9, EYE, 40], [-0.9, 2.15, 34.5], fov=48)
+    # Ground floor, looking down the North Mall. Sixteen metres of open width
+    # and three floors of balcony above the void.
+    render("01_the_wing", [2.2, EYE, 24], [0.6, EYE + 1.9, 128], fov=70)
+    # Standing at the balustrade on Floor 1, looking down into the void.
+    render("02_the_void", [4.6, 5.2 + EYE, 46], [1.0, 1.2, 62], fov=68)
+    # The service corridor behind the units. The opposite of the mall.
+    render("03_service", [21.2, EYE, 30], [21.2, EYE - 0.12, 96], fov=58, torch_on=True)
+    # The atrium and the Great Clock.
+    render("04_atrium", [0, EYE, -17], [0, 7.0, 2], fov=76)

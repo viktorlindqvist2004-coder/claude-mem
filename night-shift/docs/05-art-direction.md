@@ -31,18 +31,36 @@ The horror depends on the crew being unable to hold the building in their heads.
 around a glass-roofed atrium, four wings per floor, and a number of dark units that is
 uncomfortable to walk past.
 
+**A wing is not a corridor.** This was got wrong once already and it is the difference
+between a shopping centre and a tunnel. Section through a wing, from the centre out, each
+side:
+
+```
+   6 m void slot  |  5 m walkway  |  12 m unit  |  2.4 m service corridor
+                  ^ balustrade    ^ shopfront   ^ back door
+```
+
+Sixteen metres of open public width, a 4.4 m soffit over each walkway, and the void slot open
+from the ground floor all the way to the roof glazing sixteen metres up. From anywhere on the
+ground you can see three floors of balcony — which means from anywhere on the ground, three
+floors of balcony can see you.
+
 | | Metres | Studs (1 stud = 0.3 m) |
 | --- | --- | --- |
 | Atrium footprint | 60 × 40 | 200 × 133 |
-| Atrium clear height | 14.0 | 47 |
+| Atrium clear height | 16.6 | 55 |
 | Wing length (each, per floor) | 110 | 367 |
-| Wing width | 9.0 | 30 |
-| Retail ceiling | 3.20 | 10.7 |
-| Corridor ceiling | 2.80 | 9.3 |
-| Escalator rise per floor | 4.20 | 14 |
-| Shopfront height | 2.40 | 8.0 |
+| Wing open public width | 16.0 | 53 |
+| — void slot | 6.0 | 20 |
+| — walkway, each side | 5.0 | 16.7 |
+| Unit depth | 12.0 | 40 |
+| Service corridor width | 2.4 | 8 |
+| Floor to floor | 5.20 | 17.3 |
+| Walkway soffit | 4.40 | 14.7 |
+| Service corridor ceiling | 2.45 | 8.2 |
+| Shopfront glazing height | 3.30 | 11 |
 | Staff door height | 2.05 | 6.8 |
-| Handrail height | 1.10 | 3.7 |
+| Balustrade height | 1.12 | 3.7 |
 | Counter height | 0.95 | 3.2 |
 | Ceiling tile | 0.60 × 0.60 | 2 × 2 |
 
@@ -53,6 +71,25 @@ player walking a 110 m wing passes roughly forty units and perhaps three of them
 **Walk times are a design tool.** The atrium to the far end of a wing is about 70 seconds at
 walking pace with a torch. That is a long time to be alone, and the whole fear design depends
 on it being a long time.
+
+### Two kinds of space, and the game moves you between them all night
+
+**The public mall is vast and exposed.** Sixteen metres wide, four storeys of open air over
+your head, sightlines the length of a wing and up through every balcony. You cannot be crept
+up on here — but you also cannot hide, you are visible from three floors, and the sheer volume
+of unlit air above you is its own kind of dread. A red bulkhead lights four metres of floor in
+a space that is sixteen wide and sixteen tall.
+
+**Back of house is a pipe.** The service corridor behind the units is 2.4 m wide with a 2.45 m
+ceiling, painted cinderblock, no signage, no terrazzo, no reflections, and one bare fitting
+every fourteen metres of which most are dead. It runs the full length of every wing, it links
+every unit's back door, and it is how you reach the stockroom, the staff room, the custodial
+store, the security office, the camera room and the loading dock.
+
+The contrast is the horror engine. A crew that feels watched in the open mall goes back of
+house for relief and finds somewhere they cannot turn around in. The game should push them
+between the two several times a night, and Rule 4 — *if someone calls your name from the
+stockroom, don't answer* — lives entirely back here.
 
 **Rig the avatar to 1.68 m eye height** (R15, scaled). Default Roblox proportions in a
 photoreal set is the fastest way to make an environment look like a toy.

@@ -1,0 +1,4 @@
+# Toolchain for Night Shift. Install Rokit once (https://github.com/rojo-rbx/rokit),
+# then run `rokit install` in this directory and you have the right Rojo.
+[tools]
+rojo = "rojo-rbx/rojo@7.5.1"

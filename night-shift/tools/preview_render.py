@@ -23,9 +23,16 @@ whether the space is the right size and the right darkness.
 
 import math
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import numpy as np
 from PIL import Image, ImageFilter
+
+from sky import sky as sky_radiance, MOON_DIR
+
+SKY_TIME = 0.0  # seconds; the clouds drift, so this picks a moment
 
 # ── Layout, in metres. Mirrors src/shared/MallLayout.luau ───────────────────
 FLOOR_TO_FLOOR, RETAIL_CEILING, SLAB, SERVICE_CEILING = 5.2, 4.4, 0.45, 2.45
@@ -60,6 +67,9 @@ DIRS = {
 }
 
 RED = (255, 28, 22)
+# The moon is the only natural light in the building, and it arrives through
+# the roof glazing sixteen metres up.
+MOONLIGHT = (208, 220, 244)
 
 MAT = {
     "floor": (0.215, 0.21, 0.205), "ceiling": (0.15, 0.148, 0.145),
@@ -70,6 +80,10 @@ MAT = {
     "plant": (0.10, 0.14, 0.09), "brass": (0.36, 0.28, 0.13),
     "sign": (0.26, 0.03, 0.03), "trim": (0.24, 0.235, 0.23),
     "block": (0.25, 0.245, 0.235),  # painted cinderblock, back of house
+    "sky": (0.0, 0.0, 0.0),  # not shaded: rays that hit this see the night
+    "shelf": (0.20, 0.19, 0.18), "rack": (0.26, 0.24, 0.22),
+    "counter": (0.22, 0.21, 0.20), "sheet": (0.40, 0.39, 0.37),
+    "stock": (0.18, 0.17, 0.165),
 }
 
 boxes, lights = [], []
@@ -112,6 +126,105 @@ def neon_sign(pos, facing, rgb):
     box(np.asarray(pos) + n * 0.06, size, "sign", emissive=e)
     box(pos, (size[0] + 0.5, 0.78, size[2] + 0.5), "trim")
     light(np.asarray(pos) + n * 0.5, rgb, 3.2, 14.0)
+
+
+# ── Units ───────────────────────────────────────────────────────────────────
+# A real mall is not a rhythm. Frontages run from a 6 m kiosk to a 30 m anchor,
+# units get knocked through into their neighbours, some are set back from the
+# shopfront line, and most of them have been dark for years.
+
+UNIT_KINDS = (
+    ("anchor", 24.0, 31.0, 0.10),
+    ("large", 17.0, 23.0, 0.17),
+    ("standard", 11.0, 16.0, 0.33),
+    ("small", 7.5, 10.5, 0.27),
+    ("kiosk", 5.5, 7.0, 0.13),
+)
+
+STATES = ("trading", "dark_glass", "shutter_half", "shutter_down", "hoarded", "stripped")
+STATE_WEIGHTS = (0.0, 0.30, 0.16, 0.20, 0.16, 0.18)  # trading is placed explicitly
+
+
+def plan_units(rng, length, trading):
+    """Lay a side of a wing out end to end, then decide what each unit is."""
+    kinds = [k[0] for k in UNIT_KINDS]
+    mins = np.array([k[1] for k in UNIT_KINDS])
+    maxs = np.array([k[2] for k in UNIT_KINDS])
+    wts = np.array([k[3] for k in UNIT_KINDS])
+    wts = wts / wts.sum()
+
+    units, t = [], 0.0
+    while length - t > 5.5:
+        i = rng.choice(len(kinds), p=wts)
+        w = float(rng.uniform(mins[i], maxs[i]))
+        if length - (t + w) < 5.5:
+            w = length - t
+        units.append({"centre": t + w / 2, "width": w, "kind": kinds[i]})
+        t += w
+
+    st = np.array(STATE_WEIGHTS)
+    st = st / st.sum()
+    for u in units:
+        u["state"] = STATES[rng.choice(len(STATES), p=st)]
+        # Some units are set back from the shopfront line, which breaks the
+        # straight run more than anything else does.
+        u["recess"] = float(rng.choice([0.0, 0.0, 0.0, 0.7, 1.4], p=[.5, .15, .15, .12, .08]))
+        u["fascia"] = float(rng.uniform(0.85, 1.45))
+
+    if trading > 0 and units:
+        for i in rng.choice(len(units), size=min(trading, len(units)), replace=False):
+            units[int(i)]["state"] = "trading"
+    return units
+
+
+def build_interior(at, d, side, right, t, width, kind, state, rng, model_lat, soffit):
+    """What you see through the glass. An empty mall is only frightening if you
+    can tell the shops used to be shops."""
+    back = model_lat + side * (UNIT_DEPTH - 1.0)
+    inner = width - 1.6
+
+    if state in ("hoarded", "shutter_down"):
+        return
+
+    # Party walls, so units read as separate rooms rather than one long void.
+    for e in (-1, 1):
+        box(at(model_lat + side * UNIT_DEPTH / 2, 1.5, t + e * width / 2),
+            d(UNIT_DEPTH, 3.0, 0.3), "wall")
+    box(at(back, 1.6, t), d(0.4, 3.2, inner), "wall")
+
+    if state == "stripped":
+        box(at(model_lat + side * 3.0, 1.1, t + rng.uniform(-1, 1) * inner * 0.3),
+            d(0.7, 2.2, 0.7), "metal")  # a ladder nobody came back for
+        for _ in range(2):
+            box(at(model_lat + side * rng.uniform(2, 8), 0.55,
+                   t + rng.uniform(-0.35, 0.35) * inner),
+                d(rng.uniform(1.2, 2.4), 1.1, rng.uniform(1.2, 2.6)), "sheet")
+        return
+
+    # Fixtures. Shelf runs for a supermarket-ish unit, rails for fashion, a
+    # counter near the front for everything.
+    if kind in ("anchor", "large"):
+        for i in range(int(rng.integers(3, 6))):
+            box(at(model_lat + side * rng.uniform(3.5, 9.5), 0.85,
+                   t + (i / 5 - 0.4) * inner),
+                d(rng.uniform(4.0, 8.0), 1.7, 0.75), "shelf")
+    else:
+        for i in range(int(rng.integers(2, 5))):
+            box(at(model_lat + side * rng.uniform(2.5, 8.0), 0.92,
+                   t + rng.uniform(-0.35, 0.35) * inner),
+                d(rng.uniform(1.2, 2.6), 0.12, 0.7), "rack")
+            box(at(model_lat + side * rng.uniform(2.5, 8.0), 1.35,
+                   t + rng.uniform(-0.35, 0.35) * inner),
+                d(0.08, 0.9, 0.08), "metal")
+
+    box(at(model_lat + side * rng.uniform(2.2, 3.4), 0.5,
+           t + rng.uniform(-0.3, 0.3) * inner),
+        d(0.8, 1.0, rng.uniform(2.0, 3.6)), "counter")
+
+    if state == "trading":
+        # A unit that still trades has left something on inside.
+        light(at(model_lat + side * 4.5, 2.6, t), (255, 232, 196), 3.4, 11.0)
+        box(at(model_lat + side * 4.5, soffit - 0.9, t), d(2.2, 0.12, 3.0), "trim")
 
 
 # ── The wing ────────────────────────────────────────────────────────────────
@@ -174,6 +287,12 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
 
     box(centre + fwd * (WING_LEN / 2) + np.array([0, soffit / 2, 0]),
         d(SERV_OUT * 2, soffit, 0.6), "wall")
+    # Glazed entrance at the end of the wing: the only place in a hundred and
+    # ten metres where you can see the weather.
+    box(at(0, soffit / 2 - 0.3, WING_LEN / 2 - 0.45), d(13.0, soffit - 0.9, 0.25), "sky")
+    for m in range(5):
+        box(at((m - 2) * 3.1, soffit / 2 - 0.3, WING_LEN / 2 - 0.5),
+            d(0.22, soffit - 0.9, 0.35), "metal")
 
     if not fitted:
         return
@@ -188,87 +307,107 @@ def build_wing(floor_id, key, elevation, fitted, is_ground):
             box(at(lat, soffit - 0.13, -WING_LEN / 2 + 3.5 + 7.0 * i),
                 d(1.2, 0.16, 0.6), "metal")
 
-    # ── Shopfronts, shutters, hoardings, service doors.
-    frontage = WING_LEN / UNITS_PER_SIDE
+    # ── Shopfronts. Seeded per wing, and each side planned independently, so
+    # the two sides never line up and no two wings are alike.
+    seed = abs(int(centre[0] * 13 + centre[2] * 7 + elevation * 101)) + ord(key)
+    rng = np.random.default_rng(seed)
     rgb, trading = WINGS[(floor_id, key)]
-    left = trading
 
     for side in (-1, 1):
-        for i in range(UNITS_PER_SIDE):
-            t = -WING_LEN / 2 + frontage * (i + 0.5)
-            lat = side * WALK_OUT
-            is_trading = left > 0 and i % 3 == 0
-            if is_trading:
-                left -= 1
+        share = trading // 2 + (trading % 2 if side > 0 else 0)
+        units = plan_units(rng, WING_LEN, share)
+        for u in units:
+            t = -WING_LEN / 2 + u["centre"]
+            width, state = u["width"], u["state"]
+            lat = side * (WALK_OUT + u["recess"])
+            glass_h = soffit - u["fascia"] - 0.25
 
-            box(at(lat, soffit - 0.55, t), d(0.75, 1.10, frontage), "front")
+            box(at(lat, soffit - u["fascia"] / 2, t), d(0.8, u["fascia"], width), "front")
             for e in (-1, 1):
-                box(at(lat, (soffit - 1.1) / 2 + 0.2, t + e * frontage / 2),
-                    d(0.9, soffit - 1.1, 0.6), "front")
+                box(at(lat, glass_h / 2 + 0.2, t + e * width / 2),
+                    d(0.95, glass_h + 0.3, 0.55), "front")
+            if u["recess"] > 0.05:
+                for e in (-1, 1):
+                    box(at(side * (WALK_OUT + u["recess"] / 2), glass_h / 2 + 0.2,
+                           t + e * width / 2), d(u["recess"], glass_h + 0.3, 0.5), "front")
 
-            glass_h = soffit - 1.1
-            box(at(lat - side * 0.32, glass_h / 2 + 0.2, t),
-                d(0.12, glass_h, frontage - 0.8), "glass")
-            for m in (-0.28, 0.0, 0.28):
-                box(at(lat - side * 0.36, glass_h / 2 + 0.2, t + m * frontage),
-                    d(0.14, glass_h, 0.11), "metal")
-            box(at(lat - side * 0.34, 0.12, t), d(0.22, 0.24, frontage - 0.8), "trim")
+            build_interior(at, d, side, right, t, width, u["kind"], state, rng, lat, soffit)
 
-            if is_trading:
-                neon_sign(at(lat - side * 0.86, soffit - 0.62, t), -right * side, rgb)
+            if state == "shutter_down":
+                box(at(lat - side * 0.30, glass_h / 2 + 0.2, t),
+                    d(0.16, glass_h, width - 0.9), "shutter")
+            elif state == "shutter_half":
+                box(at(lat - side * 0.30, glass_h * 0.70 + 0.35, t),
+                    d(0.16, glass_h * 0.60, width - 0.9), "shutter")
+                box(at(lat - side * 0.32, glass_h * 0.20, t),
+                    d(0.10, glass_h * 0.40, width - 0.9), "glass")
+            elif state == "hoarded":
+                box(at(lat - side * 0.28, glass_h / 2 + 0.2, t),
+                    d(0.14, glass_h, width - 0.9), "hoard")
             else:
-                mode = (i * 7 + int(abs(centre[0] + centre[2])) + side) % 3
-                if mode == 0:
-                    box(at(lat - side * 0.32, glass_h * 0.72 + 0.2, t),
-                        d(0.16, glass_h * 0.56, frontage - 0.8), "shutter")
-                elif mode == 1:
-                    box(at(lat - side * 0.32, glass_h / 2 + 0.2, t),
-                        d(0.16, glass_h, frontage - 0.8), "shutter")
-                else:
-                    box(at(lat - side * 0.30, glass_h / 2 + 0.2, t),
-                        d(0.14, glass_h, frontage - 0.8), "hoard")
+                # Glazing you can see through, with mullions every 2.5 m or so.
+                box(at(lat - side * 0.32, glass_h / 2 + 0.2, t),
+                    d(0.10, glass_h, width - 0.9), "glass")
+                n_mul = max(1, int(width // 2.6))
+                for m in range(n_mul):
+                    box(at(lat - side * 0.36, glass_h / 2 + 0.2,
+                           t + (m / n_mul - 0.5 + 0.5 / n_mul) * (width - 0.9)),
+                        d(0.14, glass_h, 0.10), "metal")
+                box(at(lat - side * 0.34, 0.12, t), d(0.22, 0.24, width - 0.9), "trim")
+
+            if state == "trading":
+                neon_sign(at(lat - side * 0.88, soffit - u["fascia"] / 2, t),
+                          -right * side, rgb)
 
             # Back door into the service corridor.
             box(at(side * (UNIT_OUT - 0.2), 1.02, t), d(0.16, 2.05, 0.95), "metal")
 
-    # ── Dressing, out on the walkways where people would actually put it.
-    n = int(WING_LEN // 11.0)
-    for i in range(n):
-        t = -WING_LEN / 2 + 8.0 + 11.0 * i
-        side = 1 if i % 2 == 0 else -1
-        lat = side * (HALF_VOID + 1.7)
+    # ── Islands in the middle of the mall: closed kiosks, a photo booth, an
+    # ATM lobby. This is what stops a mall reading as a corridor.
+    for kt in (-WING_LEN * 0.34, -WING_LEN * 0.02, WING_LEN * 0.27):
+        kt += float(rng.uniform(-4, 4))
+        klat = float(rng.uniform(-1.0, 1.0)) * (HALF_VOID - 1.2)
+        box(at(klat, 1.25, kt), d(3.0, 2.5, 4.4), "trim")
+        box(at(klat, 2.62, kt), d(4.2, 0.24, 5.6), "metal")
+        box(at(klat, 1.55, kt), d(3.16, 1.5, 4.56), "glass")
 
-        if i % 3 == 0:
+    # ── A seating court where the mall widens out, roughly halfway down.
+    court = float(rng.uniform(-0.1, 0.25)) * WING_LEN
+    for i in range(5):
+        a = i * 2 * math.pi / 5
+        box(at(math.cos(a) * 3.4, 0.44, court + math.sin(a) * 3.4),
+            d(0.7, 0.10, 2.2), "seat")
+    box(at(0, 0.36, court), d(3.2, 0.72, 3.2), "trim")
+    box(at(0, 1.15, court), d(2.5, 0.9, 2.5), "plant")
+
+    # ── Scattered dressing, at irregular intervals.
+    for _ in range(9):
+        t = float(rng.uniform(-0.48, 0.48)) * WING_LEN
+        lat = float(rng.choice([-1, 1])) * float(rng.uniform(HALF_VOID + 0.6, WALK_OUT - 1.2))
+        pick = rng.integers(0, 4)
+        if pick == 0:
             box(at(lat, 0.44, t), d(0.64, 0.09, 2.1), "seat")
             for e in (-0.85, 0.85):
                 box(at(lat, 0.21, t + e), d(0.52, 0.42, 0.10), "metal")
-        elif i % 3 == 1:
+        elif pick == 1:
             box(at(lat, 0.42, t), d(0.46, 0.84, 0.46), "metal")
             box(at(lat, 0.88, t), d(0.52, 0.09, 0.52), "trim")
-        else:
+        elif pick == 2:
             box(at(lat, 0.34, t), d(1.05, 0.68, 1.05), "trim")
             box(at(lat, 1.02, t), d(0.82, 0.72, 0.82), "plant")
+        else:
+            box(at(lat, 0.52, t), d(0.58, 0.64, 0.94), "metal")
+            box(at(lat, 0.14, t), d(0.52, 0.10, 0.88), "metal")
 
-    tot = -WING_LEN / 2 + WING_LEN * 0.34
-    box(at(HALF_VOID + 1.2, 1.1, tot), d(0.18, 2.2, 0.95), "trim")
-    box(at(HALF_VOID + 1.29, 1.52, tot), d(0.06, 1.15, 0.75), "glass")
-    for t, off in ((-WING_LEN * 0.18, -(WALK_OUT - 1.4)), (WING_LEN * 0.29, WALK_OUT - 1.9)):
-        box(at(off, 0.52, t), d(0.58, 0.64, 0.94), "metal")
-        box(at(off, 0.14, t), d(0.52, 0.10, 0.88), "metal")
-
-    # ── The red circuit.
+    # ── The red circuit. Bulkheads carry the working light; EXIT signs mark
+    # actual exits and nothing else — there were far too many of them before.
     for i in range(int(WING_LEN // BULKHEAD_SPACING) + 1):
         t = -WING_LEN / 2 + BULKHEAD_SPACING * i
         for side in (-1, 1):
             bulkhead(at(side * (WALK_OUT - 0.55), BULKHEAD_HEIGHT, t), -right * side)
-    for i in range(int(WING_LEN // EXIT_SPACING) + 1):
-        side = 1 if i % 2 == 0 else -1
-        exit_sign(at(side * (WALK_OUT - 0.5), EXIT_HEIGHT, -WING_LEN / 2 + EXIT_SPACING * i),
-                  -right * side)
-    exit_sign(at(0, EXIT_HEIGHT, WING_LEN / 2 - 0.5), -fwd)
-
-
-SKY = (150, 168, 205)
+    for t, side in ((-WING_LEN / 2 + 2.0, 1), (0.0, -1), (WING_LEN / 2 - 2.0, 1)):
+        exit_sign(at(side * (WALK_OUT - 0.5), EXIT_HEIGHT, t), -right * side)
+    exit_sign(at(0, EXIT_HEIGHT + 0.9, WING_LEN / 2 - 1.2), -fwd)
 
 
 def build_wing_roof(key):
@@ -279,21 +418,21 @@ def build_wing_roof(key):
     origin = fwd * (ATRIUM_D / 2 if key in "NS" else ATRIUM_W / 2)
     centre = origin + fwd * (WING_LEN / 2) + np.array([0, ATRIUM_H, 0])
     size = np.abs(right * VOID_W + np.array([0, 0.4, 0]) + fwd * WING_LEN) + 1e-6
-    box(centre, size, "glass", emissive=(0.055, 0.066, 0.088))
+    box(centre, size, "sky")
     for e in (-1, 1):
         box(centre + right * (e * (HALF_VOID + 0.3)),
             np.abs(right * 0.6 + np.array([0, 0.9, 0]) + fwd * WING_LEN) + 1e-6, "trim")
     for i in range(int(WING_LEN // 12) + 1):
         light(centre + fwd * (-WING_LEN / 2 + 12 * i) - np.array([0, 1.0, 0]),
-              SKY, 9.0, 26.0)
+              MOONLIGHT, 7.0, 26.0)
 
 
 def build_atrium():
     box([0, -SLAB / 2, 0], [ATRIUM_W, SLAB, ATRIUM_D], "floor", floor=True)
-    box([0, ATRIUM_H, 0], [ATRIUM_W, 0.4, ATRIUM_D], "glass", emissive=(0.055, 0.066, 0.088))
+    box([0, ATRIUM_H, 0], [ATRIUM_W, 0.4, ATRIUM_D], "sky")
     for ix in (-1, 0, 1):
         for iz in (-1, 1):
-            light([ix * 17, ATRIUM_H - 1.2, iz * 11], SKY, 16.0, 34.0)
+            light([ix * 17, ATRIUM_H - 1.2, iz * 11], MOONLIGHT, 13.0, 34.0)
 
     void_w, void_d = ATRIUM_W * 0.66, ATRIUM_D * 0.58
     dx, dz = (ATRIUM_W - void_w) / 4, (ATRIUM_D - void_d) / 4
@@ -412,7 +551,7 @@ def surface(P, N, mats, albedo, bmins, bmaxs):
     return a * (0.34 + 0.66 * ao)[:, None]
 
 
-MAT_ID = {"floor": 0, "ceiling": 1}
+MAT_ID = {"floor": 0, "ceiling": 1, "sky": 8}
 
 
 def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=None):
@@ -425,6 +564,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
     albedo = np.zeros((n, 3))
     emissive = np.zeros((n, 3))
     is_floor = np.zeros(n, bool)
+    is_sky = np.zeros(n, bool)
     mats = np.full(n, 9, np.int32)
     N = np.zeros((n, 3))
     bmins, bmaxs = np.zeros((n, 3)), np.ones((n, 3))
@@ -434,6 +574,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
         if not m.any():
             continue
         albedo[m], emissive[m], is_floor[m] = alb, emi, flr
+        is_sky[m] = mat == "sky"
         mats[m] = MAT_ID.get(mat, 9)
         bmins[m], bmaxs[m] = bmin, bmax
         a = axis[m]
@@ -481,6 +622,12 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
     col += emissive
     col[~hit] = 0.0
 
+    # Anything looking at glazing is looking at the night: moon, drifting cloud,
+    # fog on the horizon. The weather is out there, never in here.
+    outside = is_sky | (~hit)
+    if outside.any():
+        col[outside] = sky_radiance(dirs[outside], SKY_TIME)
+
     if bounce:
         m = hit & is_floor
         if m.any():
@@ -496,7 +643,7 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
         tc = np.clip(np.einsum("ij,ij->i", v, dirs), 0, tmax)
         c = orig + dirs * tc[:, None] - lp
         d2 = np.einsum("ij,ij->i", c, c)
-        haze += lc * (li * 0.0042 / (d2 + 1.4))[:, None]
+        haze += lc * (li * 0.0021 / (d2 + 1.8))[:, None]
     return col + haze
 
 

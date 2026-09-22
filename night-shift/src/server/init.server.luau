@@ -2,12 +2,15 @@
 --[[
 	Server bootstrap.
 
-	Builds the building if nobody has, hands every player a torch, and starts
-	Night 1. Everything the player can do that matters happens on this side.
+	Builds the building if nobody has, hands every player a torch, registers the
+	five nights and starts the first one. Everything the player can do that
+	matters happens on this side.
 
-	Scrub the night from the command bar while a server is running:
+	From the command bar, on a running server:
 
-	    require(game.ServerScriptService.Server.NightOne).seek(3)
+	    local S = require(game.ServerScriptService.Server.Shift)
+	    S.seek(3)     -- jump to 03:00 tonight
+	    S.begin(4)    -- start Night 4 from the top
 ]]
 
 local Players = game:GetService("Players")
@@ -17,15 +20,16 @@ local Config = require(Shared.Config)
 local Places = require(Shared.Places)
 
 local AttentionService = require(script.AttentionService)
+local Case = require(script.Case)
 local Hud = require(script.Hud)
-local NightOne = require(script.NightOne)
+local Shift = require(script.Shift)
 local World = require(script.World)
 
 -- ── Torch ───────────────────────────────────────────────────────────────────
 --[[
-	One torch each, on the character, so the crew can see each other's beams down
-	a corridor. The client asks; the server decides. A 2900K beam, because a pure
-	white one reads as a game asset rather than as a torch somebody is holding.
+	One each, on the character, so the crew can see each other's beams down a
+	corridor. The client asks; the server decides. 2900 K, because a pure white
+	beam reads as a game asset rather than as a torch somebody is holding.
 ]]
 local function torchFor(player: Player): SpotLight?
 	local character = player.Character
@@ -43,7 +47,6 @@ local function torchFor(player: Player): SpotLight?
 		light.Range = Config.FLASHLIGHT.WIDE.range * Places.METRE
 		light.Brightness = 0
 		light.Shadows = true
-		light.Enabled = true
 		light.Parent = head
 	end
 	return light
@@ -56,11 +59,11 @@ Hud.onTorch(function(player, on)
 	end
 end)
 
-Hud.onAsk(function()
-	NightOne.onAsk()
+Hud.onAsk(function(player)
+	Shift.onAsk(player)
 end)
 
--- ── Crew size ───────────────────────────────────────────────────────────────
+-- ── Crew ────────────────────────────────────────────────────────────────────
 
 local function updateCrewSize()
 	AttentionService.setSolo(#Players:GetPlayers() <= 1)
@@ -81,9 +84,15 @@ AttentionService.tierChanged:connect(function(tier: string)
 	Hud.effect("tier", tier)
 end)
 
--- ── Go ──────────────────────────────────────────────────────────────────────
+-- ── The five nights ─────────────────────────────────────────────────────────
 
 World.ensureBuilt()
-NightOne.start()
+Case.reset()
 
-print("[Night Shift] server up — Northlight Galleria")
+for night = 1, 5 do
+	Shift.register(night, require(script.Nights[`Night{night}`]))
+end
+
+Shift.begin(1)
+
+print("[Night Shift] server up — Northlight Galleria, five nights")

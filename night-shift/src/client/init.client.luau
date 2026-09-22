@@ -365,6 +365,22 @@ local function bang(intensity: number, withFlash: boolean?)
 	end
 end
 
+--[[
+	The strike counter. Thirty-three of them, four seconds apart, and the crew
+	will count out loud over voice chat whether or not this is on screen. It is
+	on screen because the count is the timer, and a timer the players are saying
+	to each other beats a bar every time.
+]]
+local strikeLabel = label(gui, "", UDim2.new(0, 300, 0, 40), UDim2.new(0.5, -150, 0, 90))
+strikeLabel.TextXAlignment = Enum.TextXAlignment.Center
+strikeLabel.TextColor3 = RED
+strikeLabel.TextSize = 30
+
+local function showStrike(text: string)
+	strikeLabel.Text = text
+	strikeLabel.TextTransparency = 0
+end
+
 remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 	if kind == "startle" then
 		local large = payload and payload.large
@@ -379,13 +395,35 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 		showHint("The lights have gone.", RED)
 	elseif kind == "fade_out" then
 		TweenService:Create(blackout, TweenInfo.new(2.5), { BackgroundTransparency = 0 }):Play()
+	elseif kind == "fade_in" then
+		TweenService:Create(blackout, TweenInfo.new(2.0), { BackgroundTransparency = 1 }):Play()
 	elseif kind == "shake" then
 		bang(payload or 0.5, false)
+	elseif kind == "strobe" then
+		flash.BackgroundTransparency = 0.7
+		TweenService:Create(flash, TweenInfo.new(0.25), { BackgroundTransparency = 1 }):Play()
 	elseif kind == "strike" then
-		bang(0.6, false)
-		showHint("Something in the atrium struck once.", RED)
+		local count = payload and payload.count or 1
+		local of = payload and payload.of
+		bang(if of then 0.85 else 0.6, false)
+		if of then
+			showStrike(`{count} / {of}`)
+		else
+			showHint("Something in the atrium struck once.", RED)
+		end
+	elseif kind == "strike_over" then
+		showStrike("")
+		showHint("Silence.", BONE)
+	elseif kind == "display" then
+		-- The HUD clock is wired to the same master as everything else in the
+		-- building, so when the atrium display goes to 88:88, so does this.
+		clockText.Text = tostring(payload)
+	elseif kind == "power" then
+		clockText.TextColor3 = if payload == true then RED else Color3.fromRGB(70, 16, 14)
 	elseif kind == "hint" then
 		showHint(tostring(payload))
+	elseif kind == "order" then
+		showHint(`They want {payload.wants}. It'll be in the back.`, BONE)
 	elseif kind == "violation" then
 		showHint(`You broke rule {payload.number}.`, RED)
 	elseif kind == "contradiction" then
@@ -394,45 +432,86 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 		showHint(`Evidence: {payload.name}`, Color3.fromRGB(198, 190, 160))
 	elseif kind == "music_stop" then
 		showHint("The tape has changed track early. Rule 2.", RED)
+	elseif kind == "downed" then
+		showHint(`{payload.who} is down. Somebody go and get them.`, RED)
+	elseif kind == "revived" then
+		showHint(`{payload.who} is back up.`, BONE)
 	elseif kind == "tier" then
 		if payload == "Watched" or payload == "Found" then
 			showHint("Something in the building has noticed you.", RED)
 		end
+	elseif kind == "ending" then
+		local lines = {}
+		if payload.result == "Correct" then
+			table.insert(lines, "CASE CLOSED — NORTHMOOR POLICE, 2026")
+			table.insert(lines, "")
+			table.insert(lines, "You named him, and you had the paper to back it.")
+		elseif payload.result == "CorrectUnsupported" then
+			table.insert(lines, "CASE OPEN — INSUFFICIENT EVIDENCE")
+			table.insert(lines, "")
+			table.insert(lines, "You were right. It will not go anywhere without three things")
+			table.insert(lines, "under it, and you brought out fewer than three.")
+		elseif payload.result == "WrongVictim" then
+			table.insert(lines, "CASE OPEN — YOU ACCUSED THE VICTIM")
+			table.insert(lines, "")
+			table.insert(lines, "They clocked in at ten and never clocked out.")
+		else
+			table.insert(lines, "CASE OPEN — WRONG NAME")
+			table.insert(lines, "")
+			table.insert(lines, "Twenty-eight years, and it is still not them.")
+		end
+		table.insert(lines, "")
+		table.insert(lines, `Evidence brought out of the building: {payload.clues} of 22`)
+		table.insert(lines, `Strikes held on the panel: {payload.held} of 33`)
+		table.insert(lines, "")
+		table.insert(lines, "NIGHT SHIFT — Part 1: Northlight Galleria")
+		openSheet("06:00", lines)
 	elseif kind == "case_file" then
-		local lines = { "DS RUTH CALDER, NORTHMOOR POLICE", "", "What you brought out tonight:" }
+		local lines = { "DS RUTH CALDER, NORTHMOOR POLICE", "", "What you have brought out so far:" }
 		if #payload.found == 0 then
 			table.insert(lines, "  Nothing. You did your job and went home.")
 		end
 		for _, clue in payload.found do
 			table.insert(lines, `  {clue.id}  {clue.name}`)
-			if clue.detail ~= "" then
+			if clue.detail and clue.detail ~= "" then
 				table.insert(lines, `        {clue.detail}`)
 			end
 		end
 		table.insert(lines, "")
-		table.insert(lines, "Seven names on the board. You get one answer, on the fifth night:")
-		for _, s in payload.suspects do
-			table.insert(lines, `  {s.name}  --  {s.role}`)
-			table.insert(lines, `        {s.summary}`)
+		if payload.canAccuse then
+			table.insert(lines, "Seven names. Walk up to one on the board and name them.")
+			table.insert(lines, "She needs three things under it, and she will only take one answer.")
+		else
+			table.insert(lines, "Seven names on the board. You get one answer, on the fifth night:")
 		end
 		table.insert(lines, "")
-		table.insert(lines, "Night 2 is where you start crossing them off.")
+		for _, suspect in payload.suspects do
+			table.insert(lines, `  {suspect.name}  --  {suspect.role}`)
+			table.insert(lines, `        {suspect.summary}`)
+			table.insert(lines, "")
+		end
 		openSheet("CASE FILE — NORTHLIGHT GALLERIA, 1998", lines)
 	end
 end)
 
 -- ── State ───────────────────────────────────────────────────────────────────
 
+local NIGHT_TITLES = { "First Shift", "The Mannequins", "Night Customers", "Blackout", "Closing" }
+
 remotes.Sync.OnClientEvent:Connect(function(state)
-	clockText.Text = state.time or "--:--"
+	if strikeLabel.Text == "" then
+		clockText.Text = state.time or "--:--"
+	end
 	clockText.TextColor3 = if state.power == false then Color3.fromRGB(70, 16, 14) else RED
 	renderObjectives(state.objectives or {})
 	walkie.Text = if state.question then `[ Q ]  {state.question}` else ""
+
+	local night = state.night or 1
+	local header = `NIGHT {night} — {NIGHT_TITLES[night] or ""}`
 	if state.carrying then
-		boardTitle.Text = `TONIGHT — carrying: {state.carrying}`
-	else
-		boardTitle.Text = "TONIGHT"
+		header ..= `  ·  carrying: {state.carrying}`
 	end
+	boardTitle.Text = header
 end)
 
 -- ── Input ───────────────────────────────────────────────────────────────────
@@ -459,5 +538,5 @@ end)
 -- glazing out on the brightest quality settings.
 Lighting.ExposureCompensation = -0.15
 
-showHint("[F] torch    [E] interact    [Q] walkie", DIM)
+showHint("[F] torch    [E] interact    [Q] walkie    [X] put it down", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

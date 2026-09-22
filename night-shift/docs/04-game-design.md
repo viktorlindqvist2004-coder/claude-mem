@@ -100,6 +100,22 @@ aggressive throughout, but the crew know the building.
 
 ---
 
+## 3b. Dread
+
+Attention decides *how much* the building does to you. [`10-fear-design.md`](10-fear-design.md)
+decides *what*, and it is a system of its own: the Presence that watches from forty metres and
+is gone the instant you look at it, retroreflective eyes that only appear in the edge of your
+torch beam, silhouettes crossing in front of neon at the end of a wing, and a catalogue of
+thirty physical startles governed by hard cooldowns and a per-night budget.
+
+Two rules from that document that constrain everything else in this one:
+
+- **Nothing supernatural is ever shown.** Only results, always with a mundane explanation
+  available in the world. This is why mannequins never move while observed — you never watch
+  the impossible happen, you only come back and find it done.
+- **No chase until Night 5.** Four nights of something that watches and never approaches
+  builds a dread a monster cannot.
+
 ## 4. Tasks
 
 Every night has a printed task board in the staff room and a clipboard item. Tasks are
@@ -130,7 +146,9 @@ slower.
 
 **Rule:** the flashlight is the only light source the player controls. There is no global
 "gamma" comfort setting beyond a standard brightness slider clamped to a range that keeps
-the game dark, and no toggleable "night vision".
+the game dark, and no toggleable "night vision". The mall's own light is neon signage, red
+EXIT signs and a few things nobody ever switched off — see
+[`05-art-direction.md`](05-art-direction.md).
 
 ---
 

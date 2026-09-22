@@ -14,9 +14,13 @@ torch shows them a 60° cone of it. Everything outside that cone is audio.
 2. **Silence is a resource, and we are stingy with it.** If the mall is quiet all the time,
    quiet means nothing. Ambience runs constantly, and the scares are built from *its
    removal*.
-3. **Two jump scares in the entire game.** Night 3 at 03:33, and one during the Night 5
-   chase. Everything else is dread. A game that startles you every ninety seconds trains
-   you not to care.
+3. **Startles are physical, budgeted and loud.** Around five a night, all of them a real
+   object falling, slamming or giving way, never a face and never a musical stinger. The
+   catalogue, the cooldowns and the loudness ceiling live in
+   [`10-fear-design.md`](10-fear-design.md). The part that belongs to audio is the **silence
+   ramp**: duck ambience and muzak by 14 dB over the 2.5 s before the hit and cut it entirely
+   for the last 0.4 s. Nobody notices the ramp, and it roughly doubles the startle — which is
+   why the loudest moment in the game does not have to be the loudest sound in the game.
 4. **Every rule with an audio component must be audible under a four-player voice chat.**
    If a tell is inaudible when friends are talking, it is not a tell.
 
@@ -97,6 +101,7 @@ A continuous positional bed, per zone:
 | Supermarket | Chest freezer compressors cycling on and off on independent timers |
 | Back of house | Dead, carpeted, close. Doors thud rather than ring. |
 | Basement | Water, a pump, and a long reverb tail that does not match the room's size |
+| Neon wings | Transformer buzz per sign, detuned slightly between units so a long wing beats against itself. Killing a wing's neon removes a sound the player did not know was there. |
 | Floor 3 | **Nothing.** No bed at all. The only place in the game with true silence, and it should be alarming. |
 
 `SoundService` reverb is set per zone (`Enum.ReverbType.Hallway`, `.Room`, `.ConcertHall`

@@ -112,6 +112,87 @@ Config.WAGES = {
 	TAG_FOUND = 0,
 }
 
+-- ─── Dread ──────────────────────────────────────────────────────────────────
+-- See docs/10-fear-design.md. The Presence watches and never approaches until
+-- Night 5; the resolution rule guarantees the player's own act of looking is what
+-- takes it away.
+Config.PRESENCE = {
+	SPAWN_DISTANCE_MIN = 25, -- metres
+	SPAWN_DISTANCE_MAX = 60,
+	-- Visible, but never where you are looking.
+	SPAWN_ANGLE_MIN_DEGREES = 18,
+	SPAWN_ANGLE_MAX_DEGREES = 42,
+	-- Look within this and it is gone one frame before the eye can resolve it —
+	-- always behind a real occluder, never a fade.
+	RESOLVE_ANGLE_DEGREES = 9,
+	-- Close past this and it was never there.
+	DESPAWN_DISTANCE = 15,
+	-- The stare: once a night, on a lone player, removal is suspended this long.
+	STARE_SECONDS = 8,
+	STARES_PER_NIGHT = 1,
+	-- Total deniability every time reads as gaslighting. One shared, unambiguous
+	-- sighting a night is what keeps the crew believing their own eyes.
+	CONFIRMED_SIGHTINGS_PER_NIGHT = 1,
+}
+
+Config.EYES = {
+	-- Retroreflective, never emissive. Visible in the edge of the beam and the
+	-- spill; aim straight at them and there is nothing there.
+	VISIBLE_ANGLE_MIN_DEGREES = 8,
+	VISIBLE_ANGLE_MAX_DEGREES = 20,
+	HEIGHT_METRES = 1.62,
+	BLINK_SECONDS = 0.11,
+	BLINK_INTERVAL_MIN = 2.5,
+	BLINK_INTERVAL_MAX = 9.0,
+}
+
+Config.CROSSING = {
+	DISTANCE_MIN = 40,
+	DISTANCE_MAX = 90,
+	DURATION_MIN = 0.3,
+	DURATION_MAX = 0.8,
+	INTERVAL_MIN = 40,
+	INTERVAL_MAX = 70,
+}
+
+Config.DREAD = {
+	-- Hard gates, not weights.
+	STARTLE_GLOBAL_COOLDOWN = 90,
+	STARTLE_AFTER_PRESENCE_COOLDOWN = 25,
+	-- Let a startled player run. The recovery is part of the rhythm.
+	POST_STARTLE_SUPPRESSION = 20,
+
+	STARTLES_PER_NIGHT = 5,
+	LARGE_STARTLES_PER_NIGHT = 2,
+	-- A build-up that resolves into nothing is the most valuable thing in the
+	-- catalogue, and it is free.
+	FAKE_OUTS_PER_STARTLE = 3,
+
+	-- Every night starts almost quiet. Let them get comfortable and split up.
+	OPENING_QUIET_SECONDS = 90,
+
+	-- Targeting multipliers. Splitting up is the trigger.
+	WEIGHT_ALONE = 3.0,
+	WEIGHT_DARK_AND_OFF_TASK = 1.6,
+	WEIGHT_NOT_SCARED_RECENTLY = 1.5, -- after NOT_SCARED_SECONDS
+	NOT_SCARED_SECONDS = 150,
+}
+
+Config.STARTLE_MIX = {
+	-- The silence ramp. Nobody notices it; it roughly doubles the startle, which
+	-- is why the loudest moment does not have to be the loudest sound.
+	DUCK_DB = -14,
+	DUCK_SECONDS = 2.5,
+	FULL_CUT_SECONDS = 0.4,
+	-- The transient carries the fright. A sustained roar just gets headphones
+	-- taken off, and this audience is largely teenagers at one in the morning.
+	TRUE_PEAK_CEILING_DBFS = -1.0,
+	LARGE_STARTLE_LU_ABOVE_BED = 18,
+	-- Accessibility: tames the peak, never removes the event. An option that
+	-- deletes the game is one everybody turns on and then nobody is scared.
+	REDUCED_SCARES_ATTENUATION_DB = -12,
+}
+
 -- ─── Trust (hidden) ─────────────────────────────────────────────────────────
 Config.TRUST_MIN = -5
 Config.TRUST_MAX = 5

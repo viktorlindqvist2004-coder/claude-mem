@@ -7,6 +7,10 @@ Five nights. A list of handwritten rules from 1998. A manager you only ever hear
 
 You win by working out who he is, and telling the police — with evidence.
 
+The mall is enormous and unlit. Neon shopfronts, red EXIT signs and your torch are the only
+light there is, and something out there watches you from about forty metres away and never
+comes closer. Until the fifth night.
+
 **Status:** pre-production. Design and story are being written first; the Roblox
 build follows. Nothing in `src/` is shipping code yet — it is the architectural
 skeleton the vertical slice will be built on.
@@ -23,6 +27,7 @@ skeleton the vertical slice will be built on.
 | [`docs/06-audio-direction.md`](docs/06-audio-direction.md) | Voice, music-as-mechanic, mix. |
 | [`docs/07-technical-architecture.md`](docs/07-technical-architecture.md) | Rojo/Luau structure, services, networking, anti-cheat. |
 | [`docs/09-the-investigation.md`](docs/09-the-investigation.md) | The mystery: seven suspects, twenty-two clues, the detective, and how you win. |
+| [`docs/10-fear-design.md`](docs/10-fear-design.md) | Dread, the Presence, eyes in the dark, and the thirty startles. |
 | [`docs/08-roadmap.md`](docs/08-roadmap.md) | Milestones from greybox to soft launch. |
 
 ## Naming: original → shipping

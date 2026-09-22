@@ -13,8 +13,12 @@ running on a phone**, so both are proven in Milestone 1, before any content is b
 - [x] Art and audio direction
 - [x] Technical architecture and repo skeleton
 - [x] The investigation: suspects, clue table, the detective, the accusation
+- [x] Fear design: the Presence, eyes, crossings, the startle catalogue, the director
 - [ ] Reference boards: mall photography, lighting, mannequins, the clock
-- [ ] Greybox the full mall at correct scale, walkable end to end
+- [ ] Greybox the full mall at correct scale, walkable end to end — all four floors, all
+      sixteen wings, with the EXIT signs already placed. **Walk it in the dark with a torch
+      before any material is authored.** If it is not frightening as grey boxes and red
+      signs, photoreal terrazzo will not save it.
 - [ ] Block out the muzak loop with temp music so Rule 2 is testable
 
 **Exit:** you can walk the whole mall in Studio at correct scale and it feels like a mall.
@@ -33,6 +37,9 @@ The whole game proven on one night.
 - [ ] Case file: clue pickup and logging, the voice log, Calder's Night 1 phone call
 - [ ] Final-quality art pass on **one corridor, the basement, and the atrium only**
 - [ ] Quality tiers implemented and measured on a real mid-range phone
+- [ ] Dread Director: the Presence with its resolution rule, eyes, crossings, and six
+      startles from the catalogue with cooldowns and the silence ramp
+- [ ] Accessibility from the start: reduce-loud-scares, reduce-flashing, startle subtitles
 
 **Exit:** Night 1 played end to end by four external testers who have never seen the doc,
 at 30 fps on a phone, and at least two of them ask him what time it is without being

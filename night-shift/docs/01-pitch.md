@@ -8,9 +8,11 @@
 
 ## The pitch
 
-Northlight Galleria opened in 1986. In the atrium stands the Great Clock, salvaged
-from a railway station that closed in 1971. Nobody has ever seen it move. It reads
-**3:33**.
+Northlight Galleria opened in 1986. A hundred and sixty-eight units over four floors, of
+which eleven still trade. At night the general lighting is off and what is left is the neon
+in the shopfronts, the red EXIT signs on the emergency circuit, and whatever your torch can
+reach. In the atrium stands the Great Clock, salvaged from a railway station that closed in
+1971. Nobody has ever seen it move. It reads **3:33**.
 
 You and up to three friends have just been hired as night crew. You mop, you
 restock, you pull the shutters down, you take the bins to the loading dock. Your
@@ -55,9 +57,28 @@ holding it, and on the fifth night you have to tell her who did it — and be ri
 5. **Closing** — name him to the police, run the closing routine that was never finished in
    1998, and let four people go home.
 
+## The fear
+
+Nothing supernatural is ever shown on screen — only its results, and every one of them has a
+mundane explanation you can walk over and check. The sign that tore loose really does have a
+corroded fixing. The eyes you saw really were at the exact position of a CCTV dome. You will
+not believe any of it.
+
+He is in the building from the first night and he never approaches. He stands at forty metres
+in unlit volume and watches, and the moment you look directly at him he goes behind something.
+You get shoulders in the red spill of an EXIT sign, a neon sign going dark in a human shape
+for four tenths of a second, a reflection in shopfront glass of someone standing in an aisle
+that has nobody in it.
+
+And roughly five times a night, something physical and very loud happens — a fascia sign
+shears a fixing and swings down at head height, a shutter slams behind you and seals the
+corridor you came in through, every neon in the wing dies in sequence running toward you, and
+the last one to go out is the one above your head.
+
 ## Why it works
 
-The horror is not a monster in a vent. It is a building that has decided you are staff,
+The horror is not a monster in a vent — there is no monster and there is never a reveal. It
+is a building that has decided you are staff,
 a manager who is kind right up until you try to leave, and a list written by a woman
 who knew she was not going to make it and spent her last weeks writing instructions
 for whoever came next.

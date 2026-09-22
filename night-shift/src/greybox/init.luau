@@ -175,36 +175,72 @@ local function buildWing(w: MallLayout.Wing, origin: Vector3, forward: Vector3, 
 		return
 	end
 
-	-- Shopfronts, and a back door into the service corridor behind each unit.
-	local frontage = length / cfg.unitsPerSide
-	local glassH = soffit - s(1.1)
-	local trading = w.tradingUnits
+	-- Shopfronts. Each side is planned independently from a seed derived from
+	-- the wing, so the two sides never line up, no two wings are alike, and the
+	-- building is identical for every player. This is a place, not a roguelike.
+	local nameSeed = 0
+	for i = 1, #w.name do
+		nameSeed += string.byte(w.name, i) * i
+	end
 
 	for _, side in { -1, 1 } do
-		for i = 1, cfg.unitsPerSide do
-			local t = -length / 2 + frontage * (i - 0.5)
-			local lat = side * walkOut
-			local isTrading = trading > 0 and i % 3 == 1
-			if isTrading then
-				trading -= 1
-			end
+		local units = MallLayout.planUnits(nameSeed * 31 + side * 7 + math.floor(origin.Y), w.tradingUnits // 2 + (if side > 0 then w.tradingUnits % 2 else 0))
 
-			part("Fascia", Vector3.new(0.75, s(1.1), frontage), at(lat, soffit - s(0.55), t), COLOR.shopfront, model)
+		for _, u in units do
+			local t = -length / 2 + s(u.centre)
+			local width = s(u.width)
+			local lat = side * (walkOut + s(u.recess))
+			local fascia = s(u.fasciaHeight)
+			local glassH = soffit - fascia - s(0.25)
+
+			part("Fascia", Vector3.new(0.8, fascia, width), at(lat, soffit - fascia / 2, t), COLOR.shopfront, model)
 			for _, e in { -1, 1 } do
-				part("Pilaster", Vector3.new(0.9, glassH, 0.6),
-					at(lat, glassH / 2 + s(0.2), t + e * frontage / 2), COLOR.shopfront, model)
+				part("Pilaster", Vector3.new(0.95, glassH + 0.3, 0.55),
+					at(lat, glassH / 2 + s(0.2), t + e * width / 2), COLOR.shopfront, model)
 			end
-			part("Glazing", Vector3.new(0.2, glassH, frontage - s(0.8)),
-				at(lat - side * 0.35, glassH / 2 + s(0.2), t), COLOR.glazing, model)
-			part("BackDoor", Vector3.new(0.3, s(2.05), s(0.95)), at(side * (unitOut - s(0.2)), s(1.02), t), COLOR.escalator, model)
 
-			if isTrading then
-				neonSign(at(lat - side * 0.9, soffit - s(0.62), t).Position, -right * side, w.hueColor, model)
+			-- Party walls, so units read as separate rooms rather than one long
+			-- void behind a strip of glass.
+			for _, e in { -1, 1 } do
+				part("PartyWall", Vector3.new(s(MallLayout.WING.unitDepth), s(3.0), 0.3),
+					at(side * (walkOut + s(MallLayout.WING.unitDepth) / 2), s(1.5), t + e * width / 2),
+					COLOR.wall, model)
 			end
+
+			if u.state == "shutterDown" then
+				part("Shutter", Vector3.new(0.16, glassH, width - 0.9),
+					at(lat - side * 0.3, glassH / 2 + s(0.2), t), COLOR.escalator, model)
+			elseif u.state == "shutterHalf" then
+				part("Shutter", Vector3.new(0.16, glassH * 0.6, width - 0.9),
+					at(lat - side * 0.3, glassH * 0.7 + s(0.35), t), COLOR.escalator, model)
+				part("Glazing", Vector3.new(0.1, glassH * 0.4, width - 0.9),
+					at(lat - side * 0.32, glassH * 0.2, t), COLOR.glazing, model)
+			elseif u.state == "hoarded" then
+				part("Hoarding", Vector3.new(0.14, glassH, width - 0.9),
+					at(lat - side * 0.28, glassH / 2 + s(0.2), t), COLOR.wall, model)
+			else
+				part("Glazing", Vector3.new(0.1, glassH, width - 0.9),
+					at(lat - side * 0.32, glassH / 2 + s(0.2), t), COLOR.glazing, model)
+				local mullions = math.max(1, math.floor(u.width / 2.6))
+				for m = 0, mullions - 1 do
+					part("Mullion", Vector3.new(0.14, glassH, 0.1),
+						at(lat - side * 0.36, glassH / 2 + s(0.2),
+							t + ((m / mullions) - 0.5 + 0.5 / mullions) * (width - 0.9)),
+						COLOR.escalator, model)
+				end
+			end
+
+			if u.state == "trading" then
+				neonSign(at(lat - side * 0.88, soffit - fascia / 2, t).Position, -right * side, w.hueColor, model)
+			end
+
+			part("BackDoor", Vector3.new(0.3, s(2.05), s(0.95)),
+				at(side * (unitOut - s(0.2)), s(1.02), t), COLOR.escalator, model)
 		end
 	end
 
-	-- The red circuit: bulkheads every 11 m, EXIT signs every 22 m.
+	-- The red circuit. Bulkheads carry the working light; EXIT signs mark
+	-- actual exits and nothing else.
 	local bulkSpacing = s(MallLayout.EXIT_SIGN.bulkheadSpacing)
 	for i = 0, math.floor(length / bulkSpacing) do
 		local t = -length / 2 + bulkSpacing * i
@@ -213,13 +249,11 @@ local function buildWing(w: MallLayout.Wing, origin: Vector3, forward: Vector3, 
 		end
 	end
 
-	local spacing = s(MallLayout.EXIT_SIGN.spacingAlongWing)
-	for i = 0, math.floor(length / spacing) do
-		local side = if i % 2 == 0 then 1 else -1
-		exitSign(at(side * (walkOut - 0.5), s(MallLayout.EXIT_SIGN.height), -length / 2 + spacing * i).Position,
-			-right * side, model)
+	for _, spot in { { -length / 2 + s(2), 1 }, { 0, -1 }, { length / 2 - s(2), 1 } } do
+		exitSign(at(spot[2] * (walkOut - 0.5), s(MallLayout.EXIT_SIGN.height), spot[1]).Position,
+			-right * spot[2], model)
 	end
-	exitSign(at(0, s(MallLayout.EXIT_SIGN.height), length / 2 - 0.5).Position, -forward, model)
+	exitSign(at(0, s(MallLayout.EXIT_SIGN.height + 0.9), length / 2 - s(1.2)).Position, -forward, model)
 end
 
 local function buildAtrium(parent: Instance)

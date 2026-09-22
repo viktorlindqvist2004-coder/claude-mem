@@ -104,6 +104,110 @@ MallLayout.WING = {
 	bridgesPerWing = 2,
 }
 
+-- ─── Units ──────────────────────────────────────────────────────────────────
+--[[
+	A real mall is not a rhythm. Frontages run from a 5.5 m kiosk to a 31 m
+	anchor, units get knocked through into their neighbours, some sit back from
+	the shopfront line, and most have been dark for years.
+
+	Each side of each wing is planned independently from a seed, so the two
+	sides never line up and no two wings are alike. The seed is derived from the
+	wing, which means the building is the same for every player and every
+	session — this is a place, not a roguelike.
+]]
+export type UnitKind = "anchor" | "large" | "standard" | "small" | "kiosk"
+
+MallLayout.UNIT_KINDS: { { kind: UnitKind, minWidth: number, maxWidth: number, weight: number } } = {
+	{ kind = "anchor", minWidth = 24.0, maxWidth = 31.0, weight = 0.10 },
+	{ kind = "large", minWidth = 17.0, maxWidth = 23.0, weight = 0.17 },
+	{ kind = "standard", minWidth = 11.0, maxWidth = 16.0, weight = 0.33 },
+	{ kind = "small", minWidth = 7.5, maxWidth = 10.5, weight = 0.27 },
+	{ kind = "kiosk", minWidth = 5.5, maxWidth = 7.0, weight = 0.13 },
+}
+
+-- What has happened to a unit since it closed. "trading" is placed explicitly
+-- from each wing's tradingUnits count, never drawn.
+export type UnitState =
+	"trading" | "darkGlass" | "shutterHalf" | "shutterDown" | "hoarded" | "stripped"
+
+MallLayout.UNIT_STATES: { { state: UnitState, weight: number } } = {
+	{ state = "darkGlass", weight = 0.30 },
+	{ state = "shutterHalf", weight = 0.16 },
+	{ state = "shutterDown", weight = 0.20 },
+	{ state = "hoarded", weight = 0.16 },
+	{ state = "stripped", weight = 0.18 },
+}
+
+-- Setbacks from the shopfront line. Breaking the straight run does more for
+-- "this is a mall, not a corridor" than any amount of prop dressing.
+MallLayout.UNIT_RECESSES = { 0.0, 0.0, 0.0, 0.7, 1.4 }
+
+export type PlannedUnit = {
+	centre: number, -- metres from the atrium end of the wing
+	width: number,
+	kind: UnitKind,
+	state: UnitState,
+	recess: number,
+	fasciaHeight: number,
+}
+
+local function weightedPick(rng: Random, entries: { any }, weightKey: string): any
+	local total = 0
+	for _, e in entries do
+		total += e[weightKey]
+	end
+	local roll = rng:NextNumber() * total
+	for _, e in entries do
+		roll -= e[weightKey]
+		if roll <= 0 then
+			return e
+		end
+	end
+	return entries[#entries]
+end
+
+--[[
+	Lay one side of a wing out end to end. Deterministic for a given seed, so
+	every player walks the same building.
+]]
+function MallLayout.planUnits(seed: number, tradingUnits: number): { PlannedUnit }
+	local rng = Random.new(seed)
+	local length = MallLayout.WING.length
+	local units: { PlannedUnit } = {}
+	local t = 0
+
+	while length - t > 5.5 do
+		local kind = weightedPick(rng, MallLayout.UNIT_KINDS, "weight")
+		local width = rng:NextNumber(kind.minWidth, kind.maxWidth)
+		if length - (t + width) < 5.5 then
+			width = length - t
+		end
+		table.insert(units, {
+			centre = t + width / 2,
+			width = width,
+			kind = kind.kind,
+			state = weightedPick(rng, MallLayout.UNIT_STATES, "weight").state,
+			recess = MallLayout.UNIT_RECESSES[rng:NextInteger(1, #MallLayout.UNIT_RECESSES)],
+			fasciaHeight = rng:NextNumber(0.85, 1.45),
+		})
+		t += width
+	end
+
+	-- Trading units are chosen, not drawn: a wing has as many lit shopfronts as
+	-- the directory says it has, and no more.
+	for _ = 1, math.min(tradingUnits, #units) do
+		for _ = 1, 24 do
+			local pick = units[rng:NextInteger(1, #units)]
+			if pick.state ~= "trading" then
+				pick.state = "trading"
+				break
+			end
+		end
+	end
+
+	return units
+end
+
 -- ─── Back of house ──────────────────────────────────────────────────────────
 -- Where the mall stops performing. Reached through any unit's back door, the
 -- staff corridor behind the supermarket, or the loading dock ramp.
@@ -197,7 +301,11 @@ end
 -- the largest scare in the game.
 MallLayout.EXIT_SIGN = {
 	height = 2.3, -- above finished floor
-	spacingAlongWing = 22, -- one every 22 m, plus both ends
+	-- Three per wing plus the end: the atrium junction, two actual fire exits,
+	-- and the glazed entrance. An EXIT sign every 22 m was absurd — it made the
+	-- mall read as a service tunnel, and it spent the blackout scare for
+	-- nothing. Bulkheads carry the working light.
+	perWing = 4,
 	-- Caged red bulkheads carry the actual working light, every 8 m. That is
 	-- close spacing, and it has to be: the public volume is 16 m wide and 16 m
 	-- tall, and a bulkhead only lights about 4 m of floor in it.

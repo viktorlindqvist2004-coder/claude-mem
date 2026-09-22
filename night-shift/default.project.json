@@ -35,6 +35,12 @@
         "Technology": "Future",
         "GlobalShadows": true
       }
+    },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Greybox": {
+        "$path": "src/greybox"
+      }
     }
   }
 }

@@ -15,10 +15,14 @@ running on a phone**, so both are proven in Milestone 1, before any content is b
 - [x] The investigation: suspects, clue table, the detective, the accusation
 - [x] Fear design: the Presence, eyes, crossings, the startle catalogue, the director
 - [ ] Reference boards: mall photography, lighting, mannequins, the clock
-- [ ] Greybox the full mall at correct scale, walkable end to end — all four floors, all
-      sixteen wings, with the EXIT signs already placed. **Walk it in the dark with a torch
-      before any material is authored.** If it is not frightening as grey boxes and red
-      signs, photoreal terrazzo will not save it.
+- [x] Floor plan as data (`MallLayout.luau`) — twelve retail wings, 168 units, eleven
+      trading, signage hues, EXIT placement
+- [x] Greybox generator (`src/greybox/`) — builds the whole mall from that plan
+- [ ] Run it in Studio, fix whatever the first build breaks on, and **walk it in the dark
+      with a torch.** If it is not frightening as grey boxes and red signs, photoreal
+      terrazzo will not save it.
+- [ ] Iterate the scale in `MallLayout.luau`: is 110 m too long? does the atrium read as
+      four storeys? does the per-wing hue actually work for finding each other over voice?
 - [ ] Block out the muzak loop with temp music so Rule 2 is testable
 
 **Exit:** you can walk the whole mall in Studio at correct scale and it feels like a mall.

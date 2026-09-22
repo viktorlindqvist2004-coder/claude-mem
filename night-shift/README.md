@@ -56,15 +56,43 @@ The concept was written in Swedish. Everything ships in English.
 
 ```
 night-shift/
-  docs/                 design + story documentation (the current deliverable)
+  docs/                 design + story documentation
   default.project.json  Rojo project definition
   src/shared/           modules replicated to both sides
   src/server/           authoritative services
   src/client/           controllers and UI
+  src/greybox/          disposable mall generator (see below)
 ```
 
-## Building (later)
+## Greybox
+
+`src/shared/MallLayout.luau` is the floor plan as data: floors, wings, unit counts,
+signage hues, EXIT placement. It is the durable artefact — the final art build, the
+streaming split, the clue placements and the Dread Director's spawn volumes all
+reference it.
+
+`src/greybox/` generates the whole mall from that plan as grey boxes, so the building can
+be walked at correct scale, in the dark, with a torch, before any material is authored.
+The geometry is disposable and gets deleted when the modular art kit lands.
 
 ```bash
-rojo serve          # then connect from Roblox Studio
+rojo serve                                      # then connect from Roblox Studio
 ```
+
+Then, in the Studio command bar:
+
+```lua
+require(game.ServerStorage.Greybox).build()     -- ~550 parts, ~90 EXIT lights
+require(game.ServerStorage.Greybox).clear()     -- remove it again
+```
+
+It applies the Night 1 lighting preset and switches `StreamingEnabled` on, so the first
+thing you see is the mall as the game intends it: almost entirely black, with red EXIT
+signs and eleven neon shopfronts.
+
+**Iterate in `MallLayout.luau`, not in Studio.** Change the wing length, the unit count or
+the hues and re-run `build()`. The one question the greybox exists to answer is whether the
+scale is right, and that question gets asked about five times.
+
+> Not yet run in Studio. There is no Roblox runtime or Luau typechecker in the environment
+> it was written in, so expect to fix a line or two on the first build.

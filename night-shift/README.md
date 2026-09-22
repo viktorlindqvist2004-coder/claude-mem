@@ -30,7 +30,8 @@ skeleton the vertical slice will be built on.
 | [`docs/10-fear-design.md`](docs/10-fear-design.md) | Dread, the Presence, eyes in the dark, and the thirty startles. |
 | [`docs/11-direction-log.md`](docs/11-direction-log.md) | **Every piece of direction given, and how it was resolved. Outranks the other docs.** |
 | [`docs/12-the-strike.md`](docs/12-the-strike.md) | The digital clock, and the night it strikes thirty-three times. |
-| [`docs/13-studio-setup.md`](docs/13-studio-setup.md) | **Start here to build it: Rojo, Studio, and the first greybox.** |
+| [`docs/14-live-setup.md`](docs/14-live-setup.md) | **Start here. Connect a folder on your Mac to Studio so edits appear live.** |
+| [`docs/13-studio-setup.md`](docs/13-studio-setup.md) | The same thing in less detail, plus what is not built yet. |
 | [`docs/08-roadmap.md`](docs/08-roadmap.md) | Milestones from greybox to soft launch. |
 
 ## Naming: original → shipping

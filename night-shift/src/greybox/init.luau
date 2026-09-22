@@ -108,13 +108,13 @@ local function wing(fid,key,y,fitted,ground)
     P("Counter",S(.8,1,2.6),A(sd*(WO+2.6),.5,at),C.tr)
     if rng:NextNumber() < .75 then
      local tint = rng:NextNumber() < .55 and Color3.fromRGB(248,236,208) or Color3.fromRGB(222,230,244)
-     G(P("Sec",S(.5,.12,.5),A(sd*(WO+rng:NextNumber(5,9)),2.6,at),tint,Enum.Material.Neon),tint,rng:NextNumber(1,2.6),10)
+     G(P("Sec",S(.5,.12,.5),A(sd*(WO+rng:NextNumber(5,9)),2.6,at),tint,Enum.Material.Neon),tint,rng:NextNumber(.4,1.1),8)
     end
    end
    if lit then
     local sg = P("Neon",S(3.4,.42,.1),CFrame.lookAt(A(lat-sd*.88,CH-fa/2,at).Position,
       A(lat-sd*.88,CH-fa/2,at).Position - ri*sd),HUE[key],Enum.Material.Neon)
-    G(sg,HUE[key],3.2,14)
+    G(sg,HUE[key],1.3,11)
    end
    P("BackDoor",S(.16,2.05,.95),A(sd*(UO-.2),1.02,at),C.me)
    t = t + w
@@ -128,7 +128,7 @@ local function wing(fid,key,y,fitted,ground)
    local pos = A(sd*rng:NextNumber(HV+1.1,WO-1.1),CH-.14,t)
    P("Can",S(.42,.14,.42),pos,C.me)
    if rng:NextNumber() > .34 then
-    G(P("Lamp",S(.3,.05,.3),pos*CFrame.new(0,-st(.07),0),RED,Enum.Material.Neon),RED,rng:NextNumber(1.3,2.6),8.5)
+    G(P("Lamp",S(.3,.05,.3),pos*CFrame.new(0,-st(.07),0),RED,Enum.Material.Neon),RED,rng:NextNumber(.5,1.1),6.5)
    end
    t = t + rng:NextNumber(4.5,11)
   end
@@ -136,7 +136,7 @@ local function wing(fid,key,y,fitted,ground)
  -- EXIT signs mark exits, nothing else.
  for _,sp in {{-WL/2+2,1},{0,-1},{WL/2-2,1}} do
   local pos = A(sp[2]*(WO-.5),2.3,sp[1]).Position
-  G(P("Exit",S(.62,.26,.1),CFrame.lookAt(pos,pos-ri*sp[2]),RED,Enum.Material.Neon),RED,.9,7)
+  G(P("Exit",S(.62,.26,.1),CFrame.lookAt(pos,pos-ri*sp[2]),RED,Enum.Material.Neon),RED,.4,5)
  end
 end
 
@@ -201,12 +201,12 @@ local function build()
     for sg,g in SG do
      local isOn = on:find(sg) ~= nil
      P("Seg",Vector3.new(g[3]*sc,g[4]*sc,.07),CFrame.new(st(x+m*(dw/2+g[1]*sc)),st(5.8+g[2]*sc),st(zf+fc*.13)),
-       isOn and RED or Color3.fromRGB(26,6,5), isOn and Enum.Material.Neon or Enum.Material.SmoothPlastic)
+       isOn and RED or Color3.fromRGB(14,4,3), isOn and Enum.Material.Neon or Enum.Material.SmoothPlastic)
     end
     x = x + m*(dw+gap)
    end
   end
-  G(P("Spill",Vector3.new(.3,.3,.3),CFrame.new(0,st(5.2),st(fc*4.5)),RED,Enum.Material.Neon),RED,2.2,14)
+  G(P("Spill",Vector3.new(.3,.3,.3),CFrame.new(0,st(5.2),st(fc*4.5)),RED,Enum.Material.Neon),RED,.8,10)
  end
 
  for _,f in FLOORS do
@@ -221,16 +221,16 @@ local function build()
  -- Night, and the weather outside.
  pcall(function() L.Technology = Enum.Technology.Future end)
  L.GlobalShadows=true; L.Ambient=Color3.fromRGB(3,3,5); L.OutdoorAmbient=Color3.fromRGB(12,14,20)
- L.Brightness=.35; L.ExposureCompensation=-.1; L.ClockTime=0; L.GeographicLatitude=20
+ L.Brightness=.22; L.ExposureCompensation=-.1; L.ClockTime=0; L.GeographicLatitude=20
  L.EnvironmentDiffuseScale=.18; L.EnvironmentSpecularScale=.65
  for _,n in {"NightAtmosphere","NightBloom","NightColour"} do
   local o=L:FindFirstChild(n); if o then o:Destroy() end
  end
  local a=Instance.new("Atmosphere"); a.Name="NightAtmosphere"; a.Density=.38; a.Haze=1.4
  a.Glare=.2; a.Color=Color3.fromRGB(180,182,190); a.Decay=Color3.fromRGB(88,92,106); a.Parent=L
- local b=Instance.new("BloomEffect"); b.Name="NightBloom"; b.Intensity=.75; b.Size=30; b.Threshold=1.35; b.Parent=L
+ local b=Instance.new("BloomEffect"); b.Name="NightBloom"; b.Intensity=.55; b.Size=26; b.Threshold=1.6; b.Parent=L
  local cc=Instance.new("ColorCorrectionEffect"); cc.Name="NightColour"; cc.Saturation=-.05
- cc.Contrast=.24; cc.TintColor=Color3.fromRGB(232,236,255); cc.Parent=L
+ cc.Contrast=.30; cc.TintColor=Color3.fromRGB(232,236,255); cc.Parent=L
  local ter=W:FindFirstChildOfClass("Terrain")
  if ter then
   local o=ter:FindFirstChildOfClass("Clouds"); if o then o:Destroy() end

@@ -86,7 +86,7 @@ rojo serve                                      # then connect from Roblox Studi
 Then, in the Studio command bar:
 
 ```lua
-require(game.ServerStorage.Greybox).build()     -- ~550 parts, ~90 EXIT lights
+local c=game.ServerStorage.Greybox:Clone() c.Parent=workspace require(c).build() c:Destroy()     -- ~550 parts, ~90 EXIT lights
 require(game.ServerStorage.Greybox).clear()     -- remove it again
 ```
 

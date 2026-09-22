@@ -3,8 +3,18 @@
 
 	Run it from the Studio command bar:
 
-	    require(game.ServerStorage.Greybox).build()
-	    require(game.ServerStorage.Greybox).clear()
+	    local c=game.ServerStorage.Greybox:Clone() c.Parent=workspace require(c).build() c:Destroy()
+
+	That clones the module before requiring it, and the clone matters: require()
+	runs a ModuleScript once per Studio session and caches the result, so after
+	Rojo syncs an edit a plain require still runs the old version out of memory.
+	A clone is a different instance, so it compiles fresh. Symptom without it is
+	the worst kind — the edit lands on disk, syncs into Studio, and changes
+	nothing, with no error to explain why.
+
+	To remove the building:
+
+	    workspace.Mall:Destroy()
 
 	Everything is in METRES; the builder converts at 1 stud = 0.3 m. The numbers
 	are at the top: WL is the wing length, AW and AD the atrium, FF the floor to

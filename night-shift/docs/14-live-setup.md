@@ -82,11 +82,17 @@ Rojo pushes it into Studio. You rebuild and look.
 To rebuild, one short line in Studio's command bar:
 
 ```lua
-require(game.ServerStorage.Greybox).build()
+local c=game.ServerStorage.Greybox:Clone() c.Parent=workspace require(c).build() c:Destroy()
 ```
 
 That line is short enough to paste safely, unlike the 800-line script — which is the whole
 reason this setup is worth twenty minutes.
+
+**The `:Clone()` in it is not decoration.** `require()` runs a ModuleScript once per Studio
+session and caches what it returns. After Rojo syncs an edit, a plain
+`require(game.ServerStorage.Greybox)` still runs the old version out of memory: the file
+changed, Studio shows the new source, and the build comes out identical with no error to
+explain it. Cloning forces a fresh compile.
 
 ## If something breaks
 

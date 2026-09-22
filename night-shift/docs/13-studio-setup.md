@@ -63,7 +63,7 @@ Studio** — Rojo syncs one way, from disk into Studio, and Studio-side edits ge
 In Studio's **command bar** (View → Command Bar), in edit mode, not play mode:
 
 ```lua
-require(game.ServerStorage.Greybox).build()
+local c=game.ServerStorage.Greybox:Clone() c.Parent=workspace require(c).build() c:Destroy()
 ```
 
 That generates the whole building at correct scale — four floors, twelve retail wings,

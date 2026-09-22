@@ -497,6 +497,58 @@ def _slabs(orig, dirs, bmin, bmax):
     return lo.max(axis=1), hi.min(axis=1), lo
 
 
+def screen_rect(b, eye, cam, w, h):
+    """Pixel bounds a box can possibly cover, or None if it cannot be seen."""
+    fwd, right, up, scale, aspect = cam
+    bmin, bmax = b[0], b[1]
+    corners = np.array([[bmin[0] if i & 1 else bmax[0],
+                         bmin[1] if i & 2 else bmax[1],
+                         bmin[2] if i & 4 else bmax[2]] for i in range(8)])
+    v = corners - eye
+    z = v @ fwd
+    if np.all(z <= 0.05):
+        return None
+    if np.any(z <= 0.05):
+        return 0, w - 1, 0, h - 1  # straddles the camera plane; do it the slow way
+    xs = (v @ right) / z / (scale * aspect)
+    ys = (v @ up) / z / scale
+    x0 = int(np.floor((xs.min() + 1) / 2 * w)) - 1
+    x1 = int(np.ceil((xs.max() + 1) / 2 * w)) + 1
+    y0 = int(np.floor((1 - ys.max()) / 2 * h)) - 1
+    y1 = int(np.ceil((1 - ys.min()) / 2 * h)) + 1
+    x0, x1 = max(x0, 0), min(x1, w - 1)
+    y0, y1 = max(y0, 0), min(y1, h - 1)
+    if x1 < x0 or y1 < y0:
+        return None
+    return x0, x1, y0, y1
+
+
+def trace_primary(eye, dirs, geom, cam, w, h, max_t=400.0):
+    """Primary rays only: every ray shares an origin, so each box is tested
+    against its own screen rectangle instead of the whole frame."""
+    n = dirs.shape[0]
+    best = np.full(n, max_t)
+    idx = np.full(n, -1, np.int32)
+    axis = np.zeros(n, np.int32)
+
+    for i, b in enumerate(geom):
+        rect = screen_rect(b, eye, cam, w, h)
+        if rect is None:
+            continue
+        x0, x1, y0, y1 = rect
+        sel = (np.arange(y0, y1 + 1)[:, None] * w + np.arange(x0, x1 + 1)[None, :]).ravel()
+        sd = dirs[sel]
+        tmin, tmax, lo = _slabs(eye, sd, b[0], b[1])
+        hit = (tmax >= np.maximum(tmin, 1e-4)) & (tmin > 1e-4) & (tmin < best[sel])
+        if not hit.any():
+            continue
+        sub = sel[hit]
+        best[sub] = tmin[hit]
+        idx[sub] = i
+        axis[sub] = lo[hit].argmax(axis=1)
+    return best, idx, axis
+
+
 def trace(orig, dirs, geom, max_t=400.0):
     n = dirs.shape[0]
     best = np.full(n, max_t)
@@ -554,9 +606,13 @@ def surface(P, N, mats, albedo, bmins, bmaxs):
 MAT_ID = {"floor": 0, "ceiling": 1, "sky": 8}
 
 
-def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=None):
+def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=None,
+          cam=None, size=None):
     n = dirs.shape[0]
-    t, idx, axis = trace(orig, dirs, geom)
+    if cam is not None and size is not None:
+        t, idx, axis = trace_primary(eye, dirs, geom, cam, size[0], size[1])
+    else:
+        t, idx, axis = trace(orig, dirs, geom)
     hit = idx >= 0
     col = np.zeros((n, 3))
     P = orig + dirs * t[:, None]
@@ -647,13 +703,14 @@ def shade(orig, dirs, geom, lit, bb, torch=None, bounce=True, shadows=True, eye=
     return col + haze
 
 
-def render(name, eye, target, fov=62.0, w=880, h=495, torch_on=False):
+def render(name, eye, target, fov=62.0, w=800, h=450, torch_on=False):
     eye = np.asarray(eye, float)
     fwd = np.asarray(target, float) - eye
     fwd /= np.linalg.norm(fwd)
     right = np.cross(fwd, [0, 1.0, 0])
     right /= np.linalg.norm(right)
     up = np.cross(right, fwd)
+    scale = math.tan(math.radians(fov) / 2)
 
     # Frustum cull on each box's bounding sphere.
     half_ang = math.radians(fov) / 2 * 1.35 * (w / h)
@@ -687,7 +744,6 @@ def render(name, eye, target, fov=62.0, w=880, h=495, torch_on=False):
     BMAX = np.array([b[1] for b in keep])
     print(f"  {name}: {len(keep)} boxes, {len(lit)} lights", flush=True)
 
-    scale = math.tan(math.radians(fov) / 2)
     px = ((np.arange(w) + 0.5) / w * 2 - 1) * scale * (w / h)
     py = (1 - (np.arange(h) + 0.5) / h * 2) * scale
     gx, gy = np.meshgrid(px, py)
@@ -697,7 +753,9 @@ def render(name, eye, target, fov=62.0, w=880, h=495, torch_on=False):
     tor = (eye, fwd, np.array([1.0, 0.83, 0.66]), 34.0,
            math.cos(math.radians(30))) if torch_on else None
 
-    col = shade(orig, dirs, keep, lit, (BMIN, BMAX), tor, eye=eye).reshape(h, w, 3)
+    cam = (fwd, right, up, scale, w / h)
+    col = shade(orig, dirs, keep, lit, (BMIN, BMAX), tor, eye=eye,
+                cam=cam, size=(w, h)).reshape(h, w, 3)
 
     col = np.clip(col, 0, None)
     col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14)

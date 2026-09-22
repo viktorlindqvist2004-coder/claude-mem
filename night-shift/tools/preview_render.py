@@ -563,32 +563,37 @@ SEG_GEOM = {
 }
 
 
-def seven_segment(text, centre, digit_h=1.05, gap=0.30, depth=0.07,
+def seven_segment(text, centre, digit_h=1.05, gap=0.30, depth=0.07, mirror=False,
                   lit=(2.0, 0.050, 0.035), unlit=(0.010, 0.002, 0.002)):
     """A 1986 LED display. Unlit segments stay faintly visible, which is what
-    makes a seven-segment panel read as a device rather than as a texture."""
+    makes a seven-segment panel read as a device rather than as a texture.
+
+    `mirror` lays the digits out along -x instead of +x, for the panel whose
+    face points the other way down the atrium. Without it one of the two reads
+    backwards, which is exactly the sort of thing you only notice in a render.
+    """
     cx, cy, cz = centre
     scale = digit_h / 2.0
     digit_w = 1.10 * scale
+    m = -1.0 if mirror else 1.0
 
-    slots = [(ch, i) for i, ch in enumerate(text)]
-    total = sum(0.42 * digit_w if ch == ":" else digit_w for ch, _ in slots)
-    total += gap * (len(slots) - 1)
-    x = cx - total / 2
+    total = sum(0.42 * digit_w if ch == ":" else digit_w for ch in text)
+    total += gap * (len(text) - 1)
+    x = cx - m * total / 2
 
-    for ch, _ in slots:
+    for ch in text:
         if ch == ":":
             for dy in (0.42, -0.42):
-                box([x + 0.21 * digit_w, cy + dy * scale, cz],
+                box([x + m * 0.21 * digit_w, cy + dy * scale, cz],
                     [0.15 * scale, 0.15 * scale, depth], "sign", emissive=lit)
-            x += 0.42 * digit_w + gap
+            x += m * (0.42 * digit_w + gap)
             continue
         on = SEGMENTS.get(ch, "")
         for seg, (dx, dy, w, h) in SEG_GEOM.items():
-            box([x + digit_w / 2 + dx * scale, cy + dy * scale, cz],
+            box([x + m * (digit_w / 2 + dx * scale), cy + dy * scale, cz],
                 [max(w, 0.02) * scale, max(h, 0.02) * scale, depth],
                 "sign", emissive=lit if seg in on else unlit)
-        x += digit_w + gap
+        x += m * (digit_w + gap)
 
 
 def build_clock():
@@ -623,7 +628,8 @@ def build_clock():
     for face in (-1, 1):
         zf = cz + face * 1.52
         box([cx, 5.80, zf], [4.7, 2.5, 0.14], "hand")                 # backing
-        seven_segment("03:33", [cx, 5.80, zf + face * 0.11], digit_h=1.15, gap=0.20)
+        seven_segment("03:33", [cx, 5.80, zf + face * 0.11], digit_h=1.15, gap=0.20,
+                      mirror=(face < 0))
 
         # The bezel is a frame, not a plate.
         for dy in (1.34, -1.34):

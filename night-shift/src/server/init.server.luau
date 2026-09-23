@@ -16,6 +16,17 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+--[[
+	Nobody spawns into a building that does not exist yet.
+
+	The mall is built by this script, and in Play Solo the local player's
+	character loads within a frame or two of the server starting. Without this
+	they would appear at the origin — which is inside the clock plinth — or fall
+	through where the floor is about to be. Auto-loading goes back on the moment
+	the geometry is there.
+]]
+Players.CharacterAutoLoads = false
+
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Net = require(Shared.Net)
@@ -159,6 +170,13 @@ end)
 
 World.ensureBuilt()
 Case.reset()
+
+Players.CharacterAutoLoads = true
+for _, player in Players:GetPlayers() do
+	if not player.Character then
+		player:LoadCharacter()
+	end
+end
 
 for night = 1, 5 do
 	Shift.register(night, require(script.Nights[`Night{night}`]))

@@ -76,7 +76,7 @@ local World = require(script.World)
 	because a pure white beam reads as a game asset rather than as a torch
 	somebody is holding.
 ]]
-local torches: { [Player]: { emitter: BasePart, light: SpotLight, on: boolean } } = {}
+local torches: { [Player]: { emitter: BasePart, light: SpotLight, core: SpotLight, on: boolean } } = {}
 
 local function torchFor(player: Player)
 	local existing = torches[player]
@@ -100,6 +100,15 @@ local function torchFor(player: Player)
 	emitter.CFrame = head.CFrame
 	emitter.Parent = workspace
 
+	--[[
+		Two cones, not one.
+
+		A single SpotLight gives an even wash across its whole angle, which is
+		a work lamp. A torch has a hotspot: a small bright disc in the middle
+		with a softer pool round it that fades to nothing at the edge. You get
+		that by nesting a narrow bright cone inside a wide dim one, and it is
+		the single cheapest thing you can do to make a beam look like a beam.
+	]]
 	local light = Instance.new("SpotLight")
 	light.Name = "Beam"
 	light.Face = Enum.NormalId.Front
@@ -108,10 +117,34 @@ local function torchFor(player: Player)
 	-- Studs, not metres: Roblox clamps this at 60 and says nothing about it.
 	light.Range = Config.FLASHLIGHT.WIDE.rangeStuds
 	light.Brightness = 0
-	light.Shadows = true
+	--[[
+		Shadows off, and this is why the beam only worked in the corridor.
+
+		Roblox's Future lighting keeps a budget for shadow-casting lights, and
+		what it costs depends on how much geometry is in range. The corridor is
+		two walls and a floor. A room is now gondolas, racking, furniture and a
+		ceiling grid -- thousands of small parts -- and a shadow-casting
+		SpotLight standing in the middle of that overruns the budget and is
+		dropped entirely. Which looks exactly like the torch switching itself
+		off when you walk through a doorway, because that is what it is.
+
+		The beam does not need to cast shadows. It needs to land on things.
+	]]
+	light.Shadows = false
 	light.Parent = emitter
 
-	local record = { emitter = emitter, light = light, on = false }
+	-- The hotspot: the same beam, a third of the angle, much brighter.
+	local core = Instance.new("SpotLight")
+	core.Name = "BeamCore"
+	core.Face = Enum.NormalId.Front
+	core.Color = Config.FLASHLIGHT.COLOR
+	core.Angle = Config.FLASHLIGHT.FOCUS.angle
+	core.Range = Config.FLASHLIGHT.FOCUS.rangeStuds
+	core.Brightness = 0
+	core.Shadows = false
+	core.Parent = emitter
+
+	local record = { emitter = emitter, light = light, core = core, on = false }
 	torches[player] = record
 	return record
 end
@@ -153,6 +186,7 @@ Hud.onTorch(function(player, on)
 		-- that tuning it live from the test panel is not undone by the next
 		-- press of F.
 		record.light.Brightness = if on then Config.FLASHLIGHT.WIDE.brightness else 0
+		record.core.Brightness = if on then Config.FLASHLIGHT.FOCUS.brightness else 0
 	end
 end)
 
@@ -220,6 +254,7 @@ Players.PlayerAdded:Connect(function(player)
 		if record then
 			record.on = true
 			record.light.Brightness = Config.FLASHLIGHT.WIDE.brightness
+			record.core.Brightness = Config.FLASHLIGHT.FOCUS.brightness
 		end
 	end)
 end)

@@ -330,44 +330,61 @@ command("Light", "darker", "Lights: darker", function()
 	nudgeLight(-0.15)
 end)
 
-command("Light", "torchUp", "Torch: stronger", function(player)
-	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
-	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
-	if beam then
-		beam.Brightness += 1
-		Hud.effect("hint", `Torch {string.format("%.1f", beam.Brightness)}`)
-	end
-end)
-
-command("Light", "torchWide", "Torch: wider", function(player)
-	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
-	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
-	if beam then
-		beam.Angle = math.min(beam.Angle + 8, 120)
-		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
-	end
-end)
-
 --[[
-	Narrower, to go with wider. Reach on a torch is bought with cone angle --
-	the range is pinned at Roblox's 60-stud ceiling and cannot be raised -- so
-	this is the control that actually changes how far you can see.
+	Tuning the beam.
+
+	It is two cones: a wide soft pool and a narrow hotspot inside it. Reach is
+	bought with the hotspot's angle, because the range is pinned at Roblox's
+	60-stud ceiling and cannot be raised at all. These four rows change one
+	thing each so the numbers that come back mean something.
 ]]
-command("Light", "torchNarrow", "Torch: narrower", function(player)
+local function beams(player)
 	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
-	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
-	if beam then
-		beam.Angle = math.max(beam.Angle - 6, 8)
-		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
+	if not torch then
+		return nil, nil
+	end
+	return torch:FindFirstChild("Beam"), torch:FindFirstChild("BeamCore")
+end
+
+command("Light", "torchUp", "Torch: brighter", function(player)
+	local pool, core = beams(player)
+	if pool and core then
+		pool.Brightness += 0.6
+		core.Brightness += 1.5
+		Hud.effect("hint", `pool {string.format("%.1f", pool.Brightness)} · core {string.format("%.1f", core.Brightness)}`)
 	end
 end)
 
-command("Light", "torchDown", "Torch: weaker", function(player)
-	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
-	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
-	if beam then
-		beam.Brightness = math.max(beam.Brightness - 1, 0.5)
-		Hud.effect("hint", `Torch {string.format("%.1f", beam.Brightness)}`)
+command("Light", "torchDown", "Torch: dimmer", function(player)
+	local pool, core = beams(player)
+	if pool and core then
+		pool.Brightness = math.max(pool.Brightness - 0.6, 0.4)
+		core.Brightness = math.max(core.Brightness - 1.5, 1.0)
+		Hud.effect("hint", `pool {string.format("%.1f", pool.Brightness)} · core {string.format("%.1f", core.Brightness)}`)
+	end
+end)
+
+command("Light", "torchWide", "Torch: wider pool", function(player)
+	local pool = beams(player)
+	if pool then
+		pool.Angle = math.clamp(pool.Angle + 6, 12, 120)
+		Hud.effect("hint", `pool angle {math.floor(pool.Angle)}`)
+	end
+end)
+
+command("Light", "torchNarrow", "Torch: tighter core", function(player)
+	local _, core = beams(player)
+	if core then
+		core.Angle = math.clamp(core.Angle - 3, 6, 90)
+		Hud.effect("hint", `core angle {math.floor(core.Angle)}`)
+	end
+end)
+
+command("Light", "torchWiderCore", "Torch: wider core", function(player)
+	local _, core = beams(player)
+	if core then
+		core.Angle = math.clamp(core.Angle + 3, 6, 90)
+		Hud.effect("hint", `core angle {math.floor(core.Angle)}`)
 	end
 end)
 

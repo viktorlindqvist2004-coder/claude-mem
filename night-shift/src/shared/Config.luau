@@ -107,8 +107,13 @@ Config.FLASHLIGHT = {
 		over less of the room and carries to the end of it. A torch is a narrow
 		beam. The 58-degree cone this had was a work lamp.
 	]]
-	WIDE = { angle = 46, rangeStuds = 60, brightness = 6.5, drainPerSecond = 0.8 },
-	FOCUS = { angle = 15, rangeStuds = 60, brightness = 11.0, drainPerSecond = 2.4 },
+	--[[
+		These are now the two halves of one beam rather than two modes. WIDE is
+		the soft pool, FOCUS is the hotspot burning through the middle of it,
+		and both are on together whenever the torch is.
+	]]
+	WIDE = { angle = 52, rangeStuds = 60, brightness = 3.4, drainPerSecond = 0.8 },
+	FOCUS = { angle = 17, rangeStuds = 60, brightness = 9.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),

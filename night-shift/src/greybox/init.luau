@@ -1799,6 +1799,41 @@ local function dressSupermarket(cx, cz, y)
 	trolley(cx + 5.4, y, cz + 3.4, -6)
 	P("SpillCone", V(0.3, 0.5, 0.3), at(cx - 2.0, y + 0.25, cz + 2.6), Color3.fromRGB(180, 96, 30))
 
+	--[[
+		The bakery counter, the newspaper stand and the bunting. The bunting is
+		the detail that does the most: a strip of triangles over the tills saying
+		something cheerful, in a room lit by an EXIT box.
+	]]
+	P("BakeryCounter", V(4.0, 1.1, 1.0), at(cx - 5.0, y + 0.55, cz - 5.0), C.trim)
+	P("BakeryGlass", V(3.8, 0.8, 0.9), at(cx - 5.0, y + 1.5, cz - 5.0), Color3.fromRGB(150, 156, 168)).Transparency = 0.7
+	for i = 0, 5 do
+		P("BakeryTray", V(0.5, 0.06, 0.4), at(cx - 6.6 + i * 0.66, y + 1.16, cz - 5.0), Color3.fromRGB(96, 78, 52))
+	end
+	local bakerySign = P("BakerySign", V(2.4, 0.42, 0.06), at(cx - 5.0, y + 2.3, cz - 5.4), C.panel)
+	printed(bakerySign, Enum.NormalId.Front, "IN-STORE BAKERY",
+		{ color = Color3.fromRGB(140, 132, 120), density = 56, font = Enum.Font.GothamBold })
+
+	P("NewsStand", V(1.2, 0.9, 0.6), at(cx + 6.4, y + 0.45, cz + 5.6), C.wood)
+	for i = 0, 3 do
+		local paper = P("Newspaper", V(0.28, 0.02, 0.4), at(cx + 6.1 + (i % 2) * 0.42, y + 0.92 + math.floor(i / 2) * 0.03, cz + 5.6),
+			Color3.fromRGB(158, 154, 146))
+		paper.Orientation = Vector3.new(0, i * 3, 0)
+	end
+
+	P("BuntingLine", V(11.0, 0.03, 0.03), at(cx, y + 2.6, cz + 5.6), C.metal)
+	for i = 0, 13 do
+		local flag = P("Bunting", V(0.34, 0.34, 0.02), at(cx - 5.2 + i * 0.8, y + 2.42, cz + 5.6),
+			({ Color3.fromRGB(120, 54, 48), Color3.fromRGB(64, 72, 96), Color3.fromRGB(110, 96, 52) })[i % 3 + 1])
+		flag.Orientation = Vector3.new(0, 0, 45)
+	end
+
+	local staffDoorSign = P("StaffOnly", V(0.5, 0.2, 0.03), at(cx - 7.6, y + 2.2, cz - 5.9), Color3.fromRGB(150, 60, 54))
+	printed(staffDoorSign, Enum.NormalId.Front, "STAFF ONLY",
+		{ color = Color3.fromRGB(240, 236, 230), density = 110 })
+
+	pottedTree(cx + 7.0, y, cz - 5.0, 8801)
+	floorBorder(cx, cz, 16.0, 12.0, y, 1.2, Color3.fromRGB(70, 66, 62))
+
 	speakerGrille(cx, y + 3.05, cz)
 	ceilingKit(cx, cz, 16.0, 12.0, y, 3.2, 4105)
 	bulkhead(cx - 4, y + 2.9, cz + 2, 7)
@@ -1844,6 +1879,31 @@ local function dressFashion(cx, cz, y)
 	P("CounterTop", V(2.1, 0.06, 0.86), at(cx + 3.6, y + 0.98, cz + 2.5), C.trim)
 	P("Till", V(0.4, 0.3, 0.4), at(cx + 3.6, y + 1.16, cz + 2.5), C.metal)
 	P("Bags", V(0.4, 0.2, 0.3), at(cx + 4.3, y + 1.08, cz + 2.5), Color3.fromRGB(150, 146, 138))
+	P("Telephone", V(0.24, 0.12, 0.2), at(cx + 2.9, y + 1.07, cz + 2.5), C.dark)
+
+	--[[
+		A wall of shoes, a sale poster, and a plant. The shoe wall is the thing
+		that makes a fashion unit read as a fashion unit rather than as a room
+		with rails in it — a grid of identical small objects at eye height reads
+		as retail from thirty metres away.
+	]]
+	P("ShoeWall", V(0.4, 2.2, 5.0), at(cx - 5.2, y + 1.1, cz + 1.0), C.wall)
+	for row = 0, 5 do
+		P("ShoeShelf", V(0.36, 0.04, 4.8), at(cx - 5.2, y + 0.4 + row * 0.34, cz + 1.0), C.trim)
+		for k = 0, 9 do
+			P("Shoe", V(0.24, 0.12, 0.3),
+				at(cx - 5.2, y + 0.48 + row * 0.34, cz - 1.2 + k * 0.48),
+				Color3.fromRGB(46 + (k * 7 + row * 11) % 40, 40 + (k * 5) % 30, 38 + (k * 3) % 26))
+		end
+	end
+
+	local poster = P("SalePoster", V(1.2, 1.7, 0.03), at(cx + 5.3, y + 1.6, cz - 2.0), Color3.fromRGB(150, 44, 40))
+	printed(poster, Enum.NormalId.Front, "FINAL\nREDUCTIONS\n\nEVERYTHING\nMUST GO",
+		{ color = Color3.fromRGB(246, 242, 236), density = 70, font = Enum.Font.GothamBold })
+
+	pottedTree(cx - 4.6, y, cz + 3.8, 8901)
+	picture(cx + 5.4, y + 2.0, cz + 3.0, "x", 8902)
+	floorBorder(cx, cz, 11.0, 9.0, y, 1.0, Color3.fromRGB(72, 68, 64))
 
 	ceilingKit(cx, cz, 11.0, 9.0, y, 3.2, 4106)
 	bulkhead(cx, y + 2.9, cz, 7)
@@ -2029,38 +2089,98 @@ local function dressToilets(cx, cz, y)
 	bulkhead(cx - 2.4, y + 2.4, cz - 1.5)
 end
 
+--[[
+	The food court.
+
+	Five units round the back wall, all shut, each with a menu board above it
+	that still has 1998 prices on. The seating is the usual: fixed tables, chairs
+	that do not match, one chair up on a table the way they leave them and one
+	that is not, a tray station and a bin station nobody emptied.
+
+	This is the first-floor room and the one place in the building that is
+	supposed to look like people were recently enjoying themselves in it, which
+	is why it is the worst one to walk into at three in the morning.
+]]
+local COUNTERS = {
+	{ "WOK EXPRESS", "Chow Mein 2.95 · Special Fried Rice 3.25 · Spring Roll 0.85" },
+	{ "BAKERS OVEN", "Steak Bake 1.10 · Sausage Roll 0.75 · Tea 0.60" },
+	{ "PIZZA SLICE", "Margherita 1.95 · Pepperoni 2.25 · Garlic Bread 1.20" },
+	{ "THE BURGER CO", "Quarter Pounder 2.49 · Fries 1.10 · Shake 1.30" },
+	{ "JACKET & CO", "Jacket Potato 2.20 · Cheese 0.40 · Beans 0.40" },
+}
+
 local function dressFoodCourt(cx, cz, y)
+	local rng = Random.new(7001)
+
+	-- Six tables, and the chairs around them are not all the same colour.
 	for i = 0, 2 do
 		for j = 0, 1 do
-			local tx, tz = cx - 4 + i * 4, cz - 2 + j * 4
+			local tx, tz = cx - 4 + i * 4, cz - 2.5 + j * 4
 			P("TableTop", V(1.0, 0.06, 1.0), at(tx, y + 0.74, tz), C.trim)
 			P("TableLeg", V(0.1, 0.72, 0.1), at(tx, y + 0.36, tz), C.metal)
 			P("TableFoot", V(0.5, 0.04, 0.5), at(tx, y + 0.02, tz), C.metal)
+			P("TableNumber", V(0.1, 0.12, 0.02), at(tx, y + 0.86, tz + 0.3), Color3.fromRGB(150, 60, 54))
 			for _, s in { -1, 1 } do
-				chair(tx + s * 0.9, y, tz)
+				local seat = P("Seat", V(0.5, 0.07, 0.5), at(tx + s * 0.9, y + 0.45, tz), C.fabric)
+				seat.Color = Color3.fromRGB(rng:NextInteger(58, 92), rng:NextInteger(48, 70), rng:NextInteger(46, 66))
+				seat.Orientation = Vector3.new(0, rng:NextNumber(-25, 25), 0)
+				P("SeatBack", V(0.5, 0.55, 0.07), at(tx + s * 0.9, y + 0.75, tz + s * 0.22), seat.Color)
+				P("SeatPost", V(0.09, 0.45, 0.09), at(tx + s * 0.9, y + 0.22, tz), C.metal)
+			end
+			-- Something left on about half of them.
+			if rng:NextNumber() < 0.5 then
+				P("Tray", V(0.42, 0.03, 0.32), at(tx + rng:NextNumber(-0.2, 0.2), y + 0.79, tz), Color3.fromRGB(110, 88, 56))
+				P("Cup", V(0.09, 0.13, 0.09), at(tx + rng:NextNumber(-0.3, 0.3), y + 0.84, tz + 0.2), Color3.fromRGB(180, 174, 164))
 			end
 		end
 	end
-	-- One chair is up on a table, the way they leave them, and one is not.
-	P("UpturnedChair", V(0.5, 0.07, 0.5), at(cx + 4, y + 0.82, cz + 2), C.fabric)
-	P("UpturnedLegs", V(0.45, 0.4, 0.45), at(cx + 4, y + 1.05, cz + 2), C.metal)
+	-- One chair up on a table, the way they leave them, and one that is not.
+	P("UpturnedChair", V(0.5, 0.07, 0.5), at(cx + 4, y + 0.82, cz + 1.5), C.fabric)
+	P("UpturnedLegs", V(0.45, 0.4, 0.45), at(cx + 4, y + 1.05, cz + 1.5), C.metal)
 
-	P("ServeryCounter", V(10.0, 1.1, 0.9), at(cx, y + 0.55, cz + 4.2), C.trim)
-	P("ServeryTop", V(10.2, 0.06, 1.0), at(cx, y + 1.13, cz + 4.2), C.metal)
-	P("MenuBoard", V(3.6, 1.0, 0.06), at(cx, y + 2.1, cz + 4.6), C.panel)
-	for i = 0, 8 do
-		P("MenuLine", V(0.9, 0.05, 0.02), at(cx - 1.2 + (i % 3) * 1.2, y + 2.4 - math.floor(i / 3) * 0.26, cz + 4.55),
-			Color3.fromRGB(150, 146, 136))
+	--[[
+		The counters. Five of them, shuttered, with the menu boards still lit in
+		the sense that they are still there — the prices are the thing. Nothing
+		says 1998 like "Steak Bake 1.10".
+	]]
+	for i, unit in COUNTERS do
+		local ux = cx - 5.4 + (i - 1) * 2.7
+		P("Servery", V(2.5, 1.1, 0.9), at(ux, y + 0.55, cz + 4.2), C.trim)
+		P("ServeryTop", V(2.6, 0.06, 1.0), at(ux, y + 1.13, cz + 4.2), C.metal)
+		P("ServeryShutter", V(2.4, 1.3, 0.08), at(ux, y + 1.8, cz + 4.45), C.shutter)
+		local board = P("MenuBoard", V(2.5, 0.85, 0.06), at(ux, y + 2.45, cz + 4.55), C.panel)
+		printed(board, Enum.NormalId.Front,
+			`<b>{unit[1]}</b>\n<font size="7">{unit[2]}</font>`,
+			{ color = Color3.fromRGB(148, 142, 134), scaled = false, density = 70 })
+		P("HeatLamp", V(0.4, 0.08, 0.3), at(ux, y + 1.55, cz + 4.0), Color3.fromRGB(60, 40, 34))
 	end
-	P("DrinksFridge", V(1.0, 1.9, 0.7), at(cx + 5.4, y + 0.95, cz + 4.0), C.metal)
-	P("FridgeGlass", V(0.9, 1.6, 0.04), at(cx + 5.4, y + 1.0, cz + 3.66), C.glass)
-	P("TrayStack", V(0.5, 0.3, 0.4), at(cx - 4.4, y + 1.28, cz + 4.2), Color3.fromRGB(120, 96, 60))
-	P("Condiments", V(0.5, 0.3, 0.4), at(cx + 2.2, y + 1.28, cz + 4.2), C.trim)
-	litterBin(cx - 5.4, y, cz + 3.6)
+
+	-- Tray station, bin station, condiments, and the plant nobody watered.
+	P("TrayStation", V(0.7, 0.95, 0.6), at(cx - 6.4, y + 0.48, cz + 3.0), C.trim)
+	P("TrayStack", V(0.5, 0.35, 0.4), at(cx - 6.4, y + 1.12, cz + 3.0), Color3.fromRGB(110, 88, 56))
+	P("BinStation", V(1.6, 1.1, 0.7), at(cx + 6.2, y + 0.55, cz + 3.0), C.wood)
+	for _, sx in { -0.4, 0.4 } do
+		P("BinHole", V(0.5, 0.06, 0.5), at(cx + 6.2 + sx, y + 1.12, cz + 3.0), C.dark)
+	end
+	P("Condiments", V(0.5, 0.3, 0.4), at(cx + 1.8, y + 1.28, cz + 4.2), C.trim)
+	P("DrinksFridge", V(1.0, 1.9, 0.7), at(cx + 6.4, y + 0.95, cz + 4.2), C.metal)
+	local chiller = P("FridgeGlass", V(0.9, 1.6, 0.04), at(cx + 6.4, y + 1.0, cz + 3.86), C.glass)
+	chiller.Transparency = 0.5
+	pottedTree(cx - 6.6, y, cz - 3.4, 7002)
+	pottedTree(cx + 6.6, y, cz - 3.4, 7003)
+	planterBed(cx, y, cz - 4.6, 8.0, true, 7004)
+	picture(cx - 6.9, y + 2.0, cz, "x", 7005)
+	picture(cx + 6.9, y + 2.0, cz + 1.0, "x", 7006)
+	litterBin(cx - 5.4, y, cz - 3.6)
+
+	-- The floor: a border, and the tiling changes under the seating.
+	floorBorder(cx, cz, 14.0, 10.0, y, 1.4, Color3.fromRGB(68, 64, 60))
 
 	speakerGrille(cx, y + 2.75, cz)
 	ceilingKit(cx, cz, 14.0, 10.0, y, 2.9, 4107)
-	bulkhead(cx, y + 2.6, cz, 8)
+	bulkhead(cx, y + 2.6, cz)
+	bulkhead(cx - 4, y + 2.6, cz + 2)
+	bulkhead(cx + 4, y + 2.6, cz + 2)
 end
 
 local DRESS = {

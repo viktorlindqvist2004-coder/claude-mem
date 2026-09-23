@@ -61,7 +61,14 @@ echo "== clearance =="
 python3 tools/check_clearance.py | sed 's/^/  /' || fail=1
 
 echo "== smoke =="
-python3 tools/smoke.py 2>&1 | grep -E "FAIL|smoke:|beats," | sed 's/^/  /'
-[ "${PIPESTATUS[0]}" != "0" ] && fail=1
+# Keep the whole output when it fails. Filtering to the lines a passing run
+# prints meant a crash showed up as an empty section, which reads like a pass.
+smoke_out=$(python3 tools/smoke.py 2>&1); smoke_rc=$?
+if [ $smoke_rc -ne 0 ]; then
+  echo "$smoke_out" | sed 's/^/  /'
+  fail=1
+else
+  echo "$smoke_out" | grep -E "FAIL|smoke:|beats," | sed 's/^/  /'
+fi
 
 exit $fail

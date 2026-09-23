@@ -495,6 +495,112 @@ local function litterBin(x, y, z)
 	P("LitterLid", V(0.5, 0.06, 0.5), at(x, y + 0.88, z), C.trim)
 end
 
+--[[
+	A car.
+
+	It was five boxes and four smaller boxes: a slab for the body, a slab for
+	the roof, two dark slabs for glass. Out on a lit forecourt that is the one
+	object in the game a player has seen ten thousand real examples of, and it
+	is the one that has to hold up, because anything that reads as "a box that
+	is meant to be a car" tells them the rest of the building is boxes too.
+
+	So this is a car the way a 1986 saloon is a car: a long low shell with a
+	bonnet at one end and a boot at the other, a greenhouse narrower than the
+	body sitting between them, raked glass, a pillar between the side windows,
+	arches the wheels sit inside rather than beside, and bumpers, lamps and a
+	plate at both ends. It is still about forty parts and none of it is
+	modelled -- it is proportion, and proportion is the whole trick.
+
+	`turn` is degrees off square. Nobody parks straight, and four cars all
+	exactly parallel is a car park nobody has ever used.
+]]
+local function car(cx, cz, tint, seed, turn)
+	local rng = Random.new(seed)
+	turn = turn or rng:NextNumber(-6, 6)
+	local dark = Color3.fromRGB(
+		math.floor(tint.R * 255 * 0.55), math.floor(tint.G * 255 * 0.55), math.floor(tint.B * 255 * 0.55))
+	local glass = Color3.fromRGB(30, 34, 40)
+	local parts = {}
+
+	--[[
+		Every part is written as an offset from the middle of the car, square,
+		and the yaw is applied as it is placed: the offset is rotated in plan
+		and the same yaw is added to whatever local orientation the part
+		already wanted. That keeps the numbers below readable -- "the mirror is
+		0.95 m out and 0.86 m forward" -- while the car itself sits crooked in
+		its bay.
+	]]
+	local rad = math.rad(turn)
+	local cosT, sinT = math.cos(rad), math.sin(rad)
+
+	local function part(name, sizeM, ox, oy, oz, colour, material, pitch, roll)
+		local made = P(name, sizeM,
+			at(cx + ox * cosT + oz * sinT, oy, cz - ox * sinT + oz * cosT),
+			colour, material)
+		if turn ~= 0 or pitch or roll then
+			made.Orientation = Vector3.new(pitch or 0, turn, roll or 0)
+		end
+		table.insert(parts, made)
+		return made
+	end
+
+	-- ── Shell ───────────────────────────────────────────────────────────────
+	part("CarBody", V(1.72, 0.54, 4.34), 0, 0.62, 0, tint)
+	part("CarSill", V(1.78, 0.16, 4.1), 0, 0.42, 0, dark)
+	-- Bonnet and boot, both a little lower than the waist, which is what stops
+	-- the body reading as one extruded block.
+	part("CarBonnet", V(1.64, 0.14, 1.28), 0, 0.92, -1.48, tint)
+	part("CarBoot", V(1.64, 0.16, 1.06), 0, 0.94, 1.6, tint)
+
+	-- ── Greenhouse ──────────────────────────────────────────────────────────
+	-- Narrower than the body, and set back from both ends.
+	part("CarCabin", V(1.54, 0.5, 2.05), 0, 1.14, 0.05, tint)
+	part("CarRoof", V(1.46, 0.09, 1.78), 0, 1.43, 0.12, tint)
+
+	-- Raked, both of them, which is the difference between a greenhouse and a
+	-- pair of dark slabs stuck on the ends of a box.
+	part("Windscreen", V(1.42, 0.58, 0.08), 0, 1.14, -1.02, glass, nil, 34).Reflectance = 0.12
+	part("RearScreen", V(1.4, 0.5, 0.08), 0, 1.16, 1.12, glass, nil, -40).Reflectance = 0.12
+
+	for _, sx in { -1, 1 } do
+		part("SideGlass", V(0.06, 0.4, 0.78), sx * 0.78, 1.2, -0.4, glass).Reflectance = 0.1
+		part("SideGlass", V(0.06, 0.38, 0.62), sx * 0.78, 1.2, 0.62, glass).Reflectance = 0.1
+		part("CarPillar", V(0.08, 0.5, 0.11), sx * 0.78, 1.14, 0.14, dark)
+		part("DoorLine", V(0.03, 0.44, 0.02), sx * 0.87, 0.66, 0.16, dark)
+		part("DoorHandle", V(0.05, 0.05, 0.22), sx * 0.88, 0.82, -0.28, Color3.fromRGB(150, 148, 144))
+		part("Mirror", V(0.2, 0.11, 0.09), sx * 0.95, 1.02, -0.86, dark)
+	end
+
+	-- ── Ends ────────────────────────────────────────────────────────────────
+	part("CarBumper", V(1.76, 0.18, 0.16), 0, 0.5, -2.2, Color3.fromRGB(58, 58, 60))
+	part("CarBumper", V(1.76, 0.18, 0.16), 0, 0.5, 2.2, Color3.fromRGB(58, 58, 60))
+	part("Grille", V(1.1, 0.16, 0.06), 0, 0.74, -2.18, Color3.fromRGB(38, 38, 40))
+	for _, sx in { -1, 1 } do
+		part("Headlamp", V(0.4, 0.18, 0.06), sx * 0.58, 0.78, -2.18, Color3.fromRGB(196, 196, 186)).Reflectance = 0.3
+		part("TailLamp", V(0.34, 0.16, 0.06), sx * 0.6, 0.8, 2.18, Color3.fromRGB(128, 32, 28))
+	end
+	local plate = part("NumberPlate", V(0.52, 0.12, 0.03), 0, 0.58, -2.24, Color3.fromRGB(198, 194, 178))
+	Surfaces.label(plate, Enum.NormalId.Front, "C" .. rng:NextInteger(100, 899) .. " NLG",
+		{ color = Color3.fromRGB(40, 38, 36), density = 150 })
+
+	-- ── Wheels, in arches rather than beside them ───────────────────────────
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1.42, 1.42 } do
+			part("WheelArch", V(0.24, 0.5, 0.86), sx * 0.86, 0.66, sz, dark)
+			part("Wheel", V(0.22, 0.62, 0.62), sx * 0.84, 0.31, sz,
+				Color3.fromRGB(26, 25, 25), nil, 0, 90).Shape = Enum.PartType.Cylinder
+			part("Hub", V(0.1, 0.34, 0.34), sx * 0.9, 0.31, sz,
+				Color3.fromRGB(122, 120, 116), nil, 0, 90).Shape = Enum.PartType.Cylinder
+		end
+	end
+
+	-- The aerial, which is the single cheapest thing you can add to a car and
+	-- the one that most makes it look like somebody owned it.
+	part("Aerial", V(0.03, 0.72, 0.03), -0.72, 1.3, -1.5, Color3.fromRGB(150, 148, 144))
+
+	return parts
+end
+
 local function trolley(x, y, z, turn)
 	local t = P("Trolley", V(0.55, 0.55, 0.9), at(x, y + 0.6, z), C.metal)
 	t.Orientation = Vector3.new(0, turn or 0, 0)
@@ -3137,15 +3243,7 @@ local function buildExterior()
 			continue
 		end
 		local tint = Color3.fromRGB(rng:NextInteger(40, 78), rng:NextInteger(42, 76), rng:NextInteger(46, 84))
-		P("CarBody", V(1.8, 0.9, 4.2), at(cx, 0.65, cz), tint)
-		P("CarRoof", V(1.6, 0.72, 2.2), at(cx, 1.4, cz - 0.2), tint)
-		P("Windscreen", V(1.5, 0.5, 0.1), at(cx, 1.32, cz - 1.25), Color3.fromRGB(38, 42, 50))
-		P("Rear", V(1.5, 0.5, 0.1), at(cx, 1.32, cz + 0.9), Color3.fromRGB(38, 42, 50))
-		for _, sx in { -1, 1 } do
-			for _, sz in { -1, 1 } do
-				P("Wheel", V(0.25, 0.6, 0.6), at(cx + sx * 0.85, 0.3, cz + sz * 1.4), C.dark)
-			end
-		end
+		car(cx, cz, tint, 6200 + i)
 		if i == 1 then
 			P("BayNumber", V(0.5, 0.02, 0.5), at(cx, 0.022, cz + 2.1), Color3.fromRGB(150, 146, 136))
 		end
@@ -3201,16 +3299,13 @@ local function buildExterior()
 	end
 
 	-- Walt's car, in bay 2, where it has been since 1998.
-	local walt = P("CarBody", V(1.8, 0.9, 4.2), at(dockX - 6, 0.65, dockZ - 11), Color3.fromRGB(58, 62, 68))
-	walt.Name = "WaltsCar"
-	P("CarRoof", V(1.6, 0.72, 2.2), at(dockX - 6, 1.4, dockZ - 11.2), Color3.fromRGB(52, 56, 62))
-	P("Windscreen", V(1.5, 0.5, 0.1), at(dockX - 6, 1.32, dockZ - 12.25), Color3.fromRGB(38, 42, 50))
-	P("Rear", V(1.5, 0.5, 0.1), at(dockX - 6, 1.32, dockZ - 10.1), Color3.fromRGB(38, 42, 50))
-	for _, sx in { -1, 1 } do
-		for _, sz in { -1, 1 } do
-			P("Wheel", V(0.25, 0.6, 0.6), at(dockX - 6 + sx * 0.85, 0.3, dockZ - 11 + sz * 1.4), C.dark)
-		end
-	end
+	--[[
+		Walt's car, which has been in the yard since 1998 and is the first piece
+		of evidence anybody finds. Parked square, because he parked it properly
+		and then did not come back for it.
+	]]
+	local body = car(dockX - 6, dockZ - 11, Color3.fromRGB(58, 62, 68), 6161, 0)
+	body[1].Name = "WaltsCar"
 	for i = 0, 3 do
 		P("BayLine", V(0.14, 0.02, 5.0), at(dockX - 8.4 + i * 2.7, 0.02, dockZ - 11), Color3.fromRGB(150, 146, 136))
 	end

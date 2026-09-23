@@ -209,6 +209,15 @@ Config.CROSSING = {
 }
 
 Config.DREAD = {
+	--[[
+		How often leaving a room sets one off.
+
+		Not every doorway, or crossing one becomes a mechanic and the player
+		starts avoiding them. About one in six means a lap of the back of house
+		produces one, somewhere, and never the same one twice -- and the other
+		five doorways are what make that one work.
+	]]
+	DOORWAY_CHANCE = 0.16,
 	-- Hard gates, not weights.
 	STARTLE_GLOBAL_COOLDOWN = 90,
 	STARTLE_AFTER_PRESENCE_COOLDOWN = 25,

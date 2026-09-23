@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "bb0f1a6"
-Build.LAST_COMMIT = "a040ddc"
-Build.SUMMARY = "Get things out of the doorways, tile the ceilings, and wrap the building"
-Build.WHEN = "23 Sep 12:23"
+Build.COMMIT = "759f08b"
+Build.LAST_COMMIT = "f767512"
+Build.SUMMARY = "Start the night outside, and give one job at a time"
+Build.WHEN = "23 Sep 12:53"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -327,8 +327,19 @@ Config.SOLO_ATTENTION_DECAY_SCALE = 1.15
 	Focus is for looking at one thing on purpose.
 ]]
 Config.FLASHLIGHT = {
-	WIDE = { angle = 82, range = 55, brightness = 4.5, drainPerSecond = 0.8 },
-	FOCUS = { angle = 24, range = 110, brightness = 7.0, drainPerSecond = 2.4 },
+	--[[
+		Weak, and short.
+
+		A 55 m beam at brightness 4.5 is a floodlight: it lit whole rooms at
+		once, which meant the building had no dark in it to be afraid of and the
+		torch had nothing to be useful for. What a torch is for is showing you a
+		small circle of a room and making you decide which small circle.
+
+		So: a few metres of usable light, and a focused mode that reaches down a
+		corridor but only shows you a doorway's worth when it gets there.
+	]]
+	WIDE = { angle = 70, range = 15, brightness = 0.85, drainPerSecond = 0.8 },
+	FOCUS = { angle = 22, range = 28, brightness = 1.5, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),
@@ -454,6 +465,15 @@ Config.CROSSING = {
 }
 
 Config.DREAD = {
+	--[[
+		How often leaving a room sets one off.
+
+		Not every doorway, or crossing one becomes a mechanic and the player
+		starts avoiding them. About one in six means a lap of the back of house
+		produces one, somewhere, and never the same one twice -- and the other
+		five doorways are what make that one work.
+	]]
+	DOORWAY_CHANCE = 0.16,
 	-- Hard gates, not weights.
 	STARTLE_GLOBAL_COOLDOWN = 90,
 	STARTLE_AFTER_PRESENCE_COOLDOWN = 25,
@@ -1572,6 +1592,17 @@ Places.POINT = {
 	FuseBox = { R.ElectricalCupboard.x, -2.8, R.ElectricalCupboard.z - 1.1 },
 	StandingWater = { R.ElectricalCupboard.x + 0.7, -4.05, R.ElectricalCupboard.z + 0.4 },
 	DockFloor = { R.LoadingDock.x + 2.5, 0.0, R.LoadingDock.z + 1.0 },
+	--[[
+		Outside, in the service yard, a few metres from the staff door.
+
+		This is where a night starts. The whole exterior -- the frontage, the
+		neon, the car park -- existed only as something to look at through the
+		entrance glazing, which nobody ever did, because the crew were put
+		straight into the staff room with the building already around them.
+		Arriving is worth more than that: you stand in a yard at ten at night,
+		you can see the one door, and you go in through it.
+	]]
+	StaffEntrance = { R.LoadingDock.x - 2.5, 0.3, R.LoadingDock.z - 8.0 },
 	StaffDoor = { -31, 1.05, -21.7 },
 	Filing = { R.SecurityOffice.x - 1.8, 1.0, R.SecurityOffice.z - 1.2 },
 }
@@ -2331,6 +2362,39 @@ SoundBank.HUM = {
 	looped = true,
 	rollOffMinMetres = 1.5,
 	rollOffMaxMetres = 16,
+}
+
+--[[
+	The buzz of a working fluorescent, at the fitting.
+
+	This one is on even though the other loops are not, because the buzz is the
+	point rather than a bed: the rolloff is tight enough that you only hear a
+	fitting when you are under it, so it is a property of that fitting in that
+	room rather than a drone you cannot get away from. Walk out and it is gone.
+
+	Still a placeholder -- it is bass.mp3 pitched up until the repeat is fast
+	enough to read as mains buzz rather than as a note -- but a placeholder you
+	can only hear standing beneath a light is one that earns its place.
+]]
+SoundBank.TUBE_HUM = {
+	caption = "[the tube above you buzzes]",
+	id = "rbxasset://sounds/bass.mp3",
+	volume = 0.07,
+	speed = 2.4,
+	looped = true,
+	rollOffMinMetres = 1.2,
+	rollOffMaxMetres = 5.5,
+}
+
+-- A fitting striking, failing, striking, and going out for good.
+SoundBank.TUBE_FAIL = {
+	caption = "[a light gives out]",
+	id = "rbxasset://sounds/electronicpingshort.wav",
+	volume = 0.5,
+	speed = 0.55,
+	looped = false,
+	rollOffMinMetres = 3,
+	rollOffMaxMetres = 40,
 }
 
 -- The fixtures that are going. One in twelve, and players use them as landmarks.
@@ -3173,6 +3237,26 @@ function Atmos.build()
 	local fixtures = {}
 	for _, part in World.all("ExitSign") do
 		table.insert(fixtures, part)
+	end
+
+	--[[
+		And the tubes, which are the ones you actually hear.
+
+		The fluorescents are lit at the start of a night now, and a lit
+		fluorescent buzzes. This emitter has a five-metre rolloff, so it is a
+		property of the fitting you are standing under rather than a bed under
+		the whole building -- which is the difference between the buzz being
+		atmosphere and the buzz being the thing a player cannot stop hearing.
+
+		It is also the sound that goes missing as the night takes the tubes
+		away, one at a time, which is how you notice before you look up.
+	]]
+	for _, part in World.all("Tube") do
+		local sound = SoundBank.make(SoundBank.TUBE_HUM, part, "Buzz")
+		sound.PlaybackSpeed = (SoundBank.TUBE_HUM.speed or 1) * (1 + detune(part) * 0.03)
+		sound:SetAttribute("BaseVolume", SoundBank.TUBE_HUM.volume)
+		sound:Play()
+		table.insert(emitters, sound)
 	end
 
 	local cents = Config.HUM.DETUNE_CENTS / 1200
@@ -4072,6 +4156,66 @@ local function fireStartle(player: Player, _large: boolean)
 	end
 end
 
+--[[
+	The doorway trigger.
+
+	Half of the startles are now hung on leaving a room rather than on a clock.
+
+	A timer picks a moment that has nothing to do with what the player is
+	doing, and the result is the thing they complained about: something falls
+	in the room you are standing in, again, and you learn that the building
+	makes noises on a schedule. Leaving a room is the opposite -- it is a beat
+	the player chose, it has a direction (the room is behind them now), and it
+	is the one moment when going back to look is a real decision rather than a
+	glance.
+
+	The delay is the part that matters. It fires two to five seconds after they
+	cross the threshold, which is long enough that they have turned away and
+	started on something else, and short enough that they are in no doubt about
+	which room it came from.
+]]
+local lastRoom: { [Player]: string } = {}
+local lastDoorway = 0
+
+local function watchDoorways()
+	task.spawn(function()
+		while running do
+			task.wait(0.4)
+			for _, player in Players:GetPlayers() do
+				local character = player.Character
+				local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if not root then
+					continue
+				end
+				local room = World.roomOf(root.Position)
+				local was = lastRoom[player]
+				lastRoom[player] = room or ""
+
+				-- Left a room, and went somewhere that is not that room.
+				if not was or was == "" or room == was then
+					continue
+				end
+				local now = os.clock()
+				if now - lastDoorway < Config.DREAD.STARTLE_GLOBAL_COOLDOWN then
+					continue
+				end
+				if not Scares.ready() or math.random() > Config.DREAD.DOORWAY_CHANCE then
+					continue
+				end
+				lastDoorway = now
+				local left, who = was, player
+				task.spawn(function()
+					task.wait(2 + math.random() * 3)
+					if running and Scares.fireBehind(who, left) then
+						lastStartle = os.clock()
+						startlesLeft -= 1
+					end
+				end)
+			end
+		end
+	end)
+end
+
 -- ── The director ────────────────────────────────────────────────────────────
 
 local function weight(player: Player): number
@@ -4093,7 +4237,10 @@ function Dread.start()
 	startlesLeft = Config.DREAD.STARTLES_PER_NIGHT
 	largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
 	lastStartle = os.clock() + Config.DREAD.OPENING_QUIET_SECONDS
+	lastDoorway = lastStartle
+	table.clear(lastRoom)
 	Scares.reset(Dread.night)
+	watchDoorways()
 
 	--[[
 		The presence resolution loop, at 15 Hz. This is the one piece of the game
@@ -5569,7 +5716,7 @@ Night.beats = {
 		ctx.caption("[the fashion circuit strobes]", "the fashion floor")
 		task.spawn(function()
 			for _ = 1, 14 do
-				for _, fitting in ctx.findAll("ExitSign") do
+				for _, fitting in ctx.findAll("Tube") do
 					Power.douse(fitting, 0.35)
 				end
 				ctx.effect("strobe", nil)
@@ -6007,6 +6154,13 @@ local function generator(ctx)
 			its lights off, because now you can see how much of it there is.
 		]]
 		ctx.power().restore()
+		--[[
+			Standby is the emergency circuit and nothing else, so the
+			fluorescents stay out. Getting the generator running gives the crew
+			back the EXIT boxes at half strength -- which is worse than the dark
+			was, because at half strength you can see how far the building goes.
+		]]
+		ctx.tubes().blackout()
 		for _, fitting in ctx.findAll("ExitSign") do
 			local light = fitting:FindFirstChildWhichIsA("Light")
 			if light then
@@ -6845,12 +6999,47 @@ function Objectives.isComplete(id: string): boolean
 	return o ~= nil and o.complete
 end
 
--- The shape the client gets. Hidden objectives are not sent at all: an empty
--- line on the board is still information.
+--[[
+	The shape the client gets.
+
+	In order, and only as far as the job in hand.
+
+	Six tasks listed at once is a wall of text at the exact moment a player has
+	walked into a dark building and has no idea what any of it wants. It reads
+	as noise, and worse, it reads as six things that are all equally urgent. So
+	the board carries what has been done, the one thing being done now, and a
+	count of what is still to come -- and nothing beyond the current job gets a
+	line of its own until it is the current job.
+
+	This gates the *board*, not the game. Every objective stays advanceable the
+	whole night, so a player who happens to pull a shutter early still gets the
+	credit, and a job with a deadline can never be hidden past it: the deadline
+	is on the label and the label is shown the moment it comes up. Nothing here
+	can make a night impossible to finish.
+]]
+function Objectives.current(): Objective?
+	for _, o in Objectives.list do
+		if not o.hidden and not o.complete and not o.failed then
+			return o
+		end
+	end
+	return nil
+end
+
 function Objectives.snapshot(): { any }
 	local out = {}
+	local remaining = 0
+	local reachedCurrent = false
+
 	for _, o in Objectives.list do
-		if not o.hidden then
+		if o.hidden then
+			continue
+		end
+		local isCurrent = not reachedCurrent and not o.complete and not o.failed
+		if isCurrent then
+			reachedCurrent = true
+		end
+		if o.complete or o.failed or isCurrent then
 			table.insert(out, {
 				id = o.id,
 				label = o.label,
@@ -6859,8 +7048,18 @@ function Objectives.snapshot(): { any }
 				complete = o.complete,
 				failed = o.failed,
 				note = o.note,
+				current = isCurrent,
+				step = #out + 1,
 			})
+		else
+			remaining += 1
 		end
+	end
+
+	-- Carried on the list itself rather than as a separate field, because the
+	-- client is handed one array and nothing else.
+	if remaining > 0 then
+		table.insert(out, { id = "__more", remaining = remaining })
 	end
 	return out
 end
@@ -6887,6 +7086,7 @@ return Objectives
 
 local TweenService = game:GetService("TweenService")
 
+local Tubes = require(script.Parent.Tubes)
 local World = require(script.Parent.World)
 
 local Power = {}
@@ -6954,10 +7154,20 @@ function Power.restore()
 	for _, entry in saved do
 		entry.light.Brightness = entry.brightness
 	end
+	--[[
+		Back on -- except the tubes that had already gone. A fitting that burnt
+		out at half past midnight is still burnt out when the power comes back,
+		and restoring it would undo the one thing the night has been doing all
+		the way through.
+	]]
 	for _, part in dimmed do
+		if part.Name == "Tube" then
+			continue
+		end
 		part.Material = Enum.Material.Neon
 		part.Color = Color3.fromRGB(255, 26, 20)
 	end
+	Tubes.repower()
 end
 
 --[[
@@ -7057,7 +7267,17 @@ type Staged = {
 
 -- ── Finding something to break ──────────────────────────────────────────────
 
+--[[
+	When set, everything is searched for from here instead of from the player.
+
+	Used by the room-exit trigger: the whole point of that beat is that the
+	noise comes from the room you have just walked out of, so the search has to
+	start in that room rather than where you are now standing.
+]]
+local originOverride: Vector3? = nil
+
 local function nearest(name: string, from: Vector3, maxMetres: number, behind: Vector3?): BasePart?
+	from = originOverride or from
 	local best, bestDistance = nil, maxMetres * METRE
 	for _, part in World.all(name) do
 		local to = part.Position - from
@@ -7201,13 +7421,13 @@ local STAGED: { Staged } = {
 	{
 		id = "lights",
 		name = "The lights",
-		caption = "[the boxes ahead go out, one at a time]",
+		caption = "[the lights ahead go out, one at a time]",
 		large = false,
 		fromNight = 1,
 		run = function(player, root)
 			local forward = look(player)
 			local ahead = {}
-			for _, box in World.all("ExitSign") do
+			for _, box in World.all("Tube") do
 				local to = box.Position - root.Position
 				if to.Magnitude < 40 * METRE and to.Unit:Dot(forward) > 0.35 then
 					table.insert(ahead, box)
@@ -7219,7 +7439,7 @@ local STAGED: { Staged } = {
 			table.sort(ahead, function(a, b)
 				return (a.Position - root.Position).Magnitude > (b.Position - root.Position).Magnitude
 			end)
-			Hud.caption("[the boxes ahead go out, one at a time]", Places.roomAt(root.Position))
+			Hud.caption("[the lights ahead go out, one at a time]", Places.roomAt(root.Position))
 			task.spawn(function()
 				for _, box in ahead do
 					Power.douse(box, 14)
@@ -7338,6 +7558,29 @@ end
 	the budget, so a crew hiding in the staff room does not burn the night's
 	allowance on nothing.
 ]]
+--[[
+	Fire one in the room a player has just left.
+
+	A bin going over in the room you are standing in, on a timer, is a noise
+	with nothing at stake: you look, you see the bin, you carry on. The same
+	bin going over in the room you walked out of eight seconds ago is the
+	building doing something behind your back, and now you have to decide
+	whether to go back and look -- which is a decision, and a noise is not.
+
+	Returns false when the room has nothing in it worth knocking over, and the
+	caller is expected to shrug and wait for the next doorway.
+]]
+function Scares.fireBehind(player: Player, roomKey: string): boolean
+	local centre = World.roomCentre(roomKey)
+	if not centre then
+		return false
+	end
+	originOverride = centre
+	local ok = Scares.fire(player)
+	originOverride = nil
+	return ok
+end
+
 function Scares.fire(player: Player, forceId: string?): boolean
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -7452,6 +7695,7 @@ local Hud = require(script.Parent.Hud)
 local Mannequins = require(script.Parent.Mannequins)
 local Objectives = require(script.Parent.Objectives)
 local Power = require(script.Parent.Power)
+local Tubes = require(script.Parent.Tubes)
 local World = require(script.Parent.World)
 
 local METRE = Places.METRE
@@ -7464,6 +7708,8 @@ Shift.definition = nil :: any
 Shift.finished = false
 
 local heartbeat: RBXScriptConnection? = nil
+local cancelTubes: (() -> ())? = nil
+local insideWatch: RBXScriptConnection? = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -7626,6 +7872,10 @@ end
 function ctx.power()
 	return Power
 end
+-- The fluorescents: lit at the start of a night, and going all the way through it.
+function ctx.tubes()
+	return Tubes
+end
 function ctx.atmos()
 	return Atmos
 end
@@ -7755,7 +8005,7 @@ local function stepStandStill()
 			]]
 			task.spawn(function()
 				local ahead = {}
-				for _, fitting in World.all("ExitSign") do
+				for _, fitting in World.all("Tube") do
 					local delta = fitting.Position - root.Position
 					if delta.Magnitude < 22 * METRE and delta.Unit:Dot(root.CFrame.LookVector) > 0.3 then
 						table.insert(ahead, fitting)
@@ -7885,6 +8135,15 @@ function Shift.stop()
 		heartbeat = nil
 	end
 	Dread.stop()
+	if insideWatch then
+		insideWatch:Disconnect()
+		insideWatch = nil
+	end
+	-- And nothing from last night is allowed to still be putting lights out.
+	if cancelTubes then
+		cancelTubes()
+		cancelTubes = nil
+	end
 	-- Nothing from last night is allowed to still be walking around in this one.
 	Mannequins.stop()
 	Customers.stop()
@@ -7911,18 +8170,95 @@ function Shift.begin(night: number)
 	Shift.finished = false
 
 	Objectives.reset()
+	--[[
+		Every night's first job, before anything the night itself asks for: get
+		in the building. The crew start in the yard now, and this is the one
+		instruction that cannot be misread -- there is a door eight metres away
+		with a light over it, and the board says to go through it. A player who
+		has understood the first job understands the shape of all the others.
+	]]
+	Objectives.add("get_inside", "Get inside. The staff door is at the loading dock", 1, false)
 	for _, o in definition.objectives do
 		Objectives.add(o[1], o[2], o[3], o[4])
 	end
 
 	Atmos.build()
+	--[[
+		The building starts lit and gets dark. Roughly two thirds of the tubes
+		go across a shift, unevenly and faster towards the end, so that by four
+		in the morning what is left is the EXIT boxes and whatever the crew are
+		carrying. Nobody is told this is happening; they notice, which is the
+		whole of the effect.
+	]]
+	Tubes.build()
+	Tubes.relight()
+	if cancelTubes then
+		cancelTubes()
+	end
+	cancelTubes = Tubes.failAcross(
+		Config.SHIFT_HOURS * Config.SECONDS_PER_GAME_HOUR[night], 0.66)
+
 	Dread.night = night
 	Dread.start()
 
 	ctx.night = night
 	definition.build(ctx)
 	buildLift(ctx)
-	ctx.move({ Places.ROOM.StaffRoom.x, 0.3, Places.ROOM.StaffRoom.z - 1.0 })
+	--[[
+		Start outside, at the staff door.
+
+		A night used to begin with the crew already standing in the staff room,
+		which meant the building simply was, and the outside of it -- the
+		frontage, the sign, the car park with one car in it -- was scenery
+		nobody ever stood in. Now the shift starts in the yard: it is ten at
+		night, there is one door, and the first thing anybody does is walk
+		through it. It also makes the opening instruction impossible to
+		misread, which is worth as much as the atmosphere.
+	]]
+	ctx.move(Places.POINT.StaffEntrance)
+
+	--[[
+		Watch for them crossing the threshold. The dock's south wall is the
+		outside of the building on that side, so anyone north of it and inside
+		the dock's width is in -- which is cheaper and far more reliable than
+		asking which room a position is nearest to.
+	]]
+	local dock = Places.ROOM.LoadingDock
+	--[[
+		And a fallback, because a board that is stuck on job one is a board that
+		is showing nothing at all. If ninety seconds pass and this has not
+		fired -- somebody got in another way, somebody was teleported by the
+		test panel, the check is wrong -- it completes itself and the night goes
+		on. The cost of being wrong here is one crossed-off line; the cost of
+		being stuck is the whole list.
+	]]
+	task.delay(90, function()
+		if Shift.night == night and not Shift.finished then
+			ctx.advance("get_inside")
+		end
+	end)
+
+	insideWatch = RunService.Heartbeat:Connect(function()
+		if Objectives.isComplete("get_inside") then
+			if insideWatch then
+				insideWatch:Disconnect()
+				insideWatch = nil
+			end
+			return
+		end
+		for _, player in Players:GetPlayers() do
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if not root then
+				continue
+			end
+			local p = (root :: BasePart).Position / METRE
+			if p.Z > dock.z - 3.4 and math.abs(p.X - dock.x) < 5.5 then
+				ctx.advance("get_inside")
+				ctx.hint("Door shut behind you. The time clock is in the staff room.")
+				return
+			end
+		end
+	end)
 
 	Shift.clock = ShiftClock.new(night)
 	ctx.clock = Shift.clock
@@ -8506,6 +8842,265 @@ return TestPanel
       </Item>
       <Item class="ModuleScript" referent="39">
         <Properties>
+          <string name="Name">Tubes</string>
+          <string name="Source"><![CDATA[--!strict
+--[[
+	Tubes — the fittings that are still working, and taking them away.
+
+	Every fluorescent batten in the building is lit when a night starts. That is
+	new, and it is the single thing that gives the dark anywhere to go: a
+	building that is uniformly black at 22:00 is uniformly black at 04:00, and
+	nothing about it has got worse in between. A building with eleven tubes on at
+	22:00 and two on at 04:00 has been getting worse all night, in a way you can
+	see without being told and without looking at the clock.
+
+	They do not simply switch off. A fluorescent at the end of its life strikes,
+	fails, strikes again and goes -- and the sound of one doing that, two rooms
+	away, is worth more than any number of stingers, because it is the building
+	failing rather than the game jumping at you.
+
+	Nothing in here decides *when*. The night does that: a shift asks for the
+	next one to go, or for the one nearest a player, and this module makes it
+	happen.
+]]
+
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Places = require(Shared.Places)
+local SoundBank = require(Shared.SoundBank)
+
+local Hud = require(script.Parent.Hud)
+local World = require(script.Parent.World)
+
+local Tubes = {}
+
+local LIT = Color3.fromRGB(222, 230, 226)
+local DEAD = Color3.fromRGB(38, 39, 38)
+
+type Fitting = { part: BasePart, light: Light?, alive: boolean }
+
+local fittings: { Fitting } = {}
+
+local function lightOf(part: BasePart): Light?
+	return part:FindFirstChildWhichIsA("Light")
+end
+
+--[[
+	Collect. Called at the start of a night, after the mall is built, so a
+	rebuild never leaves this module holding parts that no longer exist.
+]]
+function Tubes.build()
+	table.clear(fittings)
+	for _, part in World.all("Tube") do
+		local light = lightOf(part)
+		table.insert(fittings, { part = part, light = light, alive = true })
+		part.Color = LIT
+		part.Material = Enum.Material.Neon
+		if light then
+			light.Enabled = true
+		end
+	end
+	return #fittings
+end
+
+function Tubes.alive(): number
+	local n = 0
+	for _, f in fittings do
+		if f.alive and f.part.Parent then
+			n += 1
+		end
+	end
+	return n
+end
+
+local function darken(f: Fitting)
+	f.alive = false
+	f.part.Color = DEAD
+	f.part.Material = Enum.Material.SmoothPlastic
+	if f.light then
+		f.light.Enabled = false
+	end
+end
+
+--[[
+	One fitting, dying.
+
+	Three strikes and out, with the timings uneven, because an even flicker
+	reads as an effect and an uneven one reads as a fault. The caption says
+	which it was and roughly where, since a player with the sound off has to be
+	told that something two rooms away just gave up.
+]]
+function Tubes.kill(f: Fitting)
+	if not f.alive or not f.part.Parent then
+		return
+	end
+	f.alive = false
+	task.spawn(function()
+		local part, light = f.part, f.light
+		for i = 1, 3 do
+			if not part.Parent then
+				return
+			end
+			part.Color = DEAD
+			part.Material = Enum.Material.SmoothPlastic
+			if light then
+				light.Enabled = false
+			end
+			task.wait(0.05 + i * 0.04)
+			if not part.Parent then
+				return
+			end
+			part.Color = LIT
+			part.Material = Enum.Material.Neon
+			if light then
+				light.Enabled = true
+			end
+			task.wait(0.03 + math.random() * 0.09)
+		end
+		if part.Parent then
+			darken(f)
+			SoundBank.play(SoundBank.TUBE_FAIL, part, 0.12)
+			Hud.captionSlot(SoundBank.TUBE_FAIL, Places.roomAt(part.Position))
+		end
+	end)
+end
+
+-- The next one to go, chosen at random from what is left.
+function Tubes.killOne(): boolean
+	local live = {}
+	for _, f in fittings do
+		if f.alive and f.part.Parent then
+			table.insert(live, f)
+		end
+	end
+	if #live == 0 then
+		return false
+	end
+	Tubes.kill(live[math.random(1, #live)])
+	return true
+end
+
+--[[
+	The nearest one to a point that is still on.
+
+	Used when the night wants the failure to be *here* rather than somewhere:
+	the fitting over the door you are walking towards is a different event from
+	a fitting somewhere in the building.
+]]
+function Tubes.killNear(position: Vector3, minMetres: number?): boolean
+	local floor = (minMetres or 0) * Places.METRE
+	local best, bestD = nil, math.huge
+	for _, f in fittings do
+		if f.alive and f.part.Parent then
+			local d = (f.part.Position - position).Magnitude
+			if d >= floor and d < bestD then
+				best, bestD = f, d
+			end
+		end
+	end
+	if not best then
+		return false
+	end
+	Tubes.kill(best)
+	return true
+end
+
+--[[
+	The night's worth.
+
+	`fraction` of the fittings go over `seconds`, spaced unevenly -- clustered
+	slightly towards the end, because a building should be losing them faster at
+	four in the morning than at ten at night. Returns a cancel function, and the
+	shift calls it when the night ends.
+]]
+function Tubes.failAcross(seconds: number, fraction: number)
+	local total = Tubes.alive()
+	local going = math.max(1, math.floor(total * math.clamp(fraction, 0, 1)))
+	local cancelled = false
+
+	task.spawn(function()
+		for i = 1, going do
+			if cancelled then
+				return
+			end
+			--[[
+				Squared, so the gaps get shorter as the night goes on. The first
+				one goes about a fifth of the way in and the last three go
+				almost together.
+			]]
+			local at = seconds * ((i / (going + 1)) ^ 1.6)
+			local previous = seconds * (((i - 1) / (going + 1)) ^ 1.6)
+			task.wait(math.max(0.5, at - previous))
+			if cancelled then
+				return
+			end
+			Tubes.killOne()
+		end
+	end)
+
+	return function()
+		cancelled = true
+	end
+end
+
+--[[
+	All of them out, at once, without burning them.
+
+	The difference from letting them fail is that these come back: this is the
+	supply going, not the fittings going. Used where a night puts the building
+	on the emergency circuit, which is the circuit the fluorescents are not on.
+]]
+function Tubes.blackout()
+	for _, f in fittings do
+		if f.part.Parent then
+			f.part.Color = DEAD
+			f.part.Material = Enum.Material.SmoothPlastic
+			if f.light then
+				f.light.Enabled = false
+			end
+		end
+	end
+end
+
+-- Everything back on, dead ones included. The start of a night, and nothing else.
+function Tubes.relight()
+	for _, f in fittings do
+		if f.part.Parent then
+			f.alive = true
+			f.part.Color = LIT
+			f.part.Material = Enum.Material.Neon
+			if f.light then
+				f.light.Enabled = true
+			end
+		end
+	end
+end
+
+--[[
+	The far side of a power cut.
+
+	Not the same thing as relighting. A fitting that burnt out at half past
+	midnight is still burnt out when the supply comes back -- the cut took the
+	working ones away for a while, and it does not undo an hour of the building
+	failing. Only what was alive going in comes back.
+]]
+function Tubes.repower()
+	for _, f in fittings do
+		if f.alive and f.part.Parent then
+			f.part.Color = LIT
+			f.part.Material = Enum.Material.Neon
+			if f.light then
+				f.light.Enabled = true
+			end
+		end
+	end
+end
+
+return Tubes
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="40">
+        <Properties>
           <string name="Name">World</string>
           <string name="Source"><![CDATA[--!strict
 --[[
@@ -8576,6 +9171,10 @@ function World.ensureBuilt()
 	end
 end
 
+-- Forward-declared: reindex rebuilds this, and it is written below with the
+-- rest of the room lookup it belongs to.
+local indexFloors: () -> ()
+
 function World.reindex()
 	table.clear(index)
 	local mall = World.mall()
@@ -8592,10 +9191,80 @@ function World.reindex()
 			table.insert(bucket, d)
 		end
 	end
+	indexFloors()
 end
 
 function World.all(name: string): { BasePart }
 	return index[name] or {}
+end
+
+--[[
+	Which room a point is in, by the floor it is standing on.
+
+	Not the nearest room centre. That is what Places.roomAt does, and it is
+	right for a caption -- "[a bin goes over, in the stockroom]" only has to be
+	roughly true -- and useless as a trigger, because it will cheerfully report
+	that a corridor twelve metres away is the stockroom, and a trigger that
+	fires on the wrong side of a wall is worse than no trigger.
+
+	This is containment, off the geometry that was actually built: every room
+	lays a slab called `<Name>_Floor`, so its extent is a real thing with real
+	edges and standing on one is what being in that room means. It cannot drift
+	out of step with the building, because it *is* the building.
+]]
+type Floor = { key: string, x0: number, x1: number, z0: number, z1: number, y: number }
+local floors: { Floor } = {}
+
+function indexFloors()
+	table.clear(floors)
+	for name, parts in index do
+		local key = string.match(name, "^(.+)_Floor$")
+		if not key then
+			continue
+		end
+		for _, part in parts do
+			local p, size = part.Position / Places.METRE, part.Size / Places.METRE
+			table.insert(floors, {
+				key = key,
+				x0 = p.X - size.X / 2, x1 = p.X + size.X / 2,
+				z0 = p.Z - size.Z / 2, z1 = p.Z + size.Z / 2,
+				y = p.Y + size.Y / 2,
+			})
+		end
+	end
+end
+
+--[[
+	The room key, or nil out in the open. Height is checked loosely -- within
+	about a storey above the slab -- so the food court over the north arm and
+	the basement under the corridor do not claim each other's occupants.
+]]
+function World.roomOf(position: Vector3): string?
+	local p = position / Places.METRE
+	local best, bestY = nil, -math.huge
+	for _, f in floors do
+		if p.X >= f.x0 and p.X <= f.x1 and p.Z >= f.z0 and p.Z <= f.z1 then
+			local above = p.Y - f.y
+			-- Standing on it, not floating over it or buried under it.
+			if above > -1.2 and above < 4.6 and f.y > bestY then
+				best, bestY = f.key, f.y
+			end
+		end
+	end
+	return best
+end
+
+-- The middle of a room's floor, for staging something in a room nobody is in.
+function World.roomCentre(key: string): Vector3?
+	for _, f in floors do
+		if f.key == key then
+			return Vector3.new(
+				(f.x0 + f.x1) / 2 * Places.METRE,
+				(f.y + 1.2) * Places.METRE,
+				(f.z0 + f.z1) / 2 * Places.METRE)
+		end
+	end
+	return nil
 end
 
 function World.first(name: string): BasePart?
@@ -8713,11 +9382,11 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="40">
+  <Item class="ServerStorage" referent="41">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="ModuleScript" referent="41">
+    <Item class="ModuleScript" referent="42">
       <Properties>
         <string name="Name">Greybox</string>
         <string name="Source"><![CDATA[--[[
@@ -8826,57 +9495,95 @@ local function bulb(part, colour, brightness, rangeM)
 	lightCount += 1
 end
 
--- A caged red bulkhead. One per room, and that is the room's entire lighting.
 --[[
-	A bulkhead fitting, dead.
+	A fluorescent batten.
 
-	Every one of these used to be a light. There are twenty-six of them and the
-	building was a string of red puddles — which is not what a shopping centre
-	looks like at four in the morning. What a shopping centre looks like at four
-	in the morning is one thing lit and everything else off, and the one thing
-	lit is the emergency circuit, because the emergency circuit is the only
-	circuit with a legal obligation to be on.
+	These used to be dead. Every fitting in the building was off and the only
+	light anywhere was the EXIT boxes, which made the place uniformly, evenly
+	dark -- and a building that is the same darkness everywhere has no shape to
+	it and nothing to lose.
 
-	So the fittings stay as objects — they are ceiling furniture, they cast the
-	shadows, and the fact that they are all out is the point — and the only
-	light in the building comes from the EXIT boxes over the doors.
+	So the tubes are on at the start of a night. Weakly, the way a forty-year-old
+	fitting with one good tube left in it is on, and they hum. Then they go, one
+	at a time, across the shift, until what is left is the EXIT boxes and a
+	torch. That progression is the clock made visible: you do not have to look at
+	the time to know how far into the night you are, you have to look up.
+
+	`alongX` is which way the batten runs. A fluorescent is a line, not a point,
+	and a line that runs the wrong way across a corridor reads as a mistake from
+	the far end of it.
 ]]
+local TUBE_LIT = Color3.fromRGB(222, 230, 226)
+local TUBE_DEAD = Color3.fromRGB(38, 39, 38)
+
+local function tube(x, y, z, alongX)
+	if alongX == nil then
+		alongX = true
+	end
+	local body = if alongX then V(1.34, 0.1, 0.17) else V(0.17, 0.1, 1.34)
+	local lens = if alongX then V(1.24, 0.06, 0.12) else V(0.12, 0.06, 1.24)
+
+	P("TubeBody", body, at(x, y + 0.05, z), Color3.fromRGB(52, 52, 54))
+	for _, e in { -1, 1 } do
+		P("TubeEnd", if alongX then V(0.08, 0.11, 0.18) else V(0.18, 0.11, 0.08),
+			at(x + (if alongX then e * 0.63 else 0), y + 0.04, z + (if alongX then 0 else e * 0.63)),
+			Color3.fromRGB(44, 44, 46))
+	end
+
+	local lamp = P("Tube", lens, at(x, y, z), TUBE_LIT, Enum.Material.Neon)
+	lamp.CastShadow = false
+	--[[
+		Weak and short. It should put a pool on the floor under itself and let
+		the far end of the room stay dark -- one fitting should never light a
+		room, it should tell you a room is there.
+	]]
+	bulb(lamp, Color3.fromRGB(198, 212, 208), 0.42, 7)
+	return lamp
+end
+
+-- Kept so the old name still builds something: every fitting is a batten now.
 local function bulkhead(x, y, z, _rangeM)
-	local lens = P("Bulkhead", V(0.3, 0.16, 0.3), at(x, y, z), Color3.fromRGB(26, 24, 24))
-	P("BulkheadCage", V(0.4, 0.26, 0.4), at(x, y + 0.04, z), C.metal)
-	P("BulkheadTube", V(0.24, 0.05, 0.24), at(x, y - 0.03, z), Color3.fromRGB(58, 56, 54))
-	return lens
+	return tube(x, y, z, true)
 end
 
 --[[
 	An EXIT box.
 
-	Three things were wrong with these and all three were visible from the first
-	room. The lettering was clipping to "XIT", because a scaled label that is
-	also wrapped has nowhere to go. They floated at arbitrary points and ended up
-	half inside walls, because nothing told them which surface they belonged to.
-	And they were far too bright — at 1.6 over twenty-two metres every surface
-	within sight of one clipped to flat saturated red, which is not lighting, it
-	is a colour wash, and it made a fully dressed building look like a diagram
-	again.
+	It used to be a solid block of red Neon with the word printed on it, which
+	from three metres away is not a sign, it is a red lamp -- the lettering was
+	washed out by the bloom coming off the box it was printed on, so the one
+	piece of information in the whole fitting was the one thing you could not
+	read.
 
-	`facing` says which way it looks: "N", "S", "E" or "W". The box is then set
-	proud of that wall on a bracket, like a real one, and the lettering goes on
-	the two faces you can actually read it from.
+	A real one is a dark housing with a lit panel in it. So: charcoal box, the
+	panel inset and glowing, EXIT across it in white, and the light it throws is
+	a small pool on the wall beside it and nothing else. From down a corridor
+	you see a red rectangle with a word in it, and around it, black.
+
+	`facing` says which way it looks: "N", "S", "E" or "W". The box is set proud
+	of that wall on a bracket, like a real one, and the lettering goes on the two
+	faces you can read it from.
 ]]
+local EXIT_RED = Color3.fromRGB(255, 30, 22)
+
 local function exitSign(x, y, z, facing)
 	facing = facing or "S"
 	local alongX = facing == "N" or facing == "S"
-	local size = if alongX then V(0.62, 0.24, 0.1) else V(0.1, 0.24, 0.62)
 
 	-- Out from the wall it hangs on, so it is never inside it.
-	local nx = if facing == "E" then 0.26 elseif facing == "W" then -0.26 else 0
-	local nz = if facing == "N" then 0.26 elseif facing == "S" then -0.26 else 0
+	local nx = if facing == "E" then 0.3 elseif facing == "W" then -0.3 else 0
+	local nz = if facing == "N" then 0.3 elseif facing == "S" then -0.3 else 0
 
-	local sign = P("ExitSign", size, at(x + nx, y, z + nz), RED, Enum.Material.Neon)
+	P("ExitBracket", if alongX then V(0.05, 0.05, 0.36) else V(0.36, 0.05, 0.05),
+		at(x + nx / 2, y + 0.19, z + nz / 2), C.metal)
+
+	-- The housing. Dark, and it does not glow: only the panel in it does.
+	P("ExitHousing", if alongX then V(0.74, 0.32, 0.09) else V(0.09, 0.32, 0.74),
+		at(x + nx, y, z + nz), Color3.fromRGB(26, 25, 25))
+
+	local sign = P("ExitSign", if alongX then V(0.66, 0.25, 0.12) else V(0.12, 0.25, 0.66),
+		at(x + nx, y, z + nz), EXIT_RED, Enum.Material.Neon)
 	sign.CastShadow = false
-	P("ExitBracket", if alongX then V(0.06, 0.06, 0.3) else V(0.3, 0.06, 0.06),
-		at(x + nx / 2, y + 0.1, z + nz / 2), C.metal)
 
 	local faces = if alongX
 		then { Enum.NormalId.Front, Enum.NormalId.Back }
@@ -8884,49 +9591,65 @@ local function exitSign(x, y, z, facing)
 	for _, face in faces do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
-			color = Color3.fromRGB(255, 244, 240),
+			color = Color3.fromRGB(255, 236, 232),
 			font = Enum.Font.GothamBold,
 			density = 130,
 		})
 	end
 
 	--[[
-		Dim, and short. It should mark a door from down a corridor and light the
-		two metres under itself, and nothing else. Everything past that is the
-		torch's job, which is the entire point of lighting a building this way.
+		Dim, and short. It marks a door from down a corridor and lights the metre
+		of wall beside itself. Everything past that is the torch's job, which is
+		the entire point of lighting a building this way.
 	]]
-	bulb(sign, RED, 0.7, 11)
+	bulb(sign, EXIT_RED, 0.5, 6)
 	return sign
 end
 
 --[[
-	A roller shutter.
+	A fire exit.
 
-	The old one was a flat plate that grew downwards when you pulled it, and it
-	looked exactly as bad as that sounds: the slats were separate parts that
-	stayed where they were while the plate stretched through them, and it stopped
-	a metre and a half short of a ceiling that had since been raised.
-
-	This is the real arrangement. A housing box across the top of the opening, a
-	guide channel down each side, and a curtain that is already full height and
-	starts retracted inside the housing. Pulling it down slides it; nothing
-	scales, nothing stretches, and the slats are drawn on the curtain so they
-	travel with it.
-
-	It unrolls rather than slides. Sliding needs somewhere to hide the retracted
-	curtain, and over a mall arm that somewhere is the food court floor — the
-	first attempt put six shutters through it. So the curtain grows downwards out
-	of the housing, which is what the eye reads a roller shutter as doing anyway.
-
-	The slats are a SurfaceGui rather than parts, which is the whole reason this
-	works: they redistribute when the curtain resizes. Separate slat parts is
-	what made the old one look broken — the plate stretched straight through them
-	and left them hanging in the opening.
-
-	The closed geometry goes on the part as attributes, so World.lowerShutter
-	animates to exactly what it was built to become rather than to a number typed
-	in a second file that stops being true when a ceiling changes.
+	The green door is the half of this that makes the red box mean something. An
+	EXIT sign over a stretch of blank wall is a decoration; an EXIT sign over a
+	green door with a push bar on it is a way out, and the whole fifth night is
+	about there being one and it not working.
 ]]
+local EXIT_GREEN = Color3.fromRGB(26, 116, 62)
+
+local function emergencyExit(x, y, z, facing)
+	facing = facing or "S"
+	local alongX = facing == "N" or facing == "S"
+	-- Which way is out of the room, in the direction the sign faces.
+	local ox = if facing == "E" then 1 elseif facing == "W" then -1 else 0
+	local oz = if facing == "N" then 1 elseif facing == "S" then -1 else 0
+
+	P("ExitDoorFrame", if alongX then V(1.36, 2.32, 0.18) else V(0.18, 2.32, 1.36),
+		at(x, y + 1.16, z), C.trim)
+	P("ExitDoor", if alongX then V(1.12, 2.12, 0.1) else V(0.1, 2.12, 1.12),
+		at(x + ox * 0.05, y + 1.06, z + oz * 0.05), EXIT_GREEN)
+
+	-- The push bar, across the leaf at waist height. You have seen ten thousand
+	-- of these and you have never once looked at one.
+	P("PushBar", if alongX then V(0.94, 0.08, 0.08) else V(0.08, 0.08, 0.94),
+		at(x + ox * 0.12, y + 1.02, z + oz * 0.12), C.metal)
+	for _, e in { -1, 1 } do
+		P("PushBarMount", if alongX then V(0.07, 0.16, 0.1) else V(0.1, 0.16, 0.07),
+			at(x + (if alongX then e * 0.4 else ox * 0.09), y + 1.02,
+				z + (if alongX then oz * 0.09 else e * 0.4)), C.metal)
+	end
+
+	-- The running-man plate. The other half of what makes a door read as a door
+	-- you are allowed through.
+	local plate = P("ExitPlate", if alongX then V(0.2, 0.2, 0.02) else V(0.02, 0.2, 0.2),
+		at(x + ox * 0.11, y + 1.6, z + oz * 0.11), Color3.fromRGB(22, 96, 52))
+	Surfaces.label(plate,
+		if alongX then (if oz < 0 then Enum.NormalId.Front else Enum.NormalId.Back)
+		else (if ox > 0 then Enum.NormalId.Right else Enum.NormalId.Left),
+		"↥", { color = Color3.fromRGB(236, 244, 238), density = 90 })
+
+	exitSign(x, y + 2.52, z, facing)
+end
+
 local function shutterCurtain(name, sizeM, cf, closedSizeM, closedCf)
 	local curtain = P(name, sizeM, cf, Color3.fromRGB(78, 76, 74), Enum.Material.CorrodedMetal)
 	if closedSizeM then
@@ -9161,6 +9884,112 @@ end
 local function litterBin(x, y, z)
 	P("LitterBin", V(0.45, 0.85, 0.45), at(x, y + 0.42, z), C.metal)
 	P("LitterLid", V(0.5, 0.06, 0.5), at(x, y + 0.88, z), C.trim)
+end
+
+--[[
+	A car.
+
+	It was five boxes and four smaller boxes: a slab for the body, a slab for
+	the roof, two dark slabs for glass. Out on a lit forecourt that is the one
+	object in the game a player has seen ten thousand real examples of, and it
+	is the one that has to hold up, because anything that reads as "a box that
+	is meant to be a car" tells them the rest of the building is boxes too.
+
+	So this is a car the way a 1986 saloon is a car: a long low shell with a
+	bonnet at one end and a boot at the other, a greenhouse narrower than the
+	body sitting between them, raked glass, a pillar between the side windows,
+	arches the wheels sit inside rather than beside, and bumpers, lamps and a
+	plate at both ends. It is still about forty parts and none of it is
+	modelled -- it is proportion, and proportion is the whole trick.
+
+	`turn` is degrees off square. Nobody parks straight, and four cars all
+	exactly parallel is a car park nobody has ever used.
+]]
+local function car(cx, cz, tint, seed, turn)
+	local rng = Random.new(seed)
+	turn = turn or rng:NextNumber(-6, 6)
+	local dark = Color3.fromRGB(
+		math.floor(tint.R * 255 * 0.55), math.floor(tint.G * 255 * 0.55), math.floor(tint.B * 255 * 0.55))
+	local glass = Color3.fromRGB(30, 34, 40)
+	local parts = {}
+
+	--[[
+		Every part is written as an offset from the middle of the car, square,
+		and the yaw is applied as it is placed: the offset is rotated in plan
+		and the same yaw is added to whatever local orientation the part
+		already wanted. That keeps the numbers below readable -- "the mirror is
+		0.95 m out and 0.86 m forward" -- while the car itself sits crooked in
+		its bay.
+	]]
+	local rad = math.rad(turn)
+	local cosT, sinT = math.cos(rad), math.sin(rad)
+
+	local function part(name, sizeM, ox, oy, oz, colour, material, pitch, roll)
+		local made = P(name, sizeM,
+			at(cx + ox * cosT + oz * sinT, oy, cz - ox * sinT + oz * cosT),
+			colour, material)
+		if turn ~= 0 or pitch or roll then
+			made.Orientation = Vector3.new(pitch or 0, turn, roll or 0)
+		end
+		table.insert(parts, made)
+		return made
+	end
+
+	-- ── Shell ───────────────────────────────────────────────────────────────
+	part("CarBody", V(1.72, 0.54, 4.34), 0, 0.62, 0, tint)
+	part("CarSill", V(1.78, 0.16, 4.1), 0, 0.42, 0, dark)
+	-- Bonnet and boot, both a little lower than the waist, which is what stops
+	-- the body reading as one extruded block.
+	part("CarBonnet", V(1.64, 0.14, 1.28), 0, 0.92, -1.48, tint)
+	part("CarBoot", V(1.64, 0.16, 1.06), 0, 0.94, 1.6, tint)
+
+	-- ── Greenhouse ──────────────────────────────────────────────────────────
+	-- Narrower than the body, and set back from both ends.
+	part("CarCabin", V(1.54, 0.5, 2.05), 0, 1.14, 0.05, tint)
+	part("CarRoof", V(1.46, 0.09, 1.78), 0, 1.43, 0.12, tint)
+
+	-- Raked, both of them, which is the difference between a greenhouse and a
+	-- pair of dark slabs stuck on the ends of a box.
+	part("Windscreen", V(1.42, 0.58, 0.08), 0, 1.14, -1.02, glass, nil, 34).Reflectance = 0.12
+	part("RearScreen", V(1.4, 0.5, 0.08), 0, 1.16, 1.12, glass, nil, -40).Reflectance = 0.12
+
+	for _, sx in { -1, 1 } do
+		part("SideGlass", V(0.06, 0.4, 0.78), sx * 0.78, 1.2, -0.4, glass).Reflectance = 0.1
+		part("SideGlass", V(0.06, 0.38, 0.62), sx * 0.78, 1.2, 0.62, glass).Reflectance = 0.1
+		part("CarPillar", V(0.08, 0.5, 0.11), sx * 0.78, 1.14, 0.14, dark)
+		part("DoorLine", V(0.03, 0.44, 0.02), sx * 0.87, 0.66, 0.16, dark)
+		part("DoorHandle", V(0.05, 0.05, 0.22), sx * 0.88, 0.82, -0.28, Color3.fromRGB(150, 148, 144))
+		part("Mirror", V(0.2, 0.11, 0.09), sx * 0.95, 1.02, -0.86, dark)
+	end
+
+	-- ── Ends ────────────────────────────────────────────────────────────────
+	part("CarBumper", V(1.76, 0.18, 0.16), 0, 0.5, -2.2, Color3.fromRGB(58, 58, 60))
+	part("CarBumper", V(1.76, 0.18, 0.16), 0, 0.5, 2.2, Color3.fromRGB(58, 58, 60))
+	part("Grille", V(1.1, 0.16, 0.06), 0, 0.74, -2.18, Color3.fromRGB(38, 38, 40))
+	for _, sx in { -1, 1 } do
+		part("Headlamp", V(0.4, 0.18, 0.06), sx * 0.58, 0.78, -2.18, Color3.fromRGB(196, 196, 186)).Reflectance = 0.3
+		part("TailLamp", V(0.34, 0.16, 0.06), sx * 0.6, 0.8, 2.18, Color3.fromRGB(128, 32, 28))
+	end
+	local plate = part("NumberPlate", V(0.52, 0.12, 0.03), 0, 0.58, -2.24, Color3.fromRGB(198, 194, 178))
+	Surfaces.label(plate, Enum.NormalId.Front, "C" .. rng:NextInteger(100, 899) .. " NLG",
+		{ color = Color3.fromRGB(40, 38, 36), density = 150 })
+
+	-- ── Wheels, in arches rather than beside them ───────────────────────────
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1.42, 1.42 } do
+			part("WheelArch", V(0.24, 0.5, 0.86), sx * 0.86, 0.66, sz, dark)
+			part("Wheel", V(0.22, 0.62, 0.62), sx * 0.84, 0.31, sz,
+				Color3.fromRGB(26, 25, 25), nil, 0, 90).Shape = Enum.PartType.Cylinder
+			part("Hub", V(0.1, 0.34, 0.34), sx * 0.9, 0.31, sz,
+				Color3.fromRGB(122, 120, 116), nil, 0, 90).Shape = Enum.PartType.Cylinder
+		end
+	end
+
+	-- The aerial, which is the single cheapest thing you can add to a car and
+	-- the one that most makes it look like somebody owned it.
+	part("Aerial", V(0.03, 0.72, 0.03), -0.72, 1.3, -1.5, Color3.fromRGB(150, 148, 144))
+
+	return parts
 end
 
 local function trolley(x, y, z, turn)
@@ -9718,7 +10547,14 @@ local ROOMS = {
 	{ "CameraRoom", SERVICE_WEST - 2.5, 3.5, 5.0, 4.2, 0, 3.1, { { "E", 0, 1.1 } } },
 	{ "CustodialStore", SERVICE_WEST - 1.8, -2, 3.6, 3.0, 0, 3.1, { { "E", 0, 1.0 } } },
 	{ "Stockroom", SERVICE_WEST - 4.5, -9, 9.0, 7.0, 0, 3.5, { { "E", 0, 1.4 } } },
-	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 4.2, { { "E", 0, 2.6 } } },
+	--[[
+		The dock has two ways in. The east one is the corridor, and the south one
+		is the staff door onto the yard -- which the crew come in through at ten
+		and, on the fifth night, go out through. It had a door leaf screwed to a
+		solid wall for a long time, which is not a door.
+	]]
+	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 4.2,
+		{ { "E", 0, 2.6 }, { "S", -2.5, 1.3 } } },
 	-- Shop floor: east face flush with the west side of the north arm.
 	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 4.0, { { "E", 0, 3.2 } } },
 	-- South face flush with the north side of the east arm.
@@ -10428,14 +11264,17 @@ local function mallArm(axis, length, entries)
 		f += 6.0
 	end
 
-	-- The dead end, with the thing that is legally required to be lit on it.
-	exitSign(
-		(axis == "N") and 0 or start + length - 0.3,
-		MALL_H - 0.5,
-		(axis == "N") and start + length - 0.3 or 0,
-		if axis == "N" then "S" else "W")
-	P("FireDoor", size(0.15, 1.6, 2.1), pos(length - 0.12, 0, 1.05), C.metal)
-	P("PushBar", size(0.06, 1.4, 0.08), pos(length - 0.22, 0, 1.0), C.trim)
+	--[[
+		The dead end, and the way out of it. A green door with a push bar and
+		the red box over it: from the atrium, forty metres away, that pair is
+		the only thing at the end of the arm you can see, and it is the thing
+		that tells you the arm has an end.
+	]]
+	emergencyExit(
+		(axis == "N") and 0 or start + length - 0.45,
+		0,
+		(axis == "N") and start + length - 0.45 or 0,
+		if axis == "N" then "N" else "E")
 
 	-- Ceiling: grid, sprinklers, the speakers the tape comes out of, and a
 	-- hanging wayfinding sign you can read from the atrium.
@@ -10526,6 +11365,9 @@ local function serviceCorridor()
 	end
 	wallWithDoors(x - SERVICE_W / 2, z0, z1, "z", 0, h, doors, "W", C.block)
 	P("Service_EndN", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, z1), C.block)
+	-- The way out of the back of house, at the north end where the corridor
+	-- stops. It is the nearest door to the staff room and nobody uses it.
+	emergencyExit(x, 0, z1 - 0.2, "N")
 
 	--[[
 		The link through to the atrium. Ten metres of blockwork at right angles
@@ -10565,6 +11407,13 @@ local function serviceCorridor()
 		P("DuctHanger", V(0.05, 0.5, 0.05), at(x + 0.5, h - 0.2, pipe), C.metal)
 		pipe += 3.0
 	end
+	-- Battens down the corridor, along it rather than across it.
+	local lit = z0 + 4
+	while lit < z1 do
+		tube(x, h - 0.16, lit, false)
+		lit += 7.5
+	end
+
 	-- And the things that stack up in a corridor nobody shows customers.
 	-- Against the east wall, between two doors. It used to sit dead centre in
 	-- the security office doorway.
@@ -10998,7 +11847,9 @@ local function dressLoadingDock(cx, cz, y, h, w, d)
 	for i = 0, 11 do
 		P("ShutterSlat", V(3.96, 0.2, 0.04), at(cx, y + 0.2 + i * 0.25, cz - 3.9), C.trim)
 	end
-	P("StripCurtain", V(3.8, 2.6, 0.06), at(cx, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
+	-- Hung over the roller shutter and only over the roller shutter: the staff
+	-- door is 2.5 m west of here and the crew come in through it every night.
+	P("StripCurtain", V(3.2, 2.6, 0.06), at(cx + 0.3, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
 
 	P("Bin", V(1.2, 1.2, 1.0), at(cx - 3.5, y + 0.6, cz + 2.0), C.trim)
 	P("Bin", V(1.2, 1.2, 1.0), at(cx - 2.0, y + 0.6, cz + 2.0), C.trim)
@@ -11471,24 +12322,63 @@ end
 	Runs are merged before anything is built, so the whole exterior is about
 	forty parts rather than eight hundred.
 ]]
-local MASSES = {
-	-- name, x0, x1, z0, z1, parapet top
-	{ "Atrium", -11.3, 11.3, -9.3, 9.3, ATRIUM_H + 1.6 },
-	{ "NorthArm", -3.5, 3.5, 9.0, 39.2, MALL_H + 1.1 },
-	{ "EastArm", 11.0, 35.2, -3.5, 3.5, MALL_H + 1.1 },
-	{ "Supermarket", -19.3, -3.3, 16.9, 29.1, 5.2 },
-	{ "Fashion", 17.4, 28.6, 3.1, 12.3, 5.2 },
-	{ "Toilets", 12.9, 21.1, -9.3, -3.1, 4.4 },
-	-- The food court is a first-floor room over the north arm and wider than
-	-- it. Taken from the ground, so the overhang reads as a two-storey wing
-	-- instead of a box hanging in the air.
-	{ "FoodCourt", -7.3, 7.3, 8.8, 19.1, FLOOR1 + 3.6 + 1.0 },
-	{ "BackOfHouse", -34.5, -20.6, -30.3, 18.3, 5.4 },
-}
+--[[
+	The masses.
 
--- Where the envelope is deliberately not built: the entrance bay is glazed.
+	This was a hand-written list, and the back of house was one rectangle across
+	the whole wing -- which enclosed a great deal of space that is not in the
+	building. The loading dock's shutter opened onto the inside of that
+	rectangle, so the dock had a brick wall where the yard should be, and a car
+	park bay was painted across the dock floor.
+
+	So the list is derived. Every ground-floor room contributes its own
+	rectangle, the corridor and the arms contribute theirs, and the envelope
+	wraps their union: where two of them touch there is no wall, and everywhere
+	else there is brick. Add a room to ROOMS and the outside of the building
+	grows to fit it without anybody drawing an elevation.
+]]
+local function envelopeMasses()
+	local sx0, sx1 = SERVICE_X - SERVICE_W / 2 - 0.3, SERVICE_X + SERVICE_W / 2 + 0.3
+	local masses = {
+		{ "Atrium", -11.3, 11.3, -9.3, 9.3, ATRIUM_H + 1.6 },
+		{ "NorthArm", -3.5, 3.5, 9.0, 39.2, MALL_H + 1.1 },
+		{ "EastArm", 11.0, 35.2, -3.5, 3.5, MALL_H + 1.1 },
+		-- The food court is a first-floor room over the north arm and wider than
+		-- it. Taken from the ground, so the overhang reads as a two-storey wing
+		-- rather than a box hanging in the air.
+		{ "FoodCourt", -7.3, 7.3, 8.8, 19.1, FLOOR1 + 3.6 + 1.0 },
+		{ "Service", sx0, sx1, -30.3, 18.3, SERVICE_H + 1.1 },
+		{ "Link", -21.0, -11.0, 1.4, 4.6, SERVICE_H + 1.1 },
+	}
+	for _, r in ROOMS do
+		local name, cx, cz, w, d, y, h = r[1], r[2], r[3], r[4], r[5], r[6], r[7]
+		-- Ground floor only: the basement is under the building and the food
+		-- court is already up there.
+		if y == 0 then
+			table.insert(masses, {
+				name, cx - w / 2 - 0.3, cx + w / 2 + 0.3,
+				cz - d / 2 - 0.3, cz + d / 2 + 0.3, h + 1.0,
+			})
+		end
+	end
+	return masses
+end
+
+local MASSES = envelopeMasses()
+
+--[[
+	Where the envelope is deliberately not built.
+
+	The entrance bay is glazed, and the dock's south wall has a roller shutter
+	and a staff door in it -- both of which open onto the service yard, and both
+	of which were bricked up the moment the envelope went round the building.
+]]
 local ENVELOPE_OPENINGS = {
 	{ "Atrium", "S", -8.2, 8.2 },
+	-- The dock's own south wall is the elevation on that side, with the roller
+	-- shutter and the staff door in it. A second wall 0.25 m behind it is what
+	-- bricked them both up.
+	{ "LoadingDock", "S", -35.0, -22.8 },
 }
 
 local function buildEnvelope(_facadeH)
@@ -11591,6 +12481,27 @@ end
 local function buildExterior()
 	local frontZ = -ATRIUM_D / 2
 
+	--[[
+		Is this point out in the open?
+
+		The car park is laid out on a grid that does not know the building is
+		there. Bays were painted across the loading dock floor, a lamp column
+		stood in the service corridor, and one of the four cars was parked
+		indoors -- which is exactly the sort of thing you only find by walking
+		into it. Everything outside is now checked against the same rectangles
+		the envelope is built from, so the car park and the building cannot
+		drift out of step again.
+	]]
+	local function outside(x, z, margin)
+		margin = margin or 1.4
+		for _, m in MASSES do
+			if x > m[2] - margin and x < m[3] + margin and z > m[4] - margin and z < m[5] + margin then
+				return false
+			end
+		end
+		return true
+	end
+
 	-- ── The frontage ────────────────────────────────────────────────────────
 	--[[
 		A brick elevation with a glazed entrance bay in the middle of it, taller
@@ -11653,14 +12564,17 @@ local function buildExterior()
 	for row = 0, 1 do
 		local bz = frontZ - 11 - row * 13
 		for i = -8, 8 do
-			P("BayLine", V(0.14, 0.02, 5.0), at(i * 2.7, 0.02, bz), Color3.fromRGB(150, 146, 136))
+			if outside(i * 2.7, bz, 3.0) then
+				P("BayLine", V(0.14, 0.02, 5.0), at(i * 2.7, 0.02, bz), Color3.fromRGB(150, 146, 136))
+			end
 		end
 		P("AisleLine", V(48, 0.02, 0.12), at(0, 0.02, bz - 3.2), Color3.fromRGB(120, 116, 108))
 	end
-	-- Two disabled bays by the doors, wider, with the symbol painted on.
+	-- Two disabled bays by the doors, wider, with the symbol painted on. By the
+	-- doors, which is where they belong and is also not inside the dock.
 	for i = -1, 0 do
-		P("BayLine", V(0.14, 0.02, 5.0), at(-24 + i * 3.6, 0.02, frontZ - 11), Color3.fromRGB(150, 146, 136))
-		P("BaySymbol", V(1.4, 0.02, 1.4), at(-25.8 + i * 3.6, 0.021, frontZ - 11), Color3.fromRGB(70, 96, 140))
+		P("BayLine", V(0.14, 0.02, 5.0), at(-7 + i * 3.6, 0.02, frontZ - 11), Color3.fromRGB(150, 146, 136))
+		P("BaySymbol", V(1.4, 0.02, 1.4), at(-8.8 + i * 3.6, 0.021, frontZ - 11), Color3.fromRGB(70, 96, 140))
 	end
 
 	--[[
@@ -11673,7 +12587,7 @@ local function buildExterior()
 	for i = -2, 2 do
 		for row = 0, 1 do
 			local lx, lz = i * 11, frontZ - 8 - row * 13
-			if lx > -35 and lx < -19 and lz > -31 and lz < 19 then
+			if not outside(lx, lz, 2.0) then
 				continue
 			end
 			P("LampColumn", V(0.22, 7.0, 0.22), at(lx, 3.5, lz), C.metal)
@@ -11700,6 +12614,9 @@ local function buildExterior()
 
 	-- Planting islands, a bin, and a smoking shelter's worth of clutter.
 	for _, sx in { -1, 1 } do
+		if not outside(sx * 27, frontZ - 17, 3.4) then
+			continue
+		end
 		P("Island", V(6, 0.22, 2.4), at(sx * 27, 0.09, frontZ - 17), Color3.fromRGB(96, 94, 90))
 		planterBed(sx * 27, 0.2, frontZ - 17, 5.0, true, 7700 + sx)
 		pottedTree(sx * 27 - 1.8, 0.2, frontZ - 17, 7710 + sx)
@@ -11711,18 +12628,13 @@ local function buildExterior()
 
 	-- Cars. Four of them, none of which has moved in a very long time.
 	local rng = Random.new(6161)
-	for i, spot in { { -25.8, frontZ - 11 }, { 8.1, frontZ - 24 }, { -13.5, frontZ - 24 }, { 24.3, frontZ - 11 } } do
+	for i, spot in { { -8.8, frontZ - 11 }, { 8.1, frontZ - 24 }, { -13.5, frontZ - 24 }, { 24.3, frontZ - 11 } } do
 		local cx, cz = spot[1], spot[2]
-		local tint = Color3.fromRGB(rng:NextInteger(40, 78), rng:NextInteger(42, 76), rng:NextInteger(46, 84))
-		P("CarBody", V(1.8, 0.9, 4.2), at(cx, 0.65, cz), tint)
-		P("CarRoof", V(1.6, 0.72, 2.2), at(cx, 1.4, cz - 0.2), tint)
-		P("Windscreen", V(1.5, 0.5, 0.1), at(cx, 1.32, cz - 1.25), Color3.fromRGB(38, 42, 50))
-		P("Rear", V(1.5, 0.5, 0.1), at(cx, 1.32, cz + 0.9), Color3.fromRGB(38, 42, 50))
-		for _, sx in { -1, 1 } do
-			for _, sz in { -1, 1 } do
-				P("Wheel", V(0.25, 0.6, 0.6), at(cx + sx * 0.85, 0.3, cz + sz * 1.4), C.dark)
-			end
+		if not outside(cx, cz, 2.6) then
+			continue
 		end
+		local tint = Color3.fromRGB(rng:NextInteger(40, 78), rng:NextInteger(42, 76), rng:NextInteger(46, 84))
+		car(cx, cz, tint, 6200 + i)
 		if i == 1 then
 			P("BayNumber", V(0.5, 0.02, 0.5), at(cx, 0.022, cz + 2.1), Color3.fromRGB(150, 146, 136))
 		end
@@ -11778,16 +12690,13 @@ local function buildExterior()
 	end
 
 	-- Walt's car, in bay 2, where it has been since 1998.
-	local walt = P("CarBody", V(1.8, 0.9, 4.2), at(dockX - 6, 0.65, dockZ - 11), Color3.fromRGB(58, 62, 68))
-	walt.Name = "WaltsCar"
-	P("CarRoof", V(1.6, 0.72, 2.2), at(dockX - 6, 1.4, dockZ - 11.2), Color3.fromRGB(52, 56, 62))
-	P("Windscreen", V(1.5, 0.5, 0.1), at(dockX - 6, 1.32, dockZ - 12.25), Color3.fromRGB(38, 42, 50))
-	P("Rear", V(1.5, 0.5, 0.1), at(dockX - 6, 1.32, dockZ - 10.1), Color3.fromRGB(38, 42, 50))
-	for _, sx in { -1, 1 } do
-		for _, sz in { -1, 1 } do
-			P("Wheel", V(0.25, 0.6, 0.6), at(dockX - 6 + sx * 0.85, 0.3, dockZ - 11 + sz * 1.4), C.dark)
-		end
-	end
+	--[[
+		Walt's car, which has been in the yard since 1998 and is the first piece
+		of evidence anybody finds. Parked square, because he parked it properly
+		and then did not come back for it.
+	]]
+	local body = car(dockX - 6, dockZ - 11, Color3.fromRGB(58, 62, 68), 6161, 0)
+	body[1].Name = "WaltsCar"
 	for i = 0, 3 do
 		P("BayLine", V(0.14, 0.02, 5.0), at(dockX - 8.4 + i * 2.7, 0.02, dockZ - 11), Color3.fromRGB(150, 146, 136))
 	end
@@ -11840,14 +12749,33 @@ local function applyLighting()
 		now; this raises the floor slightly so what they do not reach is dim grey
 		rather than pure black.
 	]]
-	Lighting.Ambient = Color3.fromRGB(11, 11, 14)
-	Lighting.OutdoorAmbient = Color3.fromRGB(18, 20, 28)
-	Lighting.Brightness = 0.6
-	Lighting.ExposureCompensation = 0.1
-	-- Enough environment light for Marble and Metal to have a sheen. These two
-	-- numbers are what make a PBR material read as PBR rather than as paint.
-	Lighting.EnvironmentDiffuseScale = 0.3
-	Lighting.EnvironmentSpecularScale = 0.9
+	--[[
+		Very dark.
+
+		The last pass raised the floor so nothing would be invisible, and the
+		result was a building lit like a car park at dusk: you could read a
+		notice off a wall from four metres with the torch off, and there is no
+		version of that which is frightening.
+
+		The reference is a photograph of a corridor with one EXIT box in it. The
+		box is legible, there is a pool of colour on the wall beside it, and
+		everything else in the frame is black. That is the target, and these are
+		the numbers that hit it: ambient close to nothing, the sun contributing
+		almost nothing indoors, and the exposure pulled down so the fittings that
+		are on are the brightest things anywhere.
+
+		What makes it legible rather than merely black is that the tubes are lit
+		at the start of the night. You are given a building you can see, and then
+		it is taken away from you one fitting at a time.
+	]]
+	Lighting.Ambient = Color3.fromRGB(3, 3, 4)
+	Lighting.OutdoorAmbient = Color3.fromRGB(8, 9, 14)
+	Lighting.Brightness = 0.15
+	Lighting.ExposureCompensation = -0.35
+	-- Just enough environment light for Metal and Marble to have a sheen. Any
+	-- more and it becomes a second ambient term and the black point goes.
+	Lighting.EnvironmentDiffuseScale = 0.12
+	Lighting.EnvironmentSpecularScale = 0.5
 	Lighting.ShadowSoftness = 0.5
 	Lighting.ClockTime = 0
 	Lighting.GeographicLatitude = 20
@@ -11876,9 +12804,12 @@ local function applyLighting()
 	-- A threshold below the exposure turns the whole frame to soup.
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "NightBloom"
-	bloom.Intensity = 0.32
-	bloom.Size = 16
-	bloom.Threshold = 2.1
+	-- Threshold under the exposure now, because the exposure is well below zero
+	-- and the only things above it are the lit panels. This is what gives the
+	-- EXIT box its halo and the tube its glare.
+	bloom.Intensity = 0.55
+	bloom.Size = 20
+	bloom.Threshold = 0.85
 	bloom.Parent = Lighting
 
 	--[[
@@ -11895,9 +12826,9 @@ local function applyLighting()
 		every red wall in the last build looked like painted card. Taking the
 		saturation out gives the red somewhere to go before it flattens.
 	]]
-	grade.Saturation = -0.34
-	grade.Contrast = 0.12
-	grade.Brightness = 0.01
+	grade.Saturation = -0.2
+	grade.Contrast = 0.22
+	grade.Brightness = -0.02
 	grade.TintColor = Color3.fromRGB(238, 238, 248)
 	grade.Parent = Lighting
 
@@ -12082,7 +13013,7 @@ end
 return Greybox
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="42">
+      <Item class="ModuleScript" referent="43">
         <Properties>
           <string name="Name">Surfaces</string>
           <string name="Source"><![CDATA[--[[
@@ -12451,15 +13382,15 @@ return Surfaces
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="43">
+  <Item class="StarterPlayer" referent="44">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="44">
+    <Item class="StarterPlayerScripts" referent="45">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="45">
+      <Item class="LocalScript" referent="46">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--!strict
@@ -12564,19 +13495,43 @@ boardTitle.LayoutOrder = 0
 
 local rows: { TextLabel } = {}
 
+--[[
+	The board.
+
+	What has been done, the one thing being done now, and how many are left.
+	The current job is the only bright line on it and it carries an arrow; the
+	finished ones are struck through and dim, because seeing four of them
+	crossed off is the only thing that tells a player the night is going
+	anywhere. Everything still to come is one grey line with a number on it.
+
+	The server decides what is on this list. Anything past the current job is
+	not sent, so there is nothing here that can leak a job early.
+]]
 local function renderObjectives(objectives: { any })
 	for _, row in rows do
 		row:Destroy()
 	end
 	table.clear(rows)
 	for i, o in objectives do
-		local mark = if o.complete then "[x]" elseif o.failed then "[-]" else "[ ]"
-		local count = if o.total > 1 and not o.complete then ` <font color="#7a7670">{o.done}/{o.total}</font>` else ""
+		if o.id == "__more" then
+			local more = label(board,
+				`    <i>{o.remaining} more after that</i>`,
+				UDim2.new(1, 0, 0, 18), UDim2.new())
+			more.LayoutOrder = i
+			more.TextColor3 = Color3.fromRGB(104, 100, 96)
+			more.TextSize = 13
+			table.insert(rows, more)
+			continue
+		end
+
+		local mark = if o.complete then "[x]" elseif o.failed then "[-]" else "──▶"
+		local count = if o.total > 1 and not o.complete then ` <font color="#9a9690">{o.done}/{o.total}</font>` else ""
+		local text = if o.complete then `<s>{o.label}</s>` else o.label
 		local colour = if o.complete then DIM elseif o.failed then RED else BONE
-		local row = label(board, `{mark} {o.label}{count}`, UDim2.new(1, 0, 0, 18), UDim2.new())
+		local row = label(board, `{mark} {text}{count}`, UDim2.new(1, 0, 0, 20), UDim2.new())
 		row.LayoutOrder = i
 		row.TextColor3 = colour
-		row.TextSize = 14
+		row.TextSize = if o.current then 16 else 14
 		if o.note then
 			local note = label(board, `    <i>{o.note}</i>`, UDim2.new(1, 0, 0, 16), UDim2.new())
 			note.LayoutOrder = i
@@ -13236,6 +14191,7 @@ whereLabel.TextSize = 14
 
 -- Where each job is, said the way a colleague would say it.
 local WHERE = {
+	get_inside = "the yard · the green door with the light over it",
 	clock_in = "staff room · the machine by the lockers",
 	read_rules = "staff room · taped inside the end locker",
 	face_shelves = "supermarket · off the north arm",
@@ -13283,17 +14239,26 @@ remotes.Sync.OnClientEvent:Connect(function(state)
 		stays on the left for anybody who wants it; this is the line that stops
 		a player standing in a corridor wondering what the game wants.
 	]]
-	local next_ = nil
+	local next_, done, total = nil, 0, 0
 	for _, o in state.objectives or {} do
-		if not o.complete and not o.failed then
+		if o.id == "__more" then
+			total += o.remaining
+			continue
+		end
+		total += 1
+		if o.complete then
+			done += 1
+		elseif not o.failed and not next_ then
 			next_ = o
-			break
 		end
 	end
 	if next_ then
 		local count = if next_.total > 1 then `  ({next_.done}/{next_.total})` else ""
 		nowLabel.Text = `{next_.label}{count}`
-		whereLabel.Text = next_.note or WHERE[next_.id] or ""
+		-- Always a where. A job with no location attached is the state this
+		-- whole line exists to prevent.
+		whereLabel.Text = `{next_.note or WHERE[next_.id] or "ask over the walkie"}`
+			.. `   <font color="#6e6a66">· job {done + 1} of {total}</font>`
 	else
 		nowLabel.Text = ""
 		whereLabel.Text = ""
@@ -13305,6 +14270,57 @@ remotes.Sync.OnClientEvent:Connect(function(state)
 		header ..= `  ·  carrying: {state.carrying}`
 	end
 	boardTitle.Text = header
+end)
+
+--[[
+	The faint glow on things you can pick up.
+
+	A building this dark hides its own affordances: a mop against a wall two
+	metres away is a dark shape among dark shapes, and a player who cannot find
+	the thing the board is telling them to fetch concludes the game is broken
+	rather than that they are standing next to it.
+
+	So anything you could act on right now carries a very weak highlight. Two
+	rules make it atmosphere rather than a waypoint marker:
+
+	  * **Occluded.** DepthMode is the whole point. A glow that comes through
+	    walls turns the building into a map and throws away every sightline the
+	    place has. This one stops at the first thing in front of it, so you see
+	    it when you could see the object itself.
+
+	  * **In range only.** PromptShown and PromptHidden fire exactly when a
+	    prompt comes into and goes out of its own activation distance, so the
+	    glow is on precisely the things you are near, and nothing scans the
+	    workspace to work that out.
+]]
+local glows: { [ProximityPrompt]: Highlight } = {}
+
+ProximityPromptService.PromptShown:Connect(function(prompt)
+	if glows[prompt] then
+		return
+	end
+	local part = prompt.Parent
+	if not part or not part:IsA("BasePart") then
+		return
+	end
+	local glow = Instance.new("Highlight")
+	glow.Name = "Reachable"
+	glow.Adornee = part
+	glow.DepthMode = Enum.HighlightDepthMode.Occluded
+	glow.FillColor = Color3.fromRGB(226, 216, 190)
+	glow.FillTransparency = 0.93
+	glow.OutlineColor = Color3.fromRGB(240, 232, 212)
+	glow.OutlineTransparency = 0.55
+	glow.Parent = part
+	glows[prompt] = glow
+end)
+
+ProximityPromptService.PromptHidden:Connect(function(prompt)
+	local glow = glows[prompt]
+	if glow then
+		glow:Destroy()
+		glows[prompt] = nil
+	end
 end)
 
 -- ── The test panel ──────────────────────────────────────────────────────────
@@ -13543,7 +14559,7 @@ print("[Night Shift] client up — night 1, Northlight Galleria")
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="46">
+  <Item class="Workspace" referent="47">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>

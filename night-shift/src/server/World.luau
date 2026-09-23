@@ -67,6 +67,10 @@ function World.ensureBuilt()
 	end
 end
 
+-- Forward-declared: reindex rebuilds this, and it is written below with the
+-- rest of the room lookup it belongs to.
+local indexFloors: () -> ()
+
 function World.reindex()
 	table.clear(index)
 	local mall = World.mall()
@@ -83,10 +87,80 @@ function World.reindex()
 			table.insert(bucket, d)
 		end
 	end
+	indexFloors()
 end
 
 function World.all(name: string): { BasePart }
 	return index[name] or {}
+end
+
+--[[
+	Which room a point is in, by the floor it is standing on.
+
+	Not the nearest room centre. That is what Places.roomAt does, and it is
+	right for a caption -- "[a bin goes over, in the stockroom]" only has to be
+	roughly true -- and useless as a trigger, because it will cheerfully report
+	that a corridor twelve metres away is the stockroom, and a trigger that
+	fires on the wrong side of a wall is worse than no trigger.
+
+	This is containment, off the geometry that was actually built: every room
+	lays a slab called `<Name>_Floor`, so its extent is a real thing with real
+	edges and standing on one is what being in that room means. It cannot drift
+	out of step with the building, because it *is* the building.
+]]
+type Floor = { key: string, x0: number, x1: number, z0: number, z1: number, y: number }
+local floors: { Floor } = {}
+
+function indexFloors()
+	table.clear(floors)
+	for name, parts in index do
+		local key = string.match(name, "^(.+)_Floor$")
+		if not key then
+			continue
+		end
+		for _, part in parts do
+			local p, size = part.Position / Places.METRE, part.Size / Places.METRE
+			table.insert(floors, {
+				key = key,
+				x0 = p.X - size.X / 2, x1 = p.X + size.X / 2,
+				z0 = p.Z - size.Z / 2, z1 = p.Z + size.Z / 2,
+				y = p.Y + size.Y / 2,
+			})
+		end
+	end
+end
+
+--[[
+	The room key, or nil out in the open. Height is checked loosely -- within
+	about a storey above the slab -- so the food court over the north arm and
+	the basement under the corridor do not claim each other's occupants.
+]]
+function World.roomOf(position: Vector3): string?
+	local p = position / Places.METRE
+	local best, bestY = nil, -math.huge
+	for _, f in floors do
+		if p.X >= f.x0 and p.X <= f.x1 and p.Z >= f.z0 and p.Z <= f.z1 then
+			local above = p.Y - f.y
+			-- Standing on it, not floating over it or buried under it.
+			if above > -1.2 and above < 4.6 and f.y > bestY then
+				best, bestY = f.key, f.y
+			end
+		end
+	end
+	return best
+end
+
+-- The middle of a room's floor, for staging something in a room nobody is in.
+function World.roomCentre(key: string): Vector3?
+	for _, f in floors do
+		if f.key == key then
+			return Vector3.new(
+				(f.x0 + f.x1) / 2 * Places.METRE,
+				(f.y + 1.2) * Places.METRE,
+				(f.z0 + f.z1) / 2 * Places.METRE)
+		end
+	end
+	return nil
 end
 
 function World.first(name: string): BasePart?

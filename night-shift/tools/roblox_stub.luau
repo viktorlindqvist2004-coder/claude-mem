@@ -130,6 +130,12 @@ function V3.__mul(a, b)
 	if type(a) == "number" then return V3.new(b.X * a, b.Y * a, b.Z * a) end
 	return V3.new(a.X * b.X, a.Y * b.Y, a.Z * b.Z)
 end
+-- Roblox divides a Vector3 by a number; the stub has to as well, or code that
+-- converts studs to metres the obvious way only fails once it is in Studio.
+function V3.__div(a, b)
+	if type(b) == "number" then return V3.new(a.X / b, a.Y / b, a.Z / b) end
+	return V3.new(a.X / b.X, a.Y / b.Y, a.Z / b.Z)
+end
 function V3.__add(a, b) return V3.new(a.X + b.X, a.Y + b.Y, a.Z + b.Z) end
 function V3.__sub(a, b) return V3.new(a.X - b.X, a.Y - b.Y, a.Z - b.Z) end
 function V3.__unm(a) return V3.new(-a.X, -a.Y, -a.Z) end

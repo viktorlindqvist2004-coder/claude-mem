@@ -59,7 +59,17 @@ type Staged = {
 
 -- ── Finding something to break ──────────────────────────────────────────────
 
+--[[
+	When set, everything is searched for from here instead of from the player.
+
+	Used by the room-exit trigger: the whole point of that beat is that the
+	noise comes from the room you have just walked out of, so the search has to
+	start in that room rather than where you are now standing.
+]]
+local originOverride: Vector3? = nil
+
 local function nearest(name: string, from: Vector3, maxMetres: number, behind: Vector3?): BasePart?
+	from = originOverride or from
 	local best, bestDistance = nil, maxMetres * METRE
 	for _, part in World.all(name) do
 		local to = part.Position - from
@@ -340,6 +350,29 @@ end
 	the budget, so a crew hiding in the staff room does not burn the night's
 	allowance on nothing.
 ]]
+--[[
+	Fire one in the room a player has just left.
+
+	A bin going over in the room you are standing in, on a timer, is a noise
+	with nothing at stake: you look, you see the bin, you carry on. The same
+	bin going over in the room you walked out of eight seconds ago is the
+	building doing something behind your back, and now you have to decide
+	whether to go back and look -- which is a decision, and a noise is not.
+
+	Returns false when the room has nothing in it worth knocking over, and the
+	caller is expected to shrug and wait for the next doorway.
+]]
+function Scares.fireBehind(player: Player, roomKey: string): boolean
+	local centre = World.roomCentre(roomKey)
+	if not centre then
+		return false
+	end
+	originOverride = centre
+	local ok = Scares.fire(player)
+	originOverride = nil
+	return ok
+end
+
 function Scares.fire(player: Player, forceId: string?): boolean
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?

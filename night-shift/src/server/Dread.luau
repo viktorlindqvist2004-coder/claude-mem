@@ -227,6 +227,66 @@ local function fireStartle(player: Player, _large: boolean)
 	end
 end
 
+--[[
+	The doorway trigger.
+
+	Half of the startles are now hung on leaving a room rather than on a clock.
+
+	A timer picks a moment that has nothing to do with what the player is
+	doing, and the result is the thing they complained about: something falls
+	in the room you are standing in, again, and you learn that the building
+	makes noises on a schedule. Leaving a room is the opposite -- it is a beat
+	the player chose, it has a direction (the room is behind them now), and it
+	is the one moment when going back to look is a real decision rather than a
+	glance.
+
+	The delay is the part that matters. It fires two to five seconds after they
+	cross the threshold, which is long enough that they have turned away and
+	started on something else, and short enough that they are in no doubt about
+	which room it came from.
+]]
+local lastRoom: { [Player]: string } = {}
+local lastDoorway = 0
+
+local function watchDoorways()
+	task.spawn(function()
+		while running do
+			task.wait(0.4)
+			for _, player in Players:GetPlayers() do
+				local character = player.Character
+				local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if not root then
+					continue
+				end
+				local room = World.roomOf(root.Position)
+				local was = lastRoom[player]
+				lastRoom[player] = room or ""
+
+				-- Left a room, and went somewhere that is not that room.
+				if not was or was == "" or room == was then
+					continue
+				end
+				local now = os.clock()
+				if now - lastDoorway < Config.DREAD.STARTLE_GLOBAL_COOLDOWN then
+					continue
+				end
+				if not Scares.ready() or math.random() > Config.DREAD.DOORWAY_CHANCE then
+					continue
+				end
+				lastDoorway = now
+				local left, who = was, player
+				task.spawn(function()
+					task.wait(2 + math.random() * 3)
+					if running and Scares.fireBehind(who, left) then
+						lastStartle = os.clock()
+						startlesLeft -= 1
+					end
+				end)
+			end
+		end
+	end)
+end
+
 -- ── The director ────────────────────────────────────────────────────────────
 
 local function weight(player: Player): number
@@ -248,7 +308,10 @@ function Dread.start()
 	startlesLeft = Config.DREAD.STARTLES_PER_NIGHT
 	largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
 	lastStartle = os.clock() + Config.DREAD.OPENING_QUIET_SECONDS
+	lastDoorway = lastStartle
+	table.clear(lastRoom)
 	Scares.reset(Dread.night)
+	watchDoorways()
 
 	--[[
 		The presence resolution loop, at 15 Hz. This is the one piece of the game

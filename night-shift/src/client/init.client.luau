@@ -877,6 +877,57 @@ remotes.Sync.OnClientEvent:Connect(function(state)
 	boardTitle.Text = header
 end)
 
+--[[
+	The faint glow on things you can pick up.
+
+	A building this dark hides its own affordances: a mop against a wall two
+	metres away is a dark shape among dark shapes, and a player who cannot find
+	the thing the board is telling them to fetch concludes the game is broken
+	rather than that they are standing next to it.
+
+	So anything you could act on right now carries a very weak highlight. Two
+	rules make it atmosphere rather than a waypoint marker:
+
+	  * **Occluded.** DepthMode is the whole point. A glow that comes through
+	    walls turns the building into a map and throws away every sightline the
+	    place has. This one stops at the first thing in front of it, so you see
+	    it when you could see the object itself.
+
+	  * **In range only.** PromptShown and PromptHidden fire exactly when a
+	    prompt comes into and goes out of its own activation distance, so the
+	    glow is on precisely the things you are near, and nothing scans the
+	    workspace to work that out.
+]]
+local glows: { [ProximityPrompt]: Highlight } = {}
+
+ProximityPromptService.PromptShown:Connect(function(prompt)
+	if glows[prompt] then
+		return
+	end
+	local part = prompt.Parent
+	if not part or not part:IsA("BasePart") then
+		return
+	end
+	local glow = Instance.new("Highlight")
+	glow.Name = "Reachable"
+	glow.Adornee = part
+	glow.DepthMode = Enum.HighlightDepthMode.Occluded
+	glow.FillColor = Color3.fromRGB(226, 216, 190)
+	glow.FillTransparency = 0.93
+	glow.OutlineColor = Color3.fromRGB(240, 232, 212)
+	glow.OutlineTransparency = 0.55
+	glow.Parent = part
+	glows[prompt] = glow
+end)
+
+ProximityPromptService.PromptHidden:Connect(function(prompt)
+	local glow = glows[prompt]
+	if glow then
+		glow:Destroy()
+		glows[prompt] = nil
+	end
+end)
+
 -- ── The test panel ──────────────────────────────────────────────────────────
 --[[
 	F9. Every event in the game as a button, grouped, because the last beat of

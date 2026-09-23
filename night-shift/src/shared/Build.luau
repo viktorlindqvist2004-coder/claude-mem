@@ -17,10 +17,10 @@
 
 local Build = {}
 
-Build.COMMIT = "e19e6de"
-Build.LAST_COMMIT = "4f6bc62"
-Build.SUMMARY = "Furnish the staff room from its walls, and build furniture that reads"
-Build.WHEN = "23 Sep 17:16"
+Build.COMMIT = "51ccf38"
+Build.LAST_COMMIT = "47acefc"
+Build.SUMMARY = "Furnish the back of house, and build racking you can see through"
+Build.WHEN = "23 Sep 17:17"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 

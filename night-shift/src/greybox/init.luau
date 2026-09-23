@@ -472,6 +472,72 @@ end
 -- ── Props ───────────────────────────────────────────────────────────────────
 
 --[[
+	A supermarket gondola.
+
+	Shop shelving is not pallet racking and the two should never have shared a
+	function. Racking is an open steel frame you can see through; a gondola is
+	a solid back panel with shelves hanging off both sides of it, and the fact
+	that you *cannot* see through it is the entire reason a supermarket floor
+	is laid out in runs -- five aisles you have to walk down one at a time.
+
+	Shelves cant back a few degrees so the stock faces you, and each one
+	carries a price rail along its front edge, which at three metres is the
+	only thing that separates a shop shelf from a plank.
+]]
+local function gondola(x, y, z, len, alongX, seed)
+	local rng = Random.new(seed or 11)
+	local backT, depth = 0.08, 0.46
+
+	P("GondolaPlinth", (if alongX then V(len, 0.12, depth * 2) else V(depth * 2, 0.12, len)),
+		at(x, y + 0.06, z), C.dark)
+	P("GondolaBack", (if alongX then V(len, 1.9, backT) else V(backT, 1.9, len)),
+		at(x, y + 1.0, z), Color3.fromRGB(96, 94, 90))
+	P("GondolaCap", (if alongX then V(len + 0.04, 0.06, depth * 2 + 0.04) else V(depth * 2 + 0.04, 0.06, len + 0.04)),
+		at(x, y + 1.96, z), C.trim)
+
+	for _, side in { -1, 1 } do
+		for level = 0, 3 do
+			local sy = y + 0.42 + level * 0.44
+			local sx = if alongX then x else x + side * (depth / 2 + backT / 2)
+			local sz = if alongX then z + side * (depth / 2 + backT / 2) else z
+			local shelf = P("Shelf", (if alongX then V(len - 0.06, 0.04, depth) else V(depth, 0.04, len - 0.06)),
+				at(sx, sy, sz), C.metal)
+			shelf.Orientation = if alongX then Vector3.new(side * -5, 0, 0) else Vector3.new(0, 0, side * 5)
+			-- The price rail. Small, and the whole difference between a shop
+			-- shelf and a plank.
+			P("PriceRail", (if alongX then V(len - 0.06, 0.05, 0.02) else V(0.02, 0.05, len - 0.06)),
+				at(if alongX then sx else sx + side * (depth / 2 - 0.01),
+					sy + 0.03,
+					if alongX then sz + side * (depth / 2 - 0.01) else sz),
+				Color3.fromRGB(206, 202, 194))
+
+			--[[
+				Stock, as rows of things rather than one grey slab. Gaps are
+				deliberate: a faced-up shelf is a solid wall of product, and
+				Night 1 asks the crew to face these up precisely because they
+				are not.
+			]]
+			--[[
+				Pitched at a quarter of a metre rather than a sixth. At 0.17 a
+				five-aisle shop floor was two and a half thousand parts of tin,
+				which is a lot of rendering for a detail you read as "full
+				shelf" either way.
+			]]
+			local n = if level == 3 then 0 else math.floor((len - 0.3) / 0.25)
+			for i = 0, n - 1 do
+				if rng:NextNumber() < 0.74 then
+					local o = -len / 2 + 0.26 + i * 0.25
+					local tone = rng:NextInteger(72, 128)
+					P("Facing", (if alongX then V(0.21, 0.24, 0.3) else V(0.3, 0.24, 0.21)),
+						at(if alongX then x + o else sx, sy + 0.16, if alongX then sz else z + o),
+						Color3.fromRGB(tone, tone - rng:NextInteger(0, 14), tone - rng:NextInteger(4, 22)))
+				end
+			end
+		end
+	end
+end
+
+--[[
 	Pallet racking.
 
 	It was a solid box 1.8 m tall with a lid on it, which is a wall, not
@@ -2626,27 +2692,37 @@ end
 	goes back on the belt.
 ]]
 local function dressSupermarket(cx, cz, y, h, w, d)
+	--[[
+		Five aisles of gondola, not five runs of pallet racking. A shop floor
+		is laid out so you cannot see across it: solid backs, and you walk
+		each aisle one at a time.
+	]]
 	for i = 0, 4 do
-		shelfRun(cx, y, cz - 4.0 + i * 2.0, 11.0, true)
-		-- Stock on the shelves, with holes in it.
-		for j = 0, 9 do
-			if (i * 3 + j) % 4 ~= 0 then
-				local bx = cx - 5.0 + j * 1.1
-				P("Facing", V(0.9, 0.3, 0.6), at(bx, y + 1.05, cz - 4.0 + i * 2.0), Color3.fromRGB(96, 90, 82))
-				P("Facing", V(0.9, 0.3, 0.6), at(bx, y + 1.55, cz - 4.0 + i * 2.0), Color3.fromRGB(88, 84, 78))
-			end
-		end
+		gondola(cx, y, cz - 4.0 + i * 2.0, 11.0, true, 5100 + i)
 		local aisle = P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.0 + i * 2.0), C.trim)
 		printed(aisle, Enum.NormalId.Left,
 			({ "1  TINNED", "2  BAKING", "3  HOUSEHOLD", "4  FROZEN", "5  DRINKS" })[i + 1] or "",
 			{ color = Color3.fromRGB(198, 196, 190), density = 70 })
 	end
 
+	--[[
+		Three checkouts. A checkout is a belt you put shopping on, a till the
+		operator sits behind and a packing shelf on the far side, and it needs
+		all three or it is a counter with a box on it.
+	]]
 	for i = 0, 2 do
 		local tx = cx - 4.5 + i * 4.5
-		P("CheckoutBelt", V(2.6, 0.9, 0.8), at(tx, y + 0.45, cz + 5.0), C.trim)
-		P("BeltTop", V(2.4, 0.04, 0.55), at(tx, y + 0.92, cz + 5.0), C.dark)
-		P("Till", V(0.4, 0.3, 0.4), at(tx + 1.0, y + 1.05, cz + 5.0), C.metal)
+		P("CheckoutBelt", V(2.6, 0.82, 0.74), at(tx, y + 0.45, cz + 5.0), C.trim)
+		P("CheckoutKick", V(2.5, 0.12, 0.6), at(tx, y + 0.06, cz + 5.0), C.dark)
+		P("BeltTop", V(2.3, 0.03, 0.5), at(tx, y + 0.88, cz + 5.0), Color3.fromRGB(46, 44, 42))
+		for _, e in { -1, 1 } do
+			P("BeltRoller", V(0.07, 0.07, 0.5), at(tx + e * 1.13, y + 0.88, cz + 5.0), C.metal)
+		end
+		-- The packing shelf on the customer side, where the bags go.
+		P("PackShelf", V(1.1, 0.04, 0.5), at(tx + 1.5, y + 0.86, cz + 5.0), C.trim)
+		P("PackLeg", V(0.06, 0.84, 0.06), at(tx + 1.9, y + 0.42, cz + 5.0), C.metal)
+		P("Till", V(0.42, 0.3, 0.4), at(tx + 1.0, y + 1.04, cz + 5.0), C.metal)
+		P("TillKeys", V(0.3, 0.03, 0.22), at(tx + 1.0, y + 1.2, cz + 5.06), C.dark)
 		P("TillScreen", V(0.3, 0.22, 0.03), at(tx + 1.0, y + 1.3, cz + 4.82), C.panel)
 		local lane = P("LaneNumber", V(0.18, 0.22, 0.03), at(tx, y + 2.0, cz + 5.4), RED, Enum.Material.Neon)
 		Surfaces.label(lane, Enum.NormalId.Front, tostring(i + 1), {

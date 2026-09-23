@@ -196,6 +196,26 @@ function World.roomCentre(key: string): Vector3?
 	return nil
 end
 
+--[[
+	Every part whose name starts with this prefix.
+
+	For the things a night numbers as it makes them -- ShelfBay1, ShelfBay2 --
+	where there is no single name to ask for and the set is the point. Asking
+	for "ShelfBay" gets nothing, silently, which is how a feature that depends
+	on a name can look like it is working and be doing nothing at all.
+]]
+function World.allPrefixed(prefix: string): { BasePart }
+	local out = {}
+	for name, parts in index do
+		if string.sub(name, 1, #prefix) == prefix then
+			for _, part in parts do
+				table.insert(out, part)
+			end
+		end
+	end
+	return out
+end
+
 function World.first(name: string): BasePart?
 	return (index[name] or {})[1]
 end

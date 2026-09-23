@@ -90,19 +90,50 @@ local function lightTheJob()
 		return
 	end
 	for _, name in Targets.FOR[current.id] or {} do
-		for _, part in World.all(name) do
+		-- A trailing star means "everything starting with this": the shelf
+		-- bays are numbered as the night makes them, so there is no one name.
+		local parts = if string.sub(name, -1) == "*"
+			then World.allPrefixed(string.sub(name, 1, -2))
+			else World.all(name)
+		for _, part in parts do
 			local glow = Instance.new("Highlight")
 			glow.Name = "TheJob"
 			glow.Adornee = part
 			glow.DepthMode = Enum.HighlightDepthMode.Occluded
-			glow.FillColor = Color3.fromRGB(255, 236, 198)
-			glow.FillTransparency = 0.78
-			glow.OutlineColor = Color3.fromRGB(255, 244, 214)
-			glow.OutlineTransparency = 0.12
+			glow.FillColor = Color3.fromRGB(255, 238, 200)
+			glow.FillTransparency = 0.72
+			glow.OutlineColor = Color3.fromRGB(255, 246, 220)
+			glow.OutlineTransparency = 0
 			glow.Parent = part
 			table.insert(glowing, glow)
 		end
 	end
+
+	--[[
+		And a slow breath on it.
+
+		A static outline is furniture; something that moves, even barely, is
+		the thing you are looking for. Two and a half seconds a cycle and
+		nowhere near full brightness at the top -- it has to be unmistakable
+		once your eye lands on it without ever being a light source in a
+		building whose whole point is that there are four of those.
+	]]
+	local mine = glowing
+	task.spawn(function()
+		local t = 0
+		-- Twenty times a second is plenty for a two-and-a-half-second breath,
+		-- and it is a great deal less than every frame.
+		while mine == glowing and #mine > 0 do
+			t += task.wait(0.05)
+			local breath = 0.5 + 0.5 * math.sin(t * (math.pi * 2) / 2.5)
+			for _, glow in mine do
+				if glow.Parent then
+					glow.FillTransparency = 0.86 - 0.18 * breath
+					glow.OutlineTransparency = 0.34 - 0.34 * breath
+				end
+			end
+		end
+	end)
 end
 
 ctx.MANAGER = NightScript.MANAGER

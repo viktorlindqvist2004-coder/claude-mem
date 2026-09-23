@@ -60,6 +60,9 @@ python3 tools/check_refs.py | sed 's/^/  /' || fail=1
 echo "== clearance =="
 python3 tools/check_clearance.py | sed 's/^/  /' || fail=1
 
+echo "== job targets =="
+python3 tools/check_targets.py | sed 's/^/  /' || fail=1
+
 echo "== placement =="
 python3 tools/check_placement.py | sed 's/^/  /' || true
 

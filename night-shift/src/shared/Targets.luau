@@ -32,7 +32,7 @@ Targets.FOR = {
 	-- Night 1 — First Shift
 	clock_in = { "TimeClock" },
 	read_rules = { "RuleSheet" },
-	face_shelves = { "ShelfBay" },
+	face_shelves = { "ShelfBay*" },
 	mop_landing = { "MopHandle", "WetLanding" },
 	pull_shutters = { "Shutter" },
 	bins_to_dock = { "Bin", "DockDropOff" },
@@ -41,10 +41,10 @@ Targets.FOR = {
 	clock_out = { "StaffDoor", "ExitDoor" },
 
 	-- Night 2 — Stocktake
-	dress_window = { "MannequinTorso", "Plinth" },
+	dress_window = { "Plinth" },
 	count_stock = { "StockBook", "Lectern" },
 	find_tape = { "Cart" },
-	put_them_back = { "MannequinTorso", "Plinth" },
+	put_them_back = { "Plinth" },
 	the_collar = { "RedCollar" },
 
 	-- Night 3 — The Register

@@ -47,10 +47,18 @@ RuleBook.RULES = {
 	{
 		id = "no_third_floor",
 		number = "3",
-		text = "There is no third floor. If the lift offers you a 3, take the stairs.",
+		--[[
+			This used to be about a lift, and there is no lift any more -- an
+			escalator and a lift twelve metres apart is one circulation core
+			too many, and the escalator is the one you can see the first floor
+			from. The rule is unchanged in what it means: it hangs on the
+			stair behind the food court, which is the thing Night 4 actually
+			sends somebody up.
+		]]
+		text = "There is no third floor. The stair behind the food court doesn't go anywhere — if you find yourself on it, come back down.",
 		provenance = "nora",
 		appearsOnNight = 1,
-		trigger = "Lift panel displays a third button",
+		trigger = "A stair appears behind the food court",
 		violationSeverity = "major",
 	},
 	{

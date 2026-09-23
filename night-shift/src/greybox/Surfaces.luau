@@ -282,34 +282,49 @@ function Surfaces.label(part: BasePart, face: Enum.NormalId, text: string, optio
 
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
-	--[[
-		Most lettering wants a margin round it -- a notice with text touching
-		its own edge reads as a mistake. A sign whose entire job is one word
-		does not: `fill` gives the label the whole face, so TextScaled has the
-		full height to work with and the word comes out as tall as the thing
-		it is written on.
-	]]
-	if options.fill then
-		label.Size = UDim2.fromScale(1, 1)
-		label.Position = UDim2.fromScale(0, 0)
-	else
-		label.Size = UDim2.fromScale(0.92, 0.86)
-		label.Position = UDim2.fromScale(0.04, 0.07)
-	end
 	label.Text = text
 	label.Font = options.font or Enum.Font.GothamMedium
 	label.TextColor3 = options.color or Color3.fromRGB(226, 222, 212)
-	--[[
-		Scaled and wrapped at the same time is what turned every EXIT sign in the
-		building into "XIT": the wrap decides where the line breaks before the
-		scale decides how big it is, and the overflow is simply cut off. A label
-		that is scaling to fit must not also be wrapping.
-	]]
-	label.TextScaled = options.scaled ~= false
-	label.TextWrapped = options.scaled == false
 	label.RichText = true
 	label.TextXAlignment = options.align or Enum.TextXAlignment.Center
 	label.TextYAlignment = Enum.TextYAlignment.Center
+
+	if options.fill then
+		--[[
+			A one-word sign: the whole face, and a size worked out rather than
+			fitted.
+
+			TextScaled fits a string inside its box on *both* axes, so for a
+			short wide word in a short wide box it is the width that decides
+			and the glyphs come out a fraction of the height they could be.
+			That is why EXIT stayed small through two goes at making the sign
+			bigger: every time the panel grew, the word got more width to fit
+			into and stayed exactly as tall as it was.
+
+			So the size comes from the canvas instead -- the face's height in
+			studs times the pixels per stud -- and the word is the height of
+			the thing it is written on.
+		]]
+		label.Size = UDim2.fromScale(1, 1)
+		label.Position = UDim2.fromScale(0, 0)
+		label.TextScaled = false
+		label.TextWrapped = false
+		label.TextSize = math.max(8, math.floor((options.faceHeightStuds or 1) * gui.PixelsPerStud * 0.92))
+	else
+		-- Everything else wants a margin: a notice whose text touches its own
+		-- edge reads as a mistake.
+		label.Size = UDim2.fromScale(0.92, 0.86)
+		label.Position = UDim2.fromScale(0.04, 0.07)
+		--[[
+			Scaled and wrapped at the same time is what turned every EXIT sign
+			in the building into "XIT": the wrap decides where the line breaks
+			before the scale decides how big it is, and the overflow is simply
+			cut off. A label that is scaling to fit must not also be wrapping.
+		]]
+		label.TextScaled = options.scaled ~= false
+		label.TextWrapped = options.scaled == false
+	end
+
 	label.Parent = gui
 	return label
 end

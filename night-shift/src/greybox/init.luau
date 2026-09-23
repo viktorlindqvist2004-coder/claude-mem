@@ -224,6 +224,8 @@ function exitSign(x, y, z, facing)
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
 			fill = true,
+			-- The face is 0.36 m tall; the word is sized off that directly.
+			faceHeightStuds = 0.36 / 0.3,
 			brightness = 4.5,
 			color = EXIT_RED,
 			font = Enum.Font.GothamBold,
@@ -512,7 +514,7 @@ local function gondola(x, y, z, len, alongX, seed)
 	local backT, depth = 0.08, 0.46
 
 	P("GondolaPlinth", (if alongX then V(len, 0.12, depth * 2) else V(depth * 2, 0.12, len)),
-		at(x, y + 0.06, z), C.dark)
+		at(x, y + 0.05, z), C.dark)
 	P("GondolaBack", (if alongX then V(len, 1.9, backT) else V(backT, 1.9, len)),
 		at(x, y + 1.0, z), Color3.fromRGB(96, 94, 90))
 	P("GondolaCap", (if alongX then V(len + 0.04, 0.06, depth * 2 + 0.04) else V(depth * 2 + 0.04, 0.06, len + 0.04)),
@@ -603,14 +605,25 @@ local function shelfRun(x, y, z, len, alongX)
 			P("RackBeam", (if alongX then V(len, 0.11, 0.05) else V(0.05, 0.11, len)),
 				at(bx, y + ly + 0.05, bz), Color3.fromRGB(150, 118, 40))
 		end
-		-- Decking: boards laid across the beams, with gaps between them.
-		for b = 0, 2 do
-			local o = (b - 1) * 0.26
+		--[[
+			Decking: boards laid across the beams, with gaps between them.
+
+			The boards sit at 0.26 apart and the beams are at 0.38 either side
+			of centre, so the middle board landed between them and rested on
+			nothing at all. They span the full depth now and the gaps are cut
+			by leaving the middle one narrow -- which is what a decked bay
+			looks like anyway, because the boards are cut to the beam centres.
+		]]
+		for _, o in { -0.29, 0, 0.29 } do
+			local width = if o == 0 then 0.26 else 0.3
 			P("RackDeck",
-				(if alongX then V(len - 0.06, 0.03, 0.22) else V(0.22, 0.03, len - 0.06)),
+				(if alongX then V(len - 0.06, 0.03, width) else V(width, 0.03, len - 0.06)),
 				at(if alongX then x else x + o, y + ly + 0.12, if alongX then z + o else z),
 				C.wood)
 		end
+		-- And a cross bearer under the middle board, which is what holds it.
+		P("RackBearer", (if alongX then V(len - 0.1, 0.04, 0.05) else V(0.05, 0.04, len - 0.1)),
+			at(x, y + ly + 0.09, z), C.metal)
 	end
 end
 
@@ -946,14 +959,39 @@ local function car(cx, cz, tint, seed, turn)
 	return parts
 end
 
+--[[
+	A shopping trolley.
+
+	The basket used to begin at 0.33 m with four small castors under it and a
+	third of a metre of daylight in between, so nine of these were floating in
+	the atrium and the arms. The chassis is what was missing: the basket sits
+	on a frame, the frame sits on the castors, and the basket tapers because a
+	trolley has to nest inside the one behind it.
+]]
 local function trolley(x, y, z, turn)
-	local t = P("Trolley", V(0.55, 0.55, 0.9), at(x, y + 0.6, z), C.metal)
-	t.Orientation = Vector3.new(0, turn or 0, 0)
-	local h = P("TrolleyHandle", V(0.55, 0.04, 0.04), at(x, y + 0.95, z + 0.45), C.trim)
-	h.Orientation = Vector3.new(0, turn or 0, 0)
+	turn = turn or 0
+	local function part(name, size, ox, oy, oz, colour)
+		local made = P(name, size, at(x + ox, y + oy, z + oz), colour)
+		made.Orientation = Vector3.new(0, turn, 0)
+		return made
+	end
+
+	part("TrolleyChassis", V(0.5, 0.05, 0.84), 0, 0.2, 0, C.metal)
 	for _, sx in { -1, 1 } do
+		part("TrolleyStrut", V(0.04, 0.2, 0.04), sx * 0.22, 0.12, 0.38, C.metal)
+		part("TrolleyStrut", V(0.04, 0.2, 0.04), sx * 0.22, 0.12, -0.38, C.metal)
+	end
+	-- The basket: a floor, four sides, and the taper that lets them nest.
+	part("Trolley", V(0.55, 0.04, 0.9), 0, 0.24, 0, C.metal)
+	part("TrolleyBasket", V(0.55, 0.42, 0.9), 0, 0.46, 0, C.metal)
+	part("TrolleyBack", V(0.5, 0.36, 0.04), 0, 0.44, -0.44, C.metal)
+	part("TrolleyHandle", V(0.55, 0.04, 0.04), 0, 0.72, 0.45, C.trim)
+	for _, sx in { -1, 1 } do
+		part("TrolleyUpright", V(0.04, 0.28, 0.04), sx * 0.26, 0.62, 0.44, C.metal)
 		for _, sz in { -1, 1 } do
-			P("Castor", V(0.08, 0.14, 0.08), at(x + sx * 0.22, y + 0.07, z + sz * 0.38), C.dark)
+			local castor = part("Castor", V(0.07, 0.16, 0.16), sx * 0.22, 0.08, sz * 0.38, C.dark)
+			castor.Shape = Enum.PartType.Cylinder
+			castor.Orientation = Vector3.new(0, turn, 90)
 		end
 	end
 end
@@ -1010,46 +1048,69 @@ local function ceilingKit(cx, cz, w, d, y, h, seed)
 	local step = 1.2
 	local plane = y + h - 0.12
 
-	P("CeilingTile", V(w - 0.1, 0.06, d - 0.1), at(cx, plane, cz), TILE)
+	--[[
+		The plane is laid tile by tile, not as one slab with dark squares
+		painted on it.
 
-	-- The grid, on the tile rather than instead of it.
-	local gx = cx - w / 2 + step
-	while gx < cx + w / 2 - 0.3 do
-		P("GridT", V(0.05, 0.05, d - 0.2), at(gx, plane - 0.03, cz), GRID)
-		gx += step
+		It was a slab. The missing tiles were a dark patch drawn on top of a
+		ceiling that was still completely there, and the tile leaning out of
+		one of them hung in mid-air in front of a surface with no hole in it.
+		Which is exactly what it looked like.
+
+		So: a grid of tiles, and the ones that are out are simply not built.
+		A hole is a hole, with the plenum dark behind it, and the tile that
+		came out of it rests in its own opening with one corner still up on
+		the grid. Everything meets something.
+	]]
+	local cols = math.max(1, math.floor((w - 0.2) / step))
+	local rows = math.max(1, math.floor((d - 0.2) / step))
+	local tw, td = (w - 0.12) / cols, (d - 0.12) / rows
+
+	-- Which tiles are out. Never the edge ones: a ceiling fails in the middle.
+	local missing = {}
+	local outs = math.clamp(math.floor(cols * rows / 12), 1, 4)
+	if cols > 2 and rows > 2 then
+		for _ = 1, outs do
+			local c = rng:NextInteger(2, cols - 1)
+			local r = rng:NextInteger(2, rows - 1)
+			missing[c .. ":" .. r] = true
+		end
 	end
-	local gz = cz - d / 2 + step
-	while gz < cz + d / 2 - 0.3 do
-		P("GridT", V(w - 0.2, 0.05, 0.05), at(cx, plane - 0.03, gz), GRID)
-		gz += step
-	end
-	-- The perimeter angle the tiles sit on.
-	for _, e in { { w - 0.1, 0.06, d / 2 - 0.05, 0 }, { 0.06, w / 2 - 0.05, 0, 1 } } do
-		if e[4] == 0 then
-			for _, sz in { -1, 1 } do
-				P("GridAngle", V(e[1], 0.07, 0.07), at(cx, plane - 0.03, cz + sz * e[3]), GRID)
-			end
-		else
-			for _, sx in { -1, 1 } do
-				P("GridAngle", V(0.07, 0.07, d - 0.1), at(cx + sx * e[2], plane - 0.03, cz), GRID)
+
+	local first = nil
+	for c = 1, cols do
+		for r = 1, rows do
+			local tx = cx - w / 2 + 0.06 + (c - 0.5) * tw
+			local tz = cz - d / 2 + 0.06 + (r - 0.5) * td
+			if missing[c .. ":" .. r] then
+				-- The plenum behind the hole, so it reads as depth.
+				P("Plenum", V(tw, 0.04, td), at(tx, y + h - 0.01, tz), Color3.fromRGB(12, 11, 11))
+				first = first or { tx, tz, tw, td }
+			else
+				P("CeilingTile", V(tw - 0.03, 0.05, td - 0.03), at(tx, plane, tz), TILE)
 			end
 		end
+	end
+
+	-- The grid the tiles sit in, which is now the thing that spans the holes.
+	for c = 0, cols do
+		P("GridT", V(0.05, 0.05, d - 0.1),
+			at(cx - w / 2 + 0.06 + c * tw, plane - 0.02, cz), GRID)
+	end
+	for r = 0, rows do
+		P("GridT", V(w - 0.1, 0.05, 0.05),
+			at(cx, plane - 0.02, cz - d / 2 + 0.06 + r * td), GRID)
 	end
 
 	--[[
-		Tiles that are out. A hole in the plane, the dark of the plenum behind
-		it, and on one of them the tile itself resting at an angle in its own
-		opening.
+		The tile that came out, leaning in its own opening with one edge still
+		resting on the grid. This is the whole reason the holes are here.
 	]]
-	local outs = math.clamp(math.floor(w * d / 26), 1, 4)
-	for k = 1, outs do
-		local tx = cx + math.floor(rng:NextNumber(-w / 2 + 1.4, w / 2 - 1.4) / step) * step + step / 2
-		local tz = cz + math.floor(rng:NextNumber(-d / 2 + 1.4, d / 2 - 1.4) / step) * step + step / 2
-		P("TileVoid", V(step - 0.1, 0.05, step - 0.1), at(tx, plane + 0.02, tz), Color3.fromRGB(14, 13, 13))
-		if k == 1 then
-			local leaning = P("LooseTile", V(step - 0.16, 0.05, step - 0.16), at(tx, plane - 0.14, tz - 0.16), TILE)
-			leaning.Orientation = Vector3.new(26, 4, 0)
-		end
+	if first then
+		local tx, tz, tw2, td2 = first[1], first[2], first[3], first[4]
+		local leaning = P("LooseTile", V(tw2 - 0.06, 0.05, td2 - 0.06),
+			at(tx, plane - 0.16, tz - td2 * 0.22), TILE)
+		leaning.Orientation = Vector3.new(32, 3, 0)
 	end
 
 	-- Sprinklers, each on its escutcheon, which is what stops them reading as
@@ -1659,11 +1720,13 @@ local function buildAtrium()
 	]]
 	local SOFF = 5.0
 	for _, sz in { -1, 1 } do
-		P("Soffit", V(w, 0.4, 3.6), at(0, SOFF, sz * (d / 2 - 1.8)), C.ceiling)
+		-- A hair narrower than the balcony over it, so the two slabs do not
+		-- share a vertical plane and shimmer against each other.
+		P("Soffit", V(w - 0.05, 0.36, 3.54), at(0, SOFF - 0.04, sz * (d / 2 - 1.8)), C.ceiling)
 		P("SoffitEdge", V(w, 0.5, 0.16), at(0, SOFF - 0.2, sz * (d / 2 - 3.6)), C.trim)
 	end
 	for _, sx in { -1, 1 } do
-		P("Soffit", V(3.6, 0.4, d - 7.2), at(sx * (w / 2 - 1.8), SOFF, 0), C.ceiling)
+		P("Soffit", V(3.54, 0.36, d - 7.25), at(sx * (w / 2 - 1.8), SOFF - 0.04, 0), C.ceiling)
 		P("SoffitEdge", V(0.16, 0.5, d - 7.2), at(sx * (w / 2 - 3.6), SOFF - 0.2, 0), C.trim)
 	end
 
@@ -1911,65 +1974,18 @@ local function firstFloorUnits()
 end
 
 --[[
-	The scenic lift.
+	There is no lift.
 
-	Rule 3 says: "There is no third floor. If the lift offers you a 3, take the
-	stairs." Until now there was no lift in the building for it to be about,
-	which is the kind of thing that turns a rule from a warning into a riddle.
+	There was a glazed scenic lift in the atrium with a two-button panel that
+	Rule 3 was about, and it went because a building this size does not have
+	an escalator and a lift twelve metres apart -- one of them is redundant and
+	the redundant one is the lift, because the escalator is the thing you can
+	see the first floor from.
 
-	It is glazed, it is stopped at the ground floor with its doors open, and the
-	call panel has two buttons on it. On Night 4 it has three.
+	Rule 3 still says there is no third floor. It hangs on the stair behind the
+	food court instead, which is what Night 4 actually sends somebody up.
 ]]
-local function scenicLift()
-	local lx, lz = -6.2, -7.0
-	local top = FLOOR1 + 2.4
 
-	-- Shaft: three glazed sides and a solid back, floor to first.
-	for _, side in { { -1, 0 }, { 1, 0 }, { 0, -1 } } do
-		local glass = P("LiftGlass",
-			if side[1] ~= 0 then V(0.08, top, 2.2) else V(2.2, top, 0.08),
-			at(lx + side[1] * 1.1, top / 2, lz + side[2] * 1.1),
-			Color3.fromRGB(56, 62, 72))
-		glass.Transparency = 0.55
-		glass.Reflectance = 0.18
-	end
-	P("LiftBack", V(2.4, top, 0.16), at(lx, top / 2, lz + 1.1), C.wall)
-	for _, sx in { -1, 1 } do
-		for _, sz in { -1, 1 } do
-			P("LiftMullion", V(0.12, top, 0.12), at(lx + sx * 1.1, top / 2, lz + sz * 1.1), C.metal)
-		end
-	end
-	P("LiftHead", V(2.6, 0.5, 2.6), at(lx, top + 0.25, lz), C.metal)
-	P("LiftMotor", V(1.2, 0.6, 1.0), at(lx, top + 0.8, lz), C.metal)
-
-	-- The car, stopped at the ground floor with its doors open.
-	P("LiftFloor", V(2.0, 0.12, 2.0), at(lx, 0.06, lz), C.metal)
-	P("LiftCeiling", V(2.0, 0.12, 2.0), at(lx, 2.42, lz), C.metal)
-	local lamp = P("LiftLamp", V(0.7, 0.06, 0.7), at(lx, 2.33, lz), Color3.fromRGB(40, 38, 38))
-	P("LiftHandrail", V(1.9, 0.07, 0.07), at(lx, 0.95, lz + 0.95), C.metal)
-	for _, sx in { -1, 1 } do
-		P("LiftDoor", V(0.85, 2.3, 0.1), at(lx + sx * 1.42, 1.15, lz - 1.1), C.metal)
-	end
-	P("LiftMirror", V(1.9, 1.6, 0.04), at(lx, 1.5, lz + 1.0), Color3.fromRGB(84, 90, 100)).Reflectance = 0.5
-
-	--[[
-		The panel. Two buttons, G and 1, and a blank where a third would be. The
-		blank is machined, not drilled — somebody took a button out.
-	]]
-	local panel = P("LiftPanel", V(0.22, 0.9, 0.05), at(lx + 0.85, 1.35, lz - 1.0), C.trim)
-	panel.Name = "LiftPanel"
-	P("LiftButton", V(0.09, 0.09, 0.03), at(lx + 0.85, 1.15, lz - 1.03), Color3.fromRGB(180, 172, 150))
-	P("LiftButton", V(0.09, 0.09, 0.03), at(lx + 0.85, 1.38, lz - 1.03), Color3.fromRGB(180, 172, 150))
-	local blank = P("LiftBlank", V(0.09, 0.09, 0.02), at(lx + 0.85, 1.61, lz - 1.03), Color3.fromRGB(96, 92, 88))
-	blank.Name = "LiftBlank"
-	local indicator = P("LiftIndicator", V(0.34, 0.16, 0.04), at(lx + 0.85, 1.82, lz - 1.02), C.panel)
-	indicator.Name = "LiftIndicator"
-	printed(indicator, Enum.NormalId.Right, "G", { color = Color3.fromRGB(150, 60, 54), density = 130, font = Enum.Font.Code })
-
-	local plate = P("LiftNotice", V(0.02, 0.3, 0.22), at(lx + 1.05, 1.9, lz - 0.2), Color3.fromRGB(186, 182, 168))
-	printed(plate, Enum.NormalId.Right, "MAX 8 PERSONS\n630 kg\n\nIN CASE OF FIRE\nUSE STAIRS",
-		{ color = Color3.fromRGB(48, 46, 44), scaled = false, density = 150 })
-end
 
 --[[
 	The Great Clock: a 1986 seven-segment display bolted to the case of a 1904
@@ -2363,7 +2379,9 @@ local function mallArm(axis, length, entries)
 	-- Floor banding, so the run does not read as one grey ribbon.
 	local fb = 2.0
 	while fb < length do
-		P("FloorBand", size(0.4, MALL_W - 0.3, 0.02), pos(fb, 0, 0.01), Color3.fromRGB(78, 76, 74))
+		-- Into the floor, not onto it: a band whose underside is the floor's
+		-- top face is a band that flickers.
+		P("FloorBand", size(0.4, MALL_W - 0.3, 0.02), pos(fb, 0, 0.005), Color3.fromRGB(78, 76, 74))
 		fb += 3.2
 	end
 	-- A trolley somebody abandoned at the far end, which is the first thing you
@@ -2403,8 +2421,19 @@ local function serviceCorridor()
 	P("Service_Floor", V(SERVICE_W, 0.3, z1 - sz1), at(x, -0.15, (sz1 + z1) / 2), C.floor)
 	P("Service_Ceiling", V(SERVICE_W, 0.3, z1 - z0), at(x, h + 0.15, mid), C.ceiling)
 
-	-- East wall, with the one opening that leads through to the atrium.
-	wallWithDoors(x + SERVICE_W / 2, z0, z1, "z", 0, h, { { "E", 3 - mid, 1.4 } }, "E", C.block)
+	--[[
+		East and west walls, four centimetres outboard of where the rooms
+		behind them stop.
+
+		Every back-of-house room tiles flush against this corridor, so its east
+		wall and the room's west wall were centred on exactly the same plane
+		with exactly the same thickness -- two walls occupying one wall, all
+		six faces coincident. That is the flicker: thirty-six pairs of them
+		down the corridor, shimmering as you walk past. Four centimetres is
+		invisible and it is enough.
+	]]
+	local NUDGE = 0.04
+	wallWithDoors(x + SERVICE_W / 2 + NUDGE, z0, z1, "z", 0, h, { { "E", 3 - mid, 1.4 } }, "E", C.block)
 	-- West wall, an opening into every ground-floor room behind it.
 	local doors = {}
 	for _, r in ROOMS do
@@ -2412,7 +2441,7 @@ local function serviceCorridor()
 			table.insert(doors, { "W", r[3] - mid, r[8][1][3] })
 		end
 	end
-	wallWithDoors(x - SERVICE_W / 2, z0, z1, "z", 0, h, doors, "W", C.block)
+	wallWithDoors(x - SERVICE_W / 2 - NUDGE, z0, z1, "z", 0, h, doors, "W", C.block)
 	P("Service_EndN", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, z1), C.block)
 	--[[
 		A way out at each end of the corridor.
@@ -2846,10 +2875,19 @@ local function dressStockroom(cx, cz, y, h, w, d)
 	]]
 	for i = 0, 2 do
 		shelfRun(cx - 3.4 + i * 2.2, y, cz, 5.0, false)
-		-- Cartons on the racking, unevenly, with gaps.
+		--[[
+			Cartons on the racking, unevenly, with gaps.
+
+			They were written at 1.9 m, which was the top of the old solid
+			shelving. The racking has three levels, the top deck is at 1.56,
+			and the boxes spent a while hanging a third of a metre above it in
+			clear air. Written off the deck heights now, so they cannot drift
+			again when the racking changes.
+		]]
 		for j = 0, 4 do
 			if (i + j) % 3 ~= 0 then
-				boxStack(cx - 3.4 + i * 2.2, y + 1.9, cz - 2.0 + j * 1.0, 2, 900 + i * 17 + j)
+				local deck = y + 1.44 + 0.135
+				boxStack(cx - 3.4 + i * 2.2, deck, cz - 2.0 + j * 1.0, 2, 900 + i * 17 + j)
 			end
 		end
 	end
@@ -3890,10 +3928,21 @@ local function buildEnvelope(_facadeH)
 				local wz = if alongX then fixed + oz * 0.25 else mid
 				local wall = if alongX then V(len, top, 0.5) else V(0.5, top, len)
 				P("Envelope", wall, at(wx, top / 2, wz), BRICK, Enum.Material.Brick)
-				local cap = if alongX then V(len + 0.2, 0.9, 0.9) else V(0.9, 0.9, len + 0.2)
-				P("Parapet", cap, at(wx, top + 0.45, wz), CAP)
+				--[[
+					Sunk 6 cm into the wall it caps.
+
+					Resting exactly on top means the parapet's underside and
+					the wall's top face are the same plane, which the depth
+					buffer cannot resolve -- so it picks a different one every
+					frame and the whole elevation shimmers as you walk. Every
+					surface in this building that sits on another one is
+					pushed into it slightly for the same reason.
+				]]
+				local cap = if alongX then V(len + 0.14, 0.9, 0.86) else V(0.86, 0.9, len + 0.14)
+				P("Parapet", cap, at(wx, top + 0.39, wz), CAP)
 				-- A string course, two thirds up, so the brick has a horizon.
-				local band = if alongX then V(len, 0.35, 0.66) else V(0.66, 0.35, len)
+				-- Shorter than its wall, so the two do not end on one plane.
+				local band = if alongX then V(len - 0.06, 0.35, 0.62) else V(0.62, 0.35, len - 0.06)
 				P("FacadeBand", band, at(wx, top * 0.66, wz), C.trim)
 				runStart = nil
 			end
@@ -3916,8 +3965,9 @@ local function buildEnvelope(_facadeH)
 		end
 
 		-- The roof. Flat, felted, and set down inside its own parapet.
-		P("Roof", V(x1 - x0 + 0.4, 0.4, z1 - z0 + 0.4),
-			at((x0 + x1) / 2, top - 0.2, (z0 + z1) / 2), Color3.fromRGB(46, 44, 44))
+		-- Set down inside its parapet, and not level with anything.
+		P("Roof", V(x1 - x0 + 0.34, 0.4, z1 - z0 + 0.34),
+			at((x0 + x1) / 2, top - 0.27, (z0 + z1) / 2), Color3.fromRGB(46, 44, 44))
 	end
 
 	--[[
@@ -3993,7 +4043,7 @@ local function buildExterior()
 	-- The entrance canopy, and the columns holding it up.
 	P("Canopy", V(12, 0.4, 4.5), at(0, 3.6, frontZ - 2.4), C.trim)
 	P("CanopyFascia", V(12, 0.7, 0.2), at(0, 3.3, frontZ - 4.6), C.metal)
-	P("CanopyGlass", V(11.4, 0.08, 4.0), at(0, 3.44, frontZ - 2.4), C.glass).Transparency = 0.6
+	P("CanopyGlass", V(11.4, 0.08, 4.0), at(0, 3.42, frontZ - 2.4), C.glass).Transparency = 0.6
 	for _, sx in { -1, 1 } do
 		P("CanopyColumn", V(0.28, 3.4, 0.28), at(sx * 5.2, 1.7, frontZ - 4.3), C.metal)
 		P("CanopyFoot", V(0.5, 0.15, 0.5), at(sx * 5.2, 0.07, frontZ - 4.3), C.trim)
@@ -4077,7 +4127,7 @@ local function buildExterior()
 
 	local function boundary(cx2, cz2, w2, d2)
 		P("BoundaryWall", V(w2, 0.9, d2), at(cx2, 0.45, cz2), Color3.fromRGB(76, 72, 68))
-		P("WallCoping", V(w2 + 0.14, 0.12, d2 + 0.14), at(cx2, 0.96, cz2), Color3.fromRGB(104, 100, 94))
+		P("WallCoping", V(w2 + 0.14, 0.12, d2 + 0.14), at(cx2, 0.93, cz2), Color3.fromRGB(104, 100, 94))
 		-- The palisade above it, in pales with gaps.
 		local along = if w2 > d2 then w2 else d2
 		local n2 = math.floor(along / 0.34)
@@ -4206,7 +4256,8 @@ local function buildExterior()
 		go out through it.
 	]]
 	local dockX, dockZ = SERVICE_WEST - 5.5, -22
-	P("Yard", V(26, 0.3, 16), at(dockX, -0.16, dockZ - 8), Color3.fromRGB(46, 46, 48))
+	-- A centimetre under the forecourt, so the two decks are not one plane.
+	P("Yard", V(26, 0.3, 16), at(dockX, -0.175, dockZ - 8), Color3.fromRGB(46, 46, 48))
 	--[[
 		The staff door. Green, with a push bar and a box over it, like the
 		other three ways out -- it is the one the crew come in through at ten
@@ -4498,7 +4549,6 @@ function Greybox.build()
 
 	buildAtrium()
 	firstFloorUnits()
-	scenicLift()
 	buildClock()
 	mallArm("N", 30, { { -1, 14, 3.2 } })
 	mallArm("E", 24, { { 1, 12, 3.0 }, { -1, 6, 2.4 } })

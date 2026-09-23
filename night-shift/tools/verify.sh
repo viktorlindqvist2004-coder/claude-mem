@@ -60,6 +60,12 @@ python3 tools/check_refs.py | sed 's/^/  /' || fail=1
 echo "== clearance =="
 python3 tools/check_clearance.py | sed 's/^/  /' || fail=1
 
+echo "== support =="
+python3 tools/check_floating.py | sed 's/^/  /' || fail=1
+
+echo "== z-fighting =="
+python3 tools/check_zfight.py | sed 's/^/  /' || true
+
 echo "== job targets =="
 python3 tools/check_targets.py | sed 's/^/  /' || fail=1
 

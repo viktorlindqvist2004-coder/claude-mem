@@ -2676,8 +2676,32 @@ local RunService = game:GetService("RunService")
 	they would appear at the origin — which is inside the clock plinth — or fall
 	through where the floor is about to be. Auto-loading goes back on the moment
 	the geometry is there.
+
+	And it goes back on whatever happens. A gate that can be left shut by an
+	error somewhere else is a game that never starts and never says why, which
+	is worse than the problem it was put there to solve.
 ]]
 Players.CharacterAutoLoads = false
+
+local function letThemIn()
+	if Players.CharacterAutoLoads then
+		return
+	end
+	Players.CharacterAutoLoads = true
+	for _, player in Players:GetPlayers() do
+		if not player.Character then
+			player:LoadCharacter()
+		end
+	end
+end
+
+-- The belt and braces: however this script ends, nobody is left outside.
+task.delay(20, function()
+	if not Players.CharacterAutoLoads then
+		warn("[Night Shift] the build did not finish in twenty seconds — spawning anyway")
+		letThemIn()
+	end
+end)
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
@@ -2820,21 +2844,21 @@ end)
 
 -- ── The five nights ─────────────────────────────────────────────────────────
 
-World.ensureBuilt()
-Case.reset()
-
-Players.CharacterAutoLoads = true
-for _, player in Players:GetPlayers() do
-	if not player.Character then
-		player:LoadCharacter()
-	end
+local built, buildError = pcall(World.ensureBuilt)
+if not built then
+	warn(`[Night Shift] the mall did not build: {buildError}`)
 end
+Case.reset()
+letThemIn()
 
 for night = 1, 5 do
 	Shift.register(night, require(script.Nights[`Night{night}`]))
 end
 
-Shift.begin(1)
+local started, startError = pcall(Shift.begin, 1)
+if not started then
+	warn(`[Night Shift] Night 1 did not start: {startError}`)
+end
 
 -- Everything in the game, on one key, so the fifth night's last beat does not
 -- take an hour to reach. Studio, or the place owner. See TestPanel.luau.

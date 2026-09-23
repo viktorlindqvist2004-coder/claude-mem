@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "5aa54b8"
-Build.LAST_COMMIT = "281687b"
-Build.SUMMARY = "Take the planks out of the doorways and light the job you are on"
-Build.WHEN = "23 Sep 17:08"
+Build.COMMIT = "ecce8ad"
+Build.LAST_COMMIT = "731dca9"
+Build.SUMMARY = "Make the job glow unmistakable, and check that it glows at all"
+Build.WHEN = "23 Sep 17:09"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -7888,6 +7888,7 @@ Shift.finished = false
 	the first attempt, and that lights half a room at once, which is the same as
 	lighting nothing.
 ]]
+local MAX_GLOWING = 4
 local glowing: { Highlight } = {}
 
 local heartbeat: RBXScriptConnection? = nil
@@ -7917,6 +7918,17 @@ local function lightTheJob()
 	if not current then
 		return
 	end
+	--[[
+		Gather what this job is about, and throw away what is already done.
+
+		A night switches a prompt off the moment its part has been dealt with
+		-- a shelf bay that has been faced up, a shutter that is down -- so a
+		disabled prompt is the building's own record of "not this one any
+		more". Without this, all nine shutters glow for the whole of an
+		objective that wants four of them, and the player cannot tell which
+		four are left.
+	]]
+	local candidates = {}
 	for _, name in Targets.FOR[current.id] or {} do
 		-- A trailing star means "everything starting with this": the shelf
 		-- bays are numbered as the night makes them, so there is no one name.
@@ -7924,17 +7936,53 @@ local function lightTheJob()
 			then World.allPrefixed(string.sub(name, 1, -2))
 			else World.all(name)
 		for _, part in parts do
-			local glow = Instance.new("Highlight")
-			glow.Name = "TheJob"
-			glow.Adornee = part
-			glow.DepthMode = Enum.HighlightDepthMode.Occluded
-			glow.FillColor = Color3.fromRGB(255, 238, 200)
-			glow.FillTransparency = 0.72
-			glow.OutlineColor = Color3.fromRGB(255, 246, 220)
-			glow.OutlineTransparency = 0
-			glow.Parent = part
-			table.insert(glowing, glow)
+			local prompt = part:FindFirstChildWhichIsA("ProximityPrompt")
+			if not (prompt and not prompt.Enabled) then
+				table.insert(candidates, part)
+			end
 		end
+	end
+
+	--[[
+		And never more than a handful at once, nearest first.
+
+		Sixteen glowing stair treads or seven glowing bins is a light show,
+		not an instruction. Four is enough to say "these, and there are more
+		of them" without the room turning into a map -- and as each one is
+		dealt with the next takes its place, so the set walks you through the
+		job rather than laying the whole job out at once.
+	]]
+	local crew = Players:GetPlayers()
+	if #candidates > MAX_GLOWING and #crew > 0 then
+		local from = nil
+		for _, player in crew do
+			local root = ctx.root(player)
+			if root then
+				from = root.Position
+				break
+			end
+		end
+		if from then
+			table.sort(candidates, function(a, b)
+				return (a.Position - from).Magnitude < (b.Position - from).Magnitude
+			end)
+		end
+	end
+
+	for i, part in candidates do
+		if i > MAX_GLOWING then
+			break
+		end
+		local glow = Instance.new("Highlight")
+		glow.Name = "TheJob"
+		glow.Adornee = part
+		glow.DepthMode = Enum.HighlightDepthMode.Occluded
+		glow.FillColor = Color3.fromRGB(255, 238, 200)
+		glow.FillTransparency = 0.72
+		glow.OutlineColor = Color3.fromRGB(255, 246, 220)
+		glow.OutlineTransparency = 0
+		glow.Parent = part
+		table.insert(glowing, glow)
 	end
 
 	--[[

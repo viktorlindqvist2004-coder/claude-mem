@@ -8,18 +8,24 @@
 	need reasoning about. The answer is printed in the Output window on start
 	and shown on screen for a few seconds when you join, and if it does not
 	match what was just pushed then the sync is the problem and nothing else is.
+
+	COMMIT is a hash of the source this build was made from, not a git commit:
+	a git stamp has to be written before the commit that carries it, so it
+	always named the previous one. LAST_COMMIT is the git side, and it is the
+	commit *before* this build, which is what it says.
 ]]
 
 local Build = {}
 
-Build.COMMIT = "26626e7"
-Build.SUMMARY = "Stage the jump scares on the building, and say what the game is about"
-Build.WHEN = "23 Sep 12:03"
+Build.COMMIT = "bb0f1a6"
+Build.LAST_COMMIT = "a040ddc"
+Build.SUMMARY = "Get things out of the doorways, tile the ceilings, and wrap the building"
+Build.WHEN = "23 Sep 12:23"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
 function Build.line(): string
-	return `Night Shift · {Build.COMMIT}{if Build.DIRTY then "+" else ""} · {Build.WHEN}`
+	return `Night Shift · build {Build.COMMIT} · {Build.WHEN} · after {Build.LAST_COMMIT}`
 end
 
 return Build

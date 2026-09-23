@@ -248,7 +248,10 @@ require(script.TestPanel)
 ]]
 local Build = require(Shared.Build)
 print(`[Night Shift] {Build.line()}`)
-print(`[Night Shift] {Build.SUMMARY}`)
+-- The subject of the commit before this build, which is what it is. It is not
+-- a description of what is in front of you, and it used to be printed as if
+-- it were.
+print(`[Night Shift] last commit: {Build.SUMMARY}`)
 if Build.DIRTY then
 	print("[Night Shift] (built from a working tree with uncommitted changes)")
 end

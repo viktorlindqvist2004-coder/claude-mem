@@ -1,24 +1,47 @@
 #!/usr/bin/env python3
 """
-stamp.py — write the current commit into the game.
+stamp.py — write which version of the game this is into the game.
 
-"Are my changes in?" should never be a question anybody has to reason about.
-This writes the commit the working tree is on into src/shared/Build.luau, which
-the game prints on start and shows on screen for a few seconds when you join.
+"Are my changes in?" should never be a question anybody has to reason about,
+and for a while it was one anyway: the stamp was the git commit, and the stamp
+has to be written *before* the commit that contains it, so every build named
+the commit before its own and printed that commit's subject. A build carrying
+tonight's work announced itself with last night's headline.
+
+So the version is a hash of the source the game is actually built from. It
+changes when and only when the source changes, it cannot name the wrong thing,
+and it is what World.ensureBuilt compares against to decide whether the mall
+standing in a place file is stale. The git commit rides along beside it as
+context, clearly labelled as the *last* commit rather than as this build.
 
 Run it before committing. tools/verify.sh runs it too.
 """
 
-import io, os, subprocess, datetime
+import datetime, hashlib, io, os, subprocess
 
 os.chdir(os.path.join(os.path.dirname(__file__), ".."))
 
 def git(*args):
     return subprocess.run(["git", *args], capture_output=True, text=True).stdout.strip()
 
-sha = git("rev-parse", "--short", "HEAD") or "unknown"
+# The version: every source file the game is built from, hashed. Sorted, so
+# the same tree always gives the same answer on any machine.
+digest = hashlib.sha256()
+sources = []
+for root, dirs, files in os.walk("src"):
+    dirs.sort()
+    for f in sorted(files):
+        if f.endswith(".luau") and f != "Build.luau":
+            sources.append(os.path.join(root, f))
+sources.append("default.project.json")
+for path in sorted(sources):
+    digest.update(path.encode())
+    digest.update(io.open(path, "rb").read())
+sha = digest.hexdigest()[:7]
+
+commit = git("rev-parse", "--short", "HEAD") or "unknown"
 subject = git("log", "-1", "--format=%s") or "uncommitted"
-when = git("log", "-1", "--format=%cd", "--date=format:%d %b %H:%M") or "—"
+when = datetime.datetime.now().strftime("%d %b %H:%M")
 dirty = bool(git("status", "--porcelain", "--", "src", "default.project.json"))
 
 def lua(text):
@@ -36,22 +59,28 @@ body = f'''--!strict
 	need reasoning about. The answer is printed in the Output window on start
 	and shown on screen for a few seconds when you join, and if it does not
 	match what was just pushed then the sync is the problem and nothing else is.
+
+	COMMIT is a hash of the source this build was made from, not a git commit:
+	a git stamp has to be written before the commit that carries it, so it
+	always named the previous one. LAST_COMMIT is the git side, and it is the
+	commit *before* this build, which is what it says.
 ]]
 
 local Build = {{}}
 
 Build.COMMIT = "{sha}"
+Build.LAST_COMMIT = "{commit}"
 Build.SUMMARY = {lua(subject)}
 Build.WHEN = "{when}"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = {str(dirty).lower()}
 
 function Build.line(): string
-	return `Night Shift · {{Build.COMMIT}}{{if Build.DIRTY then "+" else ""}} · {{Build.WHEN}}`
+	return `Night Shift · build {{Build.COMMIT}} · {{Build.WHEN}} · after {{Build.LAST_COMMIT}}`
 end
 
 return Build
 '''
 
 io.open("src/shared/Build.luau", "w", encoding="utf-8").write(body)
-print(f"stamped {sha}{'+' if dirty else ''} — {subject}")
+print(f"stamped build {sha} — {len(sources)} sources, after {commit} \"{subject}\"")

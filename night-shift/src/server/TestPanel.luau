@@ -263,7 +263,7 @@ end
 
 command("Build", "version", "Which build is this", function()
 	local Build = require(Shared.Build)
-	Hud.effect("hint", `{Build.line()} — {Build.SUMMARY}`)
+	Hud.effect("hint", `{Build.line()} — last commit: {Build.SUMMARY}`)
 end)
 
 --[[

@@ -108,7 +108,13 @@ end
 local function bulkhead(x, y, z, rangeM)
 	local lens = P("Bulkhead", V(0.3, 0.16, 0.3), at(x, y, z), RED, Enum.Material.Neon)
 	P("BulkheadCage", V(0.4, 0.26, 0.4), at(x, y + 0.04, z), C.metal)
-	bulb(lens, RED, 0.85, rangeM or 5.5)
+	--[[
+		Not much brighter, but reaching a great deal further. A fitting that
+		lights a two-metre puddle directly under itself leaves the room it is in
+		unreadable; one that washes the whole room faintly gives every surface
+		in it a shape, and the torch still has all the work to do.
+	]]
+	bulb(lens, RED, 1.1, (rangeM or 5.5) * 2.4)
 end
 
 --[[
@@ -118,6 +124,7 @@ end
 ]]
 local function exitSign(x, y, z, facing)
 	local sign = P("ExitSign", V(0.55, 0.22, 0.12), at(x, y, z), RED, Enum.Material.Neon)
+	sign.CastShadow = false
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
@@ -126,7 +133,7 @@ local function exitSign(x, y, z, facing)
 			density = 90,
 		})
 	end
-	bulb(sign, RED, 0.5, 4)
+	bulb(sign, RED, 0.7, 10)
 	return sign
 end
 
@@ -1476,14 +1483,28 @@ end
 local function applyLighting()
 	pcall(function() Lighting.Technology = Enum.Technology.Future end)
 	Lighting.GlobalShadows = true
-	Lighting.Ambient = Color3.fromRGB(2, 2, 3)
-	Lighting.OutdoorAmbient = Color3.fromRGB(8, 9, 13)
-	Lighting.Brightness = 0.1
-	Lighting.ExposureCompensation = -0.15
-	-- Enough environment light for Marble and Metal to have a sheen, and not a
-	-- lumen more. These two numbers are what make a PBR material read as PBR.
-	Lighting.EnvironmentDiffuseScale = 0.16
-	Lighting.EnvironmentSpecularScale = 0.75
+	--[[
+		Dark, and legible.
+
+		These were tuned until the building was properly black, and the result
+		was that none of it could be seen — every surface, every prop, every
+		printed sign was there and invisible, and the room read as an empty grey
+		box because nothing in it had enough light to have a shape.
+
+		That is the wrong kind of dark. The useful kind is where you can make out
+		the volume of a room and the silhouette of what is in it, and the torch
+		is what turns any of it into detail. If you cannot tell a stockroom from
+		a staff room without the torch, the lighting is too low; if you can read
+		a rota off the wall without it, it is too high.
+	]]
+	Lighting.Ambient = Color3.fromRGB(7, 7, 9)
+	Lighting.OutdoorAmbient = Color3.fromRGB(14, 16, 22)
+	Lighting.Brightness = 0.45
+	Lighting.ExposureCompensation = 0.15
+	-- Enough environment light for Marble and Metal to have a sheen. These two
+	-- numbers are what make a PBR material read as PBR rather than as paint.
+	Lighting.EnvironmentDiffuseScale = 0.3
+	Lighting.EnvironmentSpecularScale = 0.9
 	Lighting.ShadowSoftness = 0.5
 	Lighting.ClockTime = 0
 	Lighting.GeographicLatitude = 20
@@ -1525,9 +1546,11 @@ local function applyLighting()
 	]]
 	local grade = Instance.new("ColorCorrectionEffect")
 	grade.Name = "NightColour"
-	grade.Saturation = -0.12
-	grade.Contrast = 0.34
-	grade.Brightness = -0.02
+	grade.Saturation = -0.1
+	-- Contrast was doing the job brightness should have been doing: crushing
+	-- everything below the red fittings into a single flat black.
+	grade.Contrast = 0.18
+	grade.Brightness = 0.02
 	grade.TintColor = Color3.fromRGB(238, 238, 248)
 	grade.Parent = Lighting
 

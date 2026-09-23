@@ -63,9 +63,16 @@ Config.SOLO_ATTENTION_GAIN_SCALE = 0.7
 Config.SOLO_ATTENTION_DECAY_SCALE = 1.15
 
 -- ─── Flashlight ─────────────────────────────────────────────────────────────
+--[[
+	The torch is the instrument the whole game is looked at through, so it is
+	worth more than most things here. Wide is what you walk with: broad enough to
+	see the floor and a wall at the same time, which a narrow beam does not do
+	and which is why a narrow beam feels like playing through a drinking straw.
+	Focus is for looking at one thing on purpose.
+]]
 Config.FLASHLIGHT = {
-	WIDE = { angle = 60, range = 60, brightness = 2.2, drainPerSecond = 0.8 },
-	FOCUS = { angle = 18, range = 110, brightness = 5.0, drainPerSecond = 2.4 },
+	WIDE = { angle = 82, range = 55, brightness = 4.5, drainPerSecond = 0.8 },
+	FOCUS = { angle = 24, range = 110, brightness = 7.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),

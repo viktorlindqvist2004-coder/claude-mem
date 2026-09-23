@@ -238,6 +238,88 @@ command("Build", "version", "Which build is this", function()
 	Hud.effect("hint", `{Build.line()} — {Build.SUMMARY}`)
 end)
 
+--[[
+	Every sound in the game, one after another, named as it plays.
+
+	None of the audio is final — every slot points at something that ships inside
+	the Roblox client, shaped with pitch into roughly the right thing. Some of
+	those will be silent, some will be wrong, and there is no way to tell which
+	from outside the engine. This plays the lot with the slot name on screen, so
+	the answer is a list rather than a guess.
+]]
+command("Audio", "everySound", "Play every sound, named", function(player)
+	local root = Shift.ctx.root(player)
+	if not root then
+		return
+	end
+	local names = {}
+	for name, slot in SoundBank do
+		if typeof(slot) == "table" and slot.id then
+			table.insert(names, name)
+		end
+	end
+	table.sort(names)
+	task.spawn(function()
+		for _, name in names do
+			local slot = (SoundBank :: any)[name]
+			Hud.caption(`{name}  —  {slot.caption or "(no caption)"}`)
+			local sound = SoundBank.make(slot, root, `Test_{name}`)
+			sound.Looped = false
+			-- Loops are shaped to sit under everything, so on their own they are
+			-- inaudible. Lift them for the test only.
+			sound.Volume = math.max(slot.volume, 0.45)
+			sound:Play()
+			task.delay(3.5, function()
+				sound:Destroy()
+			end)
+			task.wait(3.8)
+		end
+		Hud.caption(`[that was all {#names} of them]`)
+	end)
+end)
+
+--[[
+	The darkness is the hardest number in the project to get right from outside
+	the engine, so it is adjustable from inside it. Change it, say what the value
+	was when it looked right, and it goes into the greybox.
+]]
+local function nudgeLight(step: number)
+	local Lighting = game:GetService("Lighting")
+	Lighting.Brightness = math.clamp(Lighting.Brightness + step, 0, 4)
+	Lighting.Ambient = Color3.fromRGB(
+		math.clamp(3 + Lighting.Brightness * 9, 0, 60),
+		math.clamp(3 + Lighting.Brightness * 9, 0, 60),
+		math.clamp(4 + Lighting.Brightness * 11, 0, 60)
+	)
+	Hud.effect("hint", `Brightness {string.format("%.2f", Lighting.Brightness)} — tell me this number if it looks right.`)
+end
+
+command("Light", "brighter", "Lights: brighter", function()
+	nudgeLight(0.15)
+end)
+
+command("Light", "darker", "Lights: darker", function()
+	nudgeLight(-0.15)
+end)
+
+command("Light", "torchUp", "Torch: stronger", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Brightness += 1
+		Hud.effect("hint", `Torch {string.format("%.1f", beam.Brightness)}`)
+	end
+end)
+
+command("Light", "torchWide", "Torch: wider", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Angle = math.min(beam.Angle + 8, 120)
+		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
+	end
+end)
+
 command("Audio", "voiceReport", "How much voice is recorded", function()
 	local total = 0
 	for _, group in { NightScript.NIGHT1, NightScript.NIGHT2, NightScript.NIGHT3, NightScript.NIGHT4, NightScript.NIGHT5, NightScript.ENDING } do

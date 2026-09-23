@@ -12,9 +12,9 @@
 
 local Build = {}
 
-Build.COMMIT = "dfafedb"
-Build.SUMMARY = "Print which build this is, so nobody has to guess"
-Build.WHEN = "23 Sep 01:37"
+Build.COMMIT = "17a3613"
+Build.SUMMARY = "Silence the drone at the clock, and let the building be seen"
+Build.WHEN = "23 Sep 01:48"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = false
 

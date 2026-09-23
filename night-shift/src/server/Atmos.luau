@@ -99,12 +99,17 @@ function Atmos.build()
 	-- ── The tape ────────────────────────────────────────────────────────────
 	-- Ceiling speakers in the atrium and both arms. Never back of house: crossing
 	-- the service door has to be something you hear.
+	--[[
+		Nothing in the atrium. The clock is the only thing that makes a sound in
+		that room and it has to stay that way: a tick with forty metres of empty
+		hall around it is the whole character of the place, and anything else
+		playing within earshot of it is competing with the best sound in the game.
+	]]
 	local speakerPoints = {
-		{ 0, 7.4, -4 },
-		{ 0, 2.8, 16 },
-		{ 0, 2.8, 30 },
-		{ 17, 2.8, 0 },
-		{ 29, 2.8, 0 },
+		{ 0, 2.8, 18 },
+		{ 0, 2.8, 32 },
+		{ 19, 2.8, 0 },
+		{ 31, 2.8, 0 },
 	}
 	for i, point in speakerPoints do
 		local anchor = anchorAt(`CeilingSpeaker{i}`, point)
@@ -148,8 +153,12 @@ function Atmos.build()
 	wind:Play()
 	table.insert(emitters, wind)
 
-	-- ── The clock ───────────────────────────────────────────────────────────
-	-- A 1904 movement under a 1986 display. It has never been stopped.
+	--[[
+		The clock. A 1904 movement under a 1986 display, and it has never been
+		stopped. One tick every two seconds, carrying a long way in a hall with
+		nothing else in it, and it is the sound the whole building is arranged
+		around — every other emitter is kept out of earshot of it deliberately.
+	]]
 	local clockAnchor = anchorAt("ClockMovement", { 0, 4.0, 0 })
 	task.spawn(function()
 		while clockAnchor.Parent do

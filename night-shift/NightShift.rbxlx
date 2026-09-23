@@ -31,9 +31,9 @@
 
 local Build = {}
 
-Build.COMMIT = "1eb6848"
-Build.SUMMARY = "Never leave the player outside the building"
-Build.WHEN = "23 Sep 01:35"
+Build.COMMIT = "10e4c08"
+Build.SUMMARY = "Stamp the stamp"
+Build.WHEN = "23 Sep 01:37"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -313,9 +313,16 @@ Config.SOLO_ATTENTION_GAIN_SCALE = 0.7
 Config.SOLO_ATTENTION_DECAY_SCALE = 1.15
 
 -- ─── Flashlight ─────────────────────────────────────────────────────────────
+--[[
+	The torch is the instrument the whole game is looked at through, so it is
+	worth more than most things here. Wide is what you walk with: broad enough to
+	see the floor and a wall at the same time, which a narrow beam does not do
+	and which is why a narrow beam feels like playing through a drinking straw.
+	Focus is for looking at one thing on purpose.
+]]
 Config.FLASHLIGHT = {
-	WIDE = { angle = 60, range = 60, brightness = 2.2, drainPerSecond = 0.8 },
-	FOCUS = { angle = 18, range = 110, brightness = 5.0, drainPerSecond = 2.4 },
+	WIDE = { angle = 82, range = 55, brightness = 4.5, drainPerSecond = 0.8 },
+	FOCUS = { angle = 24, range = 110, brightness = 7.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),
@@ -2323,8 +2330,22 @@ SoundBank.CLOCK_STRIKE = {
 ]]
 SoundBank.MUZAK = {
 	caption = "[muzak]",
+	--[[
+		SILENT ON PURPOSE.
+
+		There is no built-in Roblox sound that can stand in for ninety minutes of
+		1986 shopping-centre muzak. What was here — a bass note on a loop — was a
+		droning musical tone repeating every second and a half from the ceiling
+		four metres from the clock, and it buried the one sound in the atrium
+		that is actually right.
+
+		A wrong ambient loop is worse than silence: silence is a choice the room
+		can make, and a bad loop is a thing the player has to listen past all
+		night. So this stays at zero until there is a real tape to put in it, and
+		the slot keeps everything else about it so that is a one-line change.
+	]]
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.09,
+	volume = 0,
 	speed = 0.62,
 	looped = true,
 	rollOffMinMetres = 6,
@@ -3012,12 +3033,17 @@ function Atmos.build()
 	-- ── The tape ────────────────────────────────────────────────────────────
 	-- Ceiling speakers in the atrium and both arms. Never back of house: crossing
 	-- the service door has to be something you hear.
+	--[[
+		Nothing in the atrium. The clock is the only thing that makes a sound in
+		that room and it has to stay that way: a tick with forty metres of empty
+		hall around it is the whole character of the place, and anything else
+		playing within earshot of it is competing with the best sound in the game.
+	]]
 	local speakerPoints = {
-		{ 0, 7.4, -4 },
-		{ 0, 2.8, 16 },
-		{ 0, 2.8, 30 },
-		{ 17, 2.8, 0 },
-		{ 29, 2.8, 0 },
+		{ 0, 2.8, 18 },
+		{ 0, 2.8, 32 },
+		{ 19, 2.8, 0 },
+		{ 31, 2.8, 0 },
 	}
 	for i, point in speakerPoints do
 		local anchor = anchorAt(`CeilingSpeaker{i}`, point)
@@ -3061,8 +3087,12 @@ function Atmos.build()
 	wind:Play()
 	table.insert(emitters, wind)
 
-	-- ── The clock ───────────────────────────────────────────────────────────
-	-- A 1904 movement under a 1986 display. It has never been stopped.
+	--[[
+		The clock. A 1904 movement under a 1986 display, and it has never been
+		stopped. One tick every two seconds, carrying a long way in a hall with
+		nothing else in it, and it is the sound the whole building is arranged
+		around — every other emitter is kept out of earshot of it deliberately.
+	]]
 	local clockAnchor = anchorAt("ClockMovement", { 0, 4.0, 0 })
 	task.spawn(function()
 		while clockAnchor.Parent do
@@ -7559,6 +7589,88 @@ command("Build", "version", "Which build is this", function()
 	Hud.effect("hint", `{Build.line()} — {Build.SUMMARY}`)
 end)
 
+--[[
+	Every sound in the game, one after another, named as it plays.
+
+	None of the audio is final — every slot points at something that ships inside
+	the Roblox client, shaped with pitch into roughly the right thing. Some of
+	those will be silent, some will be wrong, and there is no way to tell which
+	from outside the engine. This plays the lot with the slot name on screen, so
+	the answer is a list rather than a guess.
+]]
+command("Audio", "everySound", "Play every sound, named", function(player)
+	local root = Shift.ctx.root(player)
+	if not root then
+		return
+	end
+	local names = {}
+	for name, slot in SoundBank do
+		if typeof(slot) == "table" and slot.id then
+			table.insert(names, name)
+		end
+	end
+	table.sort(names)
+	task.spawn(function()
+		for _, name in names do
+			local slot = (SoundBank :: any)[name]
+			Hud.caption(`{name}  —  {slot.caption or "(no caption)"}`)
+			local sound = SoundBank.make(slot, root, `Test_{name}`)
+			sound.Looped = false
+			-- Loops are shaped to sit under everything, so on their own they are
+			-- inaudible. Lift them for the test only.
+			sound.Volume = math.max(slot.volume, 0.45)
+			sound:Play()
+			task.delay(3.5, function()
+				sound:Destroy()
+			end)
+			task.wait(3.8)
+		end
+		Hud.caption(`[that was all {#names} of them]`)
+	end)
+end)
+
+--[[
+	The darkness is the hardest number in the project to get right from outside
+	the engine, so it is adjustable from inside it. Change it, say what the value
+	was when it looked right, and it goes into the greybox.
+]]
+local function nudgeLight(step: number)
+	local Lighting = game:GetService("Lighting")
+	Lighting.Brightness = math.clamp(Lighting.Brightness + step, 0, 4)
+	Lighting.Ambient = Color3.fromRGB(
+		math.clamp(3 + Lighting.Brightness * 9, 0, 60),
+		math.clamp(3 + Lighting.Brightness * 9, 0, 60),
+		math.clamp(4 + Lighting.Brightness * 11, 0, 60)
+	)
+	Hud.effect("hint", `Brightness {string.format("%.2f", Lighting.Brightness)} — tell me this number if it looks right.`)
+end
+
+command("Light", "brighter", "Lights: brighter", function()
+	nudgeLight(0.15)
+end)
+
+command("Light", "darker", "Lights: darker", function()
+	nudgeLight(-0.15)
+end)
+
+command("Light", "torchUp", "Torch: stronger", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Brightness += 1
+		Hud.effect("hint", `Torch {string.format("%.1f", beam.Brightness)}`)
+	end
+end)
+
+command("Light", "torchWide", "Torch: wider", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Angle = math.min(beam.Angle + 8, 120)
+		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
+	end
+end)
+
 command("Audio", "voiceReport", "How much voice is recorded", function()
 	local total = 0
 	for _, group in { NightScript.NIGHT1, NightScript.NIGHT2, NightScript.NIGHT3, NightScript.NIGHT4, NightScript.NIGHT5, NightScript.ENDING } do
@@ -7928,7 +8040,13 @@ end
 local function bulkhead(x, y, z, rangeM)
 	local lens = P("Bulkhead", V(0.3, 0.16, 0.3), at(x, y, z), RED, Enum.Material.Neon)
 	P("BulkheadCage", V(0.4, 0.26, 0.4), at(x, y + 0.04, z), C.metal)
-	bulb(lens, RED, 0.85, rangeM or 5.5)
+	--[[
+		Not much brighter, but reaching a great deal further. A fitting that
+		lights a two-metre puddle directly under itself leaves the room it is in
+		unreadable; one that washes the whole room faintly gives every surface
+		in it a shape, and the torch still has all the work to do.
+	]]
+	bulb(lens, RED, 1.1, (rangeM or 5.5) * 2.4)
 end
 
 --[[
@@ -7938,6 +8056,7 @@ end
 ]]
 local function exitSign(x, y, z, facing)
 	local sign = P("ExitSign", V(0.55, 0.22, 0.12), at(x, y, z), RED, Enum.Material.Neon)
+	sign.CastShadow = false
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
@@ -7946,7 +8065,7 @@ local function exitSign(x, y, z, facing)
 			density = 90,
 		})
 	end
-	bulb(sign, RED, 0.5, 4)
+	bulb(sign, RED, 0.7, 10)
 	return sign
 end
 
@@ -9296,14 +9415,28 @@ end
 local function applyLighting()
 	pcall(function() Lighting.Technology = Enum.Technology.Future end)
 	Lighting.GlobalShadows = true
-	Lighting.Ambient = Color3.fromRGB(2, 2, 3)
-	Lighting.OutdoorAmbient = Color3.fromRGB(8, 9, 13)
-	Lighting.Brightness = 0.1
-	Lighting.ExposureCompensation = -0.15
-	-- Enough environment light for Marble and Metal to have a sheen, and not a
-	-- lumen more. These two numbers are what make a PBR material read as PBR.
-	Lighting.EnvironmentDiffuseScale = 0.16
-	Lighting.EnvironmentSpecularScale = 0.75
+	--[[
+		Dark, and legible.
+
+		These were tuned until the building was properly black, and the result
+		was that none of it could be seen — every surface, every prop, every
+		printed sign was there and invisible, and the room read as an empty grey
+		box because nothing in it had enough light to have a shape.
+
+		That is the wrong kind of dark. The useful kind is where you can make out
+		the volume of a room and the silhouette of what is in it, and the torch
+		is what turns any of it into detail. If you cannot tell a stockroom from
+		a staff room without the torch, the lighting is too low; if you can read
+		a rota off the wall without it, it is too high.
+	]]
+	Lighting.Ambient = Color3.fromRGB(7, 7, 9)
+	Lighting.OutdoorAmbient = Color3.fromRGB(14, 16, 22)
+	Lighting.Brightness = 0.45
+	Lighting.ExposureCompensation = 0.15
+	-- Enough environment light for Marble and Metal to have a sheen. These two
+	-- numbers are what make a PBR material read as PBR rather than as paint.
+	Lighting.EnvironmentDiffuseScale = 0.3
+	Lighting.EnvironmentSpecularScale = 0.9
 	Lighting.ShadowSoftness = 0.5
 	Lighting.ClockTime = 0
 	Lighting.GeographicLatitude = 20
@@ -9345,9 +9478,11 @@ local function applyLighting()
 	]]
 	local grade = Instance.new("ColorCorrectionEffect")
 	grade.Name = "NightColour"
-	grade.Saturation = -0.12
-	grade.Contrast = 0.34
-	grade.Brightness = -0.02
+	grade.Saturation = -0.1
+	-- Contrast was doing the job brightness should have been doing: crushing
+	-- everything below the red fittings into a single flat black.
+	grade.Contrast = 0.18
+	grade.Brightness = 0.02
 	grade.TintColor = Color3.fromRGB(238, 238, 248)
 	grade.Parent = Lighting
 

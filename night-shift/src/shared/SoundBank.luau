@@ -123,8 +123,22 @@ SoundBank.CLOCK_STRIKE = {
 ]]
 SoundBank.MUZAK = {
 	caption = "[muzak]",
+	--[[
+		SILENT ON PURPOSE.
+
+		There is no built-in Roblox sound that can stand in for ninety minutes of
+		1986 shopping-centre muzak. What was here — a bass note on a loop — was a
+		droning musical tone repeating every second and a half from the ceiling
+		four metres from the clock, and it buried the one sound in the atrium
+		that is actually right.
+
+		A wrong ambient loop is worse than silence: silence is a choice the room
+		can make, and a bad loop is a thing the player has to listen past all
+		night. So this stays at zero until there is a real tape to put in it, and
+		the slot keeps everything else about it so that is a one-line change.
+	]]
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.09,
+	volume = 0,
 	speed = 0.62,
 	looped = true,
 	rollOffMinMetres = 6,

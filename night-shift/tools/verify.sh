@@ -7,6 +7,7 @@
 #      used above where it is declared, which Luau reads as a nil global)
 #   3. build the whole mall against a stubbed Roblox API and count the parts
 #   4. check the cross-references a compiler cannot see (tools/check_refs.py)
+#   5. run all five nights against the stub: every beat, every prompt
 #
 # Needs luau and luau-analyze on PATH, or in LUAU_DIR.
 #
@@ -48,5 +49,9 @@ rm -rf "$tmp"
 
 echo "== cross-references =="
 python3 tools/check_refs.py | sed 's/^/  /' || fail=1
+
+echo "== smoke =="
+python3 tools/smoke.py 2>&1 | grep -E "FAIL|smoke:|beats," | sed 's/^/  /'
+[ "${PIPESTATUS[0]}" != "0" ] && fail=1
 
 exit $fail

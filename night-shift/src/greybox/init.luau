@@ -536,9 +536,11 @@ local function mallArm(axis, length, entries)
 
 	-- Shopfronts. Frontages vary, most are shuttered, and the few openings are
 	-- the rooms you can actually walk into.
+	local unit = 0
 	for _, side in { -1, 1 } do
 		local t = 0
 		while length - t > 2.5 do
+			unit += 1
 			local w = rng:NextNumber(3.5, 7.0)
 			if length - (t + w) < 2.5 then
 				w = length - t
@@ -554,7 +556,13 @@ local function mallArm(axis, length, entries)
 
 			if not opening then
 				P("Shopfront", size(w, WALL, MALL_H), pos(mid, side * half, MALL_H / 2), C.wall)
-				local mode = rng:NextInteger(1, 3)
+				--[[
+					Every third unit is left half up, whatever the seed says. Rule
+					11 is a task about pulling shutters down, and a building that
+					generated four closed ones in a row would be a night the crew
+					could not finish.
+				]]
+				local mode = if unit % 3 == 1 then 2 else rng:NextInteger(1, 3)
 				if mode == 1 then
 					-- Shut, and has been for years. The fascia name is still up.
 					P("Shutter", size(w - 0.5, 0.12, 2.3), pos(mid, side * (half - 0.2), 1.15), C.shutter)

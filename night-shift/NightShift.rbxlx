@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "20d2385"
-Build.LAST_COMMIT = "5598b9f"
-Build.SUMMARY = "Build the loading dock out of things instead of boxes"
-Build.WHEN = "23 Sep 17:22"
+Build.COMMIT = "8727944"
+Build.LAST_COMMIT = "1e7b404"
+Build.SUMMARY = "Build the plant room out of machinery"
+Build.WHEN = "23 Sep 17:26"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -11053,39 +11053,93 @@ end
 
 	It does not move. On Night 5 all of them start.
 ]]
+--[[
+	An escalator.
+
+	It was twenty-two flat plates climbing through the air with twenty-three
+	stacked blocks either side of them: a ramp of floating slabs, and about a
+	hundred and forty parts to say it.
+
+	What makes an escalator read is the step, and a step is a tread and a
+	riser. Flat plates at rising heights are a staircase drawn by somebody who
+	has only seen one from a distance -- the vertical face between one tread
+	and the next is the whole silhouette, and the cleats along the tread are
+	what catch a torch beam.
+
+	The balustrade, the handrail and the skirt are one inclined part each
+	instead of twenty-three stacked ones, which is both far fewer parts and
+	the only way to get a straight edge: a stack of blocks approximating a
+	slope has a sawtooth along the top of it that you can see from the far
+	side of an atrium.
+]]
 local function escalator(x, z, y, rise, run, alongZ, seed)
-	local steps = 22
+	local steps = 20
 	local w = 1.1
-	for i = 0, steps do
-		local t = i / steps
-		local sx = alongZ and x or x + (t - 0.5) * run
-		local sz = alongZ and z + (t - 0.5) * run or z
-		P("EscalatorStep",
-			alongZ and V(w, 0.2, run / steps + 0.02) or V(run / steps + 0.02, 0.2, w),
-			at(sx, y + t * rise, sz), C.metal)
-		if i % 3 == 0 then
-			P("EscalatorComb",
-				alongZ and V(w, 0.04, 0.06) or V(0.06, 0.04, w),
-				at(sx, y + t * rise + 0.11, sz), Color3.fromRGB(140, 130, 60))
+	local span = math.sqrt(rise * rise + run * run)
+	local angle = math.deg(math.atan2(rise, run))
+	local tread = run / steps
+
+	--[[
+		The comb plates: the flat landings at the top and bottom, where the
+		steps go under the floor. Without them the incline just stops.
+	]]
+	for _, e in { -1, 1 } do
+		local cy = if e < 0 then y + 0.02 else y + rise + 0.02
+		local cx = if alongZ then x else x + e * (run / 2 + 0.45)
+		local cz = if alongZ then z + e * (run / 2 + 0.45) else z
+		P("EscalatorComb", (if alongZ then V(w, 0.06, 0.9) else V(0.9, 0.06, w)),
+			at(cx, cy, cz), Color3.fromRGB(150, 138, 62))
+	end
+
+	for i = 0, steps - 1 do
+		local t = (i + 0.5) / steps
+		local sy = y + t * rise
+		local sx = if alongZ then x else x + (t - 0.5) * run
+		local sz = if alongZ then z + (t - 0.5) * run else z
+
+		-- The tread, and the riser under its leading edge.
+		P("EscalatorStep", (if alongZ then V(w, 0.06, tread) else V(tread, 0.06, w)),
+			at(sx, sy, sz), C.metal)
+		P("EscalatorRiser",
+			(if alongZ then V(w, rise / steps, 0.05) else V(0.05, rise / steps, w)),
+			at(if alongZ then sx else sx - tread / 2,
+				sy - rise / steps / 2,
+				if alongZ then sz - tread / 2 else sz), Color3.fromRGB(62, 64, 66))
+		-- Cleats along the tread, which is what a torch beam finds.
+		for k = -1, 1 do
+			P("StepCleat", (if alongZ then V(0.03, 0.02, tread - 0.03) else V(tread - 0.03, 0.02, 0.03)),
+				at(if alongZ then sx + k * 0.3 else sx, sy + 0.04, if alongZ then sz else sz + k * 0.3),
+				Color3.fromRGB(88, 90, 92))
 		end
 	end
+
+	--[[
+		One inclined part per side per element. A stack of blocks approximating
+		a slope has a sawtooth along the top that you can see from the far side
+		of an atrium.
+	]]
+	local tilt = if alongZ then Vector3.new(-angle, 0, 0) else Vector3.new(0, 0, angle)
 	for _, side in { -1, 1 } do
-		local bx = alongZ and x + side * (w / 2 + 0.1) or x
-		local bz = alongZ and z or z + side * (w / 2 + 0.1)
-		for i = 0, steps do
-			local t = i / steps
-			P("Balustrade",
-				alongZ and V(0.1, 1.0, run / steps + 0.02) or V(run / steps + 0.02, 1.0, 0.1),
-				at(alongZ and bx or bx + (t - 0.5) * run, y + t * rise + 0.6, alongZ and bz + (t - 0.5) * run or bz),
-				Color3.fromRGB(46, 50, 58)).Transparency = 0.45
-			P("Handrail",
-				alongZ and V(0.14, 0.08, run / steps + 0.02) or V(run / steps + 0.02, 0.08, 0.14),
-				at(alongZ and bx or bx + (t - 0.5) * run, y + t * rise + 1.12, alongZ and bz + (t - 0.5) * run or bz),
-				C.dark)
-		end
+		local bx = if alongZ then x + side * (w / 2 + 0.12) else x
+		local bz = if alongZ then z else z + side * (w / 2 + 0.12)
+		local my = y + rise / 2
+
+		local glass = P("Balustrade", (if alongZ then V(0.06, 0.95, span) else V(span, 0.95, 0.06)),
+			at(bx, my + 0.55, bz), Color3.fromRGB(46, 50, 58))
+		glass.Transparency = 0.45
+		glass.Orientation = tilt
+		P("BalustradeEdge", (if alongZ then V(0.1, 0.06, span) else V(span, 0.06, 0.1)),
+			at(bx, my + 1.03, bz), C.trim).Orientation = tilt
+		P("Handrail", (if alongZ then V(0.13, 0.09, span) else V(span, 0.09, 0.13)),
+			at(bx, my + 1.11, bz), C.dark).Orientation = tilt
+		P("EscalatorSkirt", (if alongZ then V(0.12, 0.42, span) else V(span, 0.42, 0.12)),
+			at(bx, my - 0.18, bz), C.metal).Orientation = tilt
 	end
-	P("EscalatorSkirt", alongZ and V(w + 0.4, 0.5, run) or V(run, 0.5, w + 0.4),
-		at(x, y + rise / 2 - 0.4, z), C.metal)
+
+	-- The truss underneath, which is what it hangs from.
+	local truss = P("EscalatorTruss", (if alongZ then V(w + 0.3, 0.55, span) else V(span, 0.55, w + 0.3)),
+		at(x, y + rise / 2 - 0.5, z), Color3.fromRGB(58, 58, 60))
+	truss.Orientation = tilt
 end
 
 -- A shopfront awning. Striped, faded, and half of them have a rip in them.
@@ -12569,15 +12623,32 @@ end
 	that Rule 5 says is fine. Rule 5 is crossed out.
 ]]
 local function dressFashion(cx, cz, y, h, w, d)
+	--[[
+		Four garment rails. A rail is two A-frames, a top tube, a lower tube
+		that braces them, and clothes hanging from it -- and what makes the
+		clothes read is that they hang at slightly different heights on
+		hangers you can see, rather than sitting in a row at one level like
+		books on a shelf.
+	]]
 	for i = 0, 3 do
 		local rx = cx - 3.0 + i * 2.0
-		P("Rail", V(2.2, 0.07, 0.07), at(rx, y + 1.5, cz - 1.5), C.metal)
-		P("RailPost", V(0.07, 1.5, 0.07), at(rx - 1.0, y + 0.75, cz - 1.5), C.metal)
-		P("RailPost", V(0.07, 1.5, 0.07), at(rx + 1.0, y + 0.75, cz - 1.5), C.metal)
-		P("RailFoot", V(0.5, 0.05, 0.5), at(rx - 1.0, y + 0.03, cz - 1.5), C.metal)
-		P("RailFoot", V(0.5, 0.05, 0.5), at(rx + 1.0, y + 0.03, cz - 1.5), C.metal)
+		P("Rail", V(2.2, 0.05, 0.05), at(rx, y + 1.52, cz - 1.5), C.metal)
+		P("RailBrace", V(2.0, 0.04, 0.04), at(rx, y + 0.32, cz - 1.5), C.metal)
+		for _, e in { -1, 1 } do
+			P("RailPost", V(0.05, 1.5, 0.05), at(rx + e * 1.0, y + 0.76, cz - 1.5), C.metal)
+			-- The A-frame foot, which is what stops it being a pole in a floor.
+			for _, f in { -1, 1 } do
+				local leg = P("RailLeg", V(0.05, 0.42, 0.05), at(rx + e * 1.0, y + 0.2, cz - 1.5 + f * 0.16), C.metal)
+				leg.Orientation = Vector3.new(f * 22, 0, 0)
+			end
+			P("RailFoot", V(0.06, 0.04, 0.62), at(rx + e * 1.0, y + 0.02, cz - 1.5), C.dark)
+		end
 		for j = 0, 8 do
-			garment(rx - 0.95 + j * 0.24, y + 1.5, cz - 1.5,
+			local gx = rx - 0.95 + j * 0.24
+			local drop = ((j * 7) % 5) * 0.03
+			P("Hanger", V(0.16, 0.02, 0.02), at(gx, y + 1.47, cz - 1.5), C.metal)
+			P("HangerHook", V(0.02, 0.09, 0.02), at(gx, y + 1.53, cz - 1.5), C.metal)
+			garment(gx, y + 1.42 - drop, cz - 1.5,
 				(j % 4 == 0) and Color3.fromRGB(78, 46, 46) or C.fabric)
 		end
 	end
@@ -12599,17 +12670,43 @@ local function dressFashion(cx, cz, y, h, w, d)
 	P("MirrorWall", V(4.0, 2.2, 0.08), at(cx, y + 1.3, cz + 4.3), Color3.fromRGB(58, 62, 70))
 	local mirror = P("MirrorFace", V(3.9, 2.1, 0.03), at(cx, y + 1.3, cz + 4.24), Color3.fromRGB(88, 94, 106))
 	mirror.Reflectance = 0.5
+	--[[
+		Four fitting rooms: a cubicle with a curtain, not a box with a slab on
+		the front. The gap under the curtain is the whole thing -- it is the
+		only reason a fitting room is frightening, because you can see whether
+		there are feet in it.
+	]]
 	for i = 0, 3 do
-		P("FittingRoom", V(1.2, 2.2, 1.2), at(cx - 3.5 + i * 1.4, y + 1.1, cz + 3.6), C.fabric)
-		P("Curtain", V(1.16, 2.0, 0.05), at(cx - 3.5 + i * 1.4, y + 1.0, cz + 3.0), Color3.fromRGB(62, 54, 50))
-		P("CurtainRail", V(1.3, 0.05, 0.05), at(cx - 3.5 + i * 1.4, y + 2.05, cz + 3.0), C.metal)
+		local fx = cx - 3.5 + i * 1.4
+		P("FittingRoom", V(1.3, 2.3, 1.3), at(fx, y + 1.15, cz + 3.7), C.fabric)
+		P("FittingWall", V(0.05, 2.3, 1.3), at(fx + 0.65, y + 1.15, cz + 3.7), C.trim)
+		P("CurtainRail", V(1.34, 0.05, 0.05), at(fx, y + 2.14, cz + 3.05), C.metal)
+		-- Curtain hung short of the floor, with folds in it.
+		for k = -2, 2 do
+			P("Curtain", V(0.26, 1.85, 0.05), at(fx + k * 0.25, y + 1.14, cz + 3.05 + (k % 2) * 0.03),
+				Color3.fromRGB(62, 54, 50))
+		end
+		P("CurtainHooks", V(1.2, 0.05, 0.03), at(fx, y + 2.08, cz + 3.05), C.dark)
+		P("FittingStool", V(0.34, 0.05, 0.34), at(fx, y + 0.42, cz + 4.0), C.fabric)
+		for _, sx in { -1, 1 } do
+			P("StoolLeg", V(0.04, 0.4, 0.04), at(fx + sx * 0.12, y + 0.2, cz + 4.0), C.metal)
+		end
+		P("FittingMirror", V(0.03, 1.3, 0.9), at(fx - 0.62, y + 1.3, cz + 3.8),
+			Color3.fromRGB(86, 92, 102)).Reflectance = 0.5
 	end
 
-	P("Counter", V(2.0, 0.95, 0.8), at(cx + 3.6, y + 0.48, cz + 2.5), C.wood)
-	P("CounterTop", V(2.1, 0.06, 0.86), at(cx + 3.6, y + 0.98, cz + 2.5), C.trim)
-	P("Till", V(0.4, 0.3, 0.4), at(cx + 3.6, y + 1.16, cz + 2.5), C.metal)
+	-- The counter: a plinth, a carcass, a top with an overhang, and the things
+	-- that live on a shop counter.
+	P("CounterKick", V(1.9, 0.1, 0.7), at(cx + 3.6, y + 0.05, cz + 2.5), C.dark)
+	P("Counter", V(2.0, 0.86, 0.78), at(cx + 3.6, y + 0.53, cz + 2.5), C.wood)
+	P("CounterTop", V(2.12, 0.05, 0.9), at(cx + 3.6, y + 0.98, cz + 2.5), C.trim)
+	P("CounterEdge", V(2.14, 0.02, 0.92), at(cx + 3.6, y + 0.95, cz + 2.5), C.metal)
+	P("Till", V(0.4, 0.28, 0.38), at(cx + 3.6, y + 1.15, cz + 2.5), C.metal)
+	P("TillKeys", V(0.3, 0.03, 0.2), at(cx + 3.6, y + 1.3, cz + 2.56), C.dark)
+	P("TillDrawer", V(0.36, 0.1, 0.3), at(cx + 3.6, y + 0.96, cz + 2.16), C.metal)
 	P("Bags", V(0.4, 0.2, 0.3), at(cx + 4.3, y + 1.08, cz + 2.5), Color3.fromRGB(150, 146, 138))
 	P("Telephone", V(0.24, 0.12, 0.2), at(cx + 2.9, y + 1.07, cz + 2.5), C.dark)
+	P("TagGun", V(0.06, 0.12, 0.16), at(cx + 3.1, y + 1.06, cz + 2.7), Color3.fromRGB(120, 60, 54))
 
 	--[[
 		A wall of shoes, a sale poster, and a plant. The shoe wall is the thing
@@ -13052,16 +13149,16 @@ local function dressFoodCourt(cx, cz, y, h, w, d)
 	for i = 0, 2 do
 		for j = 0, 1 do
 			local tx, tz = cx - 4 + i * 4, cz - 2.5 + j * 4
-			P("TableTop", V(1.0, 0.06, 1.0), at(tx, y + 0.74, tz), C.trim)
-			P("TableLeg", V(0.1, 0.72, 0.1), at(tx, y + 0.36, tz), C.metal)
-			P("TableFoot", V(0.5, 0.04, 0.5), at(tx, y + 0.02, tz), C.metal)
+			-- A pedestal table: a disc on a column on a cast foot, with the
+			-- edge band that stops the top reading as a floating square.
+			P("TableTop", V(1.0, 0.04, 1.0), at(tx, y + 0.75, tz), C.trim)
+			P("TableEdge", V(1.04, 0.03, 1.04), at(tx, y + 0.72, tz), C.metal)
+			P("TableLeg", V(0.1, 0.7, 0.1), at(tx, y + 0.37, tz), C.metal)
+			P("TableFoot", V(0.44, 0.03, 0.44), at(tx, y + 0.03, tz), C.dark)
+			P("TableFootCap", V(0.2, 0.05, 0.2), at(tx, y + 0.06, tz), C.metal)
 			P("TableNumber", V(0.1, 0.12, 0.02), at(tx, y + 0.86, tz + 0.3), Color3.fromRGB(150, 60, 54))
 			for _, s in { -1, 1 } do
-				local seat = P("Seat", V(0.5, 0.07, 0.5), at(tx + s * 0.9, y + 0.45, tz), C.fabric)
-				seat.Color = Color3.fromRGB(rng:NextInteger(58, 92), rng:NextInteger(48, 70), rng:NextInteger(46, 66))
-				seat.Orientation = Vector3.new(0, rng:NextNumber(-25, 25), 0)
-				P("SeatBack", V(0.5, 0.55, 0.07), at(tx + s * 0.9, y + 0.75, tz + s * 0.22), seat.Color)
-				P("SeatPost", V(0.09, 0.45, 0.09), at(tx + s * 0.9, y + 0.22, tz), C.metal)
+				chair(tx + s * 0.9, y, tz, (if s > 0 then 90 else 270) + rng:NextNumber(-22, 22))
 			end
 			-- Something left on about half of them.
 			if rng:NextNumber() < 0.5 then
@@ -13081,9 +13178,18 @@ local function dressFoodCourt(cx, cz, y, h, w, d)
 	]]
 	for i, unit in COUNTERS do
 		local ux = cx - 5.4 + (i - 1) * 2.7
-		P("Servery", V(2.5, 1.1, 0.9), at(ux, y + 0.55, cz + 4.2), C.trim)
-		P("ServeryTop", V(2.6, 0.06, 1.0), at(ux, y + 1.13, cz + 4.2), C.metal)
-		P("ServeryShutter", V(2.4, 1.3, 0.08), at(ux, y + 1.8, cz + 4.45), C.shutter)
+		-- A servery: a kick, a carcass, a stainless top with a raised edge,
+		-- a sneeze screen and the shutter that comes down over all of it.
+		P("ServeryKick", V(2.4, 0.1, 0.8), at(ux, y + 0.05, cz + 4.2), C.dark)
+		P("Servery", V(2.5, 1.02, 0.9), at(ux, y + 0.61, cz + 4.2), C.trim)
+		P("ServeryTop", V(2.6, 0.05, 1.0), at(ux, y + 1.14, cz + 4.2), C.metal)
+		P("ServeryLip", V(2.6, 0.05, 0.04), at(ux, y + 1.18, cz + 3.71), C.metal)
+		P("SneezeScreen", V(2.4, 0.38, 0.03), at(ux, y + 1.38, cz + 3.82), C.glass).Transparency = 0.62
+		for _, sx in { -1, 1 } do
+			P("ScreenPost", V(0.04, 0.4, 0.04), at(ux + sx * 1.18, y + 1.38, cz + 3.82), C.metal)
+		end
+		P("ServeryHousing", V(2.56, 0.3, 0.3), at(ux, y + 2.55, cz + 4.4), C.metal)
+		P("ServeryShutter", V(2.4, 1.2, 0.06), at(ux, y + 1.8, cz + 4.45), C.shutter)
 		local board = P("MenuBoard", V(2.5, 0.85, 0.06), at(ux, y + 2.45, cz + 4.55), C.panel)
 		printed(board, Enum.NormalId.Front,
 			`<b>{unit[1]}</b>\n<font size="7">{unit[2]}</font>`,

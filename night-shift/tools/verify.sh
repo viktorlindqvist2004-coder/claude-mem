@@ -86,4 +86,32 @@ else
   echo "$smoke_out" | grep -E "FAIL|smoke:|beats," | sed 's/^/  /'
 fi
 
+# ── The place file ──────────────────────────────────────────────────────────
+#
+# NightShift.rbxlx is the no-setup route into the game, and it is a snapshot:
+# it does not change when a source file does. That is a footgun with a long
+# fuse. Somebody downloads it once, opens it every evening for a week, and
+# every change pushed in that week is invisible to them -- including a change
+# they asked for and are now looking straight at the old version of.
+#
+# So it is rebuilt here, on every verify, and if it cannot be rebuilt the
+# mismatch is stated rather than left to be discovered.
+echo "== place file =="
+stamp_of() { sed -n 's/.*Build\.COMMIT = "\([a-f0-9]*\)".*/\1/p' "$1" 2>/dev/null | head -1; }
+want=$(stamp_of src/shared/Build.luau)
+if command -v "${ROJO:-rojo}" >/dev/null 2>&1; then
+  "${ROJO:-rojo}" build -o NightShift.rbxlx >/dev/null 2>&1 \
+    && echo "  rebuilt NightShift.rbxlx at $want" \
+    || { echo "  COULD NOT REBUILD NightShift.rbxlx"; fail=1; }
+else
+  have=$(stamp_of NightShift.rbxlx)
+  if [ "$want" = "$have" ]; then
+    echo "  NightShift.rbxlx is current (rojo not installed, not rebuilt)"
+  else
+    echo "  STALE: NightShift.rbxlx carries $have, the source is $want"
+    echo "  rojo is not installed, so it could not be rebuilt. Run: rokit install"
+    fail=1
+  fi
+fi
+
 exit $fail

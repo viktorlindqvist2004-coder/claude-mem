@@ -523,66 +523,6 @@ function ctx.callFromTheDark(point: { number }, ruleId: string?)
 	end
 end
 
---[[
-	The lift.
-
-	Rule 3 is the only rule on Nora's list that describes a machine rather than a
-	behaviour: "There is no third floor. If the lift offers you a 3, take the
-	stairs." For four nights the panel has two buttons and a blank where a third
-	would be, and the blank is machined rather than drilled — somebody took a
-	button out.
-
-	From Night 4 the blank is lit and it says 3. Pressing it is the single
-	largest deliberate rule break available in the game, and it is available to
-	anybody who has read the sheet and wants to find out.
-]]
-local function buildLift(ctx)
-	local panel = World.first("LiftPanel")
-	local blank = World.first("LiftBlank")
-	local indicator = World.first("LiftIndicator")
-	if not panel then
-		return
-	end
-
-	World.prompt(panel, { action = "Call the lift", object = "Two buttons", distanceMetres = 2.5 }, function()
-		-- It is dead and has been since the mains were reconfigured in 1994.
-		if indicator then
-			SoundBank.play(SoundBank.PA_CLICK, indicator)
-		end
-		Hud.caption("[the panel clicks. nothing moves]", "the atrium")
-	end)
-
-	if Shift.night < 4 or not blank then
-		return
-	end
-
-	blank.Color = Color3.fromRGB(255, 26, 20)
-	blank.Material = Enum.Material.Neon
-	local glow = Instance.new("PointLight")
-	glow.Color = Color3.fromRGB(255, 26, 20)
-	glow.Brightness = 0.6
-	glow.Range = 3 * METRE
-	glow.Shadows = false
-	glow.Parent = blank
-
-	Hud.caption("[a third button is lit]", "the atrium")
-
-	World.prompt(blank, { action = "Press 3", object = "There is no third floor", distanceMetres = 2.5 }, function()
-		ctx.violation("no_third_floor")
-		if indicator then
-			SoundBank.play(SoundBank.STARTLE_SMALL, indicator)
-		end
-		Hud.caption("[the indicator reads 3. the car does not move]", "the atrium")
-		Hud.effect("startle", { shake = 0.55, flash = false, large = false })
-		--[[
-			It does not take you anywhere. The building does not need to: the
-			punishment for pressing it is that from here on the thing that has
-			been watching knows you have read the list and tested it.
-		]]
-		AttentionService.add(Config.ATTENTION_GAIN.FORBIDDEN_DOOR * 2)
-	end)
-end
-
 -- ── Running a night ─────────────────────────────────────────────────────────
 
 local NIGHT_MODULES: { [number]: any } = {}
@@ -686,7 +626,6 @@ function Shift.begin(night: number)
 
 	ctx.night = night
 	definition.build(ctx)
-	buildLift(ctx)
 	--[[
 		Start outside, at the staff door.
 

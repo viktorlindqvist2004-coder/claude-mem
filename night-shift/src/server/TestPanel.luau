@@ -203,25 +203,6 @@ command("Building", "board", "Put the board up", function()
 	Night5.theBoard(Shift.ctx)
 end)
 
-command("Building", "lift3", "Light the lift's third button", function()
-	local blank = World.first("LiftBlank")
-	if not blank then
-		Hud.effect("hint", "No lift in this build.")
-		return
-	end
-	blank.Color = Color3.fromRGB(255, 26, 20)
-	blank.Material = Enum.Material.Neon
-	if not blank:FindFirstChildWhichIsA("Light") then
-		local glow = Instance.new("PointLight")
-		glow.Color = Color3.fromRGB(255, 26, 20)
-		glow.Brightness = 0.6
-		glow.Range = 3 * Places.METRE
-		glow.Shadows = false
-		glow.Parent = blank
-	end
-	Hud.caption("[a third button is lit]", "the atrium")
-end)
-
 command("Building", "rebuild", "Rebuild the mall", function()
 	World.clearNodes()
 	local mall = World.mall()

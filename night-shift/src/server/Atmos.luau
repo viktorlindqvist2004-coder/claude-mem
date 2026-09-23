@@ -148,6 +148,22 @@ function Atmos.build()
 		end)
 	end
 
+	--[[
+		The tap. Every four to nine seconds, never on a beat, because a drip you
+		can predict stops being a drip and starts being a metronome.
+	]]
+	local tap = World.first("DrippingTap")
+	if tap then
+		task.spawn(function()
+			while tap.Parent do
+				task.wait(math.random(40, 90) / 10)
+				if tap.Parent then
+					SoundBank.play(SoundBank.DRIP, tap, 0.2)
+				end
+			end
+		end)
+	end
+
 	local outside = anchorAt("Weather", { Places.ROOM.LoadingDock.x, 2.0, Places.ROOM.LoadingDock.z - 5 })
 	local wind = SoundBank.make(SoundBank.WIND, outside, "Wind")
 	wind:Play()

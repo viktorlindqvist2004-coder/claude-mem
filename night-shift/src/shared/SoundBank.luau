@@ -93,6 +93,22 @@ SoundBank.WIND = {
 	rollOffMaxMetres = 50,
 }
 
+--[[
+	The tap in the toilets. It has been dripping since 1998 into a basin nobody
+	is going to turn off, and it is the second landmark sound in the building:
+	Rule 10 is about hearing the fountain, and this is the one that tells you
+	you are in the east arm without looking.
+]]
+SoundBank.DRIP = {
+	caption = "[a tap, dripping]",
+	id = "rbxasset://sounds/impact_water.mp3",
+	volume = 0.3,
+	speed = 1.6,
+	looped = false,
+	rollOffMinMetres = 1.5,
+	rollOffMaxMetres = 22,
+}
+
 -- The Great Clock. A digital display bolted to a movement that still turns.
 SoundBank.CLOCK_TICK = {
 	caption = "[the clock ticks]",

@@ -785,6 +785,9 @@ local ROOMS = {
 	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 3.2, { { "E", 0, 3.2 } } },
 	-- South face flush with the north side of the east arm.
 	{ "Fashion", 23, ARM_HALF + 4.5, 11.0, 9.0, 0, 3.2, { { "S", 0, 3.0 } } },
+	-- North face flush with the south side of the east arm. The wayfinding has
+	-- pointed at these since the building went up and there was nothing behind it.
+	{ "Toilets", 17, -(ARM_HALF + 3.0), 8.0, 6.0, 0, 2.7, { { "N", 0, 2.4 } } },
 	-- First floor: south face flush with the atrium's north balcony.
 	{ "FoodCourt", 0, ATRIUM_D / 2 + 5.0, 14.0, 10.0, FLOOR1, 2.9, { { "S", 0, 3.0 } } },
 	-- Basement.
@@ -1949,6 +1952,83 @@ end
 	The food court, on the balcony level. Six tables, a servery that closed in
 	1996, and a menu board with the prices still on it.
 ]]
+--[[
+	The toilets.
+
+	Every shopping centre has them, the wayfinding in the east arm has pointed at
+	them since the building went up, and they are one of the two or three best
+	rooms a horror game can be given: hard surfaces, a row of doors that are
+	either open or not, a wall of mirror, and a tap that has been dripping for
+	twenty-eight years into a basin nobody is going to turn off.
+
+	Nothing scripted happens in here on any of the five nights. That is
+	deliberate. A room the player is certain must contain something, that
+	contains nothing, is doing more work than most of the rooms that do.
+]]
+local function dressToilets(cx, cz, y)
+	-- Cubicles down the back wall, and one of the doors is open.
+	local rng = Random.new(2201)
+	for i = 0, 3 do
+		local px = cx - 2.7 + i * 1.5
+		P("CubicleWall", V(0.08, 2.0, 1.6), at(px - 0.75, y + 0.95, cz - 1.9), C.trim)
+		P("Pan", V(0.4, 0.42, 0.55), at(px, y + 0.21, cz - 2.3), Color3.fromRGB(196, 194, 188))
+		P("Cistern", V(0.5, 0.5, 0.22), at(px, y + 0.7, cz - 2.55), Color3.fromRGB(196, 194, 188))
+		local open = i == 2
+		local door = P("CubicleDoor", V(1.3, 1.85, 0.05), at(px, y + 1.0, cz - 1.1), C.trim)
+		if open then
+			door.Orientation = Vector3.new(0, 78, 0)
+			door.CFrame = at(px - 0.62, y + 1.0, cz - 1.65)
+			door.Orientation = Vector3.new(0, 78, 0)
+		end
+		P("CubicleLatch", V(0.06, 0.06, 0.04), at(px + 0.55, y + 1.05, cz - 1.07),
+			if open then Color3.fromRGB(120, 116, 110) else Color3.fromRGB(150, 60, 54))
+	end
+	P("CubicleWall", V(0.08, 2.0, 1.6), at(cx + 2.25, y + 0.95, cz - 1.9), C.trim)
+
+	--[[
+		The basins, the mirror, and the one tap that drips. Rule 10 is about
+		hearing the fountain; this is the other sound in the building that tells
+		you where you are without looking.
+	]]
+	P("Vanity", V(5.2, 0.12, 0.6), at(cx, y + 0.86, cz + 2.2), Color3.fromRGB(74, 72, 70))
+	P("VanityApron", V(5.2, 0.35, 0.1), at(cx, y + 0.66, cz + 1.94), Color3.fromRGB(66, 64, 62))
+	local mirror = P("ToiletMirror", V(5.0, 1.3, 0.03), at(cx, y + 1.75, cz + 2.44), Color3.fromRGB(86, 92, 102))
+	mirror.Reflectance = 0.55
+	mirror.Name = "ToiletMirror"
+	for i = -2, 2 do
+		P("Basin", V(0.52, 0.14, 0.42), at(cx + i * 1.1, y + 0.93, cz + 2.2), Color3.fromRGB(198, 196, 190))
+		P("Tap", V(0.05, 0.22, 0.05), at(cx + i * 1.1, y + 1.04, cz + 2.4), C.metal)
+	end
+	local drip = P("DrippingTap", V(0.05, 0.22, 0.05), at(cx + 2.2, y + 1.04, cz + 2.4), C.metal)
+	drip.Name = "DrippingTap"
+	P("Puddle", V(0.5, 0.02, 0.4), at(cx + 2.2, y + 0.01, cz + 1.7), Color3.fromRGB(28, 32, 36)).Reflectance = 0.45
+
+	P("HandDryer", V(0.3, 0.34, 0.22), at(cx - 3.4, y + 1.3, cz + 2.4), C.metal)
+	P("TowelDispenser", V(0.34, 0.4, 0.18), at(cx + 3.4, y + 1.35, cz + 2.4), C.metal)
+	litterBin(cx + 3.4, y, cz + 1.4)
+
+	-- The notice that is in every one of these rooms, and the tiling.
+	local notice = P("HygieneNotice", V(0.3, 0.4, 0.02), at(cx - 3.4, y + 1.8, cz + 2.42), Color3.fromRGB(190, 186, 172))
+	printed(notice, Enum.NormalId.Front, "NOW WASH\nYOUR HANDS",
+		{ color = Color3.fromRGB(52, 50, 48), density = 110 })
+	local checked = P("CleaningRota", V(0.24, 0.32, 0.02), at(cx + 2.8, y + 1.75, cz + 2.42), Color3.fromRGB(196, 192, 178))
+	printed(checked, Enum.NormalId.Front,
+		"CHECKED\n<font size=\"7\">22:00 ·  23:00 ·  00:00 ·\n01:00    02:00    03:00</font>",
+		{ color = Color3.fromRGB(56, 52, 50), scaled = false, density = 120 })
+
+	-- Floor and wall tiling, which is most of why this room feels different.
+	for i = -3, 3 do
+		P("TileJoint", V(0.03, 0.02, 5.6), at(cx + i * 1.1, y + 0.011, cz), Color3.fromRGB(58, 58, 58))
+	end
+	for i = -2, 2 do
+		P("TileJoint", V(7.6, 0.02, 0.03), at(cx, y + 0.011, cz + i * 1.1), Color3.fromRGB(58, 58, 58))
+	end
+	P("Dado", V(7.8, 0.12, 0.04), at(cx, y + 1.2, cz + 2.94), Color3.fromRGB(56, 66, 70))
+
+	bulkhead(cx, y + 2.4, cz)
+	bulkhead(cx - 2.4, y + 2.4, cz - 1.5)
+end
+
 local function dressFoodCourt(cx, cz, y)
 	for i = 0, 2 do
 		for j = 0, 1 do
@@ -1988,6 +2068,7 @@ local DRESS = {
 	SecurityOffice = dressSecurityOffice, Stockroom = dressStockroom,
 	Supermarket = dressSupermarket, Fashion = dressFashion,
 	LoadingDock = dressLoadingDock, ElectricalCupboard = dressElectricalCupboard,
+	Toilets = dressToilets,
 	PlantRoom = dressPlantRoom, CustodialStore = dressCustodial,
 	FoodCourt = dressFoodCourt,
 }
@@ -2344,7 +2425,7 @@ function Greybox.build()
 	scenicLift()
 	buildClock()
 	mallArm("N", 30, { { -1, 14, 3.2 } })
-	mallArm("E", 24, { { 1, 12, 3.0 } })
+	mallArm("E", 24, { { 1, 12, 3.0 }, { -1, 6, 2.4 } })
 	serviceCorridor()
 	buildFloorThree()
 	buildPoliceRoom()

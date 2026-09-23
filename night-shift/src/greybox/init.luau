@@ -1557,20 +1557,6 @@ local function awning(x, y, z, w, facing, seed)
 	P("AwningBar", if facing == "x" then V(0.06, 0.06, w) else V(w, 0.06, 0.06), at(x, y + 0.18, z), C.metal)
 end
 
--- Seating: two benches back to back with a bin and something growing between.
-local function seatingCluster(x, y, z, seed, alongX)
-	local rng = Random.new(seed)
-	for _, side in { -1, 1 } do
-		bench(x + (alongX and 0 or side * 0.75), y, z + (alongX and side * 0.75 or 0), alongX)
-	end
-	pottedTree(x + (alongX and 2.4 or 0), y, z + (alongX and 0 or 2.4), seed + 7)
-	litterBin(x + (alongX and -2.2 or 0.8), y, z + (alongX and 0.8 or -2.2))
-	if rng:NextNumber() < 0.5 then
-		P("Newspaper", V(0.3, 0.02, 0.22), at(x + rng:NextNumber(-0.6, 0.6), y + 0.49, z + rng:NextNumber(-0.4, 0.4)),
-			Color3.fromRGB(150, 146, 136))
-	end
-end
-
 --[[
 	Floor banding, properly. A mall floor is never one colour: it is a field with
 	a contrasting border two metres in from the shopfronts, and usually something
@@ -1584,16 +1570,6 @@ local function floorBorder(cx, cz, w, d, y, inset, colour)
 	end
 	for _, sx in { -1, 1 } do
 		P("FloorTrim", V(0.34, 0.02, d - inset * 2), at(cx + sx * (w / 2 - inset), y + 0.011, cz), c)
-	end
-end
-
-local function floorMedallion(x, z, y, r)
-	for i = 0, 3 do
-		local ring = P("FloorMedallion", V(r * 2 - i * 0.9, 0.02, r * 2 - i * 0.9), at(x, y + 0.012 + i * 0.001, z),
-			if i % 2 == 0 then Color3.fromRGB(70, 68, 66) else Color3.fromRGB(92, 88, 84))
-		ring.Shape = Enum.PartType.Cylinder
-		ring.Orientation = Vector3.new(0, 0, 90)
-		ring.Size = Vector3.new(st(0.02), st(r * 2 - i * 0.9), st(r * 2 - i * 0.9))
 	end
 end
 
@@ -1953,11 +1929,22 @@ local function buildAtrium()
 
 	-- The floor: a field, a border two metres in, and something geometric under
 	-- the void. This costs nothing and does more than any prop in the room.
+	--[[
+		A border, and a second one inside it under the void. That is all.
+
+		There was a seven-metre medallion here -- four concentric rings -- with
+		nine full-length stripes laid across it, and between them they drew a
+		fourteen-metre cartwheel on the floor of the one room you look down
+		into from the balcony. In a room lit by nothing but the clock it is the
+		brightest shape in the building and it is a wheel.
+
+		What a floor this size actually has is a field, a contrasting border in
+		from the shopfronts, and an inlay echoing the opening above it, so that
+		standing on the balcony you can see the shape of the void repeated
+		underneath. Two rectangles. It costs eight parts.
+	]]
 	floorBorder(0, 0, w, d, 0, 2.0)
-	floorMedallion(0, 0, 0, 7.0)
-	for i = -4, 4 do
-		P("FloorBand", V(0.4, 0.02, d - 0.6), at(i * 2.4, 0.01, 0), Color3.fromRGB(74, 72, 70))
-	end
+	floorBorder(0, 0, w, d, 0, 5.5, Color3.fromRGB(78, 74, 72))
 
 	speakerGrille(0, SOFF - 0.3, -7)
 	speakerGrille(0, SOFF - 0.3, 7)
@@ -2389,38 +2376,43 @@ local function mallArm(axis, length, entries)
 		return false
 	end
 
-	local f = 5.0
-	local piece = 0
-	while f < length - 3 do
+	--[[
+		Street furniture, in one line down the centre, on a fixed pitch.
+
+		It used to cycle through three arrangements every six metres -- a
+		kiosk, then a tree on one side and a bench on the other, then a
+		back-to-back seating cluster -- with the side picked by whichever one
+		had no shop door opposite it. Walk down it and every single object is
+		somewhere different from the last. That is not variety, it is the
+		definition of clutter, and it is what makes this corridor read as a
+		room things were dropped in.
+
+		A mall arm is not dressed that way. It is six metres wide with shops
+		down both sides, and everything standing in it stands in one line down
+		the middle at an even spacing, so the two walking routes either side
+		stay clear and straight the whole length. Planter, seat, planter, seat.
+
+		Kiosks and seating clusters are out of the arms altogether. A barrow
+		belongs in an atrium, where there is room to walk round it; in a six
+		metre corridor it is a roadblock.
+	]]
+	local PITCH = 8.0
+	local alongX = axis == "E"
+	local f, piece = PITCH, 0
+	while f < length - 4.0 do
 		local cx = (axis == "N") and 0 or start + f
 		local cz = (axis == "N") and start + f or 0
-		local shut = not (opposite(f, -1) or opposite(f, 1))
 		piece += 1
-		if piece % 3 == 1 then
-			if shut then
-				kiosk(cx, cz, (axis == "N") and 2.4 or 2.0, (axis == "N") and 2.0 or 2.4, 0, 9300 + piece, axis == "E")
+		if piece % 2 == 1 then
+			pottedTree(cx, 0, cz, 9400 + piece)
+		else
+			-- Two benches back to back, each facing its own side's shops.
+			for _, side in { -1, 1 } do
+				bench(cx + (alongX and 0 or side * 0.3), 0, cz + (alongX and side * 0.3 or 0), alongX)
 			end
-		elseif piece % 3 == 2 then
-			-- Tree on whichever side has no door opposite it, bench on the other.
-			local ts = if opposite(f, 1) then -1 elseif opposite(f, -1) then 1 else 1
-			if not opposite(f, ts) then
-				pottedTree(
-					(axis == "N") and ts * 1.9 or cx,
-					0,
-					(axis == "N") and cz or ts * 1.9,
-					9400 + piece)
-			end
-			if not opposite(f, -ts) then
-				bench(
-					(axis == "N") and -ts * 1.9 or cx,
-					0,
-					(axis == "N") and cz or -ts * 1.9,
-					axis == "E")
-			end
-		elseif shut then
-			seatingCluster(cx, 0, cz, 9500 + piece, axis == "E")
+			litterBin(cx + (alongX and 1.7 or 0), 0, cz + (alongX and 0 or 1.7))
 		end
-		f += 6.0
+		f += PITCH
 	end
 
 	--[[

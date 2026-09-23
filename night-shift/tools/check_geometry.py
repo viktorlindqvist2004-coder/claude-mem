@@ -41,7 +41,12 @@ VOLUMES = [
     ("floor 3",       -13,  13,   9.4,  13.4,  -10,  10),
     ("f3 stair",      -10.5,-7.5, 4.8,   9.6,    2.5, 9.5),
     ("police",         137, 143, -0.4,   3.1,   -3,   3),
-    ("car park",      -52, -8,   -0.6,   7.0,  -48, -20),
+    # Outside. Generous: a car park is the one place a prop is allowed to be
+    # anywhere, and the only thing worth catching out here is something that has
+    # ended up under the tarmac or floating above the lamps.
+    ("forecourt",     -40,  40,  -0.8,  13.0,  -50,  -8),
+    ("service yard",  -56, -12,  -0.8,   9.0,  -42,  -19),
+    ("facade",        -34,  34,  -0.8,  13.5,  -12,  -8),
     ("clock",          -3,   3,  -0.4,   6.6,   -3,   3),
 ]
 

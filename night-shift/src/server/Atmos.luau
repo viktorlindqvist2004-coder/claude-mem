@@ -164,6 +164,52 @@ function Atmos.build()
 	end
 
 	--[[
+		The sign.
+
+		One letter of NORTHLIGHT GALLERIA is dead and a second one is going: it
+		holds, then stutters for a second, then holds again, on no schedule. A
+		sign with a letter out is a building nobody maintains; a sign with a
+		letter *failing* is a building something is still drawing power in.
+
+		It is the largest light anywhere outside and the crew can see it through
+		the entrance glazing all five nights without ever being able to reach it.
+	]]
+	local letters = World.all("SignLetter")
+	if #letters > 3 then
+		local failing = letters[math.max(1, math.floor(#letters * 0.35))]
+		local light = nil
+		for _, glow in World.all("SignGlow") do
+			if math.abs(glow.Position.X - failing.Position.X) < 6 * Places.METRE then
+				light = glow:FindFirstChildWhichIsA("Light")
+				break
+			end
+		end
+		local lit, dark = failing.Color, Color3.fromRGB(34, 22, 22)
+		task.spawn(function()
+			while failing.Parent do
+				task.wait(math.random(60, 240) / 10)
+				for _ = 1, math.random(2, 7) do
+					if not failing.Parent then
+						return
+					end
+					failing.Color = dark
+					failing.Material = Enum.Material.SmoothPlastic
+					if light then
+						light.Brightness = 0.2
+					end
+					task.wait(math.random(3, 11) / 100)
+					failing.Color = lit
+					failing.Material = Enum.Material.Neon
+					if light then
+						light.Brightness = 0.9
+					end
+					task.wait(math.random(4, 18) / 100)
+				end
+			end
+		end)
+	end
+
+	--[[
 		The tap. Every four to nine seconds, never on a beat, because a drip you
 		can predict stops being a drip and starts being a metronome.
 	]]

@@ -31,9 +31,9 @@
 
 local Build = {}
 
-Build.COMMIT = "fddfa2d"
-Build.SUMMARY = "Fix what the screenshots showed: XIT, the red wash, low ceilings, first person"
-Build.WHEN = "23 Sep 11:47"
+Build.COMMIT = "bf6edd9"
+Build.SUMMARY = "Make the shutters actual roller shutters"
+Build.WHEN = "23 Sep 11:50"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -3195,6 +3195,52 @@ function Atmos.build()
 				task.wait(math.random(12, 25))
 				if cold.Parent then
 					cold.Volume = SoundBank.FREEZER.volume
+				end
+			end
+		end)
+	end
+
+	--[[
+		The sign.
+
+		One letter of NORTHLIGHT GALLERIA is dead and a second one is going: it
+		holds, then stutters for a second, then holds again, on no schedule. A
+		sign with a letter out is a building nobody maintains; a sign with a
+		letter *failing* is a building something is still drawing power in.
+
+		It is the largest light anywhere outside and the crew can see it through
+		the entrance glazing all five nights without ever being able to reach it.
+	]]
+	local letters = World.all("SignLetter")
+	if #letters > 3 then
+		local failing = letters[math.max(1, math.floor(#letters * 0.35))]
+		local light = nil
+		for _, glow in World.all("SignGlow") do
+			if math.abs(glow.Position.X - failing.Position.X) < 6 * Places.METRE then
+				light = glow:FindFirstChildWhichIsA("Light")
+				break
+			end
+		end
+		local lit, dark = failing.Color, Color3.fromRGB(34, 22, 22)
+		task.spawn(function()
+			while failing.Parent do
+				task.wait(math.random(60, 240) / 10)
+				for _ = 1, math.random(2, 7) do
+					if not failing.Parent then
+						return
+					end
+					failing.Color = dark
+					failing.Material = Enum.Material.SmoothPlastic
+					if light then
+						light.Brightness = 0.2
+					end
+					task.wait(math.random(3, 11) / 100)
+					failing.Color = lit
+					failing.Material = Enum.Material.Neon
+					if light then
+						light.Brightness = 0.9
+					end
+					task.wait(math.random(4, 18) / 100)
 				end
 			end
 		end)
@@ -8736,6 +8782,62 @@ local function speakerGrille(x, y, z)
 	P("SpeakerGrille", V(0.28, 0.02, 0.28), at(x, y - 0.06, z), C.dark)
 end
 
+--[[
+	A neon sign.
+
+	Individual letters, because that is the only way one of them can be out —
+	and one of them being out is the entire reason to build it letter by letter
+	rather than print a word on a box. The dead one is not broken, it is dark:
+	the tube is there, it is just not lit, and it has not been lit for a while.
+
+	Each letter is its own emitter face; the light comes from four floods across
+	the run rather than one per letter, because nineteen PointLights on a sign
+	nobody stands under is nineteen too many.
+]]
+local function neonSign(text, x, y, z, letterH, colour, deadIndex)
+	colour = colour or RED
+	local letterW = letterH * 0.62
+	local gap = letterH * 0.12
+	local count = #text
+	local total = count * letterW + (count - 1) * gap
+
+	P("SignBacking", V(total + letterH * 0.8, letterH * 1.7, 0.3), at(x, y, z + 0.18), Color3.fromRGB(22, 20, 20))
+	P("SignTray", V(total + letterH * 1.0, 0.16, 0.5), at(x, y - letterH * 0.9, z + 0.1), C.metal)
+	P("SignTray", V(total + letterH * 1.0, 0.16, 0.5), at(x, y + letterH * 0.9, z + 0.1), C.metal)
+
+	for i = 1, count do
+		local ch = text:sub(i, i)
+		local lx = x - total / 2 + letterW / 2 + (i - 1) * (letterW + gap)
+		if ch ~= " " then
+			local dead = i == deadIndex
+			local letter = P("SignLetter", V(letterW, letterH, 0.12), at(lx, y, z),
+				if dead then Color3.fromRGB(34, 22, 22) else colour,
+				if dead then Enum.Material.SmoothPlastic else Enum.Material.Neon)
+			letter.CastShadow = false
+			for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+				Surfaces.label(letter, face, ch, {
+					lit = not dead,
+					color = if dead then Color3.fromRGB(58, 44, 42) else Color3.fromRGB(255, 214, 208),
+					font = Enum.Font.GothamBold,
+					density = 90,
+				})
+			end
+			-- The mounting pins every letter of these is hung off.
+			P("SignPin", V(0.05, 0.05, 0.22), at(lx, y + letterH * 0.3, z + 0.16), C.metal)
+			P("SignPin", V(0.05, 0.05, 0.22), at(lx, y - letterH * 0.3, z + 0.16), C.metal)
+		end
+	end
+
+	-- Four floods across the run, not one per letter.
+	for i = 0, 3 do
+		local gx = x - total / 2 + (total / 3) * i
+		local glow = P("SignGlow", V(0.2, 0.2, 0.2), at(gx, y, z - 0.6), colour, Enum.Material.Neon)
+		glow.Transparency = 1
+		glow.CanCollide = false
+		bulb(glow, colour, 0.9, 16)
+	end
+end
+
 -- ── Mall furniture ──────────────────────────────────────────────────────────
 --[[
 	The things that make a shopping centre look like a shopping centre rather
@@ -10746,51 +10848,235 @@ end
 	you leave through it. The car park is empty except for one car that has been
 	there since 1998.
 ]]
+--[[
+	Outside.
+
+	It was a rectangle of tarmac with one car on it, and the building it belonged
+	to had no front — you could stand in the atrium looking out through a
+	shuttered entrance at nothing, which is a worse advertisement for the place
+	being real than having no windows at all.
+
+	So: a frontage with the centre's name on it, a canopy, a forecourt with
+	painted bays and lamp columns, a trolley shelter, a service yard round the
+	back where the dock is, and a perimeter. All of it is seen from inside
+	through the entrance glazing, which is the only reason any of it is here —
+	the crew never go out until the fifth night, and the whole point is that they
+	can see the car park the entire time and cannot reach it.
+]]
 local function buildExterior()
-	P("Tarmac", V(40, 0.3, 26), at(-30, -0.16, -35), Color3.fromRGB(46, 46, 48))
-	-- The staff door is in the loading dock's south wall. It is how you come in
-	-- at ten and, five nights later, how you get out.
-	local door = P("StaffDoor", V(1.2, 2.1, 0.15), at(-31, 1.05, -22), C.metal)
-	door.Name = "StaffDoor"
-	exitSign(-31, 2.5, -22.25, "S")
+	local frontZ = -ATRIUM_D / 2
 
-	for i = 0, 3 do
-		P("Bay", V(0.12, 0.02, 5.0), at(-40 + i * 3.0, 0.02, -35), Color3.fromRGB(120, 118, 110))
+	-- ── The frontage ────────────────────────────────────────────────────────
+	--[[
+		A brick elevation with a glazed entrance bay in the middle of it, taller
+		than the atrium behind so the building has a parapet and a roofline
+		rather than stopping where its ceiling does.
+	]]
+	local facadeH = ATRIUM_H + 1.6
+	for _, side in { -1, 1 } do
+		P("Facade", V(15, facadeH, 0.5), at(side * 15.5, facadeH / 2, frontZ - 0.3), Color3.fromRGB(78, 62, 54))
+		P("FacadeBand", V(15, 0.6, 0.7), at(side * 15.5, facadeH - 0.9, frontZ - 0.35), C.trim)
+		P("Parapet", V(15, 0.9, 0.9), at(side * 15.5, facadeH + 0.45, frontZ - 0.3), Color3.fromRGB(64, 52, 46))
 	end
-	-- Walt's car. It has been in the same bay for twenty-eight years.
-	local car = P("CarBody", V(1.8, 0.9, 4.2), at(-37, 0.65, -35), Color3.fromRGB(58, 62, 68))
-	car.Name = "WaltsCar"
-	P("CarRoof", V(1.6, 0.7, 2.2), at(-37, 1.4, -35.2), Color3.fromRGB(52, 56, 62))
-
-	local lamp = P("CarParkLamp", V(0.5, 0.2, 0.5), at(-34, 6.0, -31), Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
-	P("LampPost", V(0.18, 6.0, 0.18), at(-34, 3.0, -31), C.metal)
-	bulb(lamp, Color3.fromRGB(255, 172, 80), 1.2, 14)
-
-	-- Walt's wheels, his windows, and twenty-eight years of weather on them.
-	for _, sx in { -1, 1 } do
-		for _, sz in { -1, 1 } do
-			P("Wheel", V(0.25, 0.6, 0.6), at(-37 + sx * 0.85, 0.3, -35 + sz * 1.4), C.dark)
+	P("Parapet", V(9, 1.4, 0.9), at(0, facadeH + 0.7, frontZ - 0.3), Color3.fromRGB(64, 52, 46))
+	-- Brick courses, so it is masonry and not a painted slab.
+	for i = 1, 11 do
+		for _, side in { -1, 1 } do
+			P("BrickCourse", V(14.8, 0.04, 0.06), at(side * 15.5, i * 0.85, frontZ - 0.56), Color3.fromRGB(58, 46, 40))
 		end
 	end
-	P("Windscreen", V(1.5, 0.5, 0.1), at(-37, 1.3, -36.2), Color3.fromRGB(44, 48, 54))
-	P("Rear", V(1.5, 0.5, 0.1), at(-37, 1.3, -33.9), Color3.fromRGB(44, 48, 54))
+
+	--[[
+		The sign.
+
+		Nineteen letters in red neon across the parapet, lit, and visible from
+		the far end of the car park — the thing that makes the building a
+		shopping centre rather than a warehouse, and the only large light
+		anywhere outside.
+
+		The second L of GALLERIA is out. Nobody has been up there to change it,
+		and it reads NORTHLIGHT GAL ERIA from the forecourt, which is both funny
+		and the exact kind of small wrongness the whole game is made of. It is
+		also a callback nobody will catch until the fifth night: on the
+		opening-day tape in 1986, Halvard cannot pronounce the word either.
+	]]
+	neonSign("NORTHLIGHT GALLERIA", 0, facadeH + 0.7, frontZ - 1.0, 1.5, RED, 15)
+	P("SignRail", V(20, 0.12, 0.12), at(0, facadeH - 0.5, frontZ - 1.0), C.metal)
+	for _, sx in { -1, 1 } do
+		P("SignStay", V(0.1, 2.0, 0.1), at(sx * 8, facadeH - 0.3, frontZ - 0.95), C.metal)
+	end
+
+	-- The entrance canopy, and the columns holding it up.
+	P("Canopy", V(12, 0.4, 4.5), at(0, 3.6, frontZ - 2.4), C.trim)
+	P("CanopyFascia", V(12, 0.7, 0.2), at(0, 3.3, frontZ - 4.6), C.metal)
+	P("CanopyGlass", V(11.4, 0.08, 4.0), at(0, 3.44, frontZ - 2.4), C.glass).Transparency = 0.6
+	for _, sx in { -1, 1 } do
+		P("CanopyColumn", V(0.28, 3.4, 0.28), at(sx * 5.2, 1.7, frontZ - 4.3), C.metal)
+		P("CanopyFoot", V(0.5, 0.15, 0.5), at(sx * 5.2, 0.07, frontZ - 4.3), C.trim)
+	end
+
+	-- A second set of doors outside the shutter, so the entrance has a lobby.
+	for _, sx in { -1, 1 } do
+		P("OuterDoor", V(1.45, 2.3, 0.1), at(sx * 0.8, 1.15, frontZ - 0.9), C.metal)
+		P("OuterDoorGlass", V(1.2, 1.9, 0.04), at(sx * 0.8, 1.25, frontZ - 0.94), Color3.fromRGB(30, 34, 40)).Transparency = 0.5
+		P("DoorHandle", V(0.05, 0.9, 0.05), at(sx * 0.15, 1.1, frontZ - 0.97), C.metal)
+	end
+	local hours = P("OpeningHours", V(0.5, 0.7, 0.03), at(2.2, 1.6, frontZ - 0.93), Color3.fromRGB(180, 176, 166))
+	printed(hours, Enum.NormalId.Back,
+		"OPENING HOURS\n<font size=\"7\">MON-SAT 9-5.30\nSUN CLOSED</font>",
+		{ color = Color3.fromRGB(48, 46, 44), scaled = false, density = 130 })
+
+	-- ── The forecourt ───────────────────────────────────────────────────────
+	P("Forecourt", V(64, 0.3, 38), at(0, -0.16, frontZ - 21), Color3.fromRGB(44, 44, 46))
+	P("Pavement", V(64, 0.18, 4), at(0, -0.06, frontZ - 3), Color3.fromRGB(96, 94, 90))
+	P("Kerb", V(64, 0.22, 0.4), at(0, 0.05, frontZ - 5.1), Color3.fromRGB(122, 118, 112))
+
+	--[[
+		Bays. Six rows of them with a line between every pair, which is the thing
+		that makes a stretch of tarmac read as a car park instead of a road.
+	]]
+	for row = 0, 1 do
+		local bz = frontZ - 11 - row * 13
+		for i = -8, 8 do
+			P("BayLine", V(0.14, 0.02, 5.0), at(i * 2.7, 0.02, bz), Color3.fromRGB(150, 146, 136))
+		end
+		P("AisleLine", V(48, 0.02, 0.12), at(0, 0.02, bz - 3.2), Color3.fromRGB(120, 116, 108))
+	end
+	-- Two disabled bays by the doors, wider, with the symbol painted on.
+	for i = -1, 0 do
+		P("BayLine", V(0.14, 0.02, 5.0), at(-24 + i * 3.6, 0.02, frontZ - 11), Color3.fromRGB(150, 146, 136))
+		P("BaySymbol", V(1.4, 0.02, 1.4), at(-25.8 + i * 3.6, 0.021, frontZ - 11), Color3.fromRGB(70, 96, 140))
+	end
+
+	-- Lamp columns down both aisles. Tall, sodium, and the only light out here.
+	for i = -2, 2 do
+		for row = 0, 1 do
+			local lx, lz = i * 11, frontZ - 8 - row * 13
+			P("LampColumn", V(0.22, 7.0, 0.22), at(lx, 3.5, lz), C.metal)
+			P("LampBase", V(0.45, 0.4, 0.45), at(lx, 0.2, lz), Color3.fromRGB(62, 60, 58))
+			P("LampArm", V(1.2, 0.14, 0.14), at(lx + 0.6, 7.0, lz), C.metal)
+			local head = P("CarParkLamp", V(0.8, 0.22, 0.45), at(lx + 1.2, 6.94, lz),
+				Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
+			head.CastShadow = false
+			bulb(head, Color3.fromRGB(255, 176, 92), 1.1, 22)
+		end
+	end
+
+	-- A trolley shelter, and trolleys in it, because that is what is out here.
+	P("ShelterRoof", V(7, 0.16, 3), at(20, 2.5, frontZ - 9), C.metal)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			P("ShelterPost", V(0.12, 2.5, 0.12), at(20 + sx * 3.3, 1.25, frontZ - 9 + sz * 1.3), C.metal)
+		end
+	end
+	P("ShelterRail", V(6.6, 0.08, 0.08), at(20, 0.7, frontZ - 10.2), C.metal)
+	for i = 0, 5 do
+		trolley(18 + i * 0.7, 0, frontZ - 9, 0)
+	end
+
+	-- Planting islands, a bin, and a smoking shelter's worth of clutter.
+	for _, sx in { -1, 1 } do
+		P("Island", V(6, 0.22, 2.4), at(sx * 27, 0.09, frontZ - 17), Color3.fromRGB(96, 94, 90))
+		planterBed(sx * 27, 0.2, frontZ - 17, 5.0, true, 7700 + sx)
+		pottedTree(sx * 27 - 1.8, 0.2, frontZ - 17, 7710 + sx)
+		pottedTree(sx * 27 + 1.8, 0.2, frontZ - 17, 7720 + sx)
+	end
+	litterBin(-6, 0, frontZ - 6)
+	litterBin(6, 0, frontZ - 6)
+	P("CigaretteBin", V(0.26, 0.9, 0.26), at(7.4, 0.45, frontZ - 6), C.metal)
+
+	-- Cars. Four of them, none of which has moved in a very long time.
+	local rng = Random.new(6161)
+	for i, spot in { { -25.8, frontZ - 11 }, { 8.1, frontZ - 24 }, { -13.5, frontZ - 24 }, { 24.3, frontZ - 11 } } do
+		local cx, cz = spot[1], spot[2]
+		local tint = Color3.fromRGB(rng:NextInteger(40, 78), rng:NextInteger(42, 76), rng:NextInteger(46, 84))
+		P("CarBody", V(1.8, 0.9, 4.2), at(cx, 0.65, cz), tint)
+		P("CarRoof", V(1.6, 0.72, 2.2), at(cx, 1.4, cz - 0.2), tint)
+		P("Windscreen", V(1.5, 0.5, 0.1), at(cx, 1.32, cz - 1.25), Color3.fromRGB(38, 42, 50))
+		P("Rear", V(1.5, 0.5, 0.1), at(cx, 1.32, cz + 0.9), Color3.fromRGB(38, 42, 50))
+		for _, sx in { -1, 1 } do
+			for _, sz in { -1, 1 } do
+				P("Wheel", V(0.25, 0.6, 0.6), at(cx + sx * 0.85, 0.3, cz + sz * 1.4), C.dark)
+			end
+		end
+		if i == 1 then
+			P("BayNumber", V(0.5, 0.02, 0.5), at(cx, 0.022, cz + 2.1), Color3.fromRGB(150, 146, 136))
+		end
+	end
+
+	-- The entrance barrier and the sign nobody reads.
+	P("BarrierPost", V(0.2, 1.1, 0.2), at(-30, 0.55, frontZ - 30), C.metal)
+	P("BarrierArm", V(5.0, 0.12, 0.12), at(-27.4, 1.0, frontZ - 30), Color3.fromRGB(150, 60, 54))
+	local notice = P("CarParkNotice", V(1.1, 1.4, 0.06), at(-32, 1.6, frontZ - 30), Color3.fromRGB(56, 60, 68))
+	printed(notice, Enum.NormalId.Back,
+		"NORTHLIGHT GALLERIA\nCUSTOMER PARKING\n\n<font size=\"7\">3 HOURS MAXIMUM\nVEHICLES LEFT OVERNIGHT\nWILL BE REMOVED</font>",
+		{ color = Color3.fromRGB(190, 188, 184), scaled = false, density = 90 })
+	P("NoticePost", V(0.1, 1.6, 0.1), at(-32, 0.8, frontZ - 30), C.metal)
 
 	-- Puddles, because it has been raining on this car park since 1998.
-	for i = 0, 5 do
-		local pud = P("Puddle", V(2.4 + i * 0.4, 0.02, 1.6), at(-44 + i * 4.2, 0.03, -33 + (i % 3) * 3.0),
+	for i = 0, 7 do
+		local pud = P("Puddle", V(2.4 + i * 0.4, 0.02, 1.8), at(-28 + i * 7.5, 0.03, frontZ - 14 - (i % 3) * 5),
 			Color3.fromRGB(26, 28, 32))
 		pud.Reflectance = 0.5
 		pud.CanCollide = false
 	end
 
-	-- Palisade fence along the far side, and one trolley that got out.
-	for i = 0, 25 do
-		P("Palisade", V(0.08, 2.2, 0.08), at(-50 + i * 1.6, 1.1, -47), C.metal)
+	-- Perimeter, at the far edge, so the forecourt has an end to it.
+	for i = 0, 40 do
+		P("Palisade", V(0.08, 2.2, 0.08), at(-34 + i * 1.7, 1.1, frontZ - 36), C.metal)
 	end
-	P("FenceRail", V(40, 0.08, 0.08), at(-30, 2.0, -47), C.metal)
-	P("FenceRail", V(40, 0.08, 0.08), at(-30, 0.5, -47), C.metal)
-	trolley(-24, 0, -40, 63)
-	P("Kerb", V(40, 0.14, 0.3), at(-30, 0.07, -22.4), Color3.fromRGB(122, 118, 112))
+	P("FenceRail", V(68, 0.08, 0.08), at(0, 2.0, frontZ - 36), C.metal)
+	P("FenceRail", V(68, 0.08, 0.08), at(0, 0.5, frontZ - 36), C.metal)
+
+	-- ── The service yard ────────────────────────────────────────────────────
+	--[[
+		Round the back, where the dock is. This is the one the crew actually use:
+		they come in through the staff door at ten and, on the fifth night, they
+		go out through it.
+	]]
+	local dockX, dockZ = SERVICE_WEST - 5.5, -22
+	P("Yard", V(26, 0.3, 16), at(dockX, -0.16, dockZ - 8), Color3.fromRGB(46, 46, 48))
+	local door = P("StaffDoor", V(1.2, 2.2, 0.15), at(dockX - 2.5, 1.1, dockZ), C.metal)
+	door.Name = "StaffDoor"
+	P("StaffDoorFrame", V(1.5, 2.4, 0.2), at(dockX - 2.5, 1.2, dockZ - 0.03), C.trim)
+	exitSign(dockX - 2.5, 2.8, dockZ - 0.3, "S")
+
+	-- The ramp up to the dock, the bollards, and the bin store.
+	P("DockRamp", V(5.0, 0.6, 4.0), at(dockX + 2.5, 0.3, dockZ - 2.4), Color3.fromRGB(52, 52, 54))
+	for i = -2, 2 do
+		P("Bollard", V(0.2, 1.0, 0.2), at(dockX + i * 1.6, 0.5, dockZ - 5.2), Color3.fromRGB(140, 120, 50))
+	end
+	P("BinStore", V(5.0, 2.0, 3.0), at(dockX - 8, 1.0, dockZ - 5), C.block)
+	P("BinStoreRoof", V(5.4, 0.16, 3.4), at(dockX - 8, 2.05, dockZ - 5), C.metal)
+	for i = 0, 2 do
+		P("Bin", V(1.1, 1.2, 0.95), at(dockX - 9.6 + i * 1.5, 0.6, dockZ - 5), C.trim)
+		P("BinLid", V(1.14, 0.08, 1.0), at(dockX - 9.6 + i * 1.5, 1.24, dockZ - 5), C.dark)
+	end
+
+	-- Walt's car, in bay 2, where it has been since 1998.
+	local walt = P("CarBody", V(1.8, 0.9, 4.2), at(dockX - 6, 0.65, dockZ - 11), Color3.fromRGB(58, 62, 68))
+	walt.Name = "WaltsCar"
+	P("CarRoof", V(1.6, 0.72, 2.2), at(dockX - 6, 1.4, dockZ - 11.2), Color3.fromRGB(52, 56, 62))
+	P("Windscreen", V(1.5, 0.5, 0.1), at(dockX - 6, 1.32, dockZ - 12.25), Color3.fromRGB(38, 42, 50))
+	P("Rear", V(1.5, 0.5, 0.1), at(dockX - 6, 1.32, dockZ - 10.1), Color3.fromRGB(38, 42, 50))
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			P("Wheel", V(0.25, 0.6, 0.6), at(dockX - 6 + sx * 0.85, 0.3, dockZ - 11 + sz * 1.4), C.dark)
+		end
+	end
+	for i = 0, 3 do
+		P("BayLine", V(0.14, 0.02, 5.0), at(dockX - 8.4 + i * 2.7, 0.02, dockZ - 11), Color3.fromRGB(150, 146, 136))
+	end
+	local bay2 = P("BayNumber", V(0.4, 0.02, 0.4), at(dockX - 6, 0.022, dockZ - 8.6), Color3.fromRGB(150, 146, 136))
+	printed(bay2, Enum.NormalId.Top, "2", { color = Color3.fromRGB(40, 40, 42), density = 60 })
+
+	local yardLamp = P("CarParkLamp", V(0.7, 0.22, 0.4), at(dockX + 4, 6.0, dockZ - 8),
+		Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
+	yardLamp.CastShadow = false
+	P("LampColumn", V(0.2, 6.0, 0.2), at(dockX + 4.6, 3.0, dockZ - 8), C.metal)
+	bulb(yardLamp, Color3.fromRGB(255, 176, 92), 1.2, 20)
+	trolley(dockX + 7, 0, dockZ - 13, 63)
+	P("Kerb", V(26, 0.14, 0.3), at(dockX, 0.07, dockZ - 0.4), Color3.fromRGB(122, 118, 112))
 end
 
 -- ── Lighting ────────────────────────────────────────────────────────────────

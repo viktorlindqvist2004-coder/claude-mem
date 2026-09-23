@@ -12,9 +12,9 @@
 
 local Build = {}
 
-Build.COMMIT = "fddfa2d"
-Build.SUMMARY = "Fix what the screenshots showed: XIT, the red wash, low ceilings, first person"
-Build.WHEN = "23 Sep 11:47"
+Build.COMMIT = "bf6edd9"
+Build.SUMMARY = "Make the shutters actual roller shutters"
+Build.WHEN = "23 Sep 11:50"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 

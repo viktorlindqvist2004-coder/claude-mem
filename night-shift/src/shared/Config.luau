@@ -91,8 +91,8 @@ Config.FLASHLIGHT = {
 		tension, it is a broken tool. A torch shows you a room's worth at a
 		time and makes you choose which room's worth.
 	]]
-	WIDE = { angle = 72, range = 24, brightness = 1.9, drainPerSecond = 0.8 },
-	FOCUS = { angle = 24, range = 42, brightness = 3.0, drainPerSecond = 2.4 },
+	WIDE = { angle = 58, range = 40, brightness = 4.2, drainPerSecond = 0.8 },
+	FOCUS = { angle = 19, range = 75, brightness = 7.5, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),

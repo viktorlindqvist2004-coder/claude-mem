@@ -152,6 +152,71 @@ function Tubes.blackout()
 	end
 end
 
+--[[
+	The EXIT boxes, flickering.
+
+	Once the glass goes these are the only light in the building, and steady
+	red rectangles are furniture. A box that stutters once in a while is a
+	building with something wrong with its wiring, which is a very different
+	thing to be standing in.
+
+	Two rules, both about restraint:
+
+	  * **Random, not periodic.** A flicker on a timer is a metronome: a
+	    player works out the interval inside two minutes and stops seeing it.
+	    Each box runs its own clock, seeded differently, so no two are ever in
+	    step and there is no rhythm to learn.
+	  * **Rarely.** Forty to a hundred and forty seconds between events, so
+	    most of the time nothing happens at all. The ones that land are worth
+	    something precisely because the building has been steady.
+
+	It never fully kills the box. Being left with no light at all happens in
+	this game because a night decided it, never because a timer came up.
+]]
+local exits: { BasePart } = {}
+local flickering = false
+
+function Tubes.watchExits()
+	table.clear(exits)
+	for _, box in World.all("ExitSign") do
+		table.insert(exits, box)
+	end
+	if flickering then
+		return #exits
+	end
+	flickering = true
+
+	for i, box in exits do
+		task.spawn(function()
+			local rng = Random.new(os.clock() * 1000 + i * 977)
+			local light = lightOf(box)
+			local onColour = box.Color
+			local onBrightness = if light then light.Brightness else 0.5
+			-- Stagger the first, so four boxes never start together.
+			task.wait(rng:NextNumber(10, 90))
+			while box.Parent do
+				task.wait(rng:NextNumber(40, 140))
+				if not box.Parent then
+					return
+				end
+				for _ = 1, rng:NextInteger(2, 5) do
+					box.Color = Color3.fromRGB(58, 12, 9)
+					if light then
+						light.Brightness = onBrightness * 0.12
+					end
+					task.wait(rng:NextNumber(0.03, 0.11))
+					box.Color = onColour
+					if light then
+						light.Brightness = onBrightness
+					end
+					task.wait(rng:NextNumber(0.04, 0.22))
+				end
+			end
+		end)
+	end
+	return #exits
+end
+
 -- Everything back on, at the top of a night and nowhere else. Once the glass
 -- has gone, only a new night puts it back.
 function Tubes.relight()

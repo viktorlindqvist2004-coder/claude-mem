@@ -679,6 +679,7 @@ function Shift.begin(night: number)
 	]]
 	Tubes.build()
 	Tubes.relight()
+	Tubes.watchExits()
 
 	Dread.night = night
 	Dread.start()

@@ -268,7 +268,21 @@ local function emergencyExit(x, y, z, facing)
 		else (if ox > 0 then Enum.NormalId.Right else Enum.NormalId.Left),
 		"↥", { color = Color3.fromRGB(236, 244, 238), density = 90 })
 
-	exitSign(x, y + 2.52, z, facing)
+	--[[
+		The box looks back into the building, not out of it.
+
+		`facing` here means which way is *out* -- it is what puts the door leaf
+		and the push bar on the right side of the frame. exitSign's `facing`
+		means which way the box *looks*, and those are opposites: a fire door
+		at the north end of a corridor opens north, and its sign has to be
+		read by somebody walking up that corridor from the south.
+
+		They were passed through as the same value, so all four boxes in the
+		building faced into the wall behind them and were invisible from every
+		point a player could stand. That is why nobody has ever seen one.
+	]]
+	local back = ({ N = "S", S = "N", E = "W", W = "E" })[facing] or "S"
+	exitSign(x, y + 2.52, z, back)
 end
 
 local function shutterCurtain(name, sizeM, cf, closedSizeM, closedCf)
@@ -1300,13 +1314,29 @@ local function kiosk(x, z, w, d, y, seed, alongX)
 		end
 	end
 	P("KioskCanopy", V(w + 0.3, 0.12, d + 0.3), at(x, y + h, z), C.trim)
+	-- The valance under the canopy edge, which is what gives a kiosk a
+	-- silhouette from across an atrium rather than a flat lid.
+	for _, sx in { -1, 1 } do
+		P("KioskValance", V(0.05, 0.16, d + 0.3), at(x + sx * (w / 2 + 0.14), y + h - 0.12, z), C.trim)
+		P("KioskValance", V(w + 0.3, 0.16, 0.05), at(x, y + h - 0.12, z + sx * (d / 2 + 0.14)), C.trim)
+	end
 	local fascia = P("KioskFascia", V(w + 0.3, 0.34, 0.06), at(x, y + h - 0.26, z - d / 2 - 0.16), C.panel)
 	printed(fascia, Enum.NormalId.Front, KIOSK_NAMES[rng:NextInteger(1, #KIOSK_NAMES)],
 		{ color = Color3.fromRGB(128, 124, 126), density = 52, font = Enum.Font.GothamBold })
 
 	-- Shuttered for the night, most of them.
+	--[[
+		Shuttered for the night, most of them -- and a shutter is a housing it
+		rolls into, guides either side and a curtain between them, not a plate
+		hanging in an opening.
+	]]
 	if rng:NextNumber() < 0.7 then
-		P("KioskShutter", V(w - 0.1, h - 1.2, 0.06), at(x, y + 1.75, z + (alongX and d / 2 or d / 2) - 0.08), C.shutter)
+		local sz = z + d / 2 - 0.1
+		P("KioskShutterBox", V(w - 0.06, 0.24, 0.22), at(x, y + h - 0.3, sz), C.metal)
+		for _, e in { -1, 1 } do
+			P("KioskShutterGuide", V(0.07, h - 1.3, 0.14), at(x + e * (w / 2 - 0.12), y + 1.72, sz), C.trim)
+		end
+		shutterCurtain("KioskShutter", V(w - 0.28, 0.07, h - 1.45), at(x, y + 1.68, sz))
 	end
 	P("KioskStool", V(0.34, 0.06, 0.34), at(x + w / 2 + 0.5, y + 0.6, z), C.fabric)
 	P("KioskStoolPost", V(0.07, 0.6, 0.07), at(x + w / 2 + 0.5, y + 0.3, z), C.metal)
@@ -1677,11 +1707,39 @@ local function buildAtrium()
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if
 		everybody has walked past it four nights running knowing it cannot.
 	]]
-	P("FountainKerb", V(4.6, 0.5, 4.6), at(0, 0.25, 5.5), C.trim)
-	P("FountainCap", V(4.0, 0.14, 4.0), at(0, 0.55, 5.5), C.metal)
-	P("FountainGrille", V(0.9, 0.03, 0.9), at(0, 0.63, 5.5), C.dark)
-	P("FountainPlinth", V(0.8, 0.9, 0.8), at(0, 1.0, 5.5), C.trim)
-	P("FountainBowl", V(1.5, 0.22, 1.5), at(0, 1.5, 5.5), C.metal)
+	--[[
+		Eight sides, not four. A square pool is a paddling pool; a shopping
+		centre fountain from 1986 is a faceted basin with a kerb wide enough
+		to sit on, a tiled lining, a dry bed with the drain still in it, and a
+		bowl on a plinth in the middle with nothing coming out of it.
+
+		The chipboard capping is the detail that does the work: somebody
+		screwed a lid over it in 1991 and nobody has taken it off, and you can
+		see the screws.
+	]]
+	for i = 0, 7 do
+		local a = i * math.pi / 4 + math.pi / 8
+		local seg = P("FountainKerb", V(1.95, 0.46, 0.4),
+			at(math.cos(a) * 2.2, 0.23, 5.5 + math.sin(a) * 2.2), C.trim)
+		seg.Orientation = Vector3.new(0, -math.deg(a), 0)
+		local cap = P("FountainCapping", V(1.95, 0.06, 0.44),
+			at(math.cos(a) * 2.2, 0.49, 5.5 + math.sin(a) * 2.2), C.wood)
+		cap.Orientation = Vector3.new(0, -math.deg(a), 0)
+	end
+	P("FountainBed", V(3.9, 0.12, 3.9), at(0, 0.09, 5.5), Color3.fromRGB(64, 68, 70))
+	P("FountainDrain", V(0.3, 0.02, 0.3), at(0, 0.16, 5.5 - 1.2), C.dark)
+	-- The lid somebody screwed over it in 1991, and the screws.
+	P("FountainCap", V(3.7, 0.1, 3.7), at(0, 0.5, 5.5), Color3.fromRGB(104, 84, 60))
+	for i = 0, 7 do
+		local a = i * math.pi / 4
+		P("CapScrew", V(0.06, 0.03, 0.06), at(math.cos(a) * 1.6, 0.56, 5.5 + math.sin(a) * 1.6), C.metal)
+	end
+	P("FountainGrille", V(0.8, 0.03, 0.8), at(0, 0.57, 5.5), C.dark)
+	P("FountainPlinth", V(0.7, 0.85, 0.7), at(0, 0.98, 5.5), C.trim)
+	P("FountainStem", V(0.22, 0.5, 0.22), at(0, 1.5, 5.5), C.metal)
+	P("FountainBowl", V(1.4, 0.16, 1.4), at(0, 1.76, 5.5), C.metal)
+	P("FountainBowlLip", V(1.5, 0.05, 1.5), at(0, 1.85, 5.5), C.trim)
+	P("FountainJet", V(0.09, 0.14, 0.09), at(0, 1.9, 5.5), C.metal)
 	for _, sx in { -1, 1 } do
 		bench(sx * 3.8, 0, 5.5, false)
 	end
@@ -2347,9 +2405,18 @@ local function serviceCorridor()
 	end
 	wallWithDoors(x - SERVICE_W / 2, z0, z1, "z", 0, h, doors, "W", C.block)
 	P("Service_EndN", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, z1), C.block)
-	-- The way out of the back of house, at the north end where the corridor
-	-- stops. It is the nearest door to the staff room and nobody uses it.
+	--[[
+		A way out at each end of the corridor.
+
+		The north one is the nearest door to the staff room -- you come out of
+		it, turn right, and it is there. The south one is at the far end past
+		the stockroom, which is the longest sightline in the building: from
+		the staff room door you can see a red rectangle forty metres away and
+		nothing at all in between.
+	]]
 	emergencyExit(x, 0, z1 - 0.2, "N")
+	P("Service_EndS", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, sz1 + 0.1), C.block)
+	emergencyExit(x, 0, sz1 + 0.25, "S")
 
 	--[[
 		The link through to the atrium. Ten metres of blockwork at right angles
@@ -2413,7 +2480,18 @@ local function serviceCorridor()
 	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.21, -6.1), C.wood)
 	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -16), C.trim)
 	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -15.3), C.trim)
-	P("FloorSign", V(0.3, 0.5, 0.3), at(against, 0.25, 1), Color3.fromRGB(180, 96, 30))
+	--[[
+		A wet floor sign: two hinged panels standing in an A, not a small
+		coloured box on the floor. The gap between the panels is the whole
+		silhouette -- it is the only reason you read it as a sign rather than
+		as something somebody left there.
+	]]
+	for _, e in { -1, 1 } do
+		local panel = P("FloorSign", V(0.34, 0.62, 0.03), at(against, 0.31, 1 + e * 0.1),
+			Color3.fromRGB(196, 132, 34))
+		panel.Orientation = Vector3.new(e * 13, 0, 0)
+	end
+	P("FloorSignHinge", V(0.34, 0.03, 0.2), at(against, 0.6, 1), Color3.fromRGB(150, 96, 26))
 
 	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do

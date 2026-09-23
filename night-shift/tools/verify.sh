@@ -75,6 +75,9 @@ python3 tools/check_targets.py | sed 's/^/  /' || fail=1
 echo "== placement =="
 python3 tools/check_placement.py | sed 's/^/  /' || true
 
+echo "== overlap =="
+python3 tools/check_overlap.py | sed 's/^/  /' || fail=1
+
 echo "== smoke =="
 # Keep the whole output when it fails. Filtering to the lines a passing run
 # prints meant a crash showed up as an empty section, which reads like a pass.

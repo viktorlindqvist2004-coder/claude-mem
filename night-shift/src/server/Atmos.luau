@@ -139,33 +139,18 @@ function Atmos.build()
 		end
 	end
 
-	local cents = Config.HUM.DETUNE_CENTS / 1200
-	for i, part in (if audible(SoundBank.HUM) then fixtures else {}) do
-		local failing = (i % math.floor(1 / Config.HUM.FAILING_FIXTURE_RATIO)) == 0
-		local slot = if failing then SoundBank.HUM_FAILING else SoundBank.HUM
-		local sound = SoundBank.make(slot, part, "Hum")
-		sound.PlaybackSpeed = (slot.speed or 1) * (1 + detune(part) * cents)
-		sound:SetAttribute("BaseVolume", slot.volume)
-		sound:Play()
-		table.insert(emitters, sound)
+	--[[
+		And nothing per fitting.
 
-		if failing then
-			-- The irregular buzz: it drops out and comes back, on its own clock.
-			task.spawn(function()
-				while sound.Parent do
-					task.wait(math.random(4, 15) + math.random())
-					if not sound.Parent then
-						return
-					end
-					sound.Volume = 0
-					task.wait(math.random() * 0.4 + 0.05)
-					if sound.Parent then
-						sound.Volume = slot.volume
-					end
-				end
-			end)
-		end
-	end
+		The bed above replaced forty-five emitters, but the loop that made them
+		was left in underneath it, so both were running: one quiet bed under the
+		whole building, plus a pitched-up buzz on every EXIT box with a 16 m
+		rolloff, plus an irregular dropout buzz on one in every few. Stand in a
+		small room with a box over the door -- the gents, the dead end of an arm
+		-- and that is a sound that never stops and has no source you can see.
+
+		The bed is the whole hum. There is nothing else on the fittings.
+	]]
 
 	-- ── The tape ────────────────────────────────────────────────────────────
 	-- Ceiling speakers in the atrium and both arms. Never back of house: crossing

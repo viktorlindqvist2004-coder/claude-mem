@@ -1795,34 +1795,68 @@ local function buildAtrium()
 		screwed a lid over it in 1991 and nobody has taken it off, and you can
 		see the screws.
 	]]
+	--[[
+		It has to read as a fountain, and it did not. It read as a wheel.
+
+		The shape was an octagonal kerb 4.4 m across with a flat chipboard lid
+		screwed over the whole thing and a stem and a bowl sticking up out of
+		the middle of the lid. Eight segments round a rim with a hub in the
+		centre is a cartwheel, and in a room lit by nothing but the clock the
+		silhouette is all you get. Twice now it has been reported as "a big
+		wheel or whatever it is", which is the only review that matters.
+
+		What makes a fountain read is the basin -- the fact that the floor
+		inside the kerb is lower than the floor you are standing on, and that
+		you can see down into it. So the lid comes off. You get a kerb you
+		could sit on, a tiled lining, a dry bed thirty centimetres down with
+		the drain still in it and the leaves that have blown in since, and the
+		tiered bowl above. Nobody mistakes that for anything else.
+
+		The lid was a nice idea -- somebody boarded it over in 1991 and you
+		could see the screws -- but a nice idea that hides the only part of the
+		object that identifies it is not worth the object.
+	]]
 	for i = 0, 7 do
 		local a = i * math.pi / 4 + math.pi / 8
+		local deg = -math.deg(a)
 		local seg = P("FountainKerb", V(1.95, 0.46, 0.4),
 			at(math.cos(a) * 2.2, 0.23, 5.5 + math.sin(a) * 2.2), C.trim)
-		seg.Orientation = Vector3.new(0, -math.deg(a), 0)
+		seg.Orientation = Vector3.new(0, deg, 0)
+		-- The capping you sit on, and the tiled lining below it on the inside.
 		local cap = P("FountainCapping", V(1.95, 0.06, 0.44),
-			at(math.cos(a) * 2.2, 0.49, 5.5 + math.sin(a) * 2.2), C.wood)
-		cap.Orientation = Vector3.new(0, -math.deg(a), 0)
+			at(math.cos(a) * 2.2, 0.49, 5.5 + math.sin(a) * 2.2), C.trim)
+		cap.Orientation = Vector3.new(0, deg, 0)
+		local lining = P("FountainLining", V(1.8, 0.34, 0.05),
+			at(math.cos(a) * 1.98, 0.3, 5.5 + math.sin(a) * 1.98), Color3.fromRGB(96, 116, 120))
+		lining.Orientation = Vector3.new(0, deg, 0)
 	end
-	P("FountainBed", V(3.9, 0.12, 3.9), at(0, 0.09, 5.5), Color3.fromRGB(64, 68, 70))
-	P("FountainDrain", V(0.3, 0.02, 0.3), at(0, 0.16, 5.5 - 1.2), C.dark)
-	-- The lid somebody screwed over it in 1991, and the screws.
-	P("FountainCap", V(3.7, 0.1, 3.7), at(0, 0.5, 5.5), Color3.fromRGB(104, 84, 60))
-	for i = 0, 7 do
-		local a = i * math.pi / 4
-		P("CapScrew", V(0.06, 0.03, 0.06), at(math.cos(a) * 1.6, 0.56, 5.5 + math.sin(a) * 1.6), C.metal)
+	-- The bed, thirty centimetres down, with the drain in the middle of it.
+	P("FountainBed", V(3.6, 0.12, 3.6), at(0, 0.09, 5.5), Color3.fromRGB(70, 82, 86))
+	P("FountainDrain", V(0.34, 0.03, 0.34), at(0, 0.16, 5.5), C.dark)
+	P("FountainDrainRim", V(0.44, 0.02, 0.44), at(0, 0.15, 5.5), C.metal)
+	--[[
+		What has blown in since 1998. Four leaves and a cup, at angles, because
+		a dry basin with nothing in it is a paddling pool.
+	]]
+	local litter = Random.new(4410)
+	for i = 1, 7 do
+		local a = litter:NextNumber(0, math.pi * 2)
+		local r = litter:NextNumber(0.5, 1.7)
+		local leaf = P("FountainLeaf", V(litter:NextNumber(0.1, 0.18), 0.02, litter:NextNumber(0.08, 0.14)),
+			at(math.cos(a) * r, 0.17, 5.5 + math.sin(a) * r), Color3.fromRGB(88, 74, 52))
+		leaf.Orientation = Vector3.new(0, litter:NextNumber(0, 180), 0)
 	end
-	P("FountainGrille", V(0.8, 0.03, 0.8), at(0, 0.57, 5.5), C.dark)
-	P("FountainPlinth", V(0.7, 0.85, 0.7), at(0, 0.98, 5.5), C.trim)
-	P("FountainStem", V(0.22, 0.5, 0.22), at(0, 1.5, 5.5), C.metal)
-	P("FountainBowl", V(1.4, 0.16, 1.4), at(0, 1.76, 5.5), C.metal)
-	P("FountainBowlLip", V(1.5, 0.05, 1.5), at(0, 1.85, 5.5), C.trim)
-	P("FountainJet", V(0.09, 0.14, 0.09), at(0, 1.9, 5.5), C.metal)
-	for _, sx in { -1, 1 } do
-		bench(sx * 3.8, 0, 5.5, false)
-	end
-	pottedTree(-3.2, 0, 7.4, 4401)
-	pottedTree(3.2, 0, 7.4, 4402)
+	local cup = P("FountainCup", V(0.16, 0.2, 0.16), at(-1.1, 0.25, 5.5 + 0.8), Color3.fromRGB(176, 172, 164))
+	cup.Orientation = Vector3.new(0, 24, 74)
+	-- The tiered centre: plinth, stem, and two bowls.
+	P("FountainPlinth", V(0.8, 0.5, 0.8), at(0, 0.4, 5.5), C.trim)
+	P("FountainStem", V(0.26, 0.7, 0.26), at(0, 0.98, 5.5), C.metal)
+	P("FountainBowl", V(1.6, 0.14, 1.6), at(0, 1.3, 5.5), C.metal)
+	P("FountainBowlLip", V(1.7, 0.06, 1.7), at(0, 1.38, 5.5), C.trim)
+	P("FountainStem", V(0.18, 0.5, 0.18), at(0, 1.66, 5.5), C.metal)
+	P("FountainBowl", V(0.9, 0.12, 0.9), at(0, 1.94, 5.5), C.metal)
+	P("FountainBowlLip", V(1.0, 0.05, 1.0), at(0, 2.0, 5.5), C.trim)
+	P("FountainJet", V(0.09, 0.16, 0.09), at(0, 2.08, 5.5), C.metal)
 
 	--[[
 		Nearly empty, on purpose.
@@ -1863,12 +1897,26 @@ local function buildAtrium()
 	kiosk(-8.0, -5.4, 2.2, 2.6, 0, 5502, false)
 	kiosk(8.2, -5.4, 2.2, 2.6, 0, 5503, false)
 
-	-- Seating round the fountain: three benches and the bins beside them.
-	bench(-4.4, 0, 5.4, true)
-	bench(4.4, 0, 5.4, true)
-	bench(0, 0, 8.4, true)
-	litterBin(-6.8, 0, 5.4)
-	litterBin(6.8, 0, 5.4)
+	--[[
+		Seating round the fountain, in one place and facing it.
+
+		There were five benches here and they were placed twice: the fountain
+		put two down the sides of itself and this list put three more round it,
+		and two of each pair crossed at right angles inside each other. A bench
+		with another bench through it is the thing that reads as "huller om
+		buller" from across a room, because it is not a thing at all.
+
+		One each side facing in, and the bins beside them instead of out in
+		open floor. The old third bench sat 60 cm in front of the north
+		doorway, which is the one place in this room nobody can put anything.
+	]]
+	bench(-3.6, 0, 5.5, false)
+	bench(3.6, 0, 5.5, false)
+	bench(0, 0, 2.3, true)
+	litterBin(-5.3, 0, 5.5)
+	litterBin(5.3, 0, 5.5)
+	pottedTree(-3.4, 0, 8.2, 4401)
+	pottedTree(3.4, 0, 8.2, 4402)
 
 	-- Planting at the corners, out of the way of everything.
 	pottedTree(-8.6, 0, 8.0, 6603)
@@ -1914,7 +1962,7 @@ local function buildAtrium()
 	picture(w / 2 - 0.12, 2.3, -1.5, "x", 7701)
 	picture(w / 2 - 0.12, 2.3, 2.5, "x", 7702)
 	picture(-w / 2 + 0.12, 2.3, 6.5, "x", 7703)
-	P("CigaretteBin", V(0.26, 0.9, 0.26), at(-w / 2 + 0.7, 0.45, -7.0), C.metal)
+	P("CigaretteBin", V(0.26, 0.9, 0.26), at(-w / 2 + 0.6, 0.45, -8.3), C.metal)
 
 	-- Seasonal stock that was never taken down.
 	P("BannerHanger", V(w - 4, 0.08, 0.08), at(0, h - 1.2, -2), C.metal)
@@ -1923,9 +1971,16 @@ local function buildAtrium()
 		printed(banner, Enum.NormalId.Front, ({ "WINTER", "SALE", "NOW ON" })[i + 2],
 			{ color = Color3.fromRGB(140, 128, 120), density = 40, font = Enum.Font.GothamBold })
 	end
-	-- Trolleys by the entrance, which is where trolleys end up.
-	trolley(-9.0, 0, -d / 2 + 2.6, 34)
-	trolley(-9.0, 0, -d / 2 + 3.6, 20)
+	--[[
+		Trolleys by the entrance, nested against the west wall.
+
+		They were at x -9.0, and the west kiosk stands from -9.1 to -6.9, so
+		both of them were parked inside it -- one trolley three-quarters of the
+		way through a shuttered unit, at an angle. Nested and square now, the
+		way an abandoned trolley bay looks.
+	]]
+	trolley(-10.3, 0, -d / 2 + 1.6, 0)
+	trolley(-10.3, 0, -d / 2 + 2.2, 0)
 
 	-- The floor: a field, a border two metres in, and something geometric under
 	-- the void. This costs nothing and does more than any prop in the room.
@@ -2823,15 +2878,23 @@ local function dressCameraRoom(cx, cz, y, h, w, d)
 	local east = cx + w / 2 - WALL / 2
 
 	-- ── West wall: the bench, the monitors, the rack ────────────────────────
-	local bx = west + 0.42
-	P("DeskTop", V(0.8, 0.05, 2.6), at(bx, y + 0.75, cz), C.wood)
-	P("DeskEdge", V(0.83, 0.02, 2.63), at(bx, y + 0.725, cz), C.trim)
-	P("DeskApron", V(0.6, 0.09, 2.4), at(bx, y + 0.67, cz), C.wood)
+	--[[
+		The bench stops short of the rack, and the monitors with it.
+
+		Both ran the full 2.6 m centred on the room while the rack stood at the
+		north end of the same wall, so the worktop and the top right monitor
+		were 14 cm inside it. The run is 2.2 m and sits a quarter of a metre
+		south, which clears the rack and still leaves the chair where it was.
+	]]
+	local bx, bz = west + 0.42, cz - 0.25
+	P("DeskTop", V(0.8, 0.05, 2.2), at(bx, y + 0.75, bz), C.wood)
+	P("DeskEdge", V(0.83, 0.02, 2.23), at(bx, y + 0.725, bz), C.trim)
+	P("DeskApron", V(0.6, 0.09, 2.0), at(bx, y + 0.67, bz), C.wood)
 	for _, sz in { -1, 1 } do
-		P("DeskLeg", V(0.05, 0.66, 0.05), at(bx + 0.28, y + 0.33, cz + sz * 1.15), C.metal)
-		P("DeskLeg", V(0.05, 0.66, 0.05), at(bx - 0.28, y + 0.33, cz + sz * 1.15), C.metal)
+		P("DeskLeg", V(0.05, 0.66, 0.05), at(bx + 0.28, y + 0.33, bz + sz * 0.95), C.metal)
+		P("DeskLeg", V(0.05, 0.66, 0.05), at(bx - 0.28, y + 0.33, bz + sz * 0.95), C.metal)
 	end
-	chair(bx + 0.95, y, cz - 0.1, 270)
+	chair(bx + 0.95, y, bz, 270)
 
 	--[[
 		Six monitors, stacked two high and three across, on the wall above the
@@ -2839,7 +2902,7 @@ local function dressCameraRoom(cx, cz, y, h, w, d)
 		detail that makes the other four worth looking at.
 	]]
 	for i = 0, 5 do
-		local mz = cz - 1.0 + (i % 3) * 1.0
+		local mz = bz - 0.75 + (i % 3) * 0.75
 		local my = y + 1.28 + math.floor(i / 3) * 0.66
 		P("MonitorBracket", V(0.1, 0.06, 0.4), at(west + 0.12, my - 0.24, mz), C.metal)
 		P("Monitor", V(0.44, 0.44, 0.58), at(west + 0.32, my, mz), C.panel)
@@ -3312,8 +3375,23 @@ local function dressFashion(cx, cz, y, h, w, d)
 	]]
 	for i = 0, 3 do
 		local fx = cx - 3.5 + i * 1.4
-		P("FittingRoom", V(1.3, 2.3, 1.3), at(fx, y + 1.15, cz + 3.7), C.fabric)
+		--[[
+			A cubicle, not a solid block.
+
+			It was a filled 1.3 m box with the stool, the mirror and the hooks
+			placed inside it, which means none of them were visible and all of
+			them were inside the wall. And the one thing this room is for --
+			seeing whether there are feet under a curtain -- cannot happen in
+			front of a solid cube.
+
+			Back, top and two sides. The inside is now inside.
+		]]
+		P("FittingBack", V(1.3, 2.3, 0.06), at(fx, y + 1.15, cz + 4.32), C.fabric)
+		P("FittingTop", V(1.3, 0.06, 1.3), at(fx, y + 2.27, cz + 3.7), C.fabric)
 		P("FittingWall", V(0.05, 2.3, 1.3), at(fx + 0.65, y + 1.15, cz + 3.7), C.trim)
+		if i == 0 then
+			P("FittingWall", V(0.05, 2.3, 1.3), at(fx - 0.65, y + 1.15, cz + 3.7), C.trim)
+		end
 		P("CurtainRail", V(1.34, 0.05, 0.05), at(fx, y + 2.14, cz + 3.05), C.metal)
 		-- Curtain hung short of the floor, with folds in it.
 		for k = -2, 2 do
@@ -3716,7 +3794,13 @@ local function dressToilets(cx, cz, y, h, w, d)
 		the room at three in the morning.
 	]]
 	local vx = cx - w / 2 + 0.45   -- worktop centre, 45 cm off the west wall
-	local vz = cz + 0.9            -- north of centre, clear of the cubicles
+	--[[
+		0.45, not 0.9. The east arm's shopfront glazing is recessed, and the
+		recess reaches half a metre past the line of the toilets' north wall --
+		so at 0.9 the far end of the worktop, the mirror and the end basin were
+		all inside it.
+	]]
+	local vz = cz + 0.45           -- north of centre, clear of the cubicles
 	P("Vanity", V(0.6, 0.12, 3.6), at(vx, y + 0.86, vz), Color3.fromRGB(74, 72, 70))
 	P("VanityApron", V(0.1, 0.35, 3.6), at(vx + 0.26, y + 0.66, vz), Color3.fromRGB(66, 64, 62))
 	local mirror = P("ToiletMirror", V(0.03, 1.3, 3.4), at(cx - w / 2 + 0.09, y + 1.75, vz), Color3.fromRGB(86, 92, 102))
@@ -3730,7 +3814,7 @@ local function dressToilets(cx, cz, y, h, w, d)
 	drip.Name = "DrippingTap"
 	P("Puddle", V(0.4, 0.02, 0.5), at(vx + 0.5, y + 0.01, vz - 1.6), Color3.fromRGB(28, 32, 36)).Reflectance = 0.45
 
-	P("HandDryer", V(0.22, 0.34, 0.3), at(cx - w / 2 + 0.15, y + 1.3, vz + 2.1), C.metal)
+	P("HandDryer", V(0.22, 0.34, 0.3), at(cx - w / 2 + 0.15, y + 1.3, vz + 1.9), C.metal)
 	P("TowelDispenser", V(0.18, 0.4, 0.34), at(cx - w / 2 + 0.15, y + 1.35, vz - 2.4), C.metal)
 	litterBin(cx - w / 2 + 0.5, y, vz - 2.4)
 
@@ -3750,7 +3834,18 @@ local function dressToilets(cx, cz, y, h, w, d)
 	for i = -2, 2 do
 		P("TileJoint", V(7.6, 0.02, 0.03), at(cx, y + 0.011, cz + i * 1.1), Color3.fromRGB(58, 58, 58))
 	end
-	P("Dado", V(7.8, 0.12, 0.04), at(cx, y + 1.2, cz + 2.94), Color3.fromRGB(56, 66, 70))
+	--[[
+		The tile border, in two pieces with the doorway between them.
+
+		It was one part 7.8 m long across the north wall, and the door is in
+		the middle of the north wall, so it ran straight through the opening at
+		waist height. A plank nailed across the entrance to the gents.
+	]]
+	for _, seg in { { cx - 3.9, cx - 1.29 }, { cx + 1.29, cx + 3.9 } } do
+		P("Dado", V(seg[2] - seg[1], 0.12, 0.04), at((seg[1] + seg[2]) / 2, y + 1.2, cz + 2.94),
+			Color3.fromRGB(56, 66, 70))
+	end
+	P("Dado", V(0.04, 0.12, 5.8), at(cx + 3.94, y + 1.2, cz), Color3.fromRGB(56, 66, 70))
 
 	bulkhead(cx, y + h - 0.3, cz)
 	bulkhead(cx - 2.4, y + h - 0.3, cz - 1.5)
@@ -3839,7 +3934,8 @@ local function dressFoodCourt(cx, cz, y, h, w, d)
 		P("BinHole", V(0.5, 0.06, 0.5), at(cx + 6.2 + sx, y + 1.12, cz + 3.0), C.dark)
 	end
 	P("Condiments", V(0.5, 0.3, 0.4), at(cx + 1.8, y + 1.28, cz + 4.2), C.trim)
-	P("DrinksFridge", V(1.0, 1.9, 0.7), at(cx + 6.4, y + 0.95, cz + 4.2), C.metal)
+	-- Against the east wall. It was in the end servery counter, 75 cm in.
+	P("DrinksFridge", V(0.7, 1.9, 1.0), at(cx + 6.4, y + 0.95, cz + 1.2), C.metal)
 	local chiller = P("FridgeGlass", V(0.9, 1.6, 0.04), at(cx + 6.4, y + 1.0, cz + 3.86), C.glass)
 	chiller.Transparency = 0.5
 	pottedTree(cx - 6.6, y, cz - 3.4, 7002)
@@ -4231,7 +4327,8 @@ local function buildEnvelope(_facadeH)
 	for _, lx in { -1, 1 } do
 		P("RoofLeg", V(0.14, 1.0, 0.14), at(0.5 + lx * 0.8, top + 0.5, 6.8), C.metal)
 	end
-	P("LiftOverrun", V(2.8, 2.4, 2.8), at(-6.2, top + 1.2, -7.0), Color3.fromRGB(64, 52, 46))
+	-- The tank room. It was the lift overrun, on a building with no lift.
+	P("RoofPlant", V(2.8, 2.4, 2.8), at(-6.2, top + 1.2, -7.0), Color3.fromRGB(64, 52, 46))
 	P("RoofDuct", V(0.8, 0.8, 7.0), at(-4.0, top + 0.5, -1.0), C.metal)
 end
 

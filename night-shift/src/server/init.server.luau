@@ -172,7 +172,20 @@ Players.PlayerAdded:Connect(function(player)
 		if humanoid then
 			humanoid.WalkSpeed = WALK
 		end
-		torchFor(player)
+		--[[
+			The torch starts on.
+
+			The only light in this building is the EXIT boxes, so a player who
+			spawns with it off sees a black screen and has to guess. There is
+			nothing gained by making them find out that F exists while standing
+			in the dark — the fear here is what the torch shows you, not the
+			three seconds before you work out you have one.
+		]]
+		local record = torchFor(player)
+		if record then
+			record.on = true
+			record.light.Brightness = Config.FLASHLIGHT.WIDE.brightness
+		end
 	end)
 end)
 Players.PlayerRemoving:Connect(function(player)

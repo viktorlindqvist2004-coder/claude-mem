@@ -12,9 +12,9 @@
 
 local Build = {}
 
-Build.COMMIT = "f96da4f"
-Build.SUMMARY = "Stop the arms repeating themselves"
-Build.WHEN = "23 Sep 02:08"
+Build.COMMIT = "cf4c6ba"
+Build.SUMMARY = "Point every light effect at the circuit that is actually on"
+Build.WHEN = "23 Sep 02:09"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 

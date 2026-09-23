@@ -31,9 +31,9 @@
 
 local Build = {}
 
-Build.COMMIT = "f96da4f"
-Build.SUMMARY = "Stop the arms repeating themselves"
-Build.WHEN = "23 Sep 02:08"
+Build.COMMIT = "cf4c6ba"
+Build.SUMMARY = "Point every light effect at the circuit that is actually on"
+Build.WHEN = "23 Sep 02:09"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -2894,7 +2894,20 @@ Players.PlayerAdded:Connect(function(player)
 		if humanoid then
 			humanoid.WalkSpeed = WALK
 		end
-		torchFor(player)
+		--[[
+			The torch starts on.
+
+			The only light in this building is the EXIT boxes, so a player who
+			spawns with it off sees a black screen and has to guess. There is
+			nothing gained by making them find out that F exists while standing
+			in the dark — the fear here is what the torch shows you, not the
+			three seconds before you work out you have one.
+		]]
+		local record = torchFor(player)
+		if record then
+			record.on = true
+			record.light.Brightness = Config.FLASHLIGHT.WIDE.brightness
+		end
 	end)
 end)
 Players.PlayerRemoving:Connect(function(player)
@@ -11861,7 +11874,8 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
-local torchOn = false
+-- It starts on; the server turns it on at spawn. See init.server.luau.
+local torchOn = true
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return

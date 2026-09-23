@@ -744,7 +744,8 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
-local torchOn = false
+-- It starts on; the server turns it on at spawn. See init.server.luau.
+local torchOn = true
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return

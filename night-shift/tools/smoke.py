@@ -34,7 +34,9 @@ ORDER = [
     ("Places", "src/shared/Places.luau"),
     ("SoundBank", "src/shared/SoundBank.luau"),
     ("Net", "src/shared/Net.luau"),
+    ("VoiceBank", "src/shared/VoiceBank.luau"),
     ("NightScript", "src/shared/NightScript.luau"),
+    ("Surfaces", "src/greybox/Surfaces.luau"),
     ("Greybox", "src/greybox/init.luau"),
     ("Objectives", "src/server/Objectives.luau"),
     ("Hud", "src/server/Hud.luau"),
@@ -53,6 +55,7 @@ ORDER = [
     ("Night3", "src/server/Nights/Night3.luau"),
     ("Night4", "src/server/Nights/Night4.luau"),
     ("Night5", "src/server/Nights/Night5.luau"),
+    ("TestPanel", "src/server/TestPanel.luau"),
 ]
 
 REQUIRE = re.compile(r"require\([^;\n]*?\.([A-Za-z_][A-Za-z_0-9]*)\)")
@@ -70,6 +73,15 @@ __M.Greybox.build()
 __M.World.reindex()
 
 local Shift = __M.Shift
+
+-- The panel listens on a remote; in the harness we call its handler directly.
+local function remotes_test_fire(id)
+	local Net = __M.Net.get()
+	local signal = Net.Test.OnServerEvent
+	if signal and signal.Fire then
+		signal:Fire(FAKE_PLAYER, id)
+	end
+end
 for n = 1, 5 do
 	Shift.register(n, __M[`Night{n}`])
 end
@@ -125,6 +137,24 @@ for n = 1, 5 do
 		end
 	end
 end
+
+--[[
+	And the test panel: every command it offers, fired once. The panel exists so
+	that the fifth night's last beat is one click away instead of an hour of
+	play, which only helps if every button on it works.
+]]
+print("test panel")
+local menu = __M.TestPanel.menu()
+for _, row in menu do
+	try(`panel "{row.label}"`, function()
+		remotes_test_fire(row.id)
+	end)
+end
+print(`  {#menu} commands`)
+
+-- A warn is a failure too: the panel pcalls its own commands, so a broken one
+-- would otherwise scroll past as a line of text and a clean exit code.
+failures += WARNINGS()
 
 print(failures == 0 and "smoke: clean" or `smoke: {failures} failures`)
 if failures > 0 then

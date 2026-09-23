@@ -17,6 +17,8 @@
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local NightScript = require(Shared.NightScript)
+
+local Hud = require(script.Parent.Parent.Hud)
 local Places = require(Shared.Places)
 local RuleBook = require(Shared.RuleBook)
 local SoundBank = require(Shared.SoundBank)
@@ -129,15 +131,18 @@ local function tapeTwo(ctx)
 	ctx.prompt(cart, { action = "Look in the cart", object = "Custodial", distanceMetres = 2.5 }, function(player)
 		ctx.advance("find_tape")
 		ctx.clue("C06")
-		ctx.sheet(player, "TAPE 2 — LO, CUSTODIAL, NOV 1998", {
-			"LO: ...I'm not saying it's haunted. I'm saying there's a man.",
-			"LO: He does the announcements. He's done them since before I started.",
-			"LO: Nobody's ever seen him come in and nobody's seen him go.",
-			"LO: I asked Nora. She said don't ask.",
-			"LO: There's a photo in the staff room from '89. Twenty-one people.",
-			"LO: One face is out of focus. It's out of focus in every copy.",
-			"[tape ends]",
-		})
+		--[[
+			The tape. Shown as a transcript and spoken at the same time, so a
+			player with the audio hears it and a player without it reads it, and
+			neither of them is waiting on the other.
+		]]
+		local tape = NightScript.TAPES.tape2
+		local transcript = { tape.found, "" }
+		for _, line in tape.lines do
+			table.insert(transcript, line.text)
+		end
+		ctx.sheet(player, tape.title, transcript)
+		Hud.say(tape.speaker, tape.lines)
 	end)
 end
 

@@ -173,9 +173,29 @@ Color3 = {
 	fromRGB = function(r, g, b) return { R = r / 255, G = g / 255, B = b / 255 } end,
 }
 
+--[[
+	Enum items are memoised, so `part.Material ~= Enum.Material.SmoothPlastic`
+	compares by identity the way it does in Roblox. Handing back a fresh table
+	each time would make every such test silently true.
+]]
 local leafMeta = { __index = function() return 0 end }
-local enumMeta = { __index = function(_, k) return setmetatable({ Name = k }, leafMeta) end }
-Enum = setmetatable({}, { __index = function() return setmetatable({}, enumMeta) end })
+local enumCache = {}
+Enum = setmetatable({}, {
+	__index = function(_, family)
+		local items = enumCache[family]
+		if not items then
+			items = setmetatable({}, {
+				__index = function(t, k)
+					local item = setmetatable({ Name = k, EnumType = family }, leafMeta)
+					rawset(t, k, item)
+					return item
+				end,
+			})
+			enumCache[family] = items
+		end
+		return items
+	end,
+})
 
 local RNG = {}
 RNG.__index = RNG
@@ -208,7 +228,19 @@ local workspace = getService(nil, "Workspace")
 ]]
 rawset(workspace, "Raycast", function() return nil end)
 local task = { wait = function() end, spawn = function() end, delay = function() end }
-local warn = print
+--[[
+	A warning is a failure. Several systems pcall their own callbacks and report
+	the error with warn(), which would otherwise scroll past the harness as an
+	ordinary line of output and exit clean.
+]]
+local warnings = 0
+local function warn(...)
+	warnings += 1
+	print("WARN", ...)
+end
+function WARNINGS()
+	return warnings
+end
 
 -- ── Events, remotes and the services the game actually talks to ─────────────
 --[[
@@ -279,6 +311,10 @@ end
 task.defer = task.delay
 
 TweenInfo = { new = function(...) return { ... } end }
+NumberRange = { new = function(a, b) return { Min = a, Max = b or a } end }
+NumberSequenceKeypoint = { new = function(t, v) return { Time = t, Value = v } end }
+NumberSequence = { new = function(v) return { Keypoints = v } end }
+ColorSequence = { new = function(v) return { Keypoints = v } end }
 UDim = { new = function(a, b) return { Scale = a, Offset = b } end }
 UDim2 = {
 	new = function(a, b, c, d) return { X = { Scale = a, Offset = b }, Y = { Scale = c, Offset = d } } end,
@@ -297,6 +333,7 @@ local RunService = {
 	RenderStepped = newSignal(),
 	IsServer = function() return true end,
 	IsClient = function() return false end,
+	IsStudio = function() return true end,
 	BindToRenderStep = function() end,
 }
 

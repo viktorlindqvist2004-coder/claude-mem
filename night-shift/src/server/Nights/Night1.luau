@@ -22,6 +22,8 @@ local RuleBook = require(Shared.RuleBook)
 local SoundBank = require(Shared.SoundBank)
 local NightScript = require(Shared.NightScript)
 
+local Hud = require(script.Parent.Parent.Hud)
+
 local TweenService = game:GetService("TweenService")
 
 local S = NightScript.NIGHT1
@@ -248,17 +250,18 @@ local function tapeOne(ctx)
 	end
 	ctx.prompt(checkout, { action = "Open the drawer", object = "Checkout one", distanceMetres = 2.5 }, function(player)
 		ctx.clue("C01")
-		ctx.sheet(player, "TAPE 1 — OPENING DAY, 1986", {
-			"[applause, a PA chime]",
-			"HALVARD: ...and so it is my very great pleasure to declare",
-			"the Northlight Gal-er-ia open.",
-			"[laughter]",
-			"HALVARD: I'm told I'm saying it wrong. I'll learn.",
-			"[a second voice, off-mic, unhurried, with the room behind it]",
-			"—: Ladies and gentlemen, the centre is now open.",
-			"HALVARD: ...who is that? Who's on the tannoy?",
-			"[tape ends]",
-		})
+		--[[
+			The tape. Shown as a transcript and spoken at the same time, so a
+			player with the audio hears it and a player without it reads it, and
+			neither of them is waiting on the other.
+		]]
+		local tape = NightScript.TAPES.tape1
+		local transcript = { tape.found, "" }
+		for _, line in tape.lines do
+			table.insert(transcript, line.text)
+		end
+		ctx.sheet(player, tape.title, transcript)
+		Hud.say(tape.speaker, tape.lines)
 	end)
 end
 

@@ -23,6 +23,7 @@ local SoundService = game:GetService("SoundService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Net = require(Shared.Net)
 local SoundBank = require(Shared.SoundBank)
+local VoiceBank = require(Shared.VoiceBank)
 
 local player = Players.LocalPlayer
 local remotes = Net.get()
@@ -173,11 +174,40 @@ local function playFlat(key: string, slot: any)
 	sound:Play()
 end
 
+--[[
+	The voice, when there is one. It is flat rather than positional: he is on the
+	tannoy, and the tannoy is every ceiling in the building at once, so there is
+	nowhere to walk to get away from him. That is the point of him.
+]]
+local voice: Sound? = nil
+
+local function speak(key: string?, who: string)
+	if voice then
+		voice:Stop()
+		voice:Destroy()
+		voice = nil
+	end
+	local asset = VoiceBank.assetFor(key)
+	if not asset then
+		return
+	end
+	local mix = VoiceBank.mixFor(who)
+	local sound = Instance.new("Sound")
+	sound.Name = "Voice"
+	sound.SoundId = asset
+	sound.Volume = mix.volume
+	sound.PlaybackSpeed = mix.speed
+	sound.Parent = SoundService
+	sound:Play()
+	voice = sound
+end
+
 local subtitleToken = 0
 local lastSpeaker = ""
-remotes.Say.OnClientEvent:Connect(function(who: string, text: string, seconds: number)
+remotes.Say.OnClientEvent:Connect(function(who: string, text: string, seconds: number, key: string?)
 	subtitleToken += 1
 	local token = subtitleToken
+	speak(key, who)
 	-- The two-tone chime, before he starts, and only when he starts. Station
 	-- cadence, not shopping-centre cadence, and nobody is meant to notice.
 	if who ~= lastSpeaker or line.TextTransparency > 0.5 then
@@ -514,6 +544,103 @@ remotes.Sync.OnClientEvent:Connect(function(state)
 	boardTitle.Text = header
 end)
 
+-- ── The test panel ──────────────────────────────────────────────────────────
+--[[
+	F9. Every event in the game as a button, grouped, because the last beat of
+	the fifth night is an hour of play away and it is the one most likely to be
+	broken.
+
+	The client holds no authority here: it sends the id of a row the server gave
+	it, and the server decides whether this player is allowed to ask. On a
+	published place that is the owner and nobody else.
+]]
+local panel = Instance.new("Frame")
+panel.Name = "TestPanel"
+panel.Size = UDim2.fromOffset(280, 560)
+panel.Position = UDim2.new(1, -300, 0, 90)
+panel.BackgroundColor3 = Color3.fromRGB(12, 11, 12)
+panel.BackgroundTransparency = 0.12
+panel.BorderSizePixel = 0
+panel.Visible = false
+panel.Parent = gui
+Instance.new("UICorner").Parent = panel
+
+local panelPad = Instance.new("UIPadding")
+panelPad.PaddingTop = UDim.new(0, 10)
+panelPad.PaddingLeft = UDim.new(0, 10)
+panelPad.PaddingRight = UDim.new(0, 10)
+panelPad.PaddingBottom = UDim.new(0, 10)
+panelPad.Parent = panel
+
+local panelScroll = Instance.new("ScrollingFrame")
+panelScroll.Size = UDim2.fromScale(1, 1)
+panelScroll.BackgroundTransparency = 1
+panelScroll.BorderSizePixel = 0
+panelScroll.ScrollBarThickness = 3
+panelScroll.CanvasSize = UDim2.new()
+panelScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+panelScroll.Parent = panel
+
+local panelLayout = Instance.new("UIListLayout")
+panelLayout.Padding = UDim.new(0, 3)
+panelLayout.SortOrder = Enum.SortOrder.LayoutOrder
+panelLayout.Parent = panelScroll
+
+local panelAllowed = false
+local panelBuilt = false
+
+local function buildPanel(rows)
+	if panelBuilt then
+		return
+	end
+	panelBuilt = true
+
+	local title = label(panelScroll, "TEST PANEL   <font color=\"#7a7670\">F9</font>", UDim2.new(1, -8, 0, 20), UDim2.new())
+	title.TextSize = 13
+	title.LayoutOrder = 0
+
+	local order, group = 1, nil
+	for _, row in rows do
+		if row.group ~= group then
+			group = row.group
+			order += 1
+			local heading = label(panelScroll, string.upper(group), UDim2.new(1, -8, 0, 20), UDim2.new())
+			heading.TextColor3 = RED
+			heading.TextSize = 11
+			heading.LayoutOrder = order
+		end
+		order += 1
+		local button = Instance.new("TextButton")
+		button.Size = UDim2.new(1, -8, 0, 22)
+		button.BackgroundColor3 = Color3.fromRGB(30, 28, 30)
+		button.BorderSizePixel = 0
+		button.Font = Enum.Font.Code
+		button.TextSize = 13
+		button.TextColor3 = BONE
+		button.TextXAlignment = Enum.TextXAlignment.Left
+		button.Text = `  {row.label}`
+		button.LayoutOrder = order
+		button.AutoButtonColor = true
+		button.Parent = panelScroll
+		Instance.new("UICorner").Parent = button
+		button.Activated:Connect(function()
+			remotes.Test:FireServer(row.id)
+		end)
+	end
+end
+
+remotes.Test.OnClientEvent:Connect(function(kind, payload)
+	if kind == "allowed" then
+		panelAllowed = payload == true
+		if panelAllowed then
+			showHint("[F9] test panel", DIM)
+		end
+	elseif kind == "menu" then
+		buildPanel(payload)
+		panel.Visible = true
+	end
+end)
+
 -- ── Input ───────────────────────────────────────────────────────────────────
 
 --[[
@@ -564,6 +691,15 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		remotes.Torch:FireServer(torchOn)
 	elseif input.KeyCode == Enum.KeyCode.Q then
 		remotes.Ask:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.F9 then
+		if not panelAllowed then
+			return
+		end
+		if panelBuilt then
+			panel.Visible = not panel.Visible
+		else
+			remotes.Test:FireServer("__menu")
+		end
 	elseif input.KeyCode == Enum.KeyCode.X and paper.Visible then
 		-- Not E: E is the interact key, and the prompt you just used is still
 		-- under your feet.

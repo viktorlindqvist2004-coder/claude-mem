@@ -15,6 +15,8 @@
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local NightScript = require(Shared.NightScript)
+
+local Hud = require(script.Parent.Parent.Hud)
 local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
@@ -236,17 +238,19 @@ local function office(ctx)
 				"",
 				"There is nobody in this room and there never has been.",
 			})
-			-- Tape 4, and it runs out before the name.
-			ctx.sheet(player, "TAPE 4 — NORA, CHECKOUT, NOV 1998", {
-				"NORA: I've worked out what he is. I've worked out where.",
-				"NORA: It's not a person. It was, and it isn't.",
-				"NORA: Everything he says is a station announcement. Every single one.",
-				"NORA: 'The centre is now open.' 'Mind the step.' 'Stand clear.'",
-				"NORA: He's been doing it since they put the clock in and the clock",
-				"NORA: came out of the booking hall at Northmoor and the man who",
-				"NORA: wound it was called —",
-				"[tape runs out]",
-			})
+			--[[
+				Tape 4, and it runs out in the middle of the name. That is not a
+				tease: it is the reason there is a fifth night.
+			]]
+			local tape = NightScript.TAPES.tape4
+			local transcript = { tape.found, "" }
+			for _, line in tape.lines do
+				table.insert(transcript, line.text)
+			end
+			task.delay(4, function()
+				ctx.sheet(player, tape.title, transcript)
+				Hud.say(tape.speaker, tape.lines)
+			end)
 		end)
 	end
 end

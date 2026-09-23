@@ -385,6 +385,19 @@ function Dread.start()
 	end)
 end
 
+--[[
+	Hooks for the test panel. The Presence and the eyes are the two things in the
+	game that are hardest to see on purpose — they are removed by looking at them
+	— so being able to ask for one is the only way to check they work at all.
+]]
+function Dread.testPresence(player: Player)
+	showPresence(player)
+end
+
+function Dread.testEyes(player: Player)
+	showEyes(player)
+end
+
 function Dread.stop()
 	running = false
 	clearPresence()

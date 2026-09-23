@@ -67,7 +67,10 @@ function Hud.say(speaker: string, lines: { { text: string, seconds: number } })
 			if cancelled then
 				return
 			end
-			remotes.Say:FireAllClients(speaker, line.text, line.seconds)
+			-- `key` is how the client finds the recording, if there is one. A
+			-- line with no recording is a subtitle, and that is a supported
+			-- state: every beat is timed to be readable without audio.
+			remotes.Say:FireAllClients(line.speaker or speaker, line.text, line.seconds, line.key)
 			task.wait(line.seconds)
 		end
 	end)

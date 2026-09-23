@@ -23,6 +23,8 @@
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local CaseFile = require(Shared.CaseFile)
 local NightScript = require(Shared.NightScript)
+
+local Hud = require(script.Parent.Parent.Hud)
 local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
@@ -160,18 +162,18 @@ local function clockPanel(ctx)
 			Tape 5. The one that finishes Nora's sentence, four nights after her
 			tape ran out in the middle of it.
 		]]
+		--[[
+			Tape 5. The one that finishes the sentence Nora's tape ran out in the
+			middle of, four nights ago.
+		]]
 		task.delay(3, function()
-			ctx.sheet(player, "TAPE 5 — NORA, 14 NOVEMBER 1998", {
-				"NORA: — Wren. Elias Wren.",
-				"NORA: He wound it by hand every night for forty-one years.",
-				"NORA: They found him at the foot of it in '71.",
-				"NORA: Halvard bought the movement at auction in '86 and put it",
-				"NORA: in a shopping centre and it has been announcing trains",
-				"NORA: ever since. It just calls them shops now.",
-				"NORA: I'm going to cut the power to it tonight. Walt's helping.",
-				"NORA: If you're listening to this, we didn't.",
-				"[tape ends]",
-			})
+			local tape = NightScript.TAPES.tape5
+			local transcript = { tape.found, "" }
+			for _, line in tape.lines do
+				table.insert(transcript, line.text)
+			end
+			ctx.sheet(player, tape.title, transcript)
+			Hud.say(tape.speaker, tape.lines)
 		end)
 		if ctx.advance("the_panel") then
 			step(ctx)

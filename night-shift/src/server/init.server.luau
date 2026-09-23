@@ -166,4 +166,8 @@ end
 
 Shift.begin(1)
 
+-- Everything in the game, on one key, so the fifth night's last beat does not
+-- take an hour to reach. Studio, or the place owner. See TestPanel.luau.
+require(script.TestPanel)
+
 print("[Night Shift] server up — Northlight Galleria, five nights")

@@ -41,8 +41,11 @@ done
 echo "== build the mall =="
 tmp=$(mktemp -d)
 cat tools/roblox_stub.luau > "$tmp/combined.luau"
-printf '\nlocal function MODULE()\n' >> "$tmp/combined.luau"
-cat src/greybox/init.luau >> "$tmp/combined.luau"
+# The greybox requires its own Surfaces child; inline it and resolve the require.
+printf '\nlocal __M = {}\n__M.Surfaces = (function()\n' >> "$tmp/combined.luau"
+cat src/greybox/Surfaces.luau >> "$tmp/combined.luau"
+printf '\nend)()\nlocal function MODULE()\n' >> "$tmp/combined.luau"
+sed 's/require(script\.Surfaces)/__M.Surfaces/' src/greybox/init.luau >> "$tmp/combined.luau"
 printf '\nend\nlocal G = MODULE()\nG.build()\n' >> "$tmp/combined.luau"
 if ! "$LUAU" "$tmp/combined.luau"; then fail=1; fi
 rm -rf "$tmp"

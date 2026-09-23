@@ -17,6 +17,8 @@
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local NightScript = require(Shared.NightScript)
+
+local Hud = require(script.Parent.Parent.Hud)
 local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
@@ -101,16 +103,18 @@ local function tapeThree(ctx)
 	ctx.prompt(board, { action = "Take it down", object = "Key board", distanceMetres = 2.5 }, function(player)
 		ctx.advance("tape_three")
 		ctx.clue("C13")
-		ctx.sheet(player, "TAPE 3 — WALT, SECURITY, NOV 1998", {
-			"WALT: If anyone finds this, it's the 13th and I've had enough.",
-			"WALT: I'm going to cut the power to the clock tonight.",
-			"WALT: Not the mall. The clock. Just the clock.",
-			"WALT: Because he isn't in the office and he isn't on the cameras",
-			"WALT: and the only thing in this building that's on at three",
-			"WALT: in the morning is that dial.",
-			"WALT: If I'm wrong I look daft. If I'm right —",
-			"[tape ends mid-sentence]",
-		})
+		--[[
+			The tape. Shown as a transcript and spoken at the same time, so a
+			player with the audio hears it and a player without it reads it, and
+			neither of them is waiting on the other.
+		]]
+		local tape = NightScript.TAPES.tape3
+		local transcript = { tape.found, "" }
+		for _, line in tape.lines do
+			table.insert(transcript, line.text)
+		end
+		ctx.sheet(player, tape.title, transcript)
+		Hud.say(tape.speaker, tape.lines)
 	end)
 end
 

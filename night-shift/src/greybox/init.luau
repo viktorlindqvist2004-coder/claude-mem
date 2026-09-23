@@ -35,6 +35,9 @@
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 
+-- What everything is made of, and the lettering on it. See Surfaces.luau.
+local Surfaces = require(script.Surfaces)
+
 local function st(m) return m / 0.3 end
 
 local RED = Color3.fromRGB(255, 26, 20)
@@ -54,6 +57,19 @@ local C = {
 }
 
 local WALL = 0.25
+
+--[[
+	The units, in the order the arms generate them. Eleven of the twenty-two on
+	the directory are struck through, and these are the ones whose sign boxes are
+	still bolted up with the name still in them. Nobody took them down because
+	taking them down is somebody's job and there has not been a somebody since
+	1998.
+]]
+local FASCIA = {
+	"SHOE REPAIRS", "PHOTO EXPRESS", "THE CARD SHOP", "NORTHMOOR TRAVEL",
+	"J. PEEL  OPTICIANS", "SOUND & VISION", "PET CORNER", "BAKERS OVEN",
+	"CLARKE & SON", "THE TOY BOX", "HAIR BY JEAN", "UNIT 14  TO LET",
+}
 local root, lightCount
 
 -- ── Primitives ──────────────────────────────────────────────────────────────
@@ -95,9 +111,30 @@ local function bulkhead(x, y, z, rangeM)
 	bulb(lens, RED, 0.85, rangeM or 5.5)
 end
 
-local function exitSign(x, y, z)
-	local s = P("ExitSign", V(0.55, 0.22, 0.12), at(x, y, z), RED, Enum.Material.Neon)
-	bulb(s, RED, 0.5, 4)
+--[[
+	A running-man EXIT box. The word is real text on the face of it rather than a
+	red rectangle you are asked to believe in, and it is the only lettering in the
+	building that is its own light source.
+]]
+local function exitSign(x, y, z, facing)
+	local sign = P("ExitSign", V(0.55, 0.22, 0.12), at(x, y, z), RED, Enum.Material.Neon)
+	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		Surfaces.label(sign, face, "EXIT", {
+			lit = true,
+			color = Color3.fromRGB(255, 240, 236),
+			font = Enum.Font.GothamBold,
+			density = 90,
+		})
+	end
+	bulb(sign, RED, 0.5, 4)
+	return sign
+end
+
+-- Printed, not lit. Anything that glows in a dark room gives a building away.
+local function printed(part, face, text, options)
+	options = options or {}
+	options.lit = false
+	return Surfaces.label(part, face, text, options)
 end
 
 -- ── Rooms ───────────────────────────────────────────────────────────────────
@@ -140,8 +177,16 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 			local len = g[2] - g[1]
 			if axis == "x" then
 				P("DoorHead", V(len, h - doorH, WALL), at((g[1] + g[2]) / 2, y + doorH + (h - doorH) / 2, fixed), colour)
+				P("DoorFrame", V(len + 0.16, 0.1, WALL + 0.06), at((g[1] + g[2]) / 2, y + doorH, fixed), C.trim)
+				for _, sx in { -1, 1 } do
+					P("DoorFrame", V(0.08, doorH, WALL + 0.06), at((g[1] + g[2]) / 2 + sx * (len / 2 + 0.04), y + doorH / 2, fixed), C.trim)
+				end
 			else
 				P("DoorHead", V(WALL, h - doorH, len), at(fixed, y + doorH + (h - doorH) / 2, (g[1] + g[2]) / 2), colour)
+				P("DoorFrame", V(WALL + 0.06, 0.1, len + 0.16), at(fixed, y + doorH, (g[1] + g[2]) / 2), C.trim)
+				for _, sz in { -1, 1 } do
+					P("DoorFrame", V(WALL + 0.06, doorH, 0.08), at(fixed, y + doorH / 2, (g[1] + g[2]) / 2 + sz * (len / 2 + 0.04)), C.trim)
+				end
 			end
 		end
 		cursor = math.max(cursor, g[2])
@@ -157,6 +202,20 @@ local function room(name, cx, cz, w, d, y, h, doors, colour)
 
 	P(name .. "_Floor", V(w, 0.3, d), at(cx, y - 0.15, cz), C.floor)
 	P(name .. "_Ceiling", V(w, 0.3, d), at(cx, y + h + 0.15, cz), C.ceiling)
+
+	for _, band in {
+		{ "Skirting", 0.06, 0.14, C.trim },   -- kicked, mopped, scuffed
+		{ "Dado", 1.0, 0.05, C.trim },        -- trolley rail, at trolley height
+		{ "ShadowGap", h - 0.06, 0.06, C.dark }, -- the dark line under a ceiling
+	} do
+		local label, by, bh, bc = band[1], band[2], band[3], band[4]
+		if bh < h then
+			P(label, V(w - 0.02, bh, 0.06), at(cx, y + by, cz + d / 2 - 0.12), bc)
+			P(label, V(w - 0.02, bh, 0.06), at(cx, y + by, cz - d / 2 + 0.12), bc)
+			P(label, V(0.06, bh, d - 0.02), at(cx + w / 2 - 0.12, y + by, cz), bc)
+			P(label, V(0.06, bh, d - 0.02), at(cx - w / 2 + 0.12, y + by, cz), bc)
+		end
+	end
 	wallWithDoors(z1, x0, x1, "x", y, h, doors, "N", colour)
 	wallWithDoors(z0, x0, x1, "x", y, h, doors, "S", colour)
 	wallWithDoors(x1, z0, z1, "z", y, h, doors, "E", colour)
@@ -423,7 +482,19 @@ local function buildAtrium()
 		this board, and the board is the first thing you walk past.
 	]]
 	P("DirectoryBoard", V(1.6, 2.1, 0.12), at(-w / 2 + 1.2, 1.15, -1.0), C.panel)
-	P("DirectoryFace", V(1.44, 1.9, 0.03), at(-w / 2 + 1.28, 1.2, -1.0), Color3.fromRGB(38, 40, 46))
+	local directory = P("DirectoryFace", V(1.44, 1.9, 0.03), at(-w / 2 + 1.28, 1.2, -1.0), Color3.fromRGB(38, 40, 46))
+	--[[
+		Twenty-two units, eleven struck through, and no third floor on it at all.
+		Rule 3 is about a floor that is not on this board, and this board is the
+		first thing you walk past.
+	]]
+	printed(directory, Enum.NormalId.Right,
+		"<b>NORTHLIGHT GALLERIA</b>\n<font size=\"9\">"
+			.. "GROUND\n 1  SUPERMARKET\n 2  <s>SHOE REPAIRS</s>\n 3  <s>PHOTO EXPRESS</s>\n"
+			.. " 4  FASHION\n 5  <s>TRAVEL</s>\n 6  <s>OPTICIANS</s>\n 7  <s>CARD SHOP</s>\n\n"
+			.. "FIRST\n 8  FOOD COURT\n 9  <s>TOYS</s>\n10  <s>HAIRDRESSER</s>\n11  <s>BOOKS</s>\n"
+			.. "12  <s>SPORTS</s>\n13  <s>BANK</s>\n14  <s>MUSIC</s></font>",
+		{ color = Color3.fromRGB(176, 176, 182), scaled = false, density = 66, align = Enum.TextXAlignment.Left })
 	for i = 0, 15 do
 		P("DirectoryLine", V(0.02, 0.05, 1.0),
 			at(-w / 2 + 1.31, 1.95 - i * 0.11, -1.0), Color3.fromRGB(128, 124, 116))
@@ -592,8 +663,13 @@ local function mallArm(axis, length, entries)
 				-- The fascia: a dead sign box above every unit, unlit since the
 				-- building went onto the emergency circuit at night.
 				P("FasciaBox", size(w - 0.3, 0.42, 0.55), pos(mid, side * (half - 0.2), MALL_H - 0.35), C.panel)
-				P("FasciaFace", size(w - 0.6, 0.06, 0.34), pos(mid, side * (half - 0.42), MALL_H - 0.35),
+				local fascia = P("FasciaFace", size(w - 0.6, 0.06, 0.34), pos(mid, side * (half - 0.42), MALL_H - 0.35),
 					Color3.fromRGB(46, 44, 42))
+				printed(fascia,
+					if axis == "N" then (if side < 0 then Enum.NormalId.Right else Enum.NormalId.Left)
+					else (if side < 0 then Enum.NormalId.Front else Enum.NormalId.Back),
+					FASCIA[(unit - 1) % #FASCIA + 1],
+					{ color = Color3.fromRGB(122, 120, 124), density = 44, font = Enum.Font.GothamBold })
 				P("Pilaster", size(0.4, 0.5, MALL_H), pos(t, side * half, MALL_H / 2), C.trim)
 			end
 			t += w
@@ -637,7 +713,12 @@ local function mallArm(axis, length, entries)
 		sp += 11.0
 	end
 	P("WayfindBoard", size(0.1, 2.4, 0.5), pos(6.0, 0, MALL_H - 0.75), C.panel)
-	P("WayfindFace", size(0.06, 2.2, 0.38), pos(6.0, 0, MALL_H - 0.75), Color3.fromRGB(40, 42, 48))
+	local wayfind = P("WayfindFace", size(0.06, 2.2, 0.38), pos(6.0, 0, MALL_H - 0.75), Color3.fromRGB(40, 42, 48))
+	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right } do
+		printed(wayfind, face,
+			if axis == "N" then "SUPERMARKET\nFOOD COURT" else "FASHION\nTOILETS",
+			{ color = Color3.fromRGB(184, 184, 190), density = 54 })
+	end
 
 	-- Floor banding, so the run does not read as one grey ribbon.
 	local fb = 2.0
@@ -755,6 +836,14 @@ local function dressStaffRoom(cx, cz, y)
 	end
 	local sheet = P("RuleSheet", V(0.42, 0.6, 0.02), at(cx - 2.2, y + 1.3, cz + 1.92), Color3.fromRGB(196, 188, 164))
 	sheet.Name = "RuleSheet"
+	--[[
+		Legible from where you stand, so you know what it is before you press
+		anything. The whole list is on the prompt; this is the headline and the
+		signature, which is all you can read on a sheet of A4 at two metres.
+	]]
+	printed(sheet, Enum.NormalId.Back,
+		"<b>RULES FOR NIGHT STAFF</b>\n<font size=\"8\">1. 2. 3. 4. 5. 6. 7.\n8. 9. 10. 11. 12. 13.</font>\n<i>— N.</i>",
+		{ color = Color3.fromRGB(46, 44, 56), scaled = false, density = 130, font = Enum.Font.Code })
 	P("LockerTape", V(0.06, 0.04, 0.02), at(cx - 2.2, y + 1.62, cz + 1.9), Color3.fromRGB(210, 206, 190))
 
 	-- The table, and a chair pushed back from it as though somebody stood up.
@@ -776,12 +865,16 @@ local function dressStaffRoom(cx, cz, y)
 	end
 
 	-- The noticeboard. This week's rota is on it, and it has this week's names.
-	P("Noticeboard", V(1.8, 1.1, 0.06), at(cx, y + 1.5, cz - 2.4), C.wood)
+	local noticeboard = P("Noticeboard", V(1.8, 1.1, 0.06), at(cx, y + 1.5, cz - 2.4), C.wood)
+	printed(noticeboard, Enum.NormalId.Front,
+		"NIGHT STAFF\n<font size=\"10\">rota · fire notice · hygiene · no lone working after 02:00</font>",
+		{ color = Color3.fromRGB(196, 190, 174), scaled = false, density = 60 })
 	P("NoticeFrame", V(1.9, 1.2, 0.03), at(cx, y + 1.5, cz - 2.45), C.trim)
 	for i = 0, 5 do
 		paper(cx - 0.6 + (i % 3) * 0.6, y + 1.75 - math.floor(i / 3) * 0.42, cz - 2.36, "z")
 	end
-	P("FireNotice", V(0.25, 0.35, 0.02), at(cx + 0.78, y + 1.5, cz - 2.36), Color3.fromRGB(150, 44, 36))
+	local fire = P("FireNotice", V(0.25, 0.35, 0.02), at(cx + 0.78, y + 1.5, cz - 2.36), Color3.fromRGB(150, 44, 36))
+	printed(fire, Enum.NormalId.Front, "FIRE\nACTION", { color = Color3.fromRGB(240, 236, 230), density = 120 })
 
 	-- Coat hooks, and one coat that has been on the same hook since 1998.
 	P("HookRail", V(1.2, 0.06, 0.06), at(cx - 1.8, y + 1.8, cz - 2.4), C.metal)
@@ -791,7 +884,12 @@ local function dressStaffRoom(cx, cz, y)
 	-- The time clock. You clock in here at 22:00, and Rule 1 is about it.
 	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(cx + 2.7, y + 1.4, cz - 1.0), C.metal)
 	clock.Name = "TimeClock"
-	P("TimeClockFace", V(0.24, 0.16, 0.03), at(cx + 2.7, y + 1.46, cz - 1.1), RED, Enum.Material.Neon)
+	local face = P("TimeClockFace", V(0.24, 0.16, 0.03), at(cx + 2.7, y + 1.46, cz - 1.1), RED, Enum.Material.Neon)
+	-- Every display in the building runs off the same master clock, and the
+	-- master clock has read the same thing since 1998.
+	Surfaces.label(face, Enum.NormalId.Front, "03:33", {
+		lit = true, color = Color3.fromRGB(255, 120, 110), font = Enum.Font.Code, density = 140,
+	})
 	P("CardRack", V(0.5, 0.3, 0.06), at(cx + 2.7, y + 1.0, cz - 1.05), C.wood)
 	for i = 0, 3 do
 		P("ClockCard", V(0.09, 0.22, 0.01), at(cx + 2.53 + i * 0.11, y + 1.0, cz - 1.12), Color3.fromRGB(206, 200, 182))
@@ -944,7 +1042,10 @@ local function dressSupermarket(cx, cz, y)
 				P("Facing", V(0.9, 0.3, 0.6), at(bx, y + 1.55, cz - 4.0 + i * 2.0), Color3.fromRGB(88, 84, 78))
 			end
 		end
-		P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.0 + i * 2.0), C.trim)
+		local aisle = P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.0 + i * 2.0), C.trim)
+		printed(aisle, Enum.NormalId.Left,
+			({ "1  TINNED", "2  BAKING", "3  HOUSEHOLD", "4  FROZEN", "5  DRINKS" })[i + 1] or "",
+			{ color = Color3.fromRGB(198, 196, 190), density = 70 })
 	end
 
 	for i = 0, 2 do
@@ -953,7 +1054,10 @@ local function dressSupermarket(cx, cz, y)
 		P("BeltTop", V(2.4, 0.04, 0.55), at(tx, y + 0.92, cz + 5.0), C.dark)
 		P("Till", V(0.4, 0.3, 0.4), at(tx + 1.0, y + 1.05, cz + 5.0), C.metal)
 		P("TillScreen", V(0.3, 0.22, 0.03), at(tx + 1.0, y + 1.3, cz + 4.82), C.panel)
-		P("LaneNumber", V(0.18, 0.22, 0.03), at(tx, y + 2.0, cz + 5.4), RED, Enum.Material.Neon)
+		local lane = P("LaneNumber", V(0.18, 0.22, 0.03), at(tx, y + 2.0, cz + 5.4), RED, Enum.Material.Neon)
+		Surfaces.label(lane, Enum.NormalId.Front, tostring(i + 1), {
+			lit = true, color = Color3.fromRGB(255, 150, 140), font = Enum.Font.Code, density = 150,
+		})
 		P("LanePost", V(0.05, 0.9, 0.05), at(tx, y + 1.5, cz + 5.4), C.metal)
 		P("Divider", V(0.1, 0.7, 1.6), at(tx - 1.5, y + 0.35, cz + 5.0), C.metal)
 	end
@@ -1359,6 +1463,16 @@ end
 
 -- ── Lighting ────────────────────────────────────────────────────────────────
 
+--[[
+	Lighting. Future technology, because everything about this building is per-
+	pixel: a red bulkhead casting a hard shadow off a shelf edge is the entire
+	art direction, and Voxel will not do it.
+
+	The numbers are low enough to be uncomfortable on purpose. Brightness 0.1 and
+	an ambient of nearly nothing means the only things you can see are things
+	something is pointed at. If you can cross a room without the torch, it is
+	too bright.
+]]
 local function applyLighting()
 	pcall(function() Lighting.Technology = Enum.Technology.Future end)
 	Lighting.GlobalShadows = true
@@ -1366,49 +1480,108 @@ local function applyLighting()
 	Lighting.OutdoorAmbient = Color3.fromRGB(8, 9, 13)
 	Lighting.Brightness = 0.1
 	Lighting.ExposureCompensation = -0.15
-	Lighting.EnvironmentDiffuseScale = 0.12
-	Lighting.EnvironmentSpecularScale = 0.4
-	Lighting.ShadowSoftness = 0.4
+	-- Enough environment light for Marble and Metal to have a sheen, and not a
+	-- lumen more. These two numbers are what make a PBR material read as PBR.
+	Lighting.EnvironmentDiffuseScale = 0.16
+	Lighting.EnvironmentSpecularScale = 0.75
+	Lighting.ShadowSoftness = 0.5
 	Lighting.ClockTime = 0
 	Lighting.GeographicLatitude = 20
 
-	for _, n in { "NightAtmosphere", "NightBloom", "NightColour" } do
+	for _, n in { "NightAtmosphere", "NightBloom", "NightColour", "NightDof", "NightGrade" } do
 		local old = Lighting:FindFirstChild(n)
 		if old then old:Destroy() end
 	end
 
-	local a = Instance.new("Atmosphere")
-	a.Name = "NightAtmosphere"
-	a.Density = 0.32
-	a.Haze = 1.1
-	a.Glare = 0.1
-	a.Color = Color3.fromRGB(150, 152, 160)
-	a.Decay = Color3.fromRGB(60, 62, 72)
-	a.Parent = Lighting
+	--[[
+		Atmosphere is the weather, and the weather is outside. Density carries
+		the haze in the atrium's volume so the far end of an arm goes soft;
+		Decay is what the moon does to it when it rakes across the glazing.
+	]]
+	local air = Instance.new("Atmosphere")
+	air.Name = "NightAtmosphere"
+	air.Density = 0.36
+	air.Offset = 0.2
+	air.Haze = 1.4
+	air.Glare = 0.12
+	air.Color = Color3.fromRGB(150, 152, 160)
+	air.Decay = Color3.fromRGB(58, 60, 72)
+	air.Parent = Lighting
 
-	local b = Instance.new("BloomEffect")
-	b.Name = "NightBloom"
-	b.Intensity = 0.4
-	b.Size = 24
-	b.Threshold = 1.9
-	b.Parent = Lighting
+	-- Bloom only on what is genuinely emissive: the red fittings and the clock.
+	-- A threshold below the exposure turns the whole frame to soup.
+	local bloom = Instance.new("BloomEffect")
+	bloom.Name = "NightBloom"
+	bloom.Intensity = 0.55
+	bloom.Size = 20
+	bloom.Threshold = 1.75
+	bloom.Parent = Lighting
 
-	local cc = Instance.new("ColorCorrectionEffect")
-	cc.Name = "NightColour"
-	cc.Saturation = -0.1
-	cc.Contrast = 0.3
-	cc.TintColor = Color3.fromRGB(236, 238, 250)
-	cc.Parent = Lighting
+	--[[
+		Grade. Contrast up so the blacks are actually black — half of looking
+		expensive is having a black point — and a hair of saturation off, because
+		a building lit by one colour looks more real when that colour is not
+		fully saturated.
+	]]
+	local grade = Instance.new("ColorCorrectionEffect")
+	grade.Name = "NightColour"
+	grade.Saturation = -0.12
+	grade.Contrast = 0.34
+	grade.Brightness = -0.02
+	grade.TintColor = Color3.fromRGB(238, 238, 248)
+	grade.Parent = Lighting
+
+	--[[
+		Depth of field, far side only and very weak. It is doing one job: taking
+		the hard edge off geometry at the end of a corridor so the eye reads
+		distance, and stopping the greybox's perfectly sharp box corners from
+		announcing themselves at forty metres.
+	]]
+	local dof = Instance.new("DepthOfFieldEffect")
+	dof.Name = "NightDof"
+	dof.FarIntensity = 0.28
+	dof.NearIntensity = 0
+	dof.FocusDistance = 18
+	dof.InFocusRadius = 40
+	dof.Parent = Lighting
 
 	local terrain = Workspace:FindFirstChildOfClass("Terrain")
 	if terrain then
 		local old = terrain:FindFirstChildOfClass("Clouds")
 		if old then old:Destroy() end
-		local cl = Instance.new("Clouds")
-		cl.Cover = 0.78
-		cl.Density = 0.6
-		cl.Color = Color3.fromRGB(140, 148, 164)
-		cl.Parent = terrain
+		local cloud = Instance.new("Clouds")
+		cloud.Cover = 0.82
+		cloud.Density = 0.65
+		cloud.Color = Color3.fromRGB(138, 146, 162)
+		cloud.Parent = terrain
+	end
+end
+
+--[[
+	Dust in the air. Not decoration: it is the reason a torch beam is visible at
+	all, and a torch beam you can see the edge of is the single biggest thing
+	separating this from a lit box. Four emitters in the volumes the crew spend
+	their time in, at a rate low enough that nobody consciously sees a particle.
+]]
+local function applyDust()
+	for _, where in {
+		{ 0, 3.0, 0, 6 },      -- the atrium, under the glazing
+		{ 0, 1.8, 20, 4 },     -- the north arm
+		{ 22, 1.8, 0, 4 },     -- the east arm
+		{ -22, 1.4, -2, 5 },   -- the service corridor, where the dust actually is
+		{ -22, -3.0, -10, 5 }, -- the basement
+	} do
+		local anchor = P("DustVolume", V(0.4, 0.4, 0.4), at(where[1], where[2], where[3]), C.dark)
+		anchor.Transparency = 1
+		anchor.CanCollide = false
+		anchor.CanQuery = false
+		local emitter = Surfaces.dust(anchor, where[4])
+		-- A box the size of the room, so the motes are everywhere in it rather
+		-- than in a cloud at one point.
+		emitter.Shape = Enum.ParticleEmitterShape.Box
+		emitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+		emitter.Size = NumberSequence.new(0.05)
+		anchor.Size = Vector3.new(st(16), st(6), st(16))
 	end
 end
 
@@ -1463,10 +1636,20 @@ function Greybox.build()
 	spawn.Parent = root
 
 	applyLighting()
+	applyDust()
+
+	--[[
+		The surfacing pass, last, once every part exists. It assigns a real
+		material to anything that came out of P() with the default on it, nudges
+		every colour a few per cent from a hash of where the part is, and dirties
+		whatever is within a metre and a half of a floor. See Surfaces.luau.
+	]]
+	local surfaced = Surfaces.apply(root)
+
 	pcall(function() Workspace.StreamingEnabled = false end)
 
-	print(("[Northlight Galleria] %d parts, %d lights, %d named rooms + Floor 3, the office, the interview room and the car park")
-		:format(#root:GetDescendants(), lightCount, #ROOMS))
+	print(("[Northlight Galleria] %d parts, %d lights, %d surfaced, %d named rooms + Floor 3, the office, the interview room and the car park")
+		:format(#root:GetDescendants(), lightCount, surfaced, #ROOMS))
 end
 
 return Greybox

@@ -190,9 +190,24 @@ function Tubes.watchExits()
 		task.spawn(function()
 			local rng = Random.new(os.clock() * 1000 + i * 977)
 			local light = lightOf(box)
-			local onColour = box.Color
-			local onBrightness = if light then light.Brightness else 0.5
-			-- Stagger the first, so four boxes never start together.
+			local onBrightness = if light then light.Brightness else 0.45
+			--[[
+				The lettering, not the box.
+
+				The panel on one of these is opaque and stays opaque; what is
+				lit is the legend, so a flicker is the legend going out and the
+				sign becoming a dark rectangle on a dark wall. Dimming the
+				part's colour, which is what this did first, changed nothing
+				anybody could see.
+			]]
+			local legends = {}
+			for _, child in box:GetChildren() do
+				if child:IsA("SurfaceGui") then
+					table.insert(legends, { gui = child, on = child.Brightness })
+				end
+			end
+
+			-- Stagger the first, so the boxes never start together.
 			task.wait(rng:NextNumber(10, 90))
 			while box.Parent do
 				task.wait(rng:NextNumber(40, 140))
@@ -200,12 +215,16 @@ function Tubes.watchExits()
 					return
 				end
 				for _ = 1, rng:NextInteger(2, 5) do
-					box.Color = Color3.fromRGB(58, 12, 9)
+					for _, l in legends do
+						l.gui.Brightness = l.on * 0.06
+					end
 					if light then
-						light.Brightness = onBrightness * 0.12
+						light.Brightness = onBrightness * 0.1
 					end
 					task.wait(rng:NextNumber(0.03, 0.11))
-					box.Color = onColour
+					for _, l in legends do
+						l.gui.Brightness = l.on
+					end
 					if light then
 						light.Brightness = onBrightness
 					end

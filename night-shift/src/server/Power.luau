@@ -23,6 +23,20 @@ type Saved = { light: Light, brightness: number }
 
 local saved: { Saved } = {}
 local dimmed: { BasePart } = {}
+--[[
+	The EXIT signs are lettering on an opaque face, not a glowing panel, so
+	taking their light away means taking the legend's brightness away. Without
+	this a sign whose lamp had been killed still had four red letters on it.
+]]
+local legends: { { gui: SurfaceGui, on: number } } = {}
+
+local function collectLegends(part: Instance)
+	for _, child in part:GetChildren() do
+		if child:IsA("SurfaceGui") then
+			table.insert(legends, { gui = child, on = child.Brightness })
+		end
+	end
+end
 
 local function collect()
 	table.clear(saved)
@@ -45,6 +59,9 @@ local function collect()
 			]]
 			if d.Parent and d.Parent.Name ~= "CarParkLamp" and d.Parent.Name ~= "StripLight" then
 				table.insert(saved, { light = d, brightness = d.Brightness })
+				if d.Parent.Name == "ExitSign" then
+					collectLegends(d.Parent)
+				end
 			end
 		elseif d:IsA("BasePart") and d.Material == Enum.Material.Neon then
 			if d.Name ~= "CarParkLamp" and d.Name ~= "StripLight" then
@@ -70,6 +87,9 @@ function Power.cut(seconds: number?)
 		part.Material = Enum.Material.SmoothPlastic
 		part.Color = Color3.fromRGB(14, 6, 5)
 	end
+	for _, l in legends do
+		l.gui.Brightness = 0
+	end
 end
 
 -- Everything at once, no fade. The snap is the point.
@@ -94,6 +114,9 @@ function Power.restore()
 		part.Material = Enum.Material.Neon
 		part.Color = Color3.fromRGB(255, 26, 20)
 	end
+	for _, l in legends do
+		l.gui.Brightness = l.on
+	end
 	Tubes.repower()
 end
 
@@ -105,6 +128,14 @@ end
 function Power.douse(part: BasePart, seconds: number)
 	local light = part:FindFirstChildWhichIsA("Light")
 	local wasBrightness = light and light.Brightness or 0
+	-- And the lettering, for the signs, which is the only part of them lit.
+	local guis = {}
+	for _, child in part:GetChildren() do
+		if child:IsA("SurfaceGui") then
+			table.insert(guis, { gui = child, on = child.Brightness })
+			child.Brightness = 0
+		end
+	end
 	local wasColour, wasMaterial = part.Color, part.Material
 	if light then
 		light.Brightness = 0
@@ -115,6 +146,9 @@ function Power.douse(part: BasePart, seconds: number)
 		if light then
 			light.Brightness = wasBrightness
 		end
+		for _, g in guis do
+			g.gui.Brightness = g.on
+		end
 		part.Color = wasColour
 		part.Material = wasMaterial
 	end)
@@ -124,6 +158,7 @@ function Power.reset()
 	Power.on = true
 	table.clear(saved)
 	table.clear(dimmed)
+	table.clear(legends)
 end
 
 return Power

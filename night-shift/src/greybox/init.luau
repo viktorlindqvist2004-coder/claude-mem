@@ -160,32 +160,29 @@ local function bulkhead(x, y, z, _rangeM)
 end
 
 --[[
-	An EXIT box.
+	An EXIT sign.
 
-	It used to be a solid block of red Neon with the word printed on it, which
-	from three metres away is not a sign, it is a red lamp -- the lettering was
-	washed out by the bloom coming off the box it was printed on, so the one
-	piece of information in the whole fitting was the one thing you could not
-	read.
+	Third attempt, and the first one that is a sign.
 
-	A real one is a dark housing with a lit panel in it. So: charcoal box, the
-	panel inset and glowing, EXIT across it in white, and the light it throws is
-	a small pool on the wall beside it and nothing else. From down a corridor
-	you see a red rectangle with a word in it, and around it, black.
+	It started as a solid block of red Neon with the word printed on it. From
+	three metres that is not a sign, it is a red lamp -- the bloom coming off
+	the panel washed out the one piece of information in the whole fitting, so
+	the only thing it said was "red". Making the panel a deeper red helped the
+	clipping and did not change what it was: still a glowing box.
 
-	`facing` says which way it looks: "N", "S", "E" or "W". The box is set proud
-	of that wall on a bracket, like a real one, and the lettering goes on the two
-	faces you can read it from.
+	A real illuminated exit sign is the other way round. The face is opaque,
+	the legend is cut out of it, and the light comes through the letters. The
+	panel is dark -- darker than the wall it hangs on -- and what you see from
+	the far end of a corridor is four red letters floating in nothing.
+
+	So the face is unlit charcoal, and the lettering is a SurfaceGui with the
+	lighting switched off and its brightness pushed past the bloom threshold.
+	The letters glow; nothing else does. The lamp behind it throws a small red
+	pool on the wall beside it and reaches no further, which is the whole point
+	of lighting a building this way.
 ]]
---[[
-	Deep red, not maximum red.
-
-	A Neon panel at full saturation clips, and a clipped channel takes the
-	lettering with it -- which is how a sign with EXIT written across it
-	managed to read as a plain red bar. Pulling the panel down and leaving the
-	letters at full white is what separates them again.
-]]
-local EXIT_RED = Color3.fromRGB(178, 20, 14)
+local EXIT_RED = Color3.fromRGB(255, 46, 34)
+local EXIT_FACE = Color3.fromRGB(19, 17, 17)
 
 function exitSign(x, y, z, facing)
 	facing = facing or "S"
@@ -198,32 +195,34 @@ function exitSign(x, y, z, facing)
 	P("ExitBracket", if alongX then V(0.05, 0.05, 0.36) else V(0.36, 0.05, 0.05),
 		at(x + nx / 2, y + 0.19, z + nz / 2), C.metal)
 
-	-- The housing. Dark, and it does not glow: only the panel in it does.
-	P("ExitHousing", if alongX then V(0.74, 0.32, 0.09) else V(0.09, 0.32, 0.74),
+	-- The housing, and the face in it. Neither glows.
+	P("ExitHousing", if alongX then V(0.78, 0.34, 0.1) else V(0.1, 0.34, 0.78),
 		at(x + nx, y, z + nz), Color3.fromRGB(26, 25, 25))
 
-	local sign = P("ExitSign", if alongX then V(0.66, 0.25, 0.12) else V(0.12, 0.25, 0.66),
-		at(x + nx, y, z + nz), EXIT_RED, Enum.Material.Neon)
+	local sign = P("ExitSign", if alongX then V(0.7, 0.26, 0.13) else V(0.13, 0.26, 0.7),
+		at(x + nx, y, z + nz), EXIT_FACE)
 	sign.CastShadow = false
 
+	--[[
+		The legend. LightInfluence off so it ignores the room it is in, and
+		brightness well over one so the glyphs clear the bloom threshold and
+		the dark face they sit on does not.
+	]]
 	local faces = if alongX
 		then { Enum.NormalId.Front, Enum.NormalId.Back }
 		else { Enum.NormalId.Left, Enum.NormalId.Right }
 	for _, face in faces do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
-			color = Color3.fromRGB(255, 236, 232),
+			brightness = 4.5,
+			color = EXIT_RED,
 			font = Enum.Font.GothamBold,
 			density = 130,
 		})
 	end
 
-	--[[
-		Dim, and short. It marks a door from down a corridor and lights the metre
-		of wall beside itself. Everything past that is the torch's job, which is
-		the entire point of lighting a building this way.
-	]]
-	bulb(sign, EXIT_RED, 0.5, 6)
+	-- A small red pool on the wall beside it, and nothing past that.
+	bulb(sign, EXIT_RED, 0.45, 5.5)
 	return sign
 end
 

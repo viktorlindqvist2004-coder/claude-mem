@@ -13,6 +13,7 @@
 
 local TweenService = game:GetService("TweenService")
 
+local Tubes = require(script.Parent.Tubes)
 local World = require(script.Parent.World)
 
 local Power = {}
@@ -80,10 +81,20 @@ function Power.restore()
 	for _, entry in saved do
 		entry.light.Brightness = entry.brightness
 	end
+	--[[
+		Back on -- except the tubes that had already gone. A fitting that burnt
+		out at half past midnight is still burnt out when the power comes back,
+		and restoring it would undo the one thing the night has been doing all
+		the way through.
+	]]
 	for _, part in dimmed do
+		if part.Name == "Tube" then
+			continue
+		end
 		part.Material = Enum.Material.Neon
 		part.Color = Color3.fromRGB(255, 26, 20)
 	end
+	Tubes.repower()
 end
 
 --[[

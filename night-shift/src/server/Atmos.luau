@@ -79,6 +79,26 @@ function Atmos.build()
 		table.insert(fixtures, part)
 	end
 
+	--[[
+		And the tubes, which are the ones you actually hear.
+
+		The fluorescents are lit at the start of a night now, and a lit
+		fluorescent buzzes. This emitter has a five-metre rolloff, so it is a
+		property of the fitting you are standing under rather than a bed under
+		the whole building -- which is the difference between the buzz being
+		atmosphere and the buzz being the thing a player cannot stop hearing.
+
+		It is also the sound that goes missing as the night takes the tubes
+		away, one at a time, which is how you notice before you look up.
+	]]
+	for _, part in World.all("Tube") do
+		local sound = SoundBank.make(SoundBank.TUBE_HUM, part, "Buzz")
+		sound.PlaybackSpeed = (SoundBank.TUBE_HUM.speed or 1) * (1 + detune(part) * 0.03)
+		sound:SetAttribute("BaseVolume", SoundBank.TUBE_HUM.volume)
+		sound:Play()
+		table.insert(emitters, sound)
+	end
+
 	local cents = Config.HUM.DETUNE_CENTS / 1200
 	for i, part in (if audible(SoundBank.HUM) then fixtures else {}) do
 		local failing = (i % math.floor(1 / Config.HUM.FAILING_FIXTURE_RATIO)) == 0

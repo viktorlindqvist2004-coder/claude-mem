@@ -72,6 +72,13 @@ local function generator(ctx)
 			its lights off, because now you can see how much of it there is.
 		]]
 		ctx.power().restore()
+		--[[
+			Standby is the emergency circuit and nothing else, so the
+			fluorescents stay out. Getting the generator running gives the crew
+			back the EXIT boxes at half strength -- which is worse than the dark
+			was, because at half strength you can see how far the building goes.
+		]]
+		ctx.tubes().blackout()
 		for _, fitting in ctx.findAll("ExitSign") do
 			local light = fitting:FindFirstChildWhichIsA("Light")
 			if light then

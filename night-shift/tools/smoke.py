@@ -42,6 +42,7 @@ ORDER = [
     ("Objectives", "src/server/Objectives.luau"),
     ("Hud", "src/server/Hud.luau"),
     ("World", "src/server/World.luau"),
+    ("Tubes", "src/server/Tubes.luau"),
     ("Power", "src/server/Power.luau"),
     ("Atmos", "src/server/Atmos.luau"),
     ("AttentionService", "src/server/AttentionService.luau"),

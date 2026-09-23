@@ -104,57 +104,95 @@ local function bulb(part, colour, brightness, rangeM)
 	lightCount += 1
 end
 
--- A caged red bulkhead. One per room, and that is the room's entire lighting.
 --[[
-	A bulkhead fitting, dead.
+	A fluorescent batten.
 
-	Every one of these used to be a light. There are twenty-six of them and the
-	building was a string of red puddles — which is not what a shopping centre
-	looks like at four in the morning. What a shopping centre looks like at four
-	in the morning is one thing lit and everything else off, and the one thing
-	lit is the emergency circuit, because the emergency circuit is the only
-	circuit with a legal obligation to be on.
+	These used to be dead. Every fitting in the building was off and the only
+	light anywhere was the EXIT boxes, which made the place uniformly, evenly
+	dark -- and a building that is the same darkness everywhere has no shape to
+	it and nothing to lose.
 
-	So the fittings stay as objects — they are ceiling furniture, they cast the
-	shadows, and the fact that they are all out is the point — and the only
-	light in the building comes from the EXIT boxes over the doors.
+	So the tubes are on at the start of a night. Weakly, the way a forty-year-old
+	fitting with one good tube left in it is on, and they hum. Then they go, one
+	at a time, across the shift, until what is left is the EXIT boxes and a
+	torch. That progression is the clock made visible: you do not have to look at
+	the time to know how far into the night you are, you have to look up.
+
+	`alongX` is which way the batten runs. A fluorescent is a line, not a point,
+	and a line that runs the wrong way across a corridor reads as a mistake from
+	the far end of it.
 ]]
+local TUBE_LIT = Color3.fromRGB(222, 230, 226)
+local TUBE_DEAD = Color3.fromRGB(38, 39, 38)
+
+local function tube(x, y, z, alongX)
+	if alongX == nil then
+		alongX = true
+	end
+	local body = if alongX then V(1.34, 0.1, 0.17) else V(0.17, 0.1, 1.34)
+	local lens = if alongX then V(1.24, 0.06, 0.12) else V(0.12, 0.06, 1.24)
+
+	P("TubeBody", body, at(x, y + 0.05, z), Color3.fromRGB(52, 52, 54))
+	for _, e in { -1, 1 } do
+		P("TubeEnd", if alongX then V(0.08, 0.11, 0.18) else V(0.18, 0.11, 0.08),
+			at(x + (if alongX then e * 0.63 else 0), y + 0.04, z + (if alongX then 0 else e * 0.63)),
+			Color3.fromRGB(44, 44, 46))
+	end
+
+	local lamp = P("Tube", lens, at(x, y, z), TUBE_LIT, Enum.Material.Neon)
+	lamp.CastShadow = false
+	--[[
+		Weak and short. It should put a pool on the floor under itself and let
+		the far end of the room stay dark -- one fitting should never light a
+		room, it should tell you a room is there.
+	]]
+	bulb(lamp, Color3.fromRGB(198, 212, 208), 0.42, 7)
+	return lamp
+end
+
+-- Kept so the old name still builds something: every fitting is a batten now.
 local function bulkhead(x, y, z, _rangeM)
-	local lens = P("Bulkhead", V(0.3, 0.16, 0.3), at(x, y, z), Color3.fromRGB(26, 24, 24))
-	P("BulkheadCage", V(0.4, 0.26, 0.4), at(x, y + 0.04, z), C.metal)
-	P("BulkheadTube", V(0.24, 0.05, 0.24), at(x, y - 0.03, z), Color3.fromRGB(58, 56, 54))
-	return lens
+	return tube(x, y, z, true)
 end
 
 --[[
 	An EXIT box.
 
-	Three things were wrong with these and all three were visible from the first
-	room. The lettering was clipping to "XIT", because a scaled label that is
-	also wrapped has nowhere to go. They floated at arbitrary points and ended up
-	half inside walls, because nothing told them which surface they belonged to.
-	And they were far too bright — at 1.6 over twenty-two metres every surface
-	within sight of one clipped to flat saturated red, which is not lighting, it
-	is a colour wash, and it made a fully dressed building look like a diagram
-	again.
+	It used to be a solid block of red Neon with the word printed on it, which
+	from three metres away is not a sign, it is a red lamp -- the lettering was
+	washed out by the bloom coming off the box it was printed on, so the one
+	piece of information in the whole fitting was the one thing you could not
+	read.
 
-	`facing` says which way it looks: "N", "S", "E" or "W". The box is then set
-	proud of that wall on a bracket, like a real one, and the lettering goes on
-	the two faces you can actually read it from.
+	A real one is a dark housing with a lit panel in it. So: charcoal box, the
+	panel inset and glowing, EXIT across it in white, and the light it throws is
+	a small pool on the wall beside it and nothing else. From down a corridor
+	you see a red rectangle with a word in it, and around it, black.
+
+	`facing` says which way it looks: "N", "S", "E" or "W". The box is set proud
+	of that wall on a bracket, like a real one, and the lettering goes on the two
+	faces you can read it from.
 ]]
+local EXIT_RED = Color3.fromRGB(255, 30, 22)
+
 local function exitSign(x, y, z, facing)
 	facing = facing or "S"
 	local alongX = facing == "N" or facing == "S"
-	local size = if alongX then V(0.62, 0.24, 0.1) else V(0.1, 0.24, 0.62)
 
 	-- Out from the wall it hangs on, so it is never inside it.
-	local nx = if facing == "E" then 0.26 elseif facing == "W" then -0.26 else 0
-	local nz = if facing == "N" then 0.26 elseif facing == "S" then -0.26 else 0
+	local nx = if facing == "E" then 0.3 elseif facing == "W" then -0.3 else 0
+	local nz = if facing == "N" then 0.3 elseif facing == "S" then -0.3 else 0
 
-	local sign = P("ExitSign", size, at(x + nx, y, z + nz), RED, Enum.Material.Neon)
+	P("ExitBracket", if alongX then V(0.05, 0.05, 0.36) else V(0.36, 0.05, 0.05),
+		at(x + nx / 2, y + 0.19, z + nz / 2), C.metal)
+
+	-- The housing. Dark, and it does not glow: only the panel in it does.
+	P("ExitHousing", if alongX then V(0.74, 0.32, 0.09) else V(0.09, 0.32, 0.74),
+		at(x + nx, y, z + nz), Color3.fromRGB(26, 25, 25))
+
+	local sign = P("ExitSign", if alongX then V(0.66, 0.25, 0.12) else V(0.12, 0.25, 0.66),
+		at(x + nx, y, z + nz), EXIT_RED, Enum.Material.Neon)
 	sign.CastShadow = false
-	P("ExitBracket", if alongX then V(0.06, 0.06, 0.3) else V(0.3, 0.06, 0.06),
-		at(x + nx / 2, y + 0.1, z + nz / 2), C.metal)
 
 	local faces = if alongX
 		then { Enum.NormalId.Front, Enum.NormalId.Back }
@@ -162,49 +200,65 @@ local function exitSign(x, y, z, facing)
 	for _, face in faces do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
-			color = Color3.fromRGB(255, 244, 240),
+			color = Color3.fromRGB(255, 236, 232),
 			font = Enum.Font.GothamBold,
 			density = 130,
 		})
 	end
 
 	--[[
-		Dim, and short. It should mark a door from down a corridor and light the
-		two metres under itself, and nothing else. Everything past that is the
-		torch's job, which is the entire point of lighting a building this way.
+		Dim, and short. It marks a door from down a corridor and lights the metre
+		of wall beside itself. Everything past that is the torch's job, which is
+		the entire point of lighting a building this way.
 	]]
-	bulb(sign, RED, 0.7, 11)
+	bulb(sign, EXIT_RED, 0.5, 6)
 	return sign
 end
 
 --[[
-	A roller shutter.
+	A fire exit.
 
-	The old one was a flat plate that grew downwards when you pulled it, and it
-	looked exactly as bad as that sounds: the slats were separate parts that
-	stayed where they were while the plate stretched through them, and it stopped
-	a metre and a half short of a ceiling that had since been raised.
-
-	This is the real arrangement. A housing box across the top of the opening, a
-	guide channel down each side, and a curtain that is already full height and
-	starts retracted inside the housing. Pulling it down slides it; nothing
-	scales, nothing stretches, and the slats are drawn on the curtain so they
-	travel with it.
-
-	It unrolls rather than slides. Sliding needs somewhere to hide the retracted
-	curtain, and over a mall arm that somewhere is the food court floor — the
-	first attempt put six shutters through it. So the curtain grows downwards out
-	of the housing, which is what the eye reads a roller shutter as doing anyway.
-
-	The slats are a SurfaceGui rather than parts, which is the whole reason this
-	works: they redistribute when the curtain resizes. Separate slat parts is
-	what made the old one look broken — the plate stretched straight through them
-	and left them hanging in the opening.
-
-	The closed geometry goes on the part as attributes, so World.lowerShutter
-	animates to exactly what it was built to become rather than to a number typed
-	in a second file that stops being true when a ceiling changes.
+	The green door is the half of this that makes the red box mean something. An
+	EXIT sign over a stretch of blank wall is a decoration; an EXIT sign over a
+	green door with a push bar on it is a way out, and the whole fifth night is
+	about there being one and it not working.
 ]]
+local EXIT_GREEN = Color3.fromRGB(26, 116, 62)
+
+local function emergencyExit(x, y, z, facing)
+	facing = facing or "S"
+	local alongX = facing == "N" or facing == "S"
+	-- Which way is out of the room, in the direction the sign faces.
+	local ox = if facing == "E" then 1 elseif facing == "W" then -1 else 0
+	local oz = if facing == "N" then 1 elseif facing == "S" then -1 else 0
+
+	P("ExitDoorFrame", if alongX then V(1.36, 2.32, 0.18) else V(0.18, 2.32, 1.36),
+		at(x, y + 1.16, z), C.trim)
+	P("ExitDoor", if alongX then V(1.12, 2.12, 0.1) else V(0.1, 2.12, 1.12),
+		at(x + ox * 0.05, y + 1.06, z + oz * 0.05), EXIT_GREEN)
+
+	-- The push bar, across the leaf at waist height. You have seen ten thousand
+	-- of these and you have never once looked at one.
+	P("PushBar", if alongX then V(0.94, 0.08, 0.08) else V(0.08, 0.08, 0.94),
+		at(x + ox * 0.12, y + 1.02, z + oz * 0.12), C.metal)
+	for _, e in { -1, 1 } do
+		P("PushBarMount", if alongX then V(0.07, 0.16, 0.1) else V(0.1, 0.16, 0.07),
+			at(x + (if alongX then e * 0.4 else ox * 0.09), y + 1.02,
+				z + (if alongX then oz * 0.09 else e * 0.4)), C.metal)
+	end
+
+	-- The running-man plate. The other half of what makes a door read as a door
+	-- you are allowed through.
+	local plate = P("ExitPlate", if alongX then V(0.2, 0.2, 0.02) else V(0.02, 0.2, 0.2),
+		at(x + ox * 0.11, y + 1.6, z + oz * 0.11), Color3.fromRGB(22, 96, 52))
+	Surfaces.label(plate,
+		if alongX then (if oz < 0 then Enum.NormalId.Front else Enum.NormalId.Back)
+		else (if ox > 0 then Enum.NormalId.Right else Enum.NormalId.Left),
+		"↥", { color = Color3.fromRGB(236, 244, 238), density = 90 })
+
+	exitSign(x, y + 2.52, z, facing)
+end
+
 local function shutterCurtain(name, sizeM, cf, closedSizeM, closedCf)
 	local curtain = P(name, sizeM, cf, Color3.fromRGB(78, 76, 74), Enum.Material.CorrodedMetal)
 	if closedSizeM then
@@ -1706,14 +1760,17 @@ local function mallArm(axis, length, entries)
 		f += 6.0
 	end
 
-	-- The dead end, with the thing that is legally required to be lit on it.
-	exitSign(
-		(axis == "N") and 0 or start + length - 0.3,
-		MALL_H - 0.5,
-		(axis == "N") and start + length - 0.3 or 0,
-		if axis == "N" then "S" else "W")
-	P("FireDoor", size(0.15, 1.6, 2.1), pos(length - 0.12, 0, 1.05), C.metal)
-	P("PushBar", size(0.06, 1.4, 0.08), pos(length - 0.22, 0, 1.0), C.trim)
+	--[[
+		The dead end, and the way out of it. A green door with a push bar and
+		the red box over it: from the atrium, forty metres away, that pair is
+		the only thing at the end of the arm you can see, and it is the thing
+		that tells you the arm has an end.
+	]]
+	emergencyExit(
+		(axis == "N") and 0 or start + length - 0.45,
+		0,
+		(axis == "N") and start + length - 0.45 or 0,
+		if axis == "N" then "N" else "E")
 
 	-- Ceiling: grid, sprinklers, the speakers the tape comes out of, and a
 	-- hanging wayfinding sign you can read from the atrium.
@@ -1804,6 +1861,9 @@ local function serviceCorridor()
 	end
 	wallWithDoors(x - SERVICE_W / 2, z0, z1, "z", 0, h, doors, "W", C.block)
 	P("Service_EndN", V(SERVICE_W + 0.5, h, WALL), at(x, h / 2, z1), C.block)
+	-- The way out of the back of house, at the north end where the corridor
+	-- stops. It is the nearest door to the staff room and nobody uses it.
+	emergencyExit(x, 0, z1 - 0.2, "N")
 
 	--[[
 		The link through to the atrium. Ten metres of blockwork at right angles
@@ -1843,6 +1903,13 @@ local function serviceCorridor()
 		P("DuctHanger", V(0.05, 0.5, 0.05), at(x + 0.5, h - 0.2, pipe), C.metal)
 		pipe += 3.0
 	end
+	-- Battens down the corridor, along it rather than across it.
+	local lit = z0 + 4
+	while lit < z1 do
+		tube(x, h - 0.16, lit, false)
+		lit += 7.5
+	end
+
 	-- And the things that stack up in a corridor nobody shows customers.
 	-- Against the east wall, between two doors. It used to sit dead centre in
 	-- the security office doorway.
@@ -2749,24 +2816,61 @@ end
 	Runs are merged before anything is built, so the whole exterior is about
 	forty parts rather than eight hundred.
 ]]
-local MASSES = {
-	-- name, x0, x1, z0, z1, parapet top
-	{ "Atrium", -11.3, 11.3, -9.3, 9.3, ATRIUM_H + 1.6 },
-	{ "NorthArm", -3.5, 3.5, 9.0, 39.2, MALL_H + 1.1 },
-	{ "EastArm", 11.0, 35.2, -3.5, 3.5, MALL_H + 1.1 },
-	{ "Supermarket", -19.3, -3.3, 16.9, 29.1, 5.2 },
-	{ "Fashion", 17.4, 28.6, 3.1, 12.3, 5.2 },
-	{ "Toilets", 12.9, 21.1, -9.3, -3.1, 4.4 },
-	-- The food court is a first-floor room over the north arm and wider than
-	-- it. Taken from the ground, so the overhang reads as a two-storey wing
-	-- instead of a box hanging in the air.
-	{ "FoodCourt", -7.3, 7.3, 8.8, 19.1, FLOOR1 + 3.6 + 1.0 },
-	{ "BackOfHouse", -34.5, -20.6, -30.3, 18.3, 5.4 },
-}
+--[[
+	The masses.
 
--- Where the envelope is deliberately not built: the entrance bay is glazed.
+	This was a hand-written list, and the back of house was one rectangle across
+	the whole wing -- which enclosed a great deal of space that is not in the
+	building. The loading dock's shutter opened onto the inside of that
+	rectangle, so the dock had a brick wall where the yard should be, and a car
+	park bay was painted across the dock floor.
+
+	So the list is derived. Every ground-floor room contributes its own
+	rectangle, the corridor and the arms contribute theirs, and the envelope
+	wraps their union: where two of them touch there is no wall, and everywhere
+	else there is brick. Add a room to ROOMS and the outside of the building
+	grows to fit it without anybody drawing an elevation.
+]]
+local function envelopeMasses()
+	local sx0, sx1 = SERVICE_X - SERVICE_W / 2 - 0.3, SERVICE_X + SERVICE_W / 2 + 0.3
+	local masses = {
+		{ "Atrium", -11.3, 11.3, -9.3, 9.3, ATRIUM_H + 1.6 },
+		{ "NorthArm", -3.5, 3.5, 9.0, 39.2, MALL_H + 1.1 },
+		{ "EastArm", 11.0, 35.2, -3.5, 3.5, MALL_H + 1.1 },
+		-- The food court is a first-floor room over the north arm and wider than
+		-- it. Taken from the ground, so the overhang reads as a two-storey wing
+		-- rather than a box hanging in the air.
+		{ "FoodCourt", -7.3, 7.3, 8.8, 19.1, FLOOR1 + 3.6 + 1.0 },
+		{ "Service", sx0, sx1, -30.3, 18.3, SERVICE_H + 1.1 },
+		{ "Link", -21.0, -11.0, 1.4, 4.6, SERVICE_H + 1.1 },
+	}
+	for _, r in ROOMS do
+		local name, cx, cz, w, d, y, h = r[1], r[2], r[3], r[4], r[5], r[6], r[7]
+		-- Ground floor only: the basement is under the building and the food
+		-- court is already up there.
+		if y == 0 then
+			table.insert(masses, {
+				name, cx - w / 2 - 0.3, cx + w / 2 + 0.3,
+				cz - d / 2 - 0.3, cz + d / 2 + 0.3, h + 1.0,
+			})
+		end
+	end
+	return masses
+end
+
+local MASSES = envelopeMasses()
+
+--[[
+	Where the envelope is deliberately not built.
+
+	The entrance bay is glazed, and the dock's south wall has a roller shutter
+	and a staff door in it -- both of which open onto the service yard, and both
+	of which were bricked up the moment the envelope went round the building.
+]]
 local ENVELOPE_OPENINGS = {
 	{ "Atrium", "S", -8.2, 8.2 },
+	{ "LoadingDock", "S", -31.6, -26.0 },   -- the roller shutter
+	{ "LoadingDock", "S", -34.8, -32.6 },   -- the staff door
 }
 
 local function buildEnvelope(_facadeH)
@@ -2869,6 +2973,27 @@ end
 local function buildExterior()
 	local frontZ = -ATRIUM_D / 2
 
+	--[[
+		Is this point out in the open?
+
+		The car park is laid out on a grid that does not know the building is
+		there. Bays were painted across the loading dock floor, a lamp column
+		stood in the service corridor, and one of the four cars was parked
+		indoors -- which is exactly the sort of thing you only find by walking
+		into it. Everything outside is now checked against the same rectangles
+		the envelope is built from, so the car park and the building cannot
+		drift out of step again.
+	]]
+	local function outside(x, z, margin)
+		margin = margin or 1.4
+		for _, m in MASSES do
+			if x > m[2] - margin and x < m[3] + margin and z > m[4] - margin and z < m[5] + margin then
+				return false
+			end
+		end
+		return true
+	end
+
 	-- ── The frontage ────────────────────────────────────────────────────────
 	--[[
 		A brick elevation with a glazed entrance bay in the middle of it, taller
@@ -2931,14 +3056,17 @@ local function buildExterior()
 	for row = 0, 1 do
 		local bz = frontZ - 11 - row * 13
 		for i = -8, 8 do
-			P("BayLine", V(0.14, 0.02, 5.0), at(i * 2.7, 0.02, bz), Color3.fromRGB(150, 146, 136))
+			if outside(i * 2.7, bz, 3.0) then
+				P("BayLine", V(0.14, 0.02, 5.0), at(i * 2.7, 0.02, bz), Color3.fromRGB(150, 146, 136))
+			end
 		end
 		P("AisleLine", V(48, 0.02, 0.12), at(0, 0.02, bz - 3.2), Color3.fromRGB(120, 116, 108))
 	end
-	-- Two disabled bays by the doors, wider, with the symbol painted on.
+	-- Two disabled bays by the doors, wider, with the symbol painted on. By the
+	-- doors, which is where they belong and is also not inside the dock.
 	for i = -1, 0 do
-		P("BayLine", V(0.14, 0.02, 5.0), at(-24 + i * 3.6, 0.02, frontZ - 11), Color3.fromRGB(150, 146, 136))
-		P("BaySymbol", V(1.4, 0.02, 1.4), at(-25.8 + i * 3.6, 0.021, frontZ - 11), Color3.fromRGB(70, 96, 140))
+		P("BayLine", V(0.14, 0.02, 5.0), at(-7 + i * 3.6, 0.02, frontZ - 11), Color3.fromRGB(150, 146, 136))
+		P("BaySymbol", V(1.4, 0.02, 1.4), at(-8.8 + i * 3.6, 0.021, frontZ - 11), Color3.fromRGB(70, 96, 140))
 	end
 
 	--[[
@@ -2951,7 +3079,7 @@ local function buildExterior()
 	for i = -2, 2 do
 		for row = 0, 1 do
 			local lx, lz = i * 11, frontZ - 8 - row * 13
-			if lx > -35 and lx < -19 and lz > -31 and lz < 19 then
+			if not outside(lx, lz, 2.0) then
 				continue
 			end
 			P("LampColumn", V(0.22, 7.0, 0.22), at(lx, 3.5, lz), C.metal)
@@ -2978,6 +3106,9 @@ local function buildExterior()
 
 	-- Planting islands, a bin, and a smoking shelter's worth of clutter.
 	for _, sx in { -1, 1 } do
+		if not outside(sx * 27, frontZ - 17, 3.4) then
+			continue
+		end
 		P("Island", V(6, 0.22, 2.4), at(sx * 27, 0.09, frontZ - 17), Color3.fromRGB(96, 94, 90))
 		planterBed(sx * 27, 0.2, frontZ - 17, 5.0, true, 7700 + sx)
 		pottedTree(sx * 27 - 1.8, 0.2, frontZ - 17, 7710 + sx)
@@ -2989,8 +3120,11 @@ local function buildExterior()
 
 	-- Cars. Four of them, none of which has moved in a very long time.
 	local rng = Random.new(6161)
-	for i, spot in { { -25.8, frontZ - 11 }, { 8.1, frontZ - 24 }, { -13.5, frontZ - 24 }, { 24.3, frontZ - 11 } } do
+	for i, spot in { { -8.8, frontZ - 11 }, { 8.1, frontZ - 24 }, { -13.5, frontZ - 24 }, { 24.3, frontZ - 11 } } do
 		local cx, cz = spot[1], spot[2]
+		if not outside(cx, cz, 2.6) then
+			continue
+		end
 		local tint = Color3.fromRGB(rng:NextInteger(40, 78), rng:NextInteger(42, 76), rng:NextInteger(46, 84))
 		P("CarBody", V(1.8, 0.9, 4.2), at(cx, 0.65, cz), tint)
 		P("CarRoof", V(1.6, 0.72, 2.2), at(cx, 1.4, cz - 0.2), tint)
@@ -3118,14 +3252,33 @@ local function applyLighting()
 		now; this raises the floor slightly so what they do not reach is dim grey
 		rather than pure black.
 	]]
-	Lighting.Ambient = Color3.fromRGB(11, 11, 14)
-	Lighting.OutdoorAmbient = Color3.fromRGB(18, 20, 28)
-	Lighting.Brightness = 0.6
-	Lighting.ExposureCompensation = 0.1
-	-- Enough environment light for Marble and Metal to have a sheen. These two
-	-- numbers are what make a PBR material read as PBR rather than as paint.
-	Lighting.EnvironmentDiffuseScale = 0.3
-	Lighting.EnvironmentSpecularScale = 0.9
+	--[[
+		Very dark.
+
+		The last pass raised the floor so nothing would be invisible, and the
+		result was a building lit like a car park at dusk: you could read a
+		notice off a wall from four metres with the torch off, and there is no
+		version of that which is frightening.
+
+		The reference is a photograph of a corridor with one EXIT box in it. The
+		box is legible, there is a pool of colour on the wall beside it, and
+		everything else in the frame is black. That is the target, and these are
+		the numbers that hit it: ambient close to nothing, the sun contributing
+		almost nothing indoors, and the exposure pulled down so the fittings that
+		are on are the brightest things anywhere.
+
+		What makes it legible rather than merely black is that the tubes are lit
+		at the start of the night. You are given a building you can see, and then
+		it is taken away from you one fitting at a time.
+	]]
+	Lighting.Ambient = Color3.fromRGB(3, 3, 4)
+	Lighting.OutdoorAmbient = Color3.fromRGB(8, 9, 14)
+	Lighting.Brightness = 0.15
+	Lighting.ExposureCompensation = -0.35
+	-- Just enough environment light for Metal and Marble to have a sheen. Any
+	-- more and it becomes a second ambient term and the black point goes.
+	Lighting.EnvironmentDiffuseScale = 0.12
+	Lighting.EnvironmentSpecularScale = 0.5
 	Lighting.ShadowSoftness = 0.5
 	Lighting.ClockTime = 0
 	Lighting.GeographicLatitude = 20
@@ -3154,9 +3307,12 @@ local function applyLighting()
 	-- A threshold below the exposure turns the whole frame to soup.
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "NightBloom"
-	bloom.Intensity = 0.32
-	bloom.Size = 16
-	bloom.Threshold = 2.1
+	-- Threshold under the exposure now, because the exposure is well below zero
+	-- and the only things above it are the lit panels. This is what gives the
+	-- EXIT box its halo and the tube its glare.
+	bloom.Intensity = 0.55
+	bloom.Size = 20
+	bloom.Threshold = 0.85
 	bloom.Parent = Lighting
 
 	--[[
@@ -3173,9 +3329,9 @@ local function applyLighting()
 		every red wall in the last build looked like painted card. Taking the
 		saturation out gives the red somewhere to go before it flattens.
 	]]
-	grade.Saturation = -0.34
-	grade.Contrast = 0.12
-	grade.Brightness = 0.01
+	grade.Saturation = -0.2
+	grade.Contrast = 0.22
+	grade.Brightness = -0.02
 	grade.TintColor = Color3.fromRGB(238, 238, 248)
 	grade.Parent = Lighting
 

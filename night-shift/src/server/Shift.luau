@@ -34,6 +34,7 @@ local Hud = require(script.Parent.Hud)
 local Mannequins = require(script.Parent.Mannequins)
 local Objectives = require(script.Parent.Objectives)
 local Power = require(script.Parent.Power)
+local Tubes = require(script.Parent.Tubes)
 local World = require(script.Parent.World)
 
 local METRE = Places.METRE
@@ -46,6 +47,7 @@ Shift.definition = nil :: any
 Shift.finished = false
 
 local heartbeat: RBXScriptConnection? = nil
+local cancelTubes: (() -> ())? = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -208,6 +210,10 @@ end
 function ctx.power()
 	return Power
 end
+-- The fluorescents: lit at the start of a night, and going all the way through it.
+function ctx.tubes()
+	return Tubes
+end
 function ctx.atmos()
 	return Atmos
 end
@@ -337,7 +343,7 @@ local function stepStandStill()
 			]]
 			task.spawn(function()
 				local ahead = {}
-				for _, fitting in World.all("ExitSign") do
+				for _, fitting in World.all("Tube") do
 					local delta = fitting.Position - root.Position
 					if delta.Magnitude < 22 * METRE and delta.Unit:Dot(root.CFrame.LookVector) > 0.3 then
 						table.insert(ahead, fitting)
@@ -467,6 +473,11 @@ function Shift.stop()
 		heartbeat = nil
 	end
 	Dread.stop()
+	-- And nothing from last night is allowed to still be putting lights out.
+	if cancelTubes then
+		cancelTubes()
+		cancelTubes = nil
+	end
 	-- Nothing from last night is allowed to still be walking around in this one.
 	Mannequins.stop()
 	Customers.stop()
@@ -498,6 +509,21 @@ function Shift.begin(night: number)
 	end
 
 	Atmos.build()
+	--[[
+		The building starts lit and gets dark. Roughly two thirds of the tubes
+		go across a shift, unevenly and faster towards the end, so that by four
+		in the morning what is left is the EXIT boxes and whatever the crew are
+		carrying. Nobody is told this is happening; they notice, which is the
+		whole of the effect.
+	]]
+	Tubes.build()
+	Tubes.relight()
+	if cancelTubes then
+		cancelTubes()
+	end
+	cancelTubes = Tubes.failAcross(
+		Config.SHIFT_HOURS * Config.SECONDS_PER_GAME_HOUR[night], 0.66)
+
 	Dread.night = night
 	Dread.start()
 

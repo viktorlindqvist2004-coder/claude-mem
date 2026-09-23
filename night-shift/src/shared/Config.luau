@@ -71,8 +71,19 @@ Config.SOLO_ATTENTION_DECAY_SCALE = 1.15
 	Focus is for looking at one thing on purpose.
 ]]
 Config.FLASHLIGHT = {
-	WIDE = { angle = 82, range = 55, brightness = 4.5, drainPerSecond = 0.8 },
-	FOCUS = { angle = 24, range = 110, brightness = 7.0, drainPerSecond = 2.4 },
+	--[[
+		Weak, and short.
+
+		A 55 m beam at brightness 4.5 is a floodlight: it lit whole rooms at
+		once, which meant the building had no dark in it to be afraid of and the
+		torch had nothing to be useful for. What a torch is for is showing you a
+		small circle of a room and making you decide which small circle.
+
+		So: a few metres of usable light, and a focused mode that reaches down a
+		corridor but only shows you a doorway's worth when it gets there.
+	]]
+	WIDE = { angle = 70, range = 15, brightness = 0.85, drainPerSecond = 0.8 },
+	FOCUS = { angle = 22, range = 28, brightness = 1.5, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),

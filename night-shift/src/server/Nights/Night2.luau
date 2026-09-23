@@ -254,7 +254,7 @@ Night.beats = {
 		ctx.caption("[the fashion circuit strobes]", "the fashion floor")
 		task.spawn(function()
 			for _ = 1, 14 do
-				for _, fitting in ctx.findAll("ExitSign") do
+				for _, fitting in ctx.findAll("Tube") do
 					Power.douse(fitting, 0.35)
 				end
 				ctx.effect("strobe", nil)

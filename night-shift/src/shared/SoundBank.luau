@@ -68,6 +68,39 @@ SoundBank.HUM = {
 	rollOffMaxMetres = 16,
 }
 
+--[[
+	The buzz of a working fluorescent, at the fitting.
+
+	This one is on even though the other loops are not, because the buzz is the
+	point rather than a bed: the rolloff is tight enough that you only hear a
+	fitting when you are under it, so it is a property of that fitting in that
+	room rather than a drone you cannot get away from. Walk out and it is gone.
+
+	Still a placeholder -- it is bass.mp3 pitched up until the repeat is fast
+	enough to read as mains buzz rather than as a note -- but a placeholder you
+	can only hear standing beneath a light is one that earns its place.
+]]
+SoundBank.TUBE_HUM = {
+	caption = "[the tube above you buzzes]",
+	id = "rbxasset://sounds/bass.mp3",
+	volume = 0.07,
+	speed = 2.4,
+	looped = true,
+	rollOffMinMetres = 1.2,
+	rollOffMaxMetres = 5.5,
+}
+
+-- A fitting striking, failing, striking, and going out for good.
+SoundBank.TUBE_FAIL = {
+	caption = "[a light gives out]",
+	id = "rbxasset://sounds/electronicpingshort.wav",
+	volume = 0.5,
+	speed = 0.55,
+	looped = false,
+	rollOffMinMetres = 3,
+	rollOffMaxMetres = 40,
+}
+
 -- The fixtures that are going. One in twelve, and players use them as landmarks.
 SoundBank.HUM_FAILING = {
 	caption = "[a fitting buzzes, irregularly]",

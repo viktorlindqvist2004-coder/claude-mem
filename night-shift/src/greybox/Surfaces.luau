@@ -76,7 +76,14 @@ local RULES = {
 
 	-- Ceilings and the grid under them.
 	{ "_Ceiling$", M.Concrete, 0 },
+	{ "^CeilingTile", M.Fabric, 0.05 },
+	{ "^LooseTile", M.Fabric, 0.06 },
+	{ "^TileVoid", M.Slate, 0 },
 	{ "^GridT", M.Metal, 0.08 },
+	{ "^GridAngle", M.Metal, 0.08 },
+	{ "^SprinklerPlate", M.Metal, 0.05 },
+	{ "^Envelope", M.Brick, 0.06 },
+	{ "^Roof$", M.Pebble, 0.05 },
 	{ "^Sprinkler", M.Metal, 0.12 },
 
 	-- Structure.

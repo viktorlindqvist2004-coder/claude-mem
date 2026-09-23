@@ -405,7 +405,17 @@ paperClose.Size = UDim2.new(1, 0, 0, 26)
 paperClose.Position = UDim2.new(0, 0, 1, -28)
 paperClose.BackgroundTransparency = 1
 paperClose.Font = Enum.Font.GothamMedium
-paperClose.Text = "ESC  ·  put it back"
+--[[
+	X, and not Escape.
+
+	Escape is reserved by the Roblox client for its own menu: the key never
+	reaches the experience, so a close line advertising it is a line that lies.
+	Everything else still works — E, Q, Backspace, Return, Space, and a click
+	anywhere on the screen — but only the two that are certain are printed,
+	because a label offering a key that does nothing is worse than a label
+	offering one.
+]]
+paperClose.Text = "X  ·  put it back        or click anywhere"
 paperClose.TextColor3 = Color3.fromRGB(104, 94, 76)
 paperClose.TextSize = 15
 paperClose.ZIndex = 22
@@ -533,6 +543,16 @@ local strikeLabel = label(gui, "", UDim2.new(0, 300, 0, 40), UDim2.new(0.5, -150
 strikeLabel.TextXAlignment = Enum.TextXAlignment.Center
 strikeLabel.TextColor3 = RED
 strikeLabel.TextSize = 30
+
+--[[
+	Forward-declared, because the night card is built a long way below here and
+	the effect handler is above it. Without this the reference on the "card"
+	branch resolved to a global that never existed, so the one screen that tells
+	a new player where they are, what time it is and what the job is has never
+	once appeared. It is the first thing you see on a night and it was silently
+	nothing.
+]]
+local showCard: (any) -> ()
 
 local function showStrike(text: string)
 	strikeLabel.Text = text
@@ -702,7 +722,7 @@ questionLine.TextXAlignment = Enum.TextXAlignment.Right
 questionLine.TextColor3 = Color3.fromRGB(122, 74, 70)
 questionLine.TextSize = 13
 
-local function showCard(payload)
+function showCard(payload)
 	cardPlace.Text = payload.place or ""
 	cardWhen.Text = payload.when or ""
 	cardWhat.Text = payload.what or ""
@@ -1009,11 +1029,12 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		end
 	elseif paperOpen then
 		--[[
-			Anything closes it. Escape is the one it advertises, and the rest are
-			there because somebody will try them: E and X because those are the
-			game's other two keys, Backspace because that is what people press
-			when they want something to go away, and Return and Space because
-			they are the two biggest keys on the keyboard.
+			Anything closes it. X is the one it advertises, because Escape never
+			arrives — the Roblox client keeps it for its own menu. The rest are
+			here because somebody will try them: E and Q because those are the
+			game's other keys, Backspace because that is what people press when
+			they want something gone, and Return and Space because they are the
+			two biggest keys on the keyboard.
 		]]
 		local key = input.KeyCode
 		if
@@ -1051,5 +1072,5 @@ task.delay(10, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [ESC] close", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

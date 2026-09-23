@@ -37,6 +37,8 @@ gb = io.open("src/greybox/init.luau", encoding="utf-8").read()
 names = set(re.findall(r'P\("([^"]+)"', gb))
 names |= set(re.findall(r'\.Name = "([^"]+)"', gb))
 names |= set(re.findall(r'room\("([^"]+)"', gb))
+# Parts built by a helper that takes the name: the literal never reaches P().
+names |= set(re.findall(r'shutterCurtain\("([^"]+)"', gb))
 names |= set(re.findall(r'\{ "([A-Za-z]+)",', gb))
 names |= {"Bulkhead", "ExitSign", "Seg", "Wall", "DoorHead"}
 

@@ -29,6 +29,10 @@ M = 1 / 0.3
 # Generous by half a metre in plan, because a skirting board is meant to be in
 # the wall and a fascia is meant to be proud of one.
 PAD = 0.7
+
+# The building's outside. Never in a room, always over one.
+SHELL = ("Envelope", "Parapet", "Roof", "FacadeBand", "RoofPlant", "RoofTank",
+         "RoofLeg", "RoofDuct", "LiftOverrun")
 VOLUMES = [
     ("atrium",        -11,  11,  -0.4,  10.2,  -9,   9),
     ("north arm",      -3.2, 3.2, -0.4,  4.5,    9,  39),
@@ -112,6 +116,11 @@ for line in result.stdout.strip().split("\n"):
     px, py, pz, sx, sy, sz = (float(v) / M for v in parts[1:7])
     tilted = parts[7] == "1"
     checked += 1
+
+    # The envelope is the outside of the building: standing in none of the
+    # interior volumes, and above all of them, is the whole point of it.
+    if name in SHELL:
+        continue
 
     # Which volumes could this part be in?
     inside = [

@@ -31,9 +31,9 @@
 
 local Build = {}
 
-Build.COMMIT = "e607a4a"
-Build.SUMMARY = "Build the outside, and put the centre's name on it in neon"
-Build.WHEN = "23 Sep 11:59"
+Build.COMMIT = "26626e7"
+Build.SUMMARY = "Stage the jump scares on the building, and say what the game is about"
+Build.WHEN = "23 Sep 12:03"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -9193,26 +9193,80 @@ local function mannequin(x, y, z, turn, colour)
 	end
 end
 
--- Ceiling grid, sprinklers and the speakers the tape comes out of.
+--[[
+	A suspended ceiling.
+
+	This used to be a bare grid: pale T-bars at 1.2 m in both directions
+	against a dark structural slab, and nothing in between. From underneath
+	that is not a ceiling, it is a lattice with a void behind it — which is
+	why it read as ductwork somebody gave up on rather than as a room having
+	a ceiling at all.
+
+	A 1986 mineral-fibre ceiling is the other way round: pale tile, and the
+	grid is the thin dark line between the tiles. So the tile plane goes in
+	first and the bars sit on it, and the only places you see the void are the
+	three or four tiles that are out — one of them leaning where somebody put
+	it back badly, which is worth more than the whole rest of the fitting. The
+	building has been empty since 1998 and the ceiling is the first thing to
+	say so.
+]]
+local TILE = Color3.fromRGB(128, 125, 119)
+local GRID = Color3.fromRGB(62, 60, 58)
+
 local function ceilingKit(cx, cz, w, d, y, h, seed)
 	local rng = Random.new(seed)
 	local step = 1.2
-	local i = 0
+	local plane = y + h - 0.12
+
+	P("CeilingTile", V(w - 0.1, 0.06, d - 0.1), at(cx, plane, cz), TILE)
+
+	-- The grid, on the tile rather than instead of it.
 	local gx = cx - w / 2 + step
 	while gx < cx + w / 2 - 0.3 do
-		P("GridT", V(0.05, 0.04, d - 0.4), at(gx, y + h - 0.03, cz), C.trim)
+		P("GridT", V(0.05, 0.05, d - 0.2), at(gx, plane - 0.03, cz), GRID)
 		gx += step
-		i += 1
 	end
 	local gz = cz - d / 2 + step
 	while gz < cz + d / 2 - 0.3 do
-		P("GridT", V(w - 0.4, 0.04, 0.05), at(cx, y + h - 0.03, gz), C.trim)
+		P("GridT", V(w - 0.2, 0.05, 0.05), at(cx, plane - 0.03, gz), GRID)
 		gz += step
 	end
+	-- The perimeter angle the tiles sit on.
+	for _, e in { { w - 0.1, 0.06, d / 2 - 0.05, 0 }, { 0.06, w / 2 - 0.05, 0, 1 } } do
+		if e[4] == 0 then
+			for _, sz in { -1, 1 } do
+				P("GridAngle", V(e[1], 0.07, 0.07), at(cx, plane - 0.03, cz + sz * e[3]), GRID)
+			end
+		else
+			for _, sx in { -1, 1 } do
+				P("GridAngle", V(0.07, 0.07, d - 0.1), at(cx + sx * e[2], plane - 0.03, cz), GRID)
+			end
+		end
+	end
+
+	--[[
+		Tiles that are out. A hole in the plane, the dark of the plenum behind
+		it, and on one of them the tile itself resting at an angle in its own
+		opening.
+	]]
+	local outs = math.clamp(math.floor(w * d / 26), 1, 4)
+	for k = 1, outs do
+		local tx = cx + math.floor(rng:NextNumber(-w / 2 + 1.4, w / 2 - 1.4) / step) * step + step / 2
+		local tz = cz + math.floor(rng:NextNumber(-d / 2 + 1.4, d / 2 - 1.4) / step) * step + step / 2
+		P("TileVoid", V(step - 0.1, 0.05, step - 0.1), at(tx, plane + 0.02, tz), Color3.fromRGB(14, 13, 13))
+		if k == 1 then
+			local leaning = P("LooseTile", V(step - 0.16, 0.05, step - 0.16), at(tx, plane - 0.14, tz - 0.16), TILE)
+			leaning.Orientation = Vector3.new(26, 4, 0)
+		end
+	end
+
+	-- Sprinklers, each on its escutcheon, which is what stops them reading as
+	-- nubs stuck to a slab.
 	for _ = 1, math.max(1, math.floor(w * d / 22)) do
 		local sx = cx + rng:NextNumber(-w / 2 + 1, w / 2 - 1)
 		local sz = cz + rng:NextNumber(-d / 2 + 1, d / 2 - 1)
-		P("Sprinkler", V(0.07, 0.09, 0.07), at(sx, y + h - 0.1, sz), C.metal)
+		P("SprinklerPlate", V(0.16, 0.02, 0.16), at(sx, plane - 0.04, sz), Color3.fromRGB(150, 148, 142))
+		P("Sprinkler", V(0.06, 0.08, 0.06), at(sx, plane - 0.09, sz), C.metal)
 	end
 end
 
@@ -9817,7 +9871,9 @@ local function buildAtrium()
 	seatingCluster(8.0, 0, -0.5, 6602, false)
 	pottedTree(-9.2, 0, -6.6, 6603)
 	pottedTree(9.2, 0, 7.0, 6604)
-	planterBed(0, FLOOR1, d / 2 - 1.2, w - 4, true, 6605)
+	-- The north run is split: the middle of that edge is the food court door.
+	planterBed(-(w / 4 + 0.4), FLOOR1, d / 2 - 1.2, w / 2 - 4, true, 6605)
+	planterBed(w / 4 + 0.4, FLOOR1, d / 2 - 1.2, w / 2 - 4, true, 6615)
 	planterBed(0, FLOOR1, -(d / 2 - 1.2), w - 4, true, 6606)
 
 	--[[
@@ -9954,7 +10010,8 @@ local function firstFloorUnits()
 		bench(sx * 9.4, y, 3.5, false)
 		litterBin(sx * 9.4, y, -3.5)
 	end
-	picture(0, y + 2.1, d / 2 - 0.2, "z", 3304)
+	-- Off to one side: the middle of this wall is the food court doorway.
+	picture(-5.6, y + 2.1, d / 2 - 0.2, "z", 3304)
 	pottedTree(-9.4, y, -5.2, 3305)
 	pottedTree(9.4, y, 5.2, 3306)
 end
@@ -10314,26 +10371,49 @@ local function mallArm(axis, length, entries)
 		where you can see both ends, and that is worth more than everything on
 		the walls put together.
 	]]
+	--[[
+		Is there a shop entrance opposite this point? A tree at 1.9 m from the
+		centreline is 1.3 m in front of a shopfront, which is fine in front of a
+		shuttered unit and is standing in the doorway in front of an open one.
+	]]
+	local function opposite(alongV, side)
+		for _, e in entries do
+			if e[1] == side and alongV > e[2] - e[3] / 2 - 1.8 and alongV < e[2] + e[3] / 2 + 1.8 then
+				return true
+			end
+		end
+		return false
+	end
+
 	local f = 5.0
 	local piece = 0
 	while f < length - 3 do
 		local cx = (axis == "N") and 0 or start + f
 		local cz = (axis == "N") and start + f or 0
+		local shut = not (opposite(f, -1) or opposite(f, 1))
 		piece += 1
 		if piece % 3 == 1 then
-			kiosk(cx, cz, (axis == "N") and 2.4 or 2.0, (axis == "N") and 2.0 or 2.4, 0, 9300 + piece, axis == "E")
+			if shut then
+				kiosk(cx, cz, (axis == "N") and 2.4 or 2.0, (axis == "N") and 2.0 or 2.4, 0, 9300 + piece, axis == "E")
+			end
 		elseif piece % 3 == 2 then
-			pottedTree(
-				(axis == "N") and 1.9 or cx,
-				0,
-				(axis == "N") and cz or 1.9,
-				9400 + piece)
-			bench(
-				(axis == "N") and -1.9 or cx,
-				0,
-				(axis == "N") and cz or -1.9,
-				axis == "E")
-		else
+			-- Tree on whichever side has no door opposite it, bench on the other.
+			local ts = if opposite(f, 1) then -1 elseif opposite(f, -1) then 1 else 1
+			if not opposite(f, ts) then
+				pottedTree(
+					(axis == "N") and ts * 1.9 or cx,
+					0,
+					(axis == "N") and cz or ts * 1.9,
+					9400 + piece)
+			end
+			if not opposite(f, -ts) then
+				bench(
+					(axis == "N") and -ts * 1.9 or cx,
+					0,
+					(axis == "N") and cz or -ts * 1.9,
+					axis == "E")
+			end
+		elseif shut then
 			seatingCluster(cx, 0, cz, 9500 + piece, axis == "E")
 		end
 		f += 6.0
@@ -10350,9 +10430,21 @@ local function mallArm(axis, length, entries)
 
 	-- Ceiling: grid, sprinklers, the speakers the tape comes out of, and a
 	-- hanging wayfinding sign you can read from the atrium.
+	--[[
+		The arm ceiling, the same tiled plane as the rooms — except down the
+		centre, where the coffer is, so the run keeps its two heights.
+	]]
+	for _, side in { -1, 1 } do
+		local cw = 1.5
+		P("CeilingTile", size(length - 0.2, cw, 0.06), pos(length / 2, side * (MALL_W / 2 - cw / 2 - 0.1), MALL_H - 0.14), TILE)
+		P("GridAngle", size(length - 0.2, 0.07, 0.07), pos(length / 2, side * (MALL_W / 2 - 0.14), MALL_H - 0.17), GRID)
+		P("GridAngle", size(length - 0.2, 0.07, 0.07), pos(length / 2, side * (MALL_W / 2 - cw - 0.06), MALL_H - 0.17), GRID)
+	end
 	local g = 4.0
 	while g < length - 1 do
-		P("GridT", size(0.05, MALL_W - 0.4, 0.04), pos(g, 0, MALL_H - 0.03), C.trim)
+		for _, side in { -1, 1 } do
+			P("GridT", size(0.05, 1.5, 0.05), pos(g, side * (MALL_W / 2 - 0.85), MALL_H - 0.17), GRID)
+		end
 		g += 1.2
 	end
 	local sp = 8.0
@@ -10384,6 +10476,7 @@ local function mallArm(axis, length, entries)
 		0,
 		(axis == "N") and start + length - 3 or 1.2,
 		41)
+
 
 	-- One bulkhead every eight metres or so, and nothing else.
 	local t = 3.0
@@ -10464,7 +10557,9 @@ local function serviceCorridor()
 		pipe += 3.0
 	end
 	-- And the things that stack up in a corridor nobody shows customers.
-	P("Trolley", V(0.6, 0.9, 0.5), at(x, 0.45, 9), C.metal)
+	-- Against the east wall, between two doors. It used to sit dead centre in
+	-- the security office doorway.
+	P("Trolley", V(0.6, 0.9, 0.5), at(x + 0.6, 0.45, 12), C.metal)
 	P("Pallet", V(1.0, 0.14, 0.8), at(x - 0.3, 0.07, -6), C.wood)
 	P("Bin", V(0.7, 1.0, 0.6), at(x + 0.4, 0.5, -16), C.trim)
 	P("FloorSign", V(0.3, 0.5, 0.3), at(x, 0.25, 1), Color3.fromRGB(180, 96, 30))
@@ -10583,7 +10678,7 @@ end
 local function dressCameraRoom(cx, cz, y, h, w, d)
 	desk(cx, y, cz - 1.2, 3.4, 0.9)
 	chair(cx, y, cz - 0.3)
-	P("DeskReturn", V(0.9, 0.06, 1.4), at(cx + 1.9, y + 0.74, cz - 0.6), C.wood)
+	P("DeskReturn", V(0.9, 0.06, 1.4), at(cx - 1.9, y + 0.74, cz - 0.6), C.wood)
 
 	for i = 0, 5 do
 		local mx = cx - 1.4 + (i % 3) * 1.4
@@ -10640,16 +10735,24 @@ local function dressSecurityOffice(cx, cz, y, h, w, d)
 	-- One drawer is open, and has been since somebody went through it in 1998.
 	P("OpenDrawer", V(0.56, 0.34, 0.5), at(cx - 1.25, y + 1.14, cz + 0.2), C.metal)
 
-	-- The key board. Four hooks are empty and the labels under them are still there.
-	P("KeyBoard", V(1.2, 0.8, 0.05), at(cx + 2.2, y + 1.5, cz), C.wood)
+	--[[
+		The key board. Four hooks are empty and the labels under them are still
+		there.
+
+		On the south wall, not the east one. The door is in the middle of the
+		east wall, and a board hung on the middle of the east wall is a board
+		hung across the only way in.
+	]]
+	local bz = cz - d / 2 + 0.06
+	P("KeyBoard", V(1.2, 0.8, 0.05), at(cx - 0.6, y + 1.5, bz), C.wood)
 	for i = 0, 11 do
-		local kx = cx + 1.75 + (i % 6) * 0.18
+		local kx = cx - 1.05 + (i % 6) * 0.18
 		local ky = y + 1.72 - math.floor(i / 6) * 0.34
-		P("KeyHook", V(0.02, 0.06, 0.03), at(kx, ky, cz - 0.03), C.metal)
+		P("KeyHook", V(0.02, 0.06, 0.03), at(kx, ky, bz + 0.04), C.metal)
 		if i % 3 ~= 0 then
-			P("Key", V(0.03, 0.14, 0.01), at(kx, ky - 0.1, cz - 0.04), Color3.fromRGB(168, 156, 120))
+			P("Key", V(0.03, 0.14, 0.01), at(kx, ky - 0.1, bz + 0.05), Color3.fromRGB(168, 156, 120))
 		end
-		P("KeyLabel", V(0.1, 0.04, 0.01), at(kx, ky - 0.21, cz - 0.03), Color3.fromRGB(196, 190, 170))
+		P("KeyLabel", V(0.1, 0.04, 0.01), at(kx, ky - 0.21, bz + 0.04), Color3.fromRGB(196, 190, 170))
 	end
 
 	P("Kettle", V(0.2, 0.26, 0.2), at(cx + 1.8, y + 0.87, cz - 1.6), C.metal)
@@ -10666,12 +10769,20 @@ end
 	together that you cannot see down more than one aisle at a time.
 ]]
 local function dressStockroom(cx, cz, y, h, w, d)
-	for i = 0, 3 do
-		shelfRun(cx - 3.2 + i * 2.2, y, cz, 5.0, false)
+	--[[
+		Three bays, not four, and all of them west of centre. The fourth bay
+		used to sit a metre inside the east wall, which is where the door is:
+		you opened the stockroom and walked into shelving. The aisle you arrive
+		in is now three and a half metres of empty floor, which is also the
+		only thing that makes Rule 4 work — you have to walk in before you can
+		be called from between the racks.
+	]]
+	for i = 0, 2 do
+		shelfRun(cx - 3.4 + i * 2.2, y, cz, 5.0, false)
 		-- Cartons on the racking, unevenly, with gaps.
 		for j = 0, 4 do
 			if (i + j) % 3 ~= 0 then
-				boxStack(cx - 3.2 + i * 2.2, y + 1.9, cz - 2.0 + j * 1.0, 2, 900 + i * 17 + j)
+				boxStack(cx - 3.4 + i * 2.2, y + 1.9, cz - 2.0 + j * 1.0, 2, 900 + i * 17 + j)
 			end
 		end
 	end
@@ -10812,14 +10923,19 @@ local function dressFashion(cx, cz, y, h, w, d)
 		end
 	end
 
-	-- The window bay, facing the arm. Four of them, and you count them twice.
-	for i = 0, 3 do
-		P("Plinth", V(0.6, 0.12, 0.6), at(cx - 3.0 + i * 2.0, y + 0.06, cz - 3.8), C.trim)
-		mannequin(cx - 3.0 + i * 2.0, y + 0.12, cz - 3.8, 180 + i * 6,
+	--[[
+		The window bay, facing the arm. Two either side of the entrance, the way
+		a shop actually does it — a display window flanking the door, not four
+		mannequins standing in it. They were in it. You walked into the second
+		one on the way in.
+	]]
+	for i, mx in { cx - 4.6, cx - 3.1, cx + 3.1, cx + 4.6 } do
+		P("Plinth", V(0.6, 0.12, 0.6), at(mx, y + 0.06, cz - 3.8), C.trim)
+		mannequin(mx, y + 0.12, cz - 3.8, 180 + i * 6,
 			(i == 2) and Color3.fromRGB(188, 178, 170) or nil)
 	end
 	-- One of them wears a red collar. On Night 2 there is a name tag on it.
-	P("RedCollar", V(0.2, 0.06, 0.2), at(cx + 1.0, y + 1.68, cz - 3.8), Color3.fromRGB(150, 36, 30))
+	P("RedCollar", V(0.2, 0.06, 0.2), at(cx + 3.1, y + 1.68, cz - 3.8), Color3.fromRGB(150, 36, 30))
 
 	P("MirrorWall", V(4.0, 2.2, 0.08), at(cx, y + 1.3, cz + 4.3), Color3.fromRGB(58, 62, 70))
 	local mirror = P("MirrorFace", V(3.9, 2.1, 0.03), at(cx, y + 1.3, cz + 4.24), Color3.fromRGB(88, 94, 106))
@@ -10926,15 +11042,20 @@ end
 local function dressPlantRoom(cx, cz, y, h, w, d)
 	P("AHU", V(2.6, 1.8, 1.6), at(cx - 1.4, y + 0.9, cz), C.metal)
 	P("AHUPanel", V(1.2, 0.9, 0.04), at(cx - 1.4, y + 1.1, cz - 0.82), C.trim)
-	P("Duct", V(0.9, 0.9, 5.0), at(cx - 1.4, y + 1.9, cz), C.metal)
-	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 1.9, cz - 1.8), C.trim)
-	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 1.9, cz + 1.8), C.trim)
+	--[[
+		Duct and pipework at high level, which is where a plant room puts them
+		and, more to the point, where they are not across the doorway at head
+		height. They used to run at 1.9 m straight through the only way in.
+	]]
+	P("Duct", V(0.9, 0.9, 5.0), at(cx - 1.4, y + 2.45, cz), C.metal)
+	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 2.45, cz - 1.8), C.trim)
+	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 2.45, cz + 1.8), C.trim)
 	P("Pump", V(0.8, 0.9, 0.8), at(cx + 2.0, y + 0.45, cz - 1.5), C.metal)
 	P("PumpMotor", V(0.45, 0.45, 0.7), at(cx + 2.0, y + 1.1, cz - 1.5), Color3.fromRGB(70, 82, 78))
-	P("Pipework", V(0.14, 0.14, 5.0), at(cx + 2.4, y + 1.9, cz), C.metal)
-	P("Pipework", V(0.1, 0.1, 5.0), at(cx + 2.7, y + 1.7, cz), C.metal)
-	P("ValveWheel", V(0.34, 0.06, 0.34), at(cx + 2.4, y + 1.6, cz + 0.6), C.trim)
-	P("Gauge", V(0.14, 0.14, 0.05), at(cx + 2.2, y + 1.4, cz - 0.9), Color3.fromRGB(190, 188, 180))
+	P("Pipework", V(0.14, 0.14, 5.0), at(cx + 2.4, y + 2.6, cz), C.metal)
+	P("Pipework", V(0.1, 0.1, 5.0), at(cx + 2.7, y + 2.35, cz), C.metal)
+	P("ValveWheel", V(0.34, 0.06, 0.34), at(cx + 2.4, y + 2.3, cz + 2.0), C.trim)
+	P("Gauge", V(0.14, 0.14, 0.05), at(cx + 2.2, y + 2.1, cz - 1.9), Color3.fromRGB(190, 188, 180))
 	P("Generator", V(1.6, 1.0, 0.9), at(cx + 1.6, y + 0.5, cz + 1.8), Color3.fromRGB(86, 90, 82))
 	P("GeneratorPanel", V(0.4, 0.3, 0.04), at(cx + 1.6, y + 0.8, cz + 1.3), C.panel)
 	P("PullCord", V(0.03, 0.4, 0.03), at(cx + 2.3, y + 0.9, cz + 1.4), Color3.fromRGB(150, 140, 110))
@@ -10958,8 +11079,9 @@ local function dressCustodial(cx, cz, y, h, w, d)
 	for i = 0, 4 do
 		P("SpareTube", V(0.05, 0.05, 0.9), at(cx - 1.0 + i * 0.12, y + 1.06, cz + 1.2), Color3.fromRGB(180, 176, 168))
 	end
-	P("Cart", V(0.6, 0.9, 1.0), at(cx + 1.1, y + 0.45, cz - 0.6), C.metal)
-	P("WetSign", V(0.3, 0.5, 0.3), at(cx + 1.2, y + 0.25, cz + 0.8), Color3.fromRGB(180, 96, 30))
+	-- Pushed to the back wall. The door is the east one and it is 1 m wide.
+	P("Cart", V(0.6, 0.9, 1.0), at(cx - 1.2, y + 0.45, cz - 0.8), C.metal)
+	P("WetSign", V(0.3, 0.5, 0.3), at(cx - 1.3, y + 0.25, cz + 0.9), Color3.fromRGB(180, 96, 30))
 	bulkhead(cx, y + h - 0.3, cz)
 end
 
@@ -11005,29 +11127,40 @@ local function dressToilets(cx, cz, y, h, w, d)
 		hearing the fountain; this is the other sound in the building that tells
 		you where you are without looking.
 	]]
-	P("Vanity", V(5.2, 0.12, 0.6), at(cx, y + 0.86, cz + 2.2), Color3.fromRGB(74, 72, 70))
-	P("VanityApron", V(5.2, 0.35, 0.1), at(cx, y + 0.66, cz + 1.94), Color3.fromRGB(66, 64, 62))
-	local mirror = P("ToiletMirror", V(5.0, 1.3, 0.03), at(cx, y + 1.75, cz + 2.44), Color3.fromRGB(86, 92, 102))
+	--[[
+		Down the west wall, not across the north one. The door is in the middle
+		of the north wall and the basin run was 5.2 m of worktop straight in
+		front of it: you came through the doorway into the side of a vanity.
+
+		A real gents has the basins down one side and the cubicles down the
+		other, and you can see both from the door, which is the whole point of
+		the room at three in the morning.
+	]]
+	local vx = cx - w / 2 + 0.45   -- worktop centre, 45 cm off the west wall
+	local vz = cz + 0.9            -- north of centre, clear of the cubicles
+	P("Vanity", V(0.6, 0.12, 3.6), at(vx, y + 0.86, vz), Color3.fromRGB(74, 72, 70))
+	P("VanityApron", V(0.1, 0.35, 3.6), at(vx + 0.26, y + 0.66, vz), Color3.fromRGB(66, 64, 62))
+	local mirror = P("ToiletMirror", V(0.03, 1.3, 3.4), at(cx - w / 2 + 0.09, y + 1.75, vz), Color3.fromRGB(86, 92, 102))
 	mirror.Reflectance = 0.55
 	mirror.Name = "ToiletMirror"
 	for i = -2, 2 do
-		P("Basin", V(0.52, 0.14, 0.42), at(cx + i * 1.1, y + 0.93, cz + 2.2), Color3.fromRGB(198, 196, 190))
-		P("Tap", V(0.05, 0.22, 0.05), at(cx + i * 1.1, y + 1.04, cz + 2.4), C.metal)
+		P("Basin", V(0.42, 0.14, 0.52), at(vx, y + 0.93, vz + i * 0.8), Color3.fromRGB(198, 196, 190))
+		P("Tap", V(0.05, 0.22, 0.05), at(vx - 0.2, y + 1.04, vz + i * 0.8), C.metal)
 	end
-	local drip = P("DrippingTap", V(0.05, 0.22, 0.05), at(cx + 2.2, y + 1.04, cz + 2.4), C.metal)
+	local drip = P("DrippingTap", V(0.05, 0.22, 0.05), at(vx - 0.2, y + 1.04, vz - 1.6), C.metal)
 	drip.Name = "DrippingTap"
-	P("Puddle", V(0.5, 0.02, 0.4), at(cx + 2.2, y + 0.01, cz + 1.7), Color3.fromRGB(28, 32, 36)).Reflectance = 0.45
+	P("Puddle", V(0.4, 0.02, 0.5), at(vx + 0.5, y + 0.01, vz - 1.6), Color3.fromRGB(28, 32, 36)).Reflectance = 0.45
 
-	P("HandDryer", V(0.3, 0.34, 0.22), at(cx - 3.4, y + 1.3, cz + 2.4), C.metal)
-	P("TowelDispenser", V(0.34, 0.4, 0.18), at(cx + 3.4, y + 1.35, cz + 2.4), C.metal)
-	litterBin(cx + 3.4, y, cz + 1.4)
+	P("HandDryer", V(0.22, 0.34, 0.3), at(cx - w / 2 + 0.15, y + 1.3, vz + 2.1), C.metal)
+	P("TowelDispenser", V(0.18, 0.4, 0.34), at(cx - w / 2 + 0.15, y + 1.35, vz - 2.4), C.metal)
+	litterBin(cx - w / 2 + 0.5, y, vz - 2.4)
 
 	-- The notice that is in every one of these rooms, and the tiling.
-	local notice = P("HygieneNotice", V(0.3, 0.4, 0.02), at(cx - 3.4, y + 1.8, cz + 2.42), Color3.fromRGB(190, 186, 172))
-	printed(notice, Enum.NormalId.Front, "NOW WASH\nYOUR HANDS",
+	local notice = P("HygieneNotice", V(0.02, 0.4, 0.3), at(cx - w / 2 + 0.07, y + 1.8, vz + 1.6), Color3.fromRGB(190, 186, 172))
+	printed(notice, Enum.NormalId.Right, "NOW WASH\nYOUR HANDS",
 		{ color = Color3.fromRGB(52, 50, 48), density = 110 })
-	local checked = P("CleaningRota", V(0.24, 0.32, 0.02), at(cx + 2.8, y + 1.75, cz + 2.42), Color3.fromRGB(196, 192, 178))
-	printed(checked, Enum.NormalId.Front,
+	local checked = P("CleaningRota", V(0.02, 0.32, 0.24), at(cx + w / 2 - 0.07, y + 1.75, cz + 1.2), Color3.fromRGB(196, 192, 178))
+	printed(checked, Enum.NormalId.Left,
 		"CHECKED\n<font size=\"7\">22:00 ·  23:00 ·  00:00 ·\n01:00    02:00    03:00</font>",
 		{ color = Color3.fromRGB(56, 52, 50), scaled = false, density = 120 })
 
@@ -11123,7 +11256,9 @@ local function dressFoodCourt(cx, cz, y, h, w, d)
 	chiller.Transparency = 0.5
 	pottedTree(cx - 6.6, y, cz - 3.4, 7002)
 	pottedTree(cx + 6.6, y, cz - 3.4, 7003)
-	planterBed(cx, y, cz - 4.6, 8.0, true, 7004)
+	-- Two beds flanking the entrance, not one eight-metre bed across it.
+	planterBed(cx - 4.4, y, cz - 4.6, 4.4, true, 7004)
+	planterBed(cx + 4.4, y, cz - 4.6, 4.4, true, 7014)
 	picture(cx - 6.9, y + 2.0, cz, "x", 7005)
 	picture(cx + 6.9, y + 2.0, cz + 1.0, "x", 7006)
 	litterBin(cx - 5.4, y, cz - 3.6)
@@ -11302,6 +11437,148 @@ end
 	the crew never go out until the fifth night, and the whole point is that they
 	can see the car park the entire time and cannot reach it.
 ]]
+--[[
+	The envelope.
+
+	The building had exactly one wall on the outside of it: a front elevation
+	across the atrium. Everything else — the back-of-house wing, the two arms,
+	the supermarket, the food court over the north arm — ended at its own
+	internal plaster and then stopped, so from the car park the place read as a
+	film set: a frontage with nothing behind it and a service corridor standing
+	in the open air on the far side of it. The front elevation was fifteen
+	metres wide either side of the entrance, which also meant it ran straight
+	through that corridor at the stockroom door.
+
+	So the outside is now derived from the inside rather than drawn next to it.
+	Every mass in the building is a rectangle on this list. The envelope walks
+	each rectangle's perimeter and puts up brick wherever that stretch is not
+	up against another mass — where two masses meet there is no wall, because
+	that is where the building carries on — and caps each one with a parapet at
+	its own height. The result is a massing: a tall block in the middle, two low
+	arms off it, a two-storey lump over the north arm and a long flat shed down
+	the west side, which is what a 1986 shopping centre actually looks like from
+	a car park at night.
+
+	Runs are merged before anything is built, so the whole exterior is about
+	forty parts rather than eight hundred.
+]]
+local MASSES = {
+	-- name, x0, x1, z0, z1, parapet top
+	{ "Atrium", -11.3, 11.3, -9.3, 9.3, ATRIUM_H + 1.6 },
+	{ "NorthArm", -3.5, 3.5, 9.0, 39.2, MALL_H + 1.1 },
+	{ "EastArm", 11.0, 35.2, -3.5, 3.5, MALL_H + 1.1 },
+	{ "Supermarket", -19.3, -3.3, 16.9, 29.1, 5.2 },
+	{ "Fashion", 17.4, 28.6, 3.1, 12.3, 5.2 },
+	{ "Toilets", 12.9, 21.1, -9.3, -3.1, 4.4 },
+	-- The food court is a first-floor room over the north arm and wider than
+	-- it. Taken from the ground, so the overhang reads as a two-storey wing
+	-- instead of a box hanging in the air.
+	{ "FoodCourt", -7.3, 7.3, 8.8, 19.1, FLOOR1 + 3.6 + 1.0 },
+	{ "BackOfHouse", -34.5, -20.6, -30.3, 18.3, 5.4 },
+}
+
+-- Where the envelope is deliberately not built: the entrance bay is glazed.
+local ENVELOPE_OPENINGS = {
+	{ "Atrium", "S", -8.2, 8.2 },
+}
+
+local function buildEnvelope(_facadeH)
+	local BRICK = Color3.fromRGB(78, 62, 54)
+	local CAP = Color3.fromRGB(64, 52, 46)
+	local STEP = 0.5
+
+	local function abuts(self, x, z)
+		for _, m in MASSES do
+			if m ~= self and x > m[2] + 0.05 and x < m[3] - 0.05 and z > m[4] + 0.05 and z < m[5] - 0.05 then
+				return true
+			end
+		end
+		return false
+	end
+
+	local function isOpening(name, side, a)
+		for _, o in ENVELOPE_OPENINGS do
+			if o[1] == name and o[2] == side and a > o[3] and a < o[4] then
+				return true
+			end
+		end
+		return false
+	end
+
+	for _, m in MASSES do
+		local name, x0, x1, z0, z1, top = m[1], m[2], m[3], m[4], m[5], m[6]
+
+		--[[
+			Each side: walk it, decide panel by panel whether there is a
+			building on the other side, then emit one part per unbroken run.
+		]]
+		for _, edge in {
+			{ "S", x0, x1, z0, 0, -1 },
+			{ "N", x0, x1, z1, 0, 1 },
+			{ "W", z0, z1, x0, -1, 0 },
+			{ "E", z0, z1, x1, 1, 0 },
+		} do
+			local side, a0, a1, fixed, ox, oz = edge[1], edge[2], edge[3], edge[4], edge[5], edge[6]
+			local alongX = ox == 0
+			local runStart = nil
+
+			local function flush(runEnd)
+				if not runStart or runEnd - runStart < 0.2 then
+					runStart = nil
+					return
+				end
+				local mid = (runStart + runEnd) / 2
+				local len = runEnd - runStart
+				local wx = if alongX then mid else fixed + ox * 0.25
+				local wz = if alongX then fixed + oz * 0.25 else mid
+				local wall = if alongX then V(len, top, 0.5) else V(0.5, top, len)
+				P("Envelope", wall, at(wx, top / 2, wz), BRICK, Enum.Material.Brick)
+				local cap = if alongX then V(len + 0.2, 0.9, 0.9) else V(0.9, 0.9, len + 0.2)
+				P("Parapet", cap, at(wx, top + 0.45, wz), CAP)
+				-- A string course, two thirds up, so the brick has a horizon.
+				local band = if alongX then V(len, 0.35, 0.66) else V(0.66, 0.35, len)
+				P("FacadeBand", band, at(wx, top * 0.66, wz), C.trim)
+				runStart = nil
+			end
+
+			local a = a0
+			while a < a1 - 0.01 do
+				local step = math.min(STEP, a1 - a)
+				local centre = a + step / 2
+				local px = if alongX then centre else fixed + ox * 0.6
+				local pz = if alongX then fixed + oz * 0.6 else centre
+				local open = abuts(m, px, pz) or isOpening(name, side, centre)
+				if open then
+					flush(a)
+				elseif not runStart then
+					runStart = a
+				end
+				a += step
+			end
+			flush(a1)
+		end
+
+		-- The roof. Flat, felted, and set down inside its own parapet.
+		P("Roof", V(x1 - x0 + 0.4, 0.4, z1 - z0 + 0.4),
+			at((x0 + x1) / 2, top - 0.2, (z0 + z1) / 2), Color3.fromRGB(46, 44, 44))
+	end
+
+	--[[
+		Rooftop plant on the tall block, because a flat roof with nothing on it
+		is a lid. Two air handlers, a tank and the lift overrun — all of it
+		silhouette, seen from the car park against the sky and from nowhere else.
+	]]
+	local top = ATRIUM_H + 1.6
+	P("RoofPlant", V(4.0, 1.6, 2.6), at(-4.0, top + 0.8, 3.0), C.metal)
+	P("RoofPlant", V(3.2, 1.3, 2.2), at(4.2, top + 0.65, -1.0), C.metal)
+	P("RoofTank", V(2.2, 2.0, 2.2), at(0.5, top + 1.0, 6.0), Color3.fromRGB(70, 68, 64))
+	for _, lx in { -1, 1 } do
+		P("RoofLeg", V(0.14, 1.0, 0.14), at(0.5 + lx * 0.8, top + 0.5, 6.8), C.metal)
+	end
+	P("LiftOverrun", V(2.8, 2.4, 2.8), at(-6.2, top + 1.2, -7.0), Color3.fromRGB(64, 52, 46))
+	P("RoofDuct", V(0.8, 0.8, 7.0), at(-4.0, top + 0.5, -1.0), C.metal)
+end
+
 local function buildExterior()
 	local frontZ = -ATRIUM_D / 2
 
@@ -11312,18 +11589,8 @@ local function buildExterior()
 		rather than stopping where its ceiling does.
 	]]
 	local facadeH = ATRIUM_H + 1.6
-	for _, side in { -1, 1 } do
-		P("Facade", V(15, facadeH, 0.5), at(side * 15.5, facadeH / 2, frontZ - 0.3), Color3.fromRGB(78, 62, 54))
-		P("FacadeBand", V(15, 0.6, 0.7), at(side * 15.5, facadeH - 0.9, frontZ - 0.35), C.trim)
-		P("Parapet", V(15, 0.9, 0.9), at(side * 15.5, facadeH + 0.45, frontZ - 0.3), Color3.fromRGB(64, 52, 46))
-	end
+	buildEnvelope(facadeH)
 	P("Parapet", V(9, 1.4, 0.9), at(0, facadeH + 0.7, frontZ - 0.3), Color3.fromRGB(64, 52, 46))
-	-- Brick courses, so it is masonry and not a painted slab.
-	for i = 1, 11 do
-		for _, side in { -1, 1 } do
-			P("BrickCourse", V(14.8, 0.04, 0.06), at(side * 15.5, i * 0.85, frontZ - 0.56), Color3.fromRGB(58, 46, 40))
-		end
-	end
 
 	--[[
 		The sign.
@@ -11387,10 +11654,19 @@ local function buildExterior()
 		P("BaySymbol", V(1.4, 0.02, 1.4), at(-25.8 + i * 3.6, 0.021, frontZ - 11), Color3.fromRGB(70, 96, 140))
 	end
 
-	-- Lamp columns down both aisles. Tall, sodium, and the only light out here.
+	--[[
+		Lamp columns down both aisles. Tall, sodium, and the only light out
+		here. Skipped where a column would land inside the building: the
+		back-of-house wing runs south past the front elevation, and the west
+		end of the grid used to put a seven-metre lamp through the service
+		corridor at the loading dock door.
+	]]
 	for i = -2, 2 do
 		for row = 0, 1 do
 			local lx, lz = i * 11, frontZ - 8 - row * 13
+			if lx > -35 and lx < -19 and lz > -31 and lz < 19 then
+				continue
+			end
 			P("LampColumn", V(0.22, 7.0, 0.22), at(lx, 3.5, lz), C.metal)
 			P("LampBase", V(0.45, 0.4, 0.45), at(lx, 0.2, lz), Color3.fromRGB(62, 60, 58))
 			P("LampArm", V(1.2, 0.14, 0.14), at(lx + 0.6, 7.0, lz), C.metal)
@@ -11878,7 +12154,14 @@ local RULES = {
 
 	-- Ceilings and the grid under them.
 	{ "_Ceiling$", M.Concrete, 0 },
+	{ "^CeilingTile", M.Fabric, 0.05 },
+	{ "^LooseTile", M.Fabric, 0.06 },
+	{ "^TileVoid", M.Slate, 0 },
 	{ "^GridT", M.Metal, 0.08 },
+	{ "^GridAngle", M.Metal, 0.08 },
+	{ "^SprinklerPlate", M.Metal, 0.05 },
+	{ "^Envelope", M.Brick, 0.06 },
+	{ "^Roof$", M.Pebble, 0.05 },
 	{ "^Sprinkler", M.Metal, 0.12 },
 
 	-- Structure.
@@ -12577,7 +12860,17 @@ paperClose.Size = UDim2.new(1, 0, 0, 26)
 paperClose.Position = UDim2.new(0, 0, 1, -28)
 paperClose.BackgroundTransparency = 1
 paperClose.Font = Enum.Font.GothamMedium
-paperClose.Text = "ESC  ·  put it back"
+--[[
+	X, and not Escape.
+
+	Escape is reserved by the Roblox client for its own menu: the key never
+	reaches the experience, so a close line advertising it is a line that lies.
+	Everything else still works — E, Q, Backspace, Return, Space, and a click
+	anywhere on the screen — but only the two that are certain are printed,
+	because a label offering a key that does nothing is worse than a label
+	offering one.
+]]
+paperClose.Text = "X  ·  put it back        or click anywhere"
 paperClose.TextColor3 = Color3.fromRGB(104, 94, 76)
 paperClose.TextSize = 15
 paperClose.ZIndex = 22
@@ -12705,6 +12998,16 @@ local strikeLabel = label(gui, "", UDim2.new(0, 300, 0, 40), UDim2.new(0.5, -150
 strikeLabel.TextXAlignment = Enum.TextXAlignment.Center
 strikeLabel.TextColor3 = RED
 strikeLabel.TextSize = 30
+
+--[[
+	Forward-declared, because the night card is built a long way below here and
+	the effect handler is above it. Without this the reference on the "card"
+	branch resolved to a global that never existed, so the one screen that tells
+	a new player where they are, what time it is and what the job is has never
+	once appeared. It is the first thing you see on a night and it was silently
+	nothing.
+]]
+local showCard: (any) -> ()
 
 local function showStrike(text: string)
 	strikeLabel.Text = text
@@ -12874,7 +13177,7 @@ questionLine.TextXAlignment = Enum.TextXAlignment.Right
 questionLine.TextColor3 = Color3.fromRGB(122, 74, 70)
 questionLine.TextSize = 13
 
-local function showCard(payload)
+function showCard(payload)
 	cardPlace.Text = payload.place or ""
 	cardWhen.Text = payload.when or ""
 	cardWhat.Text = payload.what or ""
@@ -13181,11 +13484,12 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		end
 	elseif paperOpen then
 		--[[
-			Anything closes it. Escape is the one it advertises, and the rest are
-			there because somebody will try them: E and X because those are the
-			game's other two keys, Backspace because that is what people press
-			when they want something to go away, and Return and Space because
-			they are the two biggest keys on the keyboard.
+			Anything closes it. X is the one it advertises, because Escape never
+			arrives — the Roblox client keeps it for its own menu. The rest are
+			here because somebody will try them: E and Q because those are the
+			game's other keys, Backspace because that is what people press when
+			they want something gone, and Return and Space because they are the
+			two biggest keys on the keyboard.
 		]]
 		local key = input.KeyCode
 		if
@@ -13223,7 +13527,7 @@ task.delay(10, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [ESC] close", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")
 ]]></string>
         </Properties>

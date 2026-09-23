@@ -31,11 +31,11 @@
 
 local Build = {}
 
-Build.COMMIT = "2f05e61"
-Build.SUMMARY = "Dress the food court, the supermarket and the fashion floor"
-Build.WHEN = "23 Sep 02:05"
+Build.COMMIT = "cf2a1c3"
+Build.SUMMARY = "Write the sound brief and the cast list"
+Build.WHEN = "23 Sep 02:07"
 -- True when the working tree had uncommitted source changes at stamp time.
-Build.DIRTY = false
+Build.DIRTY = true
 
 function Build.line(): string
 	return `Night Shift · {Build.COMMIT}{if Build.DIRTY then "+" else ""} · {Build.WHEN}`
@@ -9272,6 +9272,20 @@ local function mallArm(axis, length, entries)
 
 	P("Mall_Floor", size(length, MALL_W, 0.3), pos(length / 2, 0, -0.15), C.floor)
 	P("Mall_Ceiling", size(length, MALL_W, 0.3), pos(length / 2, 0, MALL_H + 0.15), C.ceiling)
+	--[[
+		A coffered run down the centre and a dropped margin at the edges. A flat
+		ceiling the length of an arm is what made the arms feel like tunnels;
+		three planes at two heights is a shopping centre that had an architect.
+	]]
+	for _, side in { -1, 1 } do
+		P("Mall_Margin", size(length, 1.5, 0.34), pos(length / 2, side * (MALL_W / 2 - 0.75), MALL_H - 0.17), C.ceiling)
+		P("Mall_MarginEdge", size(length, 0.12, 0.2), pos(length / 2, side * (MALL_W / 2 - 1.5), MALL_H - 0.3), C.trim)
+	end
+	local coffer = 2.0
+	while coffer < length - 1 do
+		P("Mall_Coffer", size(0.3, 2.8, 0.14), pos(coffer, 0, MALL_H - 0.07), C.trim)
+		coffer += 2.6
+	end
 	P("Mall_End", size(WALL, MALL_W, MALL_H), pos(length, 0, MALL_H / 2), C.wall)
 
 	-- Shopfronts. Frontages vary, most are shuttered, and the few openings are
@@ -9385,17 +9399,60 @@ local function mallArm(axis, length, entries)
 						"TO LET\n<font size=\"8\">ENQUIRIES\nNORTHMOOR 4417</font>",
 						{ color = Color3.fromRGB(52, 48, 44), scaled = false, density = 100 })
 				end
-				-- The fascia: a dead sign box above every unit, unlit since the
-				-- building went onto the emergency circuit at night.
-				P("FasciaBox", size(w - 0.3, 0.42, 0.55), pos(mid, side * (half - 0.2), MALL_H - 0.35), C.panel)
-				local fascia = P("FasciaFace", size(w - 0.6, 0.06, 0.34), pos(mid, side * (half - 0.42), MALL_H - 0.35),
+				--[[
+					The fascia: a dead sign box above every unit, unlit since the
+					building went onto the emergency circuit at night.
+
+					Height and colour both vary. A run of sign boxes all the same
+					size at the same height is a suspended ceiling with writing
+					on it; a run where each tenant fitted their own is a parade
+					of shops, and it is two random numbers.
+				]]
+				local fh = rng:NextNumber(0.36, 0.62)
+				local fy = MALL_H - rng:NextNumber(0.28, 0.5)
+				local tint = Color3.fromRGB(
+					rng:NextInteger(30, 62), rng:NextInteger(28, 56), rng:NextInteger(28, 58))
+				P("FasciaBox", size(w - 0.3, fh + 0.16, 0.55), pos(mid, side * (half - recess - 0.1), fy), tint)
+				local fascia = P("FasciaFace", size(w - 0.6, 0.06, fh), pos(mid, side * (half - recess - 0.32), fy),
 					Color3.fromRGB(46, 44, 42))
 				printed(fascia,
 					if axis == "N" then (if side < 0 then Enum.NormalId.Right else Enum.NormalId.Left)
 					else (if side < 0 then Enum.NormalId.Front else Enum.NormalId.Back),
 					FASCIA[(unit - 1) % #FASCIA + 1],
-					{ color = Color3.fromRGB(122, 120, 124), density = 44, font = Enum.Font.GothamBold })
+					{ color = Color3.fromRGB(rng:NextInteger(96, 150), rng:NextInteger(94, 144), rng:NextInteger(96, 148)),
+						density = 44, font = Enum.Font.GothamBold })
 				P("Pilaster", size(0.4, 0.5, MALL_H), pos(t, side * half, MALL_H / 2), C.trim)
+
+				--[[
+					One unit in six gets something that is only true of that
+					trade. A barber's pole or a rack of holiday brochures is
+					worth more than another shutter, because it is the thing a
+					player points at and says what that used to be.
+				]]
+				if unit % 6 == 3 then
+					-- The barber's, and the pole nobody unscrewed.
+					P("BarberPole", size(0.14, 0.14, 0.9),
+						pos(mid + w / 2 - 0.5, side * (half - recess - 0.35), 2.0), Color3.fromRGB(160, 154, 148))
+					for k = 0, 5 do
+						P("PoleStripe", size(0.15, 0.15, 0.07),
+							pos(mid + w / 2 - 0.5, side * (half - recess - 0.35), 1.65 + k * 0.14),
+							if k % 2 == 0 then Color3.fromRGB(130, 44, 40) else Color3.fromRGB(56, 66, 110))
+					end
+					P("PoleCap", size(0.18, 0.18, 0.08),
+						pos(mid + w / 2 - 0.5, side * (half - recess - 0.35), 2.46), C.metal)
+				elseif unit % 6 == 5 then
+					-- The travel agent's, with the window still full of 1998.
+					for k = 0, 2 do
+						local card = P("HolidayPoster", size(0.5, 0.03, 0.7),
+							pos(mid - 0.7 + k * 0.7, side * (half - recess - 0.14), 1.5),
+							({ Color3.fromRGB(56, 74, 96), Color3.fromRGB(92, 78, 50), Color3.fromRGB(66, 86, 74) })[k + 1])
+						printed(card,
+							if axis == "N" then (if side < 0 then Enum.NormalId.Right else Enum.NormalId.Left)
+							else (if side < 0 then Enum.NormalId.Front else Enum.NormalId.Back),
+							({ "TENERIFE\n7 NIGHTS\n£189", "COSTA DEL SOL\n14 NIGHTS\n£249", "LATE\nDEALS" })[k + 1],
+							{ color = Color3.fromRGB(226, 222, 214), scaled = false, density = 80, font = Enum.Font.GothamBold })
+					end
+				end
 			end
 			t += w
 		end

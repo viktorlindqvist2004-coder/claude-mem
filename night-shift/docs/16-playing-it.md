@@ -5,6 +5,30 @@ happen when you press Play, it is a bug, not a missing feature.
 
 ---
 
+## What is in the building
+
+Twelve named rooms plus the atrium, two mall arms on two levels, Floor 3, a car
+park and an interview room forty metres away. About 3500 parts.
+
+The ground floor is the atrium — two stopped escalators, four columns, a
+shuttered main entrance, a capped fountain, three island kiosks, a scenic lift,
+a directory with no third floor on it — and two arms of shopfronts running off
+it, each unit set back from its neighbours by a different amount, half of them
+with awnings, some with dressed windows, one in six with something only true of
+that trade. The upper floor is a balcony ring of shuttered units and the food
+court. Behind all of it is the service corridor and the rooms the game actually
+spends its time in.
+
+**The lighting is the emergency circuit and nothing else.** Every bulkhead
+fitting in the building is dark — they are still there, they still cast shadow,
+and the fact that they are all out is the point. The only light comes from the
+EXIT boxes over the doors, one per doorway, reaching about twenty-two metres
+each. Where you can see is the route out. Getting lost means walking away from
+the only light in the building.
+
+If it is too dark or not dark enough, press **F9** → *Lights: brighter* /
+*darker*. It prints the number.
+
 ## Running it
 
 1. Rojo is already set up — see `docs/14-live-setup.md`. With it connected, press **Play**.

@@ -91,8 +91,24 @@ Config.FLASHLIGHT = {
 		tension, it is a broken tool. A torch shows you a room's worth at a
 		time and makes you choose which room's worth.
 	]]
-	WIDE = { angle = 58, range = 40, brightness = 4.2, drainPerSecond = 0.8 },
-	FOCUS = { angle = 19, range = 75, brightness = 7.5, drainPerSecond = 2.4 },
+--[[
+		**Roblox caps Light.Range at 60 studs.** At 1 stud = 0.3 m that is
+		eighteen metres and there is no way past it -- the property is clamped,
+		silently, on assignment.
+
+		Which means every "make the torch reach further" change so far has done
+		nothing at all. 55 m, 24 m, 40 m: all of them were written as metres,
+		multiplied up to 183, 80 and 133 studs, and all three arrived as 60.
+		The only things that were ever actually changing were the brightness
+		and the cone angle.
+
+		So the range is written in studs now, at the cap, and reach is bought
+		the only way it can be: a narrower cone, so the same light is spread
+		over less of the room and carries to the end of it. A torch is a narrow
+		beam. The 58-degree cone this had was a work lamp.
+	]]
+	WIDE = { angle = 46, rangeStuds = 60, brightness = 6.5, drainPerSecond = 0.8 },
+	FOCUS = { angle = 15, rangeStuds = 60, brightness = 11.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),

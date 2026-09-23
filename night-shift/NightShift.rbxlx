@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "88059fd"
-Build.LAST_COMMIT = "072b17f"
-Build.SUMMARY = "Light the letters, not the box"
-Build.WHEN = "23 Sep 17:34"
+Build.COMMIT = "9aa0f61"
+Build.LAST_COMMIT = "9d67712"
+Build.SUMMARY = "Make the word the size of the sign it is written on"
+Build.WHEN = "23 Sep 17:37"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -347,8 +347,24 @@ Config.FLASHLIGHT = {
 		tension, it is a broken tool. A torch shows you a room's worth at a
 		time and makes you choose which room's worth.
 	]]
-	WIDE = { angle = 58, range = 40, brightness = 4.2, drainPerSecond = 0.8 },
-	FOCUS = { angle = 19, range = 75, brightness = 7.5, drainPerSecond = 2.4 },
+--[[
+		**Roblox caps Light.Range at 60 studs.** At 1 stud = 0.3 m that is
+		eighteen metres and there is no way past it -- the property is clamped,
+		silently, on assignment.
+
+		Which means every "make the torch reach further" change so far has done
+		nothing at all. 55 m, 24 m, 40 m: all of them were written as metres,
+		multiplied up to 183, 80 and 133 studs, and all three arrived as 60.
+		The only things that were ever actually changing were the brightness
+		and the cone angle.
+
+		So the range is written in studs now, at the cap, and reach is bought
+		the only way it can be: a narrower cone, so the same light is spread
+		over less of the room and carries to the end of it. A torch is a narrow
+		beam. The 58-degree cone this had was a work lamp.
+	]]
+	WIDE = { angle = 46, rangeStuds = 60, brightness = 6.5, drainPerSecond = 0.8 },
+	FOCUS = { angle = 15, rangeStuds = 60, brightness = 11.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),
@@ -3112,7 +3128,8 @@ local function torchFor(player: Player)
 	light.Face = Enum.NormalId.Front
 	light.Color = Config.FLASHLIGHT.COLOR
 	light.Angle = Config.FLASHLIGHT.WIDE.angle
-	light.Range = Config.FLASHLIGHT.WIDE.range * Places.METRE
+	-- Studs, not metres: Roblox clamps this at 60 and says nothing about it.
+	light.Range = Config.FLASHLIGHT.WIDE.rangeStuds
 	light.Brightness = 0
 	light.Shadows = true
 	light.Parent = emitter
@@ -3130,9 +3147,23 @@ RunService.Heartbeat:Connect(function()
 		end
 		local from, look = Gaze.of(player)
 		if from and look then
-			-- A little below and ahead of the eye, so the beam reads as held
-			-- rather than as coming out of the player's forehead.
-			record.emitter.CFrame = CFrame.lookAt(from + Vector3.new(0, -0.6, 0), from + look * 10)
+			--[[
+				Ahead of the eye, not just below it.
+
+				The emitter used to sit 0.6 studs under the head and nowhere
+				else, which puts it inside the character. A SpotLight that
+				casts shadows and begins inside a body is a SpotLight that
+				spends a lot of its time shadowed by that body -- and when a
+				player stood in a doorway looking through into a room, the
+				jamb was between the emitter and everything they were trying
+				to see, so the beam simply went out.
+
+				Two-thirds of a stud forward puts it clear of the character
+				and, more importantly, on the near side of whatever they are
+				standing in the opening of.
+			]]
+			local muzzle = from + look * 0.7 + Vector3.new(0, -0.5, 0)
+			record.emitter.CFrame = CFrame.lookAt(muzzle, muzzle + look * 10)
 		end
 	end
 end)
@@ -3141,6 +3172,9 @@ Hud.onTorch(function(player, on)
 	local record = torchFor(player)
 	if record then
 		record.on = on
+		-- Brightness only. The angle is set once when the torch is made, so
+		-- that tuning it live from the test panel is not undone by the next
+		-- press of F.
 		record.light.Brightness = if on then Config.FLASHLIGHT.WIDE.brightness else 0
 	end
 end)
@@ -9122,6 +9156,29 @@ command("Light", "torchWide", "Torch: wider", function(player)
 	if beam then
 		beam.Angle = math.min(beam.Angle + 8, 120)
 		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
+	end
+end)
+
+--[[
+	Narrower, to go with wider. Reach on a torch is bought with cone angle --
+	the range is pinned at Roblox's 60-stud ceiling and cannot be raised -- so
+	this is the control that actually changes how far you can see.
+]]
+command("Light", "torchNarrow", "Torch: narrower", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Angle = math.max(beam.Angle - 6, 8)
+		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
+	end
+end)
+
+command("Light", "torchDown", "Torch: weaker", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Brightness = math.max(beam.Brightness - 1, 0.5)
+		Hud.effect("hint", `Torch {string.format("%.1f", beam.Brightness)}`)
 	end
 end)
 

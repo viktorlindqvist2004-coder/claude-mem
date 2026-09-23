@@ -105,7 +105,8 @@ local function torchFor(player: Player)
 	light.Face = Enum.NormalId.Front
 	light.Color = Config.FLASHLIGHT.COLOR
 	light.Angle = Config.FLASHLIGHT.WIDE.angle
-	light.Range = Config.FLASHLIGHT.WIDE.range * Places.METRE
+	-- Studs, not metres: Roblox clamps this at 60 and says nothing about it.
+	light.Range = Config.FLASHLIGHT.WIDE.rangeStuds
 	light.Brightness = 0
 	light.Shadows = true
 	light.Parent = emitter
@@ -123,9 +124,23 @@ RunService.Heartbeat:Connect(function()
 		end
 		local from, look = Gaze.of(player)
 		if from and look then
-			-- A little below and ahead of the eye, so the beam reads as held
-			-- rather than as coming out of the player's forehead.
-			record.emitter.CFrame = CFrame.lookAt(from + Vector3.new(0, -0.6, 0), from + look * 10)
+			--[[
+				Ahead of the eye, not just below it.
+
+				The emitter used to sit 0.6 studs under the head and nowhere
+				else, which puts it inside the character. A SpotLight that
+				casts shadows and begins inside a body is a SpotLight that
+				spends a lot of its time shadowed by that body -- and when a
+				player stood in a doorway looking through into a room, the
+				jamb was between the emitter and everything they were trying
+				to see, so the beam simply went out.
+
+				Two-thirds of a stud forward puts it clear of the character
+				and, more importantly, on the near side of whatever they are
+				standing in the opening of.
+			]]
+			local muzzle = from + look * 0.7 + Vector3.new(0, -0.5, 0)
+			record.emitter.CFrame = CFrame.lookAt(muzzle, muzzle + look * 10)
 		end
 	end
 end)
@@ -134,6 +149,9 @@ Hud.onTorch(function(player, on)
 	local record = torchFor(player)
 	if record then
 		record.on = on
+		-- Brightness only. The angle is set once when the torch is made, so
+		-- that tuning it live from the test panel is not undone by the next
+		-- press of F.
 		record.light.Brightness = if on then Config.FLASHLIGHT.WIDE.brightness else 0
 	end
 end)

@@ -348,6 +348,29 @@ command("Light", "torchWide", "Torch: wider", function(player)
 	end
 end)
 
+--[[
+	Narrower, to go with wider. Reach on a torch is bought with cone angle --
+	the range is pinned at Roblox's 60-stud ceiling and cannot be raised -- so
+	this is the control that actually changes how far you can see.
+]]
+command("Light", "torchNarrow", "Torch: narrower", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Angle = math.max(beam.Angle - 6, 8)
+		Hud.effect("hint", `Torch angle {math.floor(beam.Angle)}`)
+	end
+end)
+
+command("Light", "torchDown", "Torch: weaker", function(player)
+	local torch = workspace:FindFirstChild(`Torch_{player.Name}`)
+	local beam = torch and torch:FindFirstChildWhichIsA("SpotLight")
+	if beam then
+		beam.Brightness = math.max(beam.Brightness - 1, 0.5)
+		Hud.effect("hint", `Torch {string.format("%.1f", beam.Brightness)}`)
+	end
+end)
+
 command("Audio", "deadSounds", "Which sounds failed to load", function()
 	local dead = SoundBank.deadList()
 	if #dead == 0 then

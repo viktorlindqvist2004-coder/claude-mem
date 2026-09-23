@@ -69,36 +69,57 @@ SoundBank.HUM = {
 }
 
 --[[
-	The buzz of a working fluorescent, at the fitting.
+	The hum of the fluorescents, under everything.
 
-	This one is on even though the other loops are not, because the buzz is the
-	point rather than a bed: the rolloff is tight enough that you only hear a
-	fitting when you are under it, so it is a property of that fitting in that
-	room rather than a drone you cannot get away from. Walk out and it is gone.
+	The real recording is in the repository at `audio/room/fluorescent-hum.mp3`.
+	It cannot be referenced from disk -- Roblox plays uploaded assets and
+	nothing else -- so it has to go up once through Studio and its id pasted in
+	below. Until it does, this slot is silent, on purpose: the placeholder that
+	was here before was bass.mp3 pitched up on forty-five separate emitters and
+	it sounded exactly as bad as that description suggests, which is worse than
+	nothing at all.
 
-	Still a placeholder -- it is bass.mp3 pitched up until the repeat is fast
-	enough to read as mains buzz rather than as a note -- but a placeholder you
-	can only hear standing beneath a light is one that earns its place.
+	It is not per fitting any more either. One bed, very quiet, under the whole
+	building while the lights are on -- the floor of the mix, not a layer in
+	it. If a player consciously notices it during ordinary play it is 3 dB too
+	loud.
+
+	And it stops when the glass goes. The building has been humming since the
+	crew walked in; the silence after is the half of that event that does the
+	work.
+
+	To finish it: Studio -> Asset Manager -> Audio -> Add Audio, pick that
+	file, then right-click the upload -> Copy Asset ID and paste it here as
+	"rbxassetid://<number>".
 ]]
 SoundBank.TUBE_HUM = {
-	caption = "[the tube above you buzzes]",
-	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.07,
-	speed = 2.4,
+	caption = "[the lights hum]",
+	id = "",
+	volume = 0.085,
+	speed = 1.0,
 	looped = true,
-	rollOffMinMetres = 1.2,
-	rollOffMaxMetres = 5.5,
 }
 
--- A fitting striking, failing, striking, and going out for good.
-SoundBank.TUBE_FAIL = {
-	caption = "[a light gives out]",
-	id = "rbxasset://sounds/electronicpingshort.wav",
-	volume = 0.5,
-	speed = 0.55,
+--[[
+	Every tube in the building going at once.
+
+	There is no hum any more. A buzz on forty-five fittings was a buzz you
+	could not get away from however tight the rolloff was, and it sounded
+	exactly as bad as it reads on paper. The lights are silent while they are
+	on, and they make one noise in their entire lives: this one.
+
+	Still a placeholder. metal.ogg pitched up is a sheet of something thin
+	breaking, which is the right family and not the right sound; a real
+	recording of a strip light shattering goes in audio/SOUND_SCRIPT.md.
+]]
+SoundBank.LIGHTS_DIE = {
+	caption = "[every light in the building goes at once]",
+	id = "rbxasset://sounds/metal.ogg",
+	volume = 1.0,
+	speed = 2.1,
 	looped = false,
-	rollOffMinMetres = 3,
-	rollOffMaxMetres = 40,
+	rollOffMinMetres = 8,
+	rollOffMaxMetres = 90,
 }
 
 -- The fixtures that are going. One in twelve, and players use them as landmarks.

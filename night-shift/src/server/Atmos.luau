@@ -32,6 +32,7 @@ local Atmos = {}
 local emitters: { Sound } = {}
 local muzak: { Sound } = {}
 local muzakPlaying = true
+local toldAboutHum = false
 
 -- A stable per-fixture detune, from the fixture's own position. Same building,
 -- same fingerprint, every session.
@@ -50,6 +51,31 @@ end
 -- nothing at all for the player to hear.
 local function audible(slot: any): boolean
 	return slot.volume > 0
+end
+
+--[[
+	Fade the hum out over a second or so.
+
+	Not a cut. The lights breaking is the loud event; the hum going is the
+	quiet one underneath it, and a player should register it a beat later as
+	something missing rather than as a second noise.
+]]
+function Atmos.stopHum()
+	local hum = Atmos.hum
+	if not hum then
+		return
+	end
+	Atmos.hum = nil
+	task.spawn(function()
+		for i = 10, 0, -1 do
+			if not hum.Parent then
+				return
+			end
+			hum.Volume = SoundBank.TUBE_HUM.volume * (i / 10)
+			task.wait(0.12)
+		end
+		hum:Stop()
+	end)
 end
 
 function Atmos.clear()
@@ -80,23 +106,37 @@ function Atmos.build()
 	end
 
 	--[[
-		And the tubes, which are the ones you actually hear.
+		The hum. One bed, not forty-five emitters.
 
-		The fluorescents are lit at the start of a night now, and a lit
-		fluorescent buzzes. This emitter has a five-metre rolloff, so it is a
-		property of the fitting you are standing under rather than a bed under
-		the whole building -- which is the difference between the buzz being
-		atmosphere and the buzz being the thing a player cannot stop hearing.
+		It had an emitter per fitting on a tight rolloff, which was forty-five
+		copies of a pitched-up placeholder beating against each other, and it
+		sounded appalling. It is one non-positional sound now, very quiet,
+		under the whole building for exactly as long as the lights are on --
+		which is until the first job is done and the glass goes.
 
-		It is also the sound that goes missing as the night takes the tubes
-		away, one at a time, which is how you notice before you look up.
+		Silent until audio/room/fluorescent-hum.mp3 is uploaded and its id is
+		in SoundBank.TUBE_HUM. Nothing else changes when it is.
 	]]
-	for _, part in World.all("Tube") do
-		local sound = SoundBank.make(SoundBank.TUBE_HUM, part, "Buzz")
-		sound.PlaybackSpeed = (SoundBank.TUBE_HUM.speed or 1) * (1 + detune(part) * 0.03)
-		sound:SetAttribute("BaseVolume", SoundBank.TUBE_HUM.volume)
-		sound:Play()
-		table.insert(emitters, sound)
+	if SoundBank.TUBE_HUM.id ~= "" then
+		local hum = SoundBank.make(SoundBank.TUBE_HUM, SoundService, "TubeHum")
+		hum:SetAttribute("BaseVolume", SoundBank.TUBE_HUM.volume)
+		hum:Play()
+		table.insert(emitters, hum)
+		Atmos.hum = hum
+	else
+		--[[
+			Printed, not warned. A warning means something is wrong; an asset
+			that has not been uploaded yet is a known state with a written
+			next step, and the smoke test counts warnings as failures on
+			purpose. Saying it once a night is enough.
+		]]
+		Atmos.hum = nil
+		if not toldAboutHum then
+			toldAboutHum = true
+			print("[atmos] no fluorescent hum yet — upload "
+				.. "audio/room/fluorescent-hum.mp3 in Studio and paste its asset "
+				.. "id into SoundBank.TUBE_HUM.id")
+		end
 	end
 
 	local cents = Config.HUM.DETUNE_CENTS / 1200

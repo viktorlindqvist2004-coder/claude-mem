@@ -60,6 +60,9 @@ python3 tools/check_refs.py | sed 's/^/  /' || fail=1
 echo "== clearance =="
 python3 tools/check_clearance.py | sed 's/^/  /' || fail=1
 
+echo "== placement =="
+python3 tools/check_placement.py | sed 's/^/  /' || true
+
 echo "== smoke =="
 # Keep the whole output when it fails. Filtering to the lines a passing run
 # prints meant a crash showed up as an empty section, which reads like a pass.

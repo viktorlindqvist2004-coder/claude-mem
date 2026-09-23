@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "759f08b"
-Build.LAST_COMMIT = "f767512"
-Build.SUMMARY = "Start the night outside, and give one job at a time"
-Build.WHEN = "23 Sep 12:53"
+Build.COMMIT = "6540b45"
+Build.LAST_COMMIT = "f622540"
+Build.SUMMARY = "Fire the scares at doorways, glow what you can reach, and build a car"
+Build.WHEN = "23 Sep 13:11"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -2365,36 +2365,57 @@ SoundBank.HUM = {
 }
 
 --[[
-	The buzz of a working fluorescent, at the fitting.
+	The hum of the fluorescents, under everything.
 
-	This one is on even though the other loops are not, because the buzz is the
-	point rather than a bed: the rolloff is tight enough that you only hear a
-	fitting when you are under it, so it is a property of that fitting in that
-	room rather than a drone you cannot get away from. Walk out and it is gone.
+	The real recording is in the repository at `audio/room/fluorescent-hum.mp3`.
+	It cannot be referenced from disk -- Roblox plays uploaded assets and
+	nothing else -- so it has to go up once through Studio and its id pasted in
+	below. Until it does, this slot is silent, on purpose: the placeholder that
+	was here before was bass.mp3 pitched up on forty-five separate emitters and
+	it sounded exactly as bad as that description suggests, which is worse than
+	nothing at all.
 
-	Still a placeholder -- it is bass.mp3 pitched up until the repeat is fast
-	enough to read as mains buzz rather than as a note -- but a placeholder you
-	can only hear standing beneath a light is one that earns its place.
+	It is not per fitting any more either. One bed, very quiet, under the whole
+	building while the lights are on -- the floor of the mix, not a layer in
+	it. If a player consciously notices it during ordinary play it is 3 dB too
+	loud.
+
+	And it stops when the glass goes. The building has been humming since the
+	crew walked in; the silence after is the half of that event that does the
+	work.
+
+	To finish it: Studio -> Asset Manager -> Audio -> Add Audio, pick that
+	file, then right-click the upload -> Copy Asset ID and paste it here as
+	"rbxassetid://<number>".
 ]]
 SoundBank.TUBE_HUM = {
-	caption = "[the tube above you buzzes]",
-	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.07,
-	speed = 2.4,
+	caption = "[the lights hum]",
+	id = "",
+	volume = 0.085,
+	speed = 1.0,
 	looped = true,
-	rollOffMinMetres = 1.2,
-	rollOffMaxMetres = 5.5,
 }
 
--- A fitting striking, failing, striking, and going out for good.
-SoundBank.TUBE_FAIL = {
-	caption = "[a light gives out]",
-	id = "rbxasset://sounds/electronicpingshort.wav",
-	volume = 0.5,
-	speed = 0.55,
+--[[
+	Every tube in the building going at once.
+
+	There is no hum any more. A buzz on forty-five fittings was a buzz you
+	could not get away from however tight the rolloff was, and it sounded
+	exactly as bad as it reads on paper. The lights are silent while they are
+	on, and they make one noise in their entire lives: this one.
+
+	Still a placeholder. metal.ogg pitched up is a sheet of something thin
+	breaking, which is the right family and not the right sound; a real
+	recording of a strip light shattering goes in audio/SOUND_SCRIPT.md.
+]]
+SoundBank.LIGHTS_DIE = {
+	caption = "[every light in the building goes at once]",
+	id = "rbxasset://sounds/metal.ogg",
+	volume = 1.0,
+	speed = 2.1,
 	looped = false,
-	rollOffMinMetres = 3,
-	rollOffMaxMetres = 40,
+	rollOffMinMetres = 8,
+	rollOffMaxMetres = 90,
 }
 
 -- The fixtures that are going. One in twelve, and players use them as landmarks.
@@ -3192,6 +3213,7 @@ local Atmos = {}
 local emitters: { Sound } = {}
 local muzak: { Sound } = {}
 local muzakPlaying = true
+local toldAboutHum = false
 
 -- A stable per-fixture detune, from the fixture's own position. Same building,
 -- same fingerprint, every session.
@@ -3210,6 +3232,31 @@ end
 -- nothing at all for the player to hear.
 local function audible(slot: any): boolean
 	return slot.volume > 0
+end
+
+--[[
+	Fade the hum out over a second or so.
+
+	Not a cut. The lights breaking is the loud event; the hum going is the
+	quiet one underneath it, and a player should register it a beat later as
+	something missing rather than as a second noise.
+]]
+function Atmos.stopHum()
+	local hum = Atmos.hum
+	if not hum then
+		return
+	end
+	Atmos.hum = nil
+	task.spawn(function()
+		for i = 10, 0, -1 do
+			if not hum.Parent then
+				return
+			end
+			hum.Volume = SoundBank.TUBE_HUM.volume * (i / 10)
+			task.wait(0.12)
+		end
+		hum:Stop()
+	end)
 end
 
 function Atmos.clear()
@@ -3240,23 +3287,37 @@ function Atmos.build()
 	end
 
 	--[[
-		And the tubes, which are the ones you actually hear.
+		The hum. One bed, not forty-five emitters.
 
-		The fluorescents are lit at the start of a night now, and a lit
-		fluorescent buzzes. This emitter has a five-metre rolloff, so it is a
-		property of the fitting you are standing under rather than a bed under
-		the whole building -- which is the difference between the buzz being
-		atmosphere and the buzz being the thing a player cannot stop hearing.
+		It had an emitter per fitting on a tight rolloff, which was forty-five
+		copies of a pitched-up placeholder beating against each other, and it
+		sounded appalling. It is one non-positional sound now, very quiet,
+		under the whole building for exactly as long as the lights are on --
+		which is until the first job is done and the glass goes.
 
-		It is also the sound that goes missing as the night takes the tubes
-		away, one at a time, which is how you notice before you look up.
+		Silent until audio/room/fluorescent-hum.mp3 is uploaded and its id is
+		in SoundBank.TUBE_HUM. Nothing else changes when it is.
 	]]
-	for _, part in World.all("Tube") do
-		local sound = SoundBank.make(SoundBank.TUBE_HUM, part, "Buzz")
-		sound.PlaybackSpeed = (SoundBank.TUBE_HUM.speed or 1) * (1 + detune(part) * 0.03)
-		sound:SetAttribute("BaseVolume", SoundBank.TUBE_HUM.volume)
-		sound:Play()
-		table.insert(emitters, sound)
+	if SoundBank.TUBE_HUM.id ~= "" then
+		local hum = SoundBank.make(SoundBank.TUBE_HUM, SoundService, "TubeHum")
+		hum:SetAttribute("BaseVolume", SoundBank.TUBE_HUM.volume)
+		hum:Play()
+		table.insert(emitters, hum)
+		Atmos.hum = hum
+	else
+		--[[
+			Printed, not warned. A warning means something is wrong; an asset
+			that has not been uploaded yet is a known state with a written
+			next step, and the smoke test counts warnings as failures on
+			purpose. Saying it once a night is enough.
+		]]
+		Atmos.hum = nil
+		if not toldAboutHum then
+			toldAboutHum = true
+			print("[atmos] no fluorescent hum yet — upload "
+				.. "audio/room/fluorescent-hum.mp3 in Studio and paste its asset "
+				.. "id into SoundBank.TUBE_HUM.id")
+		end
 	end
 
 	local cents = Config.HUM.DETUNE_CENTS / 1200
@@ -5716,7 +5777,7 @@ Night.beats = {
 		ctx.caption("[the fashion circuit strobes]", "the fashion floor")
 		task.spawn(function()
 			for _ = 1, 14 do
-				for _, fitting in ctx.findAll("Tube") do
+				for _, fitting in ctx.findAll("ExitSign") do
 					Power.douse(fitting, 0.35)
 				end
 				ctx.effect("strobe", nil)
@@ -7421,13 +7482,13 @@ local STAGED: { Staged } = {
 	{
 		id = "lights",
 		name = "The lights",
-		caption = "[the lights ahead go out, one at a time]",
+		caption = "[the exit boxes ahead go out, one at a time]",
 		large = false,
 		fromNight = 1,
 		run = function(player, root)
 			local forward = look(player)
 			local ahead = {}
-			for _, box in World.all("Tube") do
+			for _, box in World.all("ExitSign") do
 				local to = box.Position - root.Position
 				if to.Magnitude < 40 * METRE and to.Unit:Dot(forward) > 0.35 then
 					table.insert(ahead, box)
@@ -7439,7 +7500,7 @@ local STAGED: { Staged } = {
 			table.sort(ahead, function(a, b)
 				return (a.Position - root.Position).Magnitude > (b.Position - root.Position).Magnitude
 			end)
-			Hud.caption("[the lights ahead go out, one at a time]", Places.roomAt(root.Position))
+			Hud.caption("[the exit boxes ahead go out, one at a time]", Places.roomAt(root.Position))
 			task.spawn(function()
 				for _, box in ahead do
 					Power.douse(box, 14)
@@ -7710,6 +7771,7 @@ Shift.finished = false
 local heartbeat: RBXScriptConnection? = nil
 local cancelTubes: (() -> ())? = nil
 local insideWatch: RBXScriptConnection? = nil
+local lightsWatch: any = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -8139,6 +8201,10 @@ function Shift.stop()
 		insideWatch:Disconnect()
 		insideWatch = nil
 	end
+	if lightsWatch then
+		lightsWatch:disconnect()
+		lightsWatch = nil
+	end
 	-- And nothing from last night is allowed to still be putting lights out.
 	if cancelTubes then
 		cancelTubes()
@@ -8190,13 +8256,21 @@ function Shift.begin(night: number)
 		carrying. Nobody is told this is happening; they notice, which is the
 		whole of the effect.
 	]]
+	--[[
+		The building is lit until the shift formally starts, and then it is not.
+
+		The crew arrive, walk in, and find the lights on -- which is what makes
+		the dark afterwards mean anything, because they have seen the room.
+		Then the first job on the list gets done, and every tube in the place
+		goes in the same second with one sheet of glass breaking. From then on
+		the only light anywhere is the red boxes over the doors.
+
+		It is hung on the night's own first objective rather than a clock, so
+		it lands the moment the player has finished doing something rather than
+		while they are halfway across a room.
+	]]
 	Tubes.build()
 	Tubes.relight()
-	if cancelTubes then
-		cancelTubes()
-	end
-	cancelTubes = Tubes.failAcross(
-		Config.SHIFT_HOURS * Config.SECONDS_PER_GAME_HOUR[night], 0.66)
 
 	Dread.night = night
 	Dread.start()
@@ -8278,6 +8352,19 @@ function Shift.begin(night: number)
 			question = NightScript.THE_QUESTION,
 		})
 	end
+
+	local firstJob = definition.objectives[1] and definition.objectives[1][1]
+	if lightsWatch then
+		lightsWatch:disconnect()
+		lightsWatch = nil
+	end
+	lightsWatch = Objectives.completed:connect(function(id)
+		if id ~= firstJob or Tubes.isBroken() then
+			return
+		end
+		task.wait(1.1)
+		Tubes.breakAll()
+	end)
 
 	Hud.state.night = night
 	Hud.set("phase", "Shift")
@@ -8868,17 +8955,22 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
+local Atmos = require(script.Parent.Atmos)
 local Hud = require(script.Parent.Hud)
 local World = require(script.Parent.World)
 
 local Tubes = {}
 
-local LIT = Color3.fromRGB(222, 230, 226)
+local LIT = Color3.fromRGB(158, 166, 162)
 local DEAD = Color3.fromRGB(38, 39, 38)
 
 type Fitting = { part: BasePart, light: Light?, alive: boolean }
 
 local fittings: { Fitting } = {}
+
+-- Once the glass has gone it has gone: no power cut, generator or standby
+-- brings a broken tube back.
+local broken = false
 
 local function lightOf(part: BasePart): Light?
 	return part:FindFirstChildWhichIsA("Light")
@@ -8922,124 +9014,55 @@ local function darken(f: Fitting)
 end
 
 --[[
-	One fitting, dying.
+	The moment the building dies.
 
-	Three strikes and out, with the timings uneven, because an even flicker
-	reads as an effect and an uneven one reads as a fault. The caption says
-	which it was and roughly where, since a player with the sound off has to be
-	told that something two rooms away just gave up.
+	This replaces a night's worth of attrition. Fittings going out one at a
+	time, unevenly, across eight hours was a nice idea on paper and in play it
+	was a nuisance: something broke every few minutes, each one demanded
+	attention, and by the third the player had learnt that the building makes
+	noises on a schedule and stopped caring. Nothing that happens twenty times
+	a night is an event.
+
+	So it happens once. You clock in -- the first thing the job asks of you,
+	the moment you have formally started the shift -- and the whole building
+	goes in the same second, with one sheet of glass breaking. After that the
+	only light anywhere is the red boxes over the doors, and they stay for the
+	rest of the night.
+
+	It is not reversible. The tubes are broken, not switched off.
 ]]
-function Tubes.kill(f: Fitting)
-	if not f.alive or not f.part.Parent then
-		return
-	end
-	f.alive = false
-	task.spawn(function()
-		local part, light = f.part, f.light
-		for i = 1, 3 do
-			if not part.Parent then
-				return
+function Tubes.breakAll(at: Vector3?)
+	local anywhere = at
+	for _, f in fittings do
+		if f.part.Parent then
+			if not anywhere then
+				anywhere = f.part.Position
 			end
-			part.Color = DEAD
-			part.Material = Enum.Material.SmoothPlastic
-			if light then
-				light.Enabled = false
-			end
-			task.wait(0.05 + i * 0.04)
-			if not part.Parent then
-				return
-			end
-			part.Color = LIT
-			part.Material = Enum.Material.Neon
-			if light then
-				light.Enabled = true
-			end
-			task.wait(0.03 + math.random() * 0.09)
-		end
-		if part.Parent then
 			darken(f)
-			SoundBank.play(SoundBank.TUBE_FAIL, part, 0.12)
-			Hud.captionSlot(SoundBank.TUBE_FAIL, Places.roomAt(part.Position))
 		end
-	end)
+	end
+	broken = true
+
+	if anywhere then
+		local speaker = Instance.new("Part")
+		speaker.Anchored = true
+		speaker.CanCollide = false
+		speaker.CanQuery = false
+		speaker.Transparency = 1
+		speaker.Size = Vector3.new(1, 1, 1)
+		speaker.Position = anywhere
+		speaker.Parent = World.nodes()
+		SoundBank.play(SoundBank.LIGHTS_DIE, speaker)
+		Hud.captionSlot(SoundBank.LIGHTS_DIE, "everywhere")
+	end
+	-- And the hum the building has had since they walked in stops. That is the
+	-- half of this event nobody notices happening and everybody notices after.
+	Atmos.stopHum()
+	Hud.effect("startle", { shake = 0.7, flash = false, large = true })
 end
 
--- The next one to go, chosen at random from what is left.
-function Tubes.killOne(): boolean
-	local live = {}
-	for _, f in fittings do
-		if f.alive and f.part.Parent then
-			table.insert(live, f)
-		end
-	end
-	if #live == 0 then
-		return false
-	end
-	Tubes.kill(live[math.random(1, #live)])
-	return true
-end
-
---[[
-	The nearest one to a point that is still on.
-
-	Used when the night wants the failure to be *here* rather than somewhere:
-	the fitting over the door you are walking towards is a different event from
-	a fitting somewhere in the building.
-]]
-function Tubes.killNear(position: Vector3, minMetres: number?): boolean
-	local floor = (minMetres or 0) * Places.METRE
-	local best, bestD = nil, math.huge
-	for _, f in fittings do
-		if f.alive and f.part.Parent then
-			local d = (f.part.Position - position).Magnitude
-			if d >= floor and d < bestD then
-				best, bestD = f, d
-			end
-		end
-	end
-	if not best then
-		return false
-	end
-	Tubes.kill(best)
-	return true
-end
-
---[[
-	The night's worth.
-
-	`fraction` of the fittings go over `seconds`, spaced unevenly -- clustered
-	slightly towards the end, because a building should be losing them faster at
-	four in the morning than at ten at night. Returns a cancel function, and the
-	shift calls it when the night ends.
-]]
-function Tubes.failAcross(seconds: number, fraction: number)
-	local total = Tubes.alive()
-	local going = math.max(1, math.floor(total * math.clamp(fraction, 0, 1)))
-	local cancelled = false
-
-	task.spawn(function()
-		for i = 1, going do
-			if cancelled then
-				return
-			end
-			--[[
-				Squared, so the gaps get shorter as the night goes on. The first
-				one goes about a fifth of the way in and the last three go
-				almost together.
-			]]
-			local at = seconds * ((i / (going + 1)) ^ 1.6)
-			local previous = seconds * (((i - 1) / (going + 1)) ^ 1.6)
-			task.wait(math.max(0.5, at - previous))
-			if cancelled then
-				return
-			end
-			Tubes.killOne()
-		end
-	end)
-
-	return function()
-		cancelled = true
-	end
+function Tubes.isBroken(): boolean
+	return broken
 end
 
 --[[
@@ -9061,8 +9084,10 @@ function Tubes.blackout()
 	end
 end
 
--- Everything back on, dead ones included. The start of a night, and nothing else.
+-- Everything back on, at the top of a night and nowhere else. Once the glass
+-- has gone, only a new night puts it back.
 function Tubes.relight()
+	broken = false
 	for _, f in fittings do
 		if f.part.Parent then
 			f.alive = true
@@ -9084,6 +9109,9 @@ end
 	failing. Only what was alive going in comes back.
 ]]
 function Tubes.repower()
+	if broken then
+		return
+	end
 	for _, f in fittings do
 		if f.alive and f.part.Parent then
 			f.part.Color = LIT
@@ -9463,6 +9491,10 @@ local FASCIA = {
 }
 local root, lightCount
 
+-- Declared here so wallWithDoors can put a box over every opening it cuts.
+-- It is defined below, with the rest of the fittings.
+local exitSign: (number, number, number, string) -> any
+
 -- ── Primitives ──────────────────────────────────────────────────────────────
 
 local function P(name, sizeM, cf, colour, material)
@@ -9513,7 +9545,7 @@ end
 	and a line that runs the wrong way across a corridor reads as a mistake from
 	the far end of it.
 ]]
-local TUBE_LIT = Color3.fromRGB(222, 230, 226)
+local TUBE_LIT = Color3.fromRGB(158, 166, 162)
 local TUBE_DEAD = Color3.fromRGB(38, 39, 38)
 
 local function tube(x, y, z, alongX)
@@ -9564,9 +9596,17 @@ end
 	of that wall on a bracket, like a real one, and the lettering goes on the two
 	faces you can read it from.
 ]]
-local EXIT_RED = Color3.fromRGB(255, 30, 22)
+--[[
+	Deep red, not maximum red.
 
-local function exitSign(x, y, z, facing)
+	A Neon panel at full saturation clips, and a clipped channel takes the
+	lettering with it -- which is how a sign with EXIT written across it
+	managed to read as a plain red bar. Pulling the panel down and leaving the
+	letters at full white is what separates them again.
+]]
+local EXIT_RED = Color3.fromRGB(178, 20, 14)
+
+function exitSign(x, y, z, facing)
 	facing = facing or "S"
 	local alongX = facing == "N" or facing == "S"
 
@@ -9755,6 +9795,29 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 				end
 			end
 		end
+		--[[
+			And the box over it.
+
+			Every doorway in the building gets one, built here rather than
+			placed by hand, because "over the doors" is a property of a
+			doorway and not a decoration somebody remembers to add. It looks
+			into the room the wall belongs to -- a sign on the north wall
+			looks south -- and it sits just under the door head.
+
+			These are the only lights left once the tubes go, and they do not
+			go out. From the far end of a corridor a line of red rectangles is
+			the plan of the building drawn in the dark.
+		]]
+		local centre = (g[1] + g[2]) / 2
+		local into = ({ N = "S", S = "N", E = "W", W = "E" })[side]
+		if into and h > 2.9 then
+			if axis == "x" then
+				exitSign(centre, y + doorH + 0.28, fixed, into)
+			else
+				exitSign(fixed, y + doorH + 0.28, centre, into)
+			end
+		end
+
 		cursor = math.max(cursor, g[2])
 	end
 	wallRun(fixed, cursor, to, axis, y, h, colour)
@@ -11418,9 +11481,24 @@ local function serviceCorridor()
 	-- Against the east wall, between two doors. It used to sit dead centre in
 	-- the security office doorway.
 	P("Trolley", V(0.6, 0.9, 0.5), at(x + 0.6, 0.45, 12), C.metal)
-	P("Pallet", V(1.0, 0.14, 0.8), at(x - 0.3, 0.07, -6), C.wood)
-	P("Bin", V(0.7, 1.0, 0.6), at(x + 0.4, 0.5, -16), C.trim)
-	P("FloorSign", V(0.3, 0.5, 0.3), at(x, 0.25, 1), Color3.fromRGB(180, 96, 30))
+	--[[
+		All of it against the west wall, in a line, leaving the corridor clear.
+
+		This is the rule the whole building's dressing was missing. Things are
+		written as offsets from a room's centre because the centre is the only
+		thing the code knows, and the result is objects dotted about the open
+		floor at arbitrary distances -- a bin a metre and a half from anything,
+		a wet-floor sign standing dead in the middle of a 2.6 m corridor. That
+		is not how anybody has ever left a room. Things go against a wall, in a
+		corner, or in a deliberate row, and the floor stays clear because
+		people walk across it.
+	]]
+	local against = x - SERVICE_W / 2 + 0.45
+	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.07, -6), C.wood)
+	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.21, -6.1), C.wood)
+	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -16), C.trim)
+	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -15.3), C.trim)
+	P("FloorSign", V(0.3, 0.5, 0.3), at(against, 0.25, 1), Color3.fromRGB(180, 96, 30))
 
 	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do
@@ -11851,18 +11929,29 @@ local function dressLoadingDock(cx, cz, y, h, w, d)
 	-- door is 2.5 m west of here and the crew come in through it every night.
 	P("StripCurtain", V(3.2, 2.6, 0.06), at(cx + 0.3, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
 
-	P("Bin", V(1.2, 1.2, 1.0), at(cx - 3.5, y + 0.6, cz + 2.0), C.trim)
-	P("Bin", V(1.2, 1.2, 1.0), at(cx - 2.0, y + 0.6, cz + 2.0), C.trim)
-	P("BinLid", V(1.24, 0.08, 1.04), at(cx - 3.5, y + 1.24, cz + 2.0), C.dark)
-	P("BinLid", V(1.24, 0.08, 1.04), at(cx - 2.0, y + 1.24, cz + 2.0), C.dark)
-	for i = 0, 3 do
-		P("Pallet", V(1.2, 0.15, 1.0), at(cx + 3.0, y + 0.08 + i * 0.16, cz), C.wood)
+	--[[
+		A dock floor is kept clear, because everything that comes through it
+		has to be pushed across it. So the bins go in a row against the back
+		wall, the pallets stack in the corner, and the pump truck is parked
+		out of the way against the west wall rather than left in the middle of
+		the room -- which is where all three of them were, at arbitrary
+		offsets from the room's centre, for no reason anybody could have given.
+	]]
+	local back = cz + d / 2 - 0.75
+	for i = 0, 1 do
+		local bx = cx - 3.9 + i * 1.4
+		P("Bin", V(1.2, 1.2, 1.0), at(bx, y + 0.6, back), C.trim)
+		P("BinLid", V(1.24, 0.08, 1.04), at(bx, y + 1.24, back), C.dark)
 	end
-	boxStack(cx + 3.0, y + 0.64, cz, 3, 3301)
+	local corner = cx + w / 2 - 1.0
+	for i = 0, 3 do
+		P("Pallet", V(1.2, 0.15, 1.0), at(corner, y + 0.08 + i * 0.16, back - 0.4), C.wood)
+	end
+	boxStack(corner, y + 0.64, back - 0.4, 3, 3301)
 
 	-- The pump truck, and a fire point nobody has checked since 1996.
-	P("PumpTruck", V(0.7, 0.16, 1.6), at(cx + 1.2, y + 0.1, cz + 2.6), Color3.fromRGB(120, 60, 30))
-	P("PumpHandle", V(0.08, 1.1, 0.08), at(cx + 1.2, y + 0.65, cz + 3.4), C.metal)
+	P("PumpTruck", V(0.7, 0.16, 1.6), at(cx - w / 2 + 0.7, y + 0.1, cz + 1.4), Color3.fromRGB(120, 60, 30))
+	P("PumpHandle", V(0.08, 1.1, 0.08), at(cx - w / 2 + 0.7, y + 0.65, cz + 2.2), C.metal)
 	P("FirePoint", V(0.5, 0.7, 0.1), at(cx - 4.8, y + 1.2, cz + 3.5), Color3.fromRGB(140, 40, 32))
 	P("Extinguisher", V(0.16, 0.5, 0.16), at(cx - 4.8, y + 0.3, cz + 3.4), Color3.fromRGB(150, 44, 36))
 	P("DockEdge", V(11.0, 0.12, 0.3), at(cx, y + 0.06, cz - 3.5), Color3.fromRGB(170, 150, 60))
@@ -12807,9 +12896,16 @@ local function applyLighting()
 	-- Threshold under the exposure now, because the exposure is well below zero
 	-- and the only things above it are the lit panels. This is what gives the
 	-- EXIT box its halo and the tube its glare.
-	bloom.Intensity = 0.55
-	bloom.Size = 20
-	bloom.Threshold = 0.85
+	--[[
+		The threshold was under the exposure, so every emissive surface in the
+		game bloomed into a white blob -- the tubes became floating slabs of
+		light and the EXIT boxes became red smears with no word in them. It is
+		back above the lit panels' own level: they glow, they have an edge, and
+		you can read them.
+	]]
+	bloom.Intensity = 0.4
+	bloom.Size = 14
+	bloom.Threshold = 1.75
 	bloom.Parent = Lighting
 
 	--[[

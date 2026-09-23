@@ -23,17 +23,22 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
+local Atmos = require(script.Parent.Atmos)
 local Hud = require(script.Parent.Hud)
 local World = require(script.Parent.World)
 
 local Tubes = {}
 
-local LIT = Color3.fromRGB(222, 230, 226)
+local LIT = Color3.fromRGB(158, 166, 162)
 local DEAD = Color3.fromRGB(38, 39, 38)
 
 type Fitting = { part: BasePart, light: Light?, alive: boolean }
 
 local fittings: { Fitting } = {}
+
+-- Once the glass has gone it has gone: no power cut, generator or standby
+-- brings a broken tube back.
+local broken = false
 
 local function lightOf(part: BasePart): Light?
 	return part:FindFirstChildWhichIsA("Light")
@@ -77,124 +82,55 @@ local function darken(f: Fitting)
 end
 
 --[[
-	One fitting, dying.
+	The moment the building dies.
 
-	Three strikes and out, with the timings uneven, because an even flicker
-	reads as an effect and an uneven one reads as a fault. The caption says
-	which it was and roughly where, since a player with the sound off has to be
-	told that something two rooms away just gave up.
+	This replaces a night's worth of attrition. Fittings going out one at a
+	time, unevenly, across eight hours was a nice idea on paper and in play it
+	was a nuisance: something broke every few minutes, each one demanded
+	attention, and by the third the player had learnt that the building makes
+	noises on a schedule and stopped caring. Nothing that happens twenty times
+	a night is an event.
+
+	So it happens once. You clock in -- the first thing the job asks of you,
+	the moment you have formally started the shift -- and the whole building
+	goes in the same second, with one sheet of glass breaking. After that the
+	only light anywhere is the red boxes over the doors, and they stay for the
+	rest of the night.
+
+	It is not reversible. The tubes are broken, not switched off.
 ]]
-function Tubes.kill(f: Fitting)
-	if not f.alive or not f.part.Parent then
-		return
-	end
-	f.alive = false
-	task.spawn(function()
-		local part, light = f.part, f.light
-		for i = 1, 3 do
-			if not part.Parent then
-				return
+function Tubes.breakAll(at: Vector3?)
+	local anywhere = at
+	for _, f in fittings do
+		if f.part.Parent then
+			if not anywhere then
+				anywhere = f.part.Position
 			end
-			part.Color = DEAD
-			part.Material = Enum.Material.SmoothPlastic
-			if light then
-				light.Enabled = false
-			end
-			task.wait(0.05 + i * 0.04)
-			if not part.Parent then
-				return
-			end
-			part.Color = LIT
-			part.Material = Enum.Material.Neon
-			if light then
-				light.Enabled = true
-			end
-			task.wait(0.03 + math.random() * 0.09)
-		end
-		if part.Parent then
 			darken(f)
-			SoundBank.play(SoundBank.TUBE_FAIL, part, 0.12)
-			Hud.captionSlot(SoundBank.TUBE_FAIL, Places.roomAt(part.Position))
 		end
-	end)
+	end
+	broken = true
+
+	if anywhere then
+		local speaker = Instance.new("Part")
+		speaker.Anchored = true
+		speaker.CanCollide = false
+		speaker.CanQuery = false
+		speaker.Transparency = 1
+		speaker.Size = Vector3.new(1, 1, 1)
+		speaker.Position = anywhere
+		speaker.Parent = World.nodes()
+		SoundBank.play(SoundBank.LIGHTS_DIE, speaker)
+		Hud.captionSlot(SoundBank.LIGHTS_DIE, "everywhere")
+	end
+	-- And the hum the building has had since they walked in stops. That is the
+	-- half of this event nobody notices happening and everybody notices after.
+	Atmos.stopHum()
+	Hud.effect("startle", { shake = 0.7, flash = false, large = true })
 end
 
--- The next one to go, chosen at random from what is left.
-function Tubes.killOne(): boolean
-	local live = {}
-	for _, f in fittings do
-		if f.alive and f.part.Parent then
-			table.insert(live, f)
-		end
-	end
-	if #live == 0 then
-		return false
-	end
-	Tubes.kill(live[math.random(1, #live)])
-	return true
-end
-
---[[
-	The nearest one to a point that is still on.
-
-	Used when the night wants the failure to be *here* rather than somewhere:
-	the fitting over the door you are walking towards is a different event from
-	a fitting somewhere in the building.
-]]
-function Tubes.killNear(position: Vector3, minMetres: number?): boolean
-	local floor = (minMetres or 0) * Places.METRE
-	local best, bestD = nil, math.huge
-	for _, f in fittings do
-		if f.alive and f.part.Parent then
-			local d = (f.part.Position - position).Magnitude
-			if d >= floor and d < bestD then
-				best, bestD = f, d
-			end
-		end
-	end
-	if not best then
-		return false
-	end
-	Tubes.kill(best)
-	return true
-end
-
---[[
-	The night's worth.
-
-	`fraction` of the fittings go over `seconds`, spaced unevenly -- clustered
-	slightly towards the end, because a building should be losing them faster at
-	four in the morning than at ten at night. Returns a cancel function, and the
-	shift calls it when the night ends.
-]]
-function Tubes.failAcross(seconds: number, fraction: number)
-	local total = Tubes.alive()
-	local going = math.max(1, math.floor(total * math.clamp(fraction, 0, 1)))
-	local cancelled = false
-
-	task.spawn(function()
-		for i = 1, going do
-			if cancelled then
-				return
-			end
-			--[[
-				Squared, so the gaps get shorter as the night goes on. The first
-				one goes about a fifth of the way in and the last three go
-				almost together.
-			]]
-			local at = seconds * ((i / (going + 1)) ^ 1.6)
-			local previous = seconds * (((i - 1) / (going + 1)) ^ 1.6)
-			task.wait(math.max(0.5, at - previous))
-			if cancelled then
-				return
-			end
-			Tubes.killOne()
-		end
-	end)
-
-	return function()
-		cancelled = true
-	end
+function Tubes.isBroken(): boolean
+	return broken
 end
 
 --[[
@@ -216,8 +152,10 @@ function Tubes.blackout()
 	end
 end
 
--- Everything back on, dead ones included. The start of a night, and nothing else.
+-- Everything back on, at the top of a night and nowhere else. Once the glass
+-- has gone, only a new night puts it back.
 function Tubes.relight()
+	broken = false
 	for _, f in fittings do
 		if f.part.Parent then
 			f.alive = true
@@ -239,6 +177,9 @@ end
 	failing. Only what was alive going in comes back.
 ]]
 function Tubes.repower()
+	if broken then
+		return
+	end
 	for _, f in fittings do
 		if f.alive and f.part.Parent then
 			f.part.Color = LIT

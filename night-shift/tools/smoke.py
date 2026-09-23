@@ -42,9 +42,11 @@ ORDER = [
     ("Objectives", "src/server/Objectives.luau"),
     ("Hud", "src/server/Hud.luau"),
     ("World", "src/server/World.luau"),
+    # Atmos before Tubes: Tubes stops the hum when the glass goes, and this
+    # bundler resolves requires by evaluation order rather than by name.
+    ("Atmos", "src/server/Atmos.luau"),
     ("Tubes", "src/server/Tubes.luau"),
     ("Power", "src/server/Power.luau"),
-    ("Atmos", "src/server/Atmos.luau"),
     ("AttentionService", "src/server/AttentionService.luau"),
     ("Gaze", "src/server/Gaze.luau"),
     ("Case", "src/server/Case.luau"),

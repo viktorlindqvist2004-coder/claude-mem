@@ -72,6 +72,10 @@ local FASCIA = {
 }
 local root, lightCount
 
+-- Declared here so wallWithDoors can put a box over every opening it cuts.
+-- It is defined below, with the rest of the fittings.
+local exitSign: (number, number, number, string) -> any
+
 -- ── Primitives ──────────────────────────────────────────────────────────────
 
 local function P(name, sizeM, cf, colour, material)
@@ -122,7 +126,7 @@ end
 	and a line that runs the wrong way across a corridor reads as a mistake from
 	the far end of it.
 ]]
-local TUBE_LIT = Color3.fromRGB(222, 230, 226)
+local TUBE_LIT = Color3.fromRGB(158, 166, 162)
 local TUBE_DEAD = Color3.fromRGB(38, 39, 38)
 
 local function tube(x, y, z, alongX)
@@ -173,9 +177,17 @@ end
 	of that wall on a bracket, like a real one, and the lettering goes on the two
 	faces you can read it from.
 ]]
-local EXIT_RED = Color3.fromRGB(255, 30, 22)
+--[[
+	Deep red, not maximum red.
 
-local function exitSign(x, y, z, facing)
+	A Neon panel at full saturation clips, and a clipped channel takes the
+	lettering with it -- which is how a sign with EXIT written across it
+	managed to read as a plain red bar. Pulling the panel down and leaving the
+	letters at full white is what separates them again.
+]]
+local EXIT_RED = Color3.fromRGB(178, 20, 14)
+
+function exitSign(x, y, z, facing)
 	facing = facing or "S"
 	local alongX = facing == "N" or facing == "S"
 
@@ -364,6 +376,29 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 				end
 			end
 		end
+		--[[
+			And the box over it.
+
+			Every doorway in the building gets one, built here rather than
+			placed by hand, because "over the doors" is a property of a
+			doorway and not a decoration somebody remembers to add. It looks
+			into the room the wall belongs to -- a sign on the north wall
+			looks south -- and it sits just under the door head.
+
+			These are the only lights left once the tubes go, and they do not
+			go out. From the far end of a corridor a line of red rectangles is
+			the plan of the building drawn in the dark.
+		]]
+		local centre = (g[1] + g[2]) / 2
+		local into = ({ N = "S", S = "N", E = "W", W = "E" })[side]
+		if into and h > 2.9 then
+			if axis == "x" then
+				exitSign(centre, y + doorH + 0.28, fixed, into)
+			else
+				exitSign(fixed, y + doorH + 0.28, centre, into)
+			end
+		end
+
 		cursor = math.max(cursor, g[2])
 	end
 	wallRun(fixed, cursor, to, axis, y, h, colour)
@@ -2027,9 +2062,24 @@ local function serviceCorridor()
 	-- Against the east wall, between two doors. It used to sit dead centre in
 	-- the security office doorway.
 	P("Trolley", V(0.6, 0.9, 0.5), at(x + 0.6, 0.45, 12), C.metal)
-	P("Pallet", V(1.0, 0.14, 0.8), at(x - 0.3, 0.07, -6), C.wood)
-	P("Bin", V(0.7, 1.0, 0.6), at(x + 0.4, 0.5, -16), C.trim)
-	P("FloorSign", V(0.3, 0.5, 0.3), at(x, 0.25, 1), Color3.fromRGB(180, 96, 30))
+	--[[
+		All of it against the west wall, in a line, leaving the corridor clear.
+
+		This is the rule the whole building's dressing was missing. Things are
+		written as offsets from a room's centre because the centre is the only
+		thing the code knows, and the result is objects dotted about the open
+		floor at arbitrary distances -- a bin a metre and a half from anything,
+		a wet-floor sign standing dead in the middle of a 2.6 m corridor. That
+		is not how anybody has ever left a room. Things go against a wall, in a
+		corner, or in a deliberate row, and the floor stays clear because
+		people walk across it.
+	]]
+	local against = x - SERVICE_W / 2 + 0.45
+	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.07, -6), C.wood)
+	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.21, -6.1), C.wood)
+	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -16), C.trim)
+	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -15.3), C.trim)
+	P("FloorSign", V(0.3, 0.5, 0.3), at(against, 0.25, 1), Color3.fromRGB(180, 96, 30))
 
 	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do
@@ -2460,18 +2510,29 @@ local function dressLoadingDock(cx, cz, y, h, w, d)
 	-- door is 2.5 m west of here and the crew come in through it every night.
 	P("StripCurtain", V(3.2, 2.6, 0.06), at(cx + 0.3, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
 
-	P("Bin", V(1.2, 1.2, 1.0), at(cx - 3.5, y + 0.6, cz + 2.0), C.trim)
-	P("Bin", V(1.2, 1.2, 1.0), at(cx - 2.0, y + 0.6, cz + 2.0), C.trim)
-	P("BinLid", V(1.24, 0.08, 1.04), at(cx - 3.5, y + 1.24, cz + 2.0), C.dark)
-	P("BinLid", V(1.24, 0.08, 1.04), at(cx - 2.0, y + 1.24, cz + 2.0), C.dark)
-	for i = 0, 3 do
-		P("Pallet", V(1.2, 0.15, 1.0), at(cx + 3.0, y + 0.08 + i * 0.16, cz), C.wood)
+	--[[
+		A dock floor is kept clear, because everything that comes through it
+		has to be pushed across it. So the bins go in a row against the back
+		wall, the pallets stack in the corner, and the pump truck is parked
+		out of the way against the west wall rather than left in the middle of
+		the room -- which is where all three of them were, at arbitrary
+		offsets from the room's centre, for no reason anybody could have given.
+	]]
+	local back = cz + d / 2 - 0.75
+	for i = 0, 1 do
+		local bx = cx - 3.9 + i * 1.4
+		P("Bin", V(1.2, 1.2, 1.0), at(bx, y + 0.6, back), C.trim)
+		P("BinLid", V(1.24, 0.08, 1.04), at(bx, y + 1.24, back), C.dark)
 	end
-	boxStack(cx + 3.0, y + 0.64, cz, 3, 3301)
+	local corner = cx + w / 2 - 1.0
+	for i = 0, 3 do
+		P("Pallet", V(1.2, 0.15, 1.0), at(corner, y + 0.08 + i * 0.16, back - 0.4), C.wood)
+	end
+	boxStack(corner, y + 0.64, back - 0.4, 3, 3301)
 
 	-- The pump truck, and a fire point nobody has checked since 1996.
-	P("PumpTruck", V(0.7, 0.16, 1.6), at(cx + 1.2, y + 0.1, cz + 2.6), Color3.fromRGB(120, 60, 30))
-	P("PumpHandle", V(0.08, 1.1, 0.08), at(cx + 1.2, y + 0.65, cz + 3.4), C.metal)
+	P("PumpTruck", V(0.7, 0.16, 1.6), at(cx - w / 2 + 0.7, y + 0.1, cz + 1.4), Color3.fromRGB(120, 60, 30))
+	P("PumpHandle", V(0.08, 1.1, 0.08), at(cx - w / 2 + 0.7, y + 0.65, cz + 2.2), C.metal)
 	P("FirePoint", V(0.5, 0.7, 0.1), at(cx - 4.8, y + 1.2, cz + 3.5), Color3.fromRGB(140, 40, 32))
 	P("Extinguisher", V(0.16, 0.5, 0.16), at(cx - 4.8, y + 0.3, cz + 3.4), Color3.fromRGB(150, 44, 36))
 	P("DockEdge", V(11.0, 0.12, 0.3), at(cx, y + 0.06, cz - 3.5), Color3.fromRGB(170, 150, 60))
@@ -3416,9 +3477,16 @@ local function applyLighting()
 	-- Threshold under the exposure now, because the exposure is well below zero
 	-- and the only things above it are the lit panels. This is what gives the
 	-- EXIT box its halo and the tube its glare.
-	bloom.Intensity = 0.55
-	bloom.Size = 20
-	bloom.Threshold = 0.85
+	--[[
+		The threshold was under the exposure, so every emissive surface in the
+		game bloomed into a white blob -- the tubes became floating slabs of
+		light and the EXIT boxes became red smears with no word in them. It is
+		back above the lit panels' own level: they glow, they have an edge, and
+		you can read them.
+	]]
+	bloom.Intensity = 0.4
+	bloom.Size = 14
+	bloom.Threshold = 1.75
 	bloom.Parent = Lighting
 
 	--[[

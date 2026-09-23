@@ -49,6 +49,7 @@ Shift.finished = false
 local heartbeat: RBXScriptConnection? = nil
 local cancelTubes: (() -> ())? = nil
 local insideWatch: RBXScriptConnection? = nil
+local lightsWatch: any = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -478,6 +479,10 @@ function Shift.stop()
 		insideWatch:Disconnect()
 		insideWatch = nil
 	end
+	if lightsWatch then
+		lightsWatch:disconnect()
+		lightsWatch = nil
+	end
 	-- And nothing from last night is allowed to still be putting lights out.
 	if cancelTubes then
 		cancelTubes()
@@ -529,13 +534,21 @@ function Shift.begin(night: number)
 		carrying. Nobody is told this is happening; they notice, which is the
 		whole of the effect.
 	]]
+	--[[
+		The building is lit until the shift formally starts, and then it is not.
+
+		The crew arrive, walk in, and find the lights on -- which is what makes
+		the dark afterwards mean anything, because they have seen the room.
+		Then the first job on the list gets done, and every tube in the place
+		goes in the same second with one sheet of glass breaking. From then on
+		the only light anywhere is the red boxes over the doors.
+
+		It is hung on the night's own first objective rather than a clock, so
+		it lands the moment the player has finished doing something rather than
+		while they are halfway across a room.
+	]]
 	Tubes.build()
 	Tubes.relight()
-	if cancelTubes then
-		cancelTubes()
-	end
-	cancelTubes = Tubes.failAcross(
-		Config.SHIFT_HOURS * Config.SECONDS_PER_GAME_HOUR[night], 0.66)
 
 	Dread.night = night
 	Dread.start()
@@ -617,6 +630,19 @@ function Shift.begin(night: number)
 			question = NightScript.THE_QUESTION,
 		})
 	end
+
+	local firstJob = definition.objectives[1] and definition.objectives[1][1]
+	if lightsWatch then
+		lightsWatch:disconnect()
+		lightsWatch = nil
+	end
+	lightsWatch = Objectives.completed:connect(function(id)
+		if id ~= firstJob or Tubes.isBroken() then
+			return
+		end
+		task.wait(1.1)
+		Tubes.breakAll()
+	end)
 
 	Hud.state.night = night
 	Hud.set("phase", "Shift")

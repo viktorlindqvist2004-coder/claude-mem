@@ -213,13 +213,13 @@ local STAGED: { Staged } = {
 	{
 		id = "lights",
 		name = "The lights",
-		caption = "[the lights ahead go out, one at a time]",
+		caption = "[the exit boxes ahead go out, one at a time]",
 		large = false,
 		fromNight = 1,
 		run = function(player, root)
 			local forward = look(player)
 			local ahead = {}
-			for _, box in World.all("Tube") do
+			for _, box in World.all("ExitSign") do
 				local to = box.Position - root.Position
 				if to.Magnitude < 40 * METRE and to.Unit:Dot(forward) > 0.35 then
 					table.insert(ahead, box)
@@ -231,7 +231,7 @@ local STAGED: { Staged } = {
 			table.sort(ahead, function(a, b)
 				return (a.Position - root.Position).Magnitude > (b.Position - root.Position).Magnitude
 			end)
-			Hud.caption("[the lights ahead go out, one at a time]", Places.roomAt(root.Position))
+			Hud.caption("[the exit boxes ahead go out, one at a time]", Places.roomAt(root.Position))
 			task.spawn(function()
 				for _, box in ahead do
 					Power.douse(box, 14)

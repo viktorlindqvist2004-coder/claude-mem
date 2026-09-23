@@ -512,18 +512,37 @@ end
 	carries a price rail along its front edge, which at three metres is the
 	only thing that separates a shop shelf from a plank.
 ]]
-local function gondola(x, y, z, len, alongX, seed)
+local function gondola(x, y, z, len, alongX, seed, onlySide)
 	local rng = Random.new(seed or 11)
 	local backT, depth = 0.08, 0.46
 
-	P("GondolaPlinth", (if alongX then V(len, 0.12, depth * 2) else V(depth * 2, 0.12, len)),
-		at(x, y + 0.05, z), C.dark)
+	--[[
+		Two kinds of run, one function.
+
+		An island run stands on the shop floor with shelves off both faces of
+		its back panel. A wall run is half of one: the back goes against the
+		wall and the shelves come off the room side only, which is why the
+		plinth and the cap are half as deep and sit offset towards that side.
+
+		Every real shop floor is both. Islands alone leave a metre of dead
+		space all the way round the room -- shelving with its back to nothing,
+		which is the thing that made this room read as furniture dropped in a
+		hall rather than as a shop.
+	]]
+	local sides = if onlySide then { onlySide } else { -1, 1 }
+	local spread = if onlySide then depth + backT else depth * 2 + backT
+	local mid = if onlySide then onlySide * depth / 2 else 0
+	local mx = if alongX then 0 else mid
+	local mz = if alongX then mid else 0
+
+	P("GondolaPlinth", (if alongX then V(len, 0.12, spread) else V(spread, 0.12, len)),
+		at(x + mx, y + 0.05, z + mz), C.dark)
 	P("GondolaBack", (if alongX then V(len, 1.9, backT) else V(backT, 1.9, len)),
 		at(x, y + 1.0, z), Color3.fromRGB(96, 94, 90))
-	P("GondolaCap", (if alongX then V(len + 0.04, 0.06, depth * 2 + 0.04) else V(depth * 2 + 0.04, 0.06, len + 0.04)),
-		at(x, y + 1.96, z), C.trim)
+	P("GondolaCap", (if alongX then V(len + 0.04, 0.06, spread + 0.04) else V(spread + 0.04, 0.06, len + 0.04)),
+		at(x + mx, y + 1.96, z + mz), C.trim)
 
-	for _, side in { -1, 1 } do
+	for _, side in sides do
 		for level = 0, 3 do
 			local sy = y + 0.42 + level * 0.44
 			local sx = if alongX then x else x + side * (depth / 2 + backT / 2)
@@ -3011,109 +3030,234 @@ end
 ]]
 local function dressSupermarket(cx, cz, y, h, w, d)
 	--[[
-		Five aisles of gondola, not five runs of pallet racking. A shop floor
-		is laid out so you cannot see across it: solid backs, and you walk
-		each aisle one at a time.
+		Laid out the way a shop is laid out, which is from the walls inwards.
+
+		A supermarket is not shelving dropped in the middle of a room. It has
+		four parts and they are always in the same relationship to each other:
+
+		  * The perimeter. Wall runs down every wall that is not the front, so
+		    there is no dead metre behind anything. Chilled and frozen go on an
+		    outside wall because that is where the plant and the drains are.
+		  * The island runs, parallel, at right angles to the till bank, so a
+		    customer comes out of an aisle facing the tills.
+		  * The till bank, parallel to the front wall, one lane per belt, with
+		    the queuing space in front of it and the lobby behind.
+		  * The lobby: the strip between the front wall and the tills, where
+		    the trolleys, the baskets and the papers are, and nothing else.
+
+		What the room had instead was four island runs floating in the middle
+		with a gap all round them, and a row of tills shoved up against the
+		back wall with half a metre behind it. Both of those are things that
+		only happen when furniture is placed by eye rather than by plan.
+
+		The room is 16 x 12 with the entrance in the middle of the east wall,
+		so east is the front. Wall faces are at +-7.875 and +-5.875 -- the
+		walls are 0.25 thick and centred on the room line.
 	]]
+	local WEST, EAST = cx - 7.875, cx + 7.875
+	local NORTH, SOUTH = cz - 5.875, cz + 5.875
+
+	-- ── Perimeter ───────────────────────────────────────────────────────────
 	--[[
-		Four runs at 2.7 m, not five at 2.0.
-
-		A gondola is a metre deep over both sides, so runs two metres apart
-		left aisles a metre wide -- and a metre, once you take off the body
-		that has to walk down it, is not an aisle, it is a gap. Only a quarter
-		of this room could be stood in. A supermarket aisle is around 1.8 m and
-		these are 1.7, which is the difference between a shop floor and a maze.
+		The staff door, north-west, which the STAFF ONLY sign has been pointing
+		at a blank wall about for some time.
 	]]
-	for i = 0, 3 do
-		gondola(cx, y, cz - 4.05 + i * 2.7, 11.0, true, 5100 + i)
-		local aisle = P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.05 + i * 2.7), C.trim)
-		printed(aisle, Enum.NormalId.Left,
-			({ "1  TINNED", "2  BAKING", "3  HOUSEHOLD", "4  FROZEN" })[i + 1] or "",
-			{ color = Color3.fromRGB(198, 196, 190), density = 70 })
-	end
-
-	--[[
-		Three checkouts. A checkout is a belt you put shopping on, a till the
-		operator sits behind and a packing shelf on the far side, and it needs
-		all three or it is a counter with a box on it.
-	]]
-	for i = 0, 2 do
-		local tx = cx - 4.5 + i * 4.5
-		P("CheckoutBelt", V(2.6, 0.82, 0.74), at(tx, y + 0.45, cz + 5.0), C.trim)
-		P("CheckoutKick", V(2.5, 0.12, 0.6), at(tx, y + 0.06, cz + 5.0), C.dark)
-		P("BeltTop", V(2.3, 0.03, 0.5), at(tx, y + 0.88, cz + 5.0), Color3.fromRGB(46, 44, 42))
-		for _, e in { -1, 1 } do
-			P("BeltRoller", V(0.07, 0.07, 0.5), at(tx + e * 1.13, y + 0.88, cz + 5.0), C.metal)
-		end
-		-- The packing shelf on the customer side, where the bags go.
-		P("PackShelf", V(1.1, 0.04, 0.5), at(tx + 1.5, y + 0.86, cz + 5.0), C.trim)
-		P("PackLeg", V(0.06, 0.84, 0.06), at(tx + 1.9, y + 0.42, cz + 5.0), C.metal)
-		P("Till", V(0.42, 0.3, 0.4), at(tx + 1.0, y + 1.04, cz + 5.0), C.metal)
-		P("TillKeys", V(0.3, 0.03, 0.22), at(tx + 1.0, y + 1.2, cz + 5.06), C.dark)
-		P("TillScreen", V(0.3, 0.22, 0.03), at(tx + 1.0, y + 1.3, cz + 4.82), C.panel)
-		local lane = P("LaneNumber", V(0.18, 0.22, 0.03), at(tx, y + 2.0, cz + 5.4), RED, Enum.Material.Neon)
-		Surfaces.label(lane, Enum.NormalId.Front, tostring(i + 1), {
-			lit = true, color = Color3.fromRGB(255, 150, 140), font = Enum.Font.Code, density = 150,
-		})
-		P("LanePost", V(0.05, 0.9, 0.05), at(tx, y + 1.5, cz + 5.4), C.metal)
-		P("Divider", V(0.1, 0.7, 1.6), at(tx - 1.5, y + 0.35, cz + 5.0), C.metal)
-	end
-
-	local checkout = P("CheckoutOne", V(0.5, 0.1, 0.5), at(cx - 4.5, y + 0.95, cz + 5.0), C.trim)
-	checkout.Name = "CheckoutOne"
-	P("DrawerLip", V(0.44, 0.05, 0.3), at(cx - 4.5, y + 0.88, cz + 4.78), C.metal)
-
-	local freezer = P("Freezer", V(2.4, 1.1, 1.0), at(cx + 6.2, y + 0.55, cz - 3.0), C.metal)
-	freezer.Name = "Freezer"
-	P("FreezerGlass", V(2.2, 0.06, 0.9), at(cx + 6.2, y + 1.12, cz - 3.0), C.glass)
-	P("FreezerFrost", V(2.2, 0.02, 0.9), at(cx + 6.2, y + 1.15, cz - 3.0), Color3.fromRGB(120, 130, 140))
-
-	-- Baskets, a trolley bay, and a spill cone over nothing.
-	for i = 0, 4 do
-		P("Basket", V(0.44, 0.16, 0.34), at(cx + 6.6, y + 0.08 + i * 0.16, cz + 4.0), Color3.fromRGB(70, 66, 62))
-	end
-	trolley(cx + 5.4, y, cz + 4.6, 12)
-	trolley(cx + 5.4, y, cz + 3.4, -6)
-	P("SpillCone", V(0.3, 0.5, 0.3), at(cx - 2.0, y + 0.25, cz + 2.6), Color3.fromRGB(180, 96, 30))
+	P("StaffDoorFrame", V(1.16, 2.24, 0.08), at(cx - 7.1, y + 1.12, NORTH + 0.02), C.trim)
+	P("StaffDoorLeaf", V(1.0, 2.1, 0.06), at(cx - 7.1, y + 1.05, NORTH + 0.06), Color3.fromRGB(74, 70, 66))
+	P("StaffDoorPlate", V(0.9, 0.22, 0.02), at(cx - 7.1, y + 0.5, NORTH + 0.1), C.metal)
+	P("StaffDoorHandle", V(0.05, 0.05, 0.16), at(cx - 6.72, y + 1.06, NORTH + 0.12), C.metal)
+	local staffDoorSign = P("StaffOnly", V(0.5, 0.2, 0.03), at(cx - 7.1, y + 2.42, NORTH + 0.04), Color3.fromRGB(150, 60, 54))
+	printed(staffDoorSign, Enum.NormalId.Front, "STAFF ONLY",
+		{ color = Color3.fromRGB(240, 236, 230), density = 110 })
 
 	--[[
-		The bakery counter, the newspaper stand and the bunting. The bunting is
-		the detail that does the most: a strip of triangles over the tills saying
-		something cheerful, in a room lit by an EXIT box.
+		The bakery, against the north wall next to the staff door, because that
+		is the door the trays come through. It was standing half a metre off
+		the wall in the middle of the floor.
 	]]
-	P("BakeryCounter", V(4.0, 1.1, 1.0), at(cx - 5.0, y + 0.55, cz - 5.0), C.trim)
-	P("BakeryGlass", V(3.8, 0.8, 0.9), at(cx - 5.0, y + 1.5, cz - 5.0), Color3.fromRGB(150, 156, 168)).Transparency = 0.7
+	P("BakeryCounter", V(3.6, 0.98, 0.9), at(cx - 4.2, y + 0.61, NORTH + 0.45), C.trim)
+	P("BakeryKick", V(3.5, 0.12, 0.8), at(cx - 4.2, y + 0.06, NORTH + 0.45), C.dark)
+	P("BakeryTop", V(3.64, 0.05, 0.94), at(cx - 4.2, y + 1.12, NORTH + 0.45), C.wood)
 	for i = 0, 5 do
-		P("BakeryTray", V(0.5, 0.06, 0.4), at(cx - 6.6 + i * 0.66, y + 1.16, cz - 5.0), Color3.fromRGB(96, 78, 52))
+		P("BakeryTray", V(0.5, 0.06, 0.4), at(cx - 5.8 + i * 0.64, y + 1.18, NORTH + 0.45), Color3.fromRGB(96, 78, 52))
 	end
-	local bakerySign = P("BakerySign", V(2.4, 0.42, 0.06), at(cx - 5.0, y + 2.3, cz - 5.4), C.panel)
+	-- The display case over the counter: a glass box, not a floating pane.
+	P("BakeryGlass", V(3.4, 0.7, 0.86), at(cx - 4.2, y + 1.5, NORTH + 0.45), Color3.fromRGB(150, 156, 168)).Transparency = 0.76
+	local bakerySign = P("BakerySign", V(2.4, 0.42, 0.05), at(cx - 4.2, y + 2.34, NORTH + 0.04), C.panel)
 	printed(bakerySign, Enum.NormalId.Front, "IN-STORE BAKERY",
 		{ color = Color3.fromRGB(140, 132, 120), density = 56, font = Enum.Font.GothamBold })
 
-	P("NewsStand", V(1.2, 0.9, 0.6), at(cx + 6.4, y + 0.45, cz + 5.6), C.wood)
+	-- North wall run, east of the bakery. Back against the wall, shelves south.
+	gondola(cx, y, NORTH + 0.04, 5.2, true, 5200, 1)
+	-- West wall run. Back against the wall, shelves east.
+	gondola(WEST + 0.04, y, cz, 8.4, false, 5201, 1)
+
+	--[[
+		Chilled, along the south wall. Cabinets stand in a run with their backs
+		to the wall and their plant behind them; there is no such thing as a
+		chiller in the middle of a floor with a gap round it.
+	]]
+	for i = 0, 2 do
+		local fx = cx - 6.0 + i * 2.5
+		local body = P("Chiller", V(2.4, 1.86, 0.78), at(fx, y + 1.07, SOUTH - 0.39), Color3.fromRGB(198, 196, 190))
+		if i == 2 then
+			body.Name = "Freezer"
+		end
+		P("ChillerKick", V(2.3, 0.14, 0.7), at(fx, y + 0.07, SOUTH - 0.39), C.dark)
+		-- The open front: a recess, three shelves in it, and the night blind
+		-- rolled up in its box over the top.
+		P("ChillerWell", V(2.24, 1.5, 0.1), at(fx, y + 0.95, SOUTH - 0.74), C.dark)
+		for k = 0, 2 do
+			P("ChillerShelf", V(2.2, 0.04, 0.58), at(fx, y + 0.46 + k * 0.48, SOUTH - 0.5), C.metal)
+			for j = 0, 6 do
+				if (i * 7 + j + k) % 5 ~= 0 then
+					local tone = 120 + ((i * 3 + j * 5 + k * 7) % 40)
+					P("Facing", V(0.24, 0.3, 0.26), at(fx - 0.96 + j * 0.32, y + 0.63 + k * 0.48, SOUTH - 0.5),
+						Color3.fromRGB(tone, tone - 8, tone - 18))
+				end
+			end
+		end
+		P("ChillerBlind", V(2.3, 0.18, 0.18), at(fx, y + 1.82, SOUTH - 0.72), C.trim)
+		P("ChillerRail", V(2.24, 0.06, 0.03), at(fx, y + 1.7, SOUTH - 0.76), Color3.fromRGB(206, 202, 194))
+	end
+
+	-- ── The island runs ─────────────────────────────────────────────────────
+	--[[
+		Three runs, 6.6 m long, on a 2.9 m pitch -- which after a metre of
+		shelving leaves aisles 1.9 m wide, the width a real one is, and the
+		width two people and a cage can pass in. They stop 1.8 m short of the
+		tills so there is somewhere to queue, and 1.8 m short of the wall run
+		so there is an end aisle to get between them.
+	]]
+	local RUN_X, RUN_LEN = cx - 2.2, 6.6
+	local runZ = { cz - 3.0, cz - 0.1, cz + 2.8 }
+	for i, rz in runZ do
+		gondola(RUN_X, y, rz, RUN_LEN, true, 5100 + i)
+	end
+
+	--[[
+		Aisle signs, hung over the mouth of each aisle at the front of the shop
+		and facing the way you come in, because a sign you can only read once
+		you are in the aisle is a label, not a sign.
+	]]
+	local aisles = {
+		{ cz - 4.42, "1  TINNED  ·  BAKING" },
+		{ cz - 1.55, "2  HOUSEHOLD" },
+		{ cz + 1.35, "3  PET  ·  PAPER" },
+		{ cz + 4.19, "4  CHILLED  ·  FROZEN" },
+	}
+	for _, a in aisles do
+		local sign = P("AisleSign", V(0.05, 0.34, 1.7), at(cx + 1.7, y + 2.66, a[1]), C.trim)
+		printed(sign, Enum.NormalId.Right, a[2],
+			{ color = Color3.fromRGB(198, 196, 190), density = 70 })
+		for _, e in { -1, 1 } do
+			P("SignDrop", V(0.03, 1.1, 0.03), at(cx + 1.7, y + 3.36, a[1] + e * 0.7), C.metal)
+		end
+	end
+
+	-- ── The till bank ───────────────────────────────────────────────────────
+	--[[
+		Three lanes, parallel to the front wall, on a 1.8 m pitch. Each lane is
+		one continuous counter: belt on the customer side, till in the middle
+		where the operator stands, packing shelf on the way out. It was three
+		separate boxes in a row half a metre off the back wall, which is how
+		you end up asking what they are.
+	]]
+	local LANE_X = cx + 4.65
+	local laneZ = { cz + 1.2, cz + 3.0, cz + 4.8 }
+	for i, tz in laneZ do
+		P("CheckoutKick", V(3.4, 0.12, 0.6), at(LANE_X, y + 0.06, tz), C.dark)
+		P("CheckoutRun", V(3.5, 0.74, 0.72), at(LANE_X, y + 0.49, tz), C.trim)
+		-- Belt: a recessed rubber band with a roller at each end of it.
+		--[[
+			The belt, and both its rollers, on the counter it belongs to. They
+			were centred on the lane rather than on the belt section, which put
+			the near roller five centimetres off the end of the unit, resting
+			on air.
+		]]
+		P("BeltTop", V(2.0, 0.04, 0.52), at(cx + 3.95, y + 0.88, tz), Color3.fromRGB(44, 42, 40))
+		for _, e in { -1, 1 } do
+			local roller = P("BeltRoller", V(0.07, 0.07, 0.52), at(cx + 3.95 + e * 0.97, y + 0.88, tz), C.metal)
+			roller.Shape = Enum.PartType.Cylinder
+			roller.Orientation = Vector3.new(0, 90, 0)
+		end
+		-- The wooden bar customers put between their shopping, left on the belt.
+		P("NextCustomer", V(0.05, 0.05, 0.44), at(cx + 3.3, y + 0.92, tz), C.wood)
+		-- The counter top over the till and packing end.
+		P("CounterTop", V(1.4, 0.05, 0.76), at(cx + 5.7, y + 0.885, tz), C.trim)
+		P("Till", V(0.4, 0.28, 0.42), at(cx + 5.3, y + 1.05, tz), C.metal)
+		P("TillKeys", V(0.3, 0.03, 0.24), at(cx + 5.3, y + 1.2, tz), C.dark)
+		local screen = P("TillScreen", V(0.28, 0.2, 0.04), at(cx + 5.3, y + 1.32, tz - 0.22), C.panel)
+		screen.Orientation = Vector3.new(14, 0, 0)
+		P("BagHook", V(0.04, 0.2, 0.04), at(cx + 6.3, y + 1.0, tz + 0.3), C.metal)
+		--[[
+			The lane number hangs over the lane, the way a real one does, rather
+			than standing on a post at the end of the belt -- which is a post in
+			the one place a customer has to put a basket down.
+		]]
+		local lane = P("LaneNumber", V(0.04, 0.24, 0.22), at(cx + 3.2, y + 2.5, tz), RED, Enum.Material.Neon)
+		Surfaces.label(lane, Enum.NormalId.Left, tostring(i), {
+			lit = true, color = Color3.fromRGB(255, 150, 140), font = Enum.Font.Code, density = 150,
+		})
+		P("LaneDrop", V(0.03, 1.26, 0.03), at(cx + 3.2, y + 3.25, tz), C.metal)
+	end
+
+	-- Lane one is Nora's. The drawer with her tape in it is under this till.
+	local checkout = P("CheckoutOne", V(0.5, 0.1, 0.5), at(cx + 4.8, y + 0.94, cz + 1.2), C.trim)
+	checkout.Name = "CheckoutOne"
+	P("DrawerLip", V(0.44, 0.05, 0.06), at(cx + 4.8, y + 0.7, cz + 0.85), C.metal)
+
+	-- The bunting, over the tills, in a room lit by an EXIT box.
+	P("BuntingLine", V(0.03, 0.03, 5.4), at(cx + 4.4, y + 2.7, cz + 3.0), C.metal)
+	for i = 0, 8 do
+		local flag = P("Bunting", V(0.02, 0.34, 0.34), at(cx + 4.4, y + 2.52, cz + 0.6 + i * 0.6),
+			({ Color3.fromRGB(120, 54, 48), Color3.fromRGB(64, 72, 96), Color3.fromRGB(110, 96, 52) })[i % 3 + 1])
+		flag.Orientation = Vector3.new(45, 0, 0)
+	end
+
+	-- ── The lobby ───────────────────────────────────────────────────────────
+	--[[
+		Between the front wall and the tills, north of the entrance. Trolley
+		bay, baskets, papers -- and nothing else, because the whole job of this
+		strip is that you can get through it with a trolley.
+	]]
+	for _, rz in { cz - 5.3, cz - 3.9 } do
+		P("BayRail", V(3.0, 0.06, 0.06), at(cx + 5.2, y + 0.58, rz), C.metal)
+		for _, e in { -1, 1 } do
+			P("BayPost", V(0.06, 0.6, 0.06), at(cx + 5.2 + e * 1.45, y + 0.3, rz), C.metal)
+		end
+	end
+	for i = 0, 2 do
+		trolley(cx + 4.3 + i * 0.62, y, cz - 4.6, 90)
+	end
+
+	for i = 0, 4 do
+		P("Basket", V(0.44, 0.16, 0.34), at(EAST - 0.4, y + 0.08 + i * 0.16, cz - 2.1), Color3.fromRGB(70, 66, 62))
+	end
+	P("BasketSign", V(0.03, 0.16, 0.34), at(EAST - 0.04, y + 1.1, cz - 2.1), C.panel)
+
+	P("NewsStand", V(0.56, 0.9, 1.4), at(EAST - 0.32, y + 0.45, cz - 3.4), C.wood)
 	for i = 0, 3 do
-		local paper = P("Newspaper", V(0.28, 0.02, 0.4), at(cx + 6.1 + (i % 2) * 0.42, y + 0.92 + math.floor(i / 2) * 0.03, cz + 5.6),
+		local paper = P("Newspaper", V(0.36, 0.02, 0.28), at(EAST - 0.32, y + 0.92 + math.floor(i / 2) * 0.03, cz - 3.9 + (i % 2) * 0.46),
 			Color3.fromRGB(158, 154, 146))
 		paper.Orientation = Vector3.new(0, i * 3, 0)
 	end
 
-	P("BuntingLine", V(11.0, 0.03, 0.03), at(cx, y + 2.6, cz + 5.6), C.metal)
-	for i = 0, 13 do
-		local flag = P("Bunting", V(0.34, 0.34, 0.02), at(cx - 5.2 + i * 0.8, y + 2.42, cz + 5.6),
-			({ Color3.fromRGB(120, 54, 48), Color3.fromRGB(64, 72, 96), Color3.fromRGB(110, 96, 52) })[i % 3 + 1])
-		flag.Orientation = Vector3.new(0, 0, 45)
-	end
+	--[[
+		A trolley left out mid-shift, and the wet floor cone -- over an actual
+		wet floor. It stood in the middle of an aisle over clean tiles, which
+		is a traffic cone indoors for no reason, and the reason is the whole
+		object.
+	]]
+	trolley(cx - 0.4, y, cz - 1.55, 90)
+	P("WetPatch", V(1.1, 0.01, 0.9), at(cx + 0.2, y + 0.005, cz + 1.35), Color3.fromRGB(58, 56, 54))
+	P("SpillCone", V(0.3, 0.5, 0.3), at(cx + 0.2, y + 0.25, cz + 1.35), Color3.fromRGB(180, 96, 30))
+	P("ConeBase", V(0.42, 0.04, 0.42), at(cx + 0.2, y + 0.02, cz + 1.35), Color3.fromRGB(180, 96, 30))
 
-	local staffDoorSign = P("StaffOnly", V(0.5, 0.2, 0.03), at(cx - 7.6, y + 2.2, cz - 5.9), Color3.fromRGB(150, 60, 54))
-	printed(staffDoorSign, Enum.NormalId.Front, "STAFF ONLY",
-		{ color = Color3.fromRGB(240, 236, 230), density = 110 })
-
-	pottedTree(cx + 7.0, y, cz - 5.0, 8801)
 	floorBorder(cx, cz, 16.0, 12.0, y, 1.2, Color3.fromRGB(70, 66, 62))
-
 	speakerGrille(cx, y + 3.05, cz)
 	ceilingKit(cx, cz, w, d, y, h, 4105)
-	bulkhead(cx - 4, y + h - 0.3, cz + 2)
+	bulkhead(cx - 4, y + h - 0.3, cz - 2)
 end
 
 --[[

@@ -48,7 +48,7 @@ Places.POINT = {
 	StockroomCentre = { R.Stockroom.x, 1.0, R.Stockroom.z },
 	Mop = { R.CustodialStore.x - 0.9, 1.1, R.CustodialStore.z - 0.2 },
 	Landing = { -8.8, 0.0, -5.6 }, -- foot of the atrium stair, where the wet floor is
-	CheckoutOne = { R.Supermarket.x - 4.5, 0.95, R.Supermarket.z + 5.0 },
+	CheckoutOne = { R.Supermarket.x + 4.8, 0.95, R.Supermarket.z + 1.2 },
 	FuseBox = { R.ElectricalCupboard.x, -2.8, R.ElectricalCupboard.z - 1.1 },
 	StandingWater = { R.ElectricalCupboard.x + 0.7, -4.05, R.ElectricalCupboard.z + 0.4 },
 	DockFloor = { R.LoadingDock.x + 2.5, 0.0, R.LoadingDock.z + 1.0 },
@@ -68,18 +68,25 @@ Places.POINT = {
 }
 
 -- The five shelf bays in the supermarket, one face-up each.
-Places.SHELF_BAYS = {}
-for i = 0, 4 do
-	table.insert(Places.SHELF_BAYS, {
-		R.Supermarket.x + (if i % 2 == 0 then -3.5 else 3.5),
-		1.0,
-		R.Supermarket.z - 4.0 + i * 2.0 + 1.0,
-	})
-end
+--[[
+	One per aisle, standing in the aisle rather than inside the shelving.
+
+	These used to be generated on a formula, which put two of them inside a
+	gondola and one of them in the checkout lane. A shop floor is laid out by
+	hand, so these are too: the four island aisles and the end aisle down the
+	west wall, at the middle of each.
+]]
+Places.SHELF_BAYS = {
+	{ R.Supermarket.x - 4.0, 1.0, R.Supermarket.z - 4.42 },
+	{ R.Supermarket.x - 1.0, 1.0, R.Supermarket.z - 1.55 },
+	{ R.Supermarket.x - 4.0, 1.0, R.Supermarket.z + 1.35 },
+	{ R.Supermarket.x - 1.0, 1.0, R.Supermarket.z + 4.19 },
+	{ R.Supermarket.x - 6.4, 1.0, R.Supermarket.z + 1.0 },
+}
 
 -- Where the two wheelie bins start the night.
 Places.BINS = {
-	{ R.Supermarket.x + 6.0, 0.0, R.Supermarket.z + 4.0 },
+	{ R.Supermarket.x + 6.9, 0.0, R.Supermarket.z - 5.2 },
 	{ 1.8, 0.0, 12.0 }, -- in the north arm, outside the supermarket doorway
 }
 

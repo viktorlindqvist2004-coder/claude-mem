@@ -339,6 +339,18 @@ command("Light", "torchWide", "Torch: wider", function(player)
 	end
 end)
 
+command("Audio", "deadSounds", "Which sounds failed to load", function()
+	local dead = SoundBank.deadList()
+	if #dead == 0 then
+		Hud.effect("hint", "Every placeholder loaded. None of them are the real thing yet.")
+		return
+	end
+	Hud.caption(`[{#dead} placeholder ids will not load]`)
+	for _, id in dead do
+		Hud.caption(id:gsub("rbxasset://sounds/", ""))
+	end
+end)
+
 command("Audio", "voiceReport", "How much voice is recorded", function()
 	local total = 0
 	for _, group in { NightScript.NIGHT1, NightScript.NIGHT2, NightScript.NIGHT3, NightScript.NIGHT4, NightScript.NIGHT5, NightScript.ENDING } do

@@ -280,8 +280,14 @@ function Surfaces.label(part: BasePart, face: Enum.NormalId, text: string, optio
 	label.Text = text
 	label.Font = options.font or Enum.Font.GothamMedium
 	label.TextColor3 = options.color or Color3.fromRGB(226, 222, 212)
+	--[[
+		Scaled and wrapped at the same time is what turned every EXIT sign in the
+		building into "XIT": the wrap decides where the line breaks before the
+		scale decides how big it is, and the overflow is simply cut off. A label
+		that is scaling to fit must not also be wrapping.
+	]]
 	label.TextScaled = options.scaled ~= false
-	label.TextWrapped = true
+	label.TextWrapped = options.scaled == false
 	label.RichText = true
 	label.TextXAlignment = options.align or Enum.TextXAlignment.Center
 	label.TextYAlignment = Enum.TextYAlignment.Center

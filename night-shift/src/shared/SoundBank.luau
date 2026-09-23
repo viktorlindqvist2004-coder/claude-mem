@@ -208,7 +208,10 @@ SoundBank.PA_CLICK = {
 
 SoundBank.TORCH_CLICK = { caption = "[torch]", id = "rbxasset://sounds/switch3.wav", volume = 0.45, speed = 1.3 }
 SoundBank.CLOCK_IN = { caption = "[the time clock stamps]", id = "rbxasset://sounds/switch.wav", volume = 0.7, speed = 0.75 }
-SoundBank.PAPER = { caption = "[paper]", id = "rbxasset://sounds/swoosh.mp3", volume = 0.35, speed = 1.6 }
+-- swoosh.mp3 is not servable — "Asset is not approved for the requester". The
+-- tick is the one sound confirmed working in-engine, so paper borrows it until
+-- there is a real recording.
+SoundBank.PAPER = { caption = "[paper]", id = "rbxasset://sounds/clickfast.wav", volume = 0.3, speed = 0.7 }
 SoundBank.SHUTTER = { caption = "[a shutter rattles down]", id = "rbxasset://sounds/metal.ogg", volume = 0.55, speed = 1.15 }
 SoundBank.MOP = { caption = "[water]", id = "rbxasset://sounds/impact_water.mp3", volume = 0.45, speed = 0.85 }
 SoundBank.BIN_ROLL = { caption = "[castors on terrazzo]", id = "rbxasset://sounds/action_falling.mp3", volume = 0.22, speed = 1.4 }
@@ -248,6 +251,29 @@ SoundBank.DREAD_BED = {
 ]]
 local METRE = 1 / 0.3
 
+--[[
+	Which placeholders are actually servable.
+
+	Every id below is a guess at a file that ships inside the Roblox client, and
+	at least one of them was wrong — `swoosh.mp3` fails with "Asset is not
+	approved for the requester", silently, at the moment it is first needed.
+	There is no way to check from outside the engine, so instead every Sound this
+	module makes reports itself when it fails, once, and the test panel prints
+	the list.
+
+	Anything in here is a slot that needs a real upload before anything else.
+]]
+SoundBank.dead = {} :: { [string]: boolean }
+
+function SoundBank.deadList(): { string }
+	local out = {}
+	for id in SoundBank.dead do
+		table.insert(out, id)
+	end
+	table.sort(out)
+	return out
+end
+
 function SoundBank.make(slot: Slot, parent: Instance, name: string?): Sound
 	local sound = Instance.new("Sound")
 	sound.Name = name or "Sound"
@@ -261,6 +287,16 @@ function SoundBank.make(slot: Slot, parent: Instance, name: string?): Sound
 		sound.RollOffMaxDistance = (slot.rollOffMaxMetres or slot.rollOffMinMetres * 8) * METRE
 	end
 	sound.Parent = parent
+	--[[
+		Roblox reports a failed load once per Sound, not once per asset, so this
+		would otherwise be a wall of identical errors. Recording the id and not
+		the instance collapses it to the useful thing: which files are dead.
+	]]
+	task.delay(4, function()
+		if sound.Parent and not sound.IsLoaded then
+			SoundBank.dead[slot.id] = true
+		end
+	end)
 	return sound
 end
 

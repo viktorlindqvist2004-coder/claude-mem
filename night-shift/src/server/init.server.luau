@@ -164,7 +164,24 @@ local function updateCrewSize()
 	AttentionService.setSolo(#Players:GetPlayers() <= 1)
 end
 
+--[[
+	First person, locked.
+
+	It is the right camera for this game for the obvious reason — you can only
+	see what you are looking at, and a torch is only frightening if the dark it
+	does not reach is behind you rather than on screen beside you.
+
+	It also fixes something that was quietly wrong. In third person a Roblox
+	character faces the direction it is walking, not the direction the player is
+	looking, and three systems here ask "can they see it": the mannequins freeze
+	under it, the Presence is removed by it, the eyes are only visible outside
+	it. Locked to first person those two directions are the same thing, and the
+	camera hint the client sends is confirming what the character is already
+	doing rather than correcting it.
+]]
 Players.PlayerAdded:Connect(function(player)
+	player.CameraMode = Enum.CameraMode.LockFirstPerson
+	player.CameraMaxZoomDistance = 0.5
 	updateCrewSize()
 	player.CharacterAdded:Connect(function(character)
 		task.wait(0.2)

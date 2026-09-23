@@ -285,7 +285,7 @@ EVENT_KEYS = {
 	Triggered = true, OnServerEvent = true, OnClientEvent = true,
 	Heartbeat = true, RenderStepped = true, Stepped = true,
 	PlayerAdded = true, PlayerRemoving = true, CharacterAdded = true,
-	Changed = true, Touched = true, Ended = true,
+	Changed = true, Touched = true, Ended = true, Loaded = true,
 }
 
 local resumeBudget = 40

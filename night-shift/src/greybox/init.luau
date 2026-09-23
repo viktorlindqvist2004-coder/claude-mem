@@ -127,35 +127,53 @@ local function bulkhead(x, y, z, _rangeM)
 end
 
 --[[
-	A running-man EXIT box. The word is real text on the face of it rather than a
-	red rectangle you are asked to believe in, and it is the only lettering in the
-	building that is its own light source.
+	An EXIT box.
+
+	Three things were wrong with these and all three were visible from the first
+	room. The lettering was clipping to "XIT", because a scaled label that is
+	also wrapped has nowhere to go. They floated at arbitrary points and ended up
+	half inside walls, because nothing told them which surface they belonged to.
+	And they were far too bright — at 1.6 over twenty-two metres every surface
+	within sight of one clipped to flat saturated red, which is not lighting, it
+	is a colour wash, and it made a fully dressed building look like a diagram
+	again.
+
+	`facing` says which way it looks: "N", "S", "E" or "W". The box is then set
+	proud of that wall on a bracket, like a real one, and the lettering goes on
+	the two faces you can actually read it from.
 ]]
 local function exitSign(x, y, z, facing)
-	local sign = P("ExitSign", V(0.55, 0.22, 0.12), at(x, y, z), RED, Enum.Material.Neon)
+	facing = facing or "S"
+	local alongX = facing == "N" or facing == "S"
+	local size = if alongX then V(0.62, 0.24, 0.1) else V(0.1, 0.24, 0.62)
+
+	-- Out from the wall it hangs on, so it is never inside it.
+	local nx = if facing == "E" then 0.26 elseif facing == "W" then -0.26 else 0
+	local nz = if facing == "N" then 0.26 elseif facing == "S" then -0.26 else 0
+
+	local sign = P("ExitSign", size, at(x + nx, y, z + nz), RED, Enum.Material.Neon)
 	sign.CastShadow = false
-	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+	P("ExitBracket", if alongX then V(0.06, 0.06, 0.3) else V(0.3, 0.06, 0.06),
+		at(x + nx / 2, y + 0.1, z + nz / 2), C.metal)
+
+	local faces = if alongX
+		then { Enum.NormalId.Front, Enum.NormalId.Back }
+		else { Enum.NormalId.Left, Enum.NormalId.Right }
+	for _, face in faces do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
-			color = Color3.fromRGB(255, 240, 236),
+			color = Color3.fromRGB(255, 244, 240),
 			font = Enum.Font.GothamBold,
-			density = 90,
+			density = 130,
 		})
 	end
+
 	--[[
-		This is the entire lighting rig. Twenty or so of these, over the doors
-		they belong over, and nothing else in the building is on. They have to
-		reach a long way for that to be survivable, so each one washes a good
-		twenty metres of corridor faintly red and leaves the middle of every room
-		to the torch.
+		Dim, and short. It should mark a door from down a corridor and light the
+		two metres under itself, and nothing else. Everything past that is the
+		torch's job, which is the entire point of lighting a building this way.
 	]]
-	--[[
-		One light per box and no more. A second emitter underneath made a nicer
-		pool on the floor and doubled the light count, and the brief was fewer
-		lights, not better ones. Range does the work instead: twenty-two metres
-		of faint red down a corridor from a single source.
-	]]
-	bulb(sign, RED, 1.6, 22)
+	bulb(sign, RED, 0.7, 11)
 	return sign
 end
 
@@ -201,7 +219,9 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 		wallRun(fixed, cursor, math.max(cursor, g[1]), axis, y, h, colour)
 		-- Header over the doorway, so openings read as doors rather than as
 		-- missing wall.
-		local doorH = math.min(2.1, h - 0.15)
+		-- Tall enough for a scaled-up avatar, and still short enough to read as
+		-- a door rather than an opening.
+		local doorH = math.min(2.5, h - 0.2)
 		if h - doorH > 0.05 then
 			local len = g[2] - g[1]
 			if axis == "x" then
@@ -753,10 +773,24 @@ end
 
 -- ── The building ────────────────────────────────────────────────────────────
 
-local ATRIUM_W, ATRIUM_D, ATRIUM_H = 22, 18, 8.4
-local MALL_W, MALL_H = 6, 3.0
-local SERVICE_W, SERVICE_H = 2.2, 2.5
-local FLOOR1 = 4.4
+--[[
+	Heights.
+
+	These were set from what a shopping centre actually measures, and that was
+	the wrong reference. A Roblox avatar is about six studs tall before anybody
+	puts a hat on it, and at 1 stud = 0.3 m that is 1.8 m — but players scale
+	their characters, and a tall one at 2.4 m walked through a 2.5 m corridor
+	with its head in the ceiling.
+
+	So everything gains most of a metre. It is no longer strictly correct for a
+	1986 British shopping centre and it is correct for the game, which is the
+	only thing that matters: a ceiling you can see the underside of from eye
+	level reads as a tunnel, not a room.
+]]
+local ATRIUM_W, ATRIUM_D, ATRIUM_H = 22, 18, 9.6
+local MALL_W, MALL_H = 6.4, 3.9
+local SERVICE_W, SERVICE_H = 2.6, 3.3
+local FLOOR1 = 5.2
 
 --[[
 	Named rooms. Positions are metres from the clock. Kept in one table so the
@@ -775,24 +809,24 @@ local SHAFT = { x0 = -10, x1 = -8, z0 = 3, z1 = 9 }
 local ROOMS = {
 	-- name, cx, cz, w, d, y, h, doors
 	-- Back of house: east face flush with the service corridor's west wall.
-	{ "StaffRoom", SERVICE_WEST - 3.0, 15, 6.0, 5.0, 0, 2.5, { { "E", 0, 1.1 } } },
-	{ "SecurityOffice", SERVICE_WEST - 2.5, 9, 5.0, 4.2, 0, 2.5, { { "E", 0, 1.1 } } },
-	{ "CameraRoom", SERVICE_WEST - 2.5, 3.5, 5.0, 4.2, 0, 2.5, { { "E", 0, 1.1 } } },
-	{ "CustodialStore", SERVICE_WEST - 1.8, -2, 3.6, 3.0, 0, 2.5, { { "E", 0, 1.0 } } },
-	{ "Stockroom", SERVICE_WEST - 4.5, -9, 9.0, 7.0, 0, 2.9, { { "E", 0, 1.4 } } },
-	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 3.4, { { "E", 0, 2.6 } } },
+	{ "StaffRoom", SERVICE_WEST - 3.0, 15, 6.0, 5.0, 0, 3.1, { { "E", 0, 1.1 } } },
+	{ "SecurityOffice", SERVICE_WEST - 2.5, 9, 5.0, 4.2, 0, 3.1, { { "E", 0, 1.1 } } },
+	{ "CameraRoom", SERVICE_WEST - 2.5, 3.5, 5.0, 4.2, 0, 3.1, { { "E", 0, 1.1 } } },
+	{ "CustodialStore", SERVICE_WEST - 1.8, -2, 3.6, 3.0, 0, 3.1, { { "E", 0, 1.0 } } },
+	{ "Stockroom", SERVICE_WEST - 4.5, -9, 9.0, 7.0, 0, 3.5, { { "E", 0, 1.4 } } },
+	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 4.2, { { "E", 0, 2.6 } } },
 	-- Shop floor: east face flush with the west side of the north arm.
-	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 3.2, { { "E", 0, 3.2 } } },
+	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 4.0, { { "E", 0, 3.2 } } },
 	-- South face flush with the north side of the east arm.
-	{ "Fashion", 23, ARM_HALF + 4.5, 11.0, 9.0, 0, 3.2, { { "S", 0, 3.0 } } },
+	{ "Fashion", 23, ARM_HALF + 4.5, 11.0, 9.0, 0, 4.0, { { "S", 0, 3.0 } } },
 	-- North face flush with the south side of the east arm. The wayfinding has
 	-- pointed at these since the building went up and there was nothing behind it.
-	{ "Toilets", 17, -(ARM_HALF + 3.0), 8.0, 6.0, 0, 2.7, { { "N", 0, 2.4 } } },
+	{ "Toilets", 17, -(ARM_HALF + 3.0), 8.0, 6.0, 0, 3.3, { { "N", 0, 2.4 } } },
 	-- First floor: south face flush with the atrium's north balcony.
-	{ "FoodCourt", 0, ATRIUM_D / 2 + 5.0, 14.0, 10.0, FLOOR1, 2.9, { { "S", 0, 3.0 } } },
+	{ "FoodCourt", 0, ATRIUM_D / 2 + 5.0, 14.0, 10.0, FLOOR1, 3.6, { { "S", 0, 3.0 } } },
 	-- Basement.
-	{ "PlantRoom", SERVICE_WEST - 3.5, -6, 7.0, 5.5, -4.2, 2.4, { { "E", 0, 1.1 } } },
-	{ "ElectricalCupboard", SERVICE_WEST - 1.6, -13, 3.2, 2.6, -4.2, 2.4, { { "E", 0, 1.0 } } },
+	{ "PlantRoom", SERVICE_WEST - 3.5, -6, 7.0, 5.5, -4.6, 3.0, { { "E", 0, 1.1 } } },
+	{ "ElectricalCupboard", SERVICE_WEST - 1.6, -13, 3.2, 2.6, -4.6, 3.0, { { "E", 0, 1.0 } } },
 }
 
 --[[
@@ -853,7 +887,7 @@ local function buildAtrium()
 		P("ShutterSlat", V(5.86, 0.18, 0.03), at(0, 0.16 + k * 0.21, -d / 2 + 0.26), C.trim)
 	end
 	P("EntranceMat", V(5.0, 0.03, 1.6), at(0, 0.02, -d / 2 + 1.2), Color3.fromRGB(34, 32, 32))
-	exitSign(0, 3.1, -d / 2 + 0.5)
+	exitSign(0, 3.1, -d / 2 + 0.35, "N")
 
 	--[[
 		The soffit. Five metres over the edges, eight and a half over the middle.
@@ -914,7 +948,7 @@ local function buildAtrium()
 			at(-w / 2 + 3.1, i * (FLOOR1 / 14) + 0.5, -d / 2 + 2.0 + i * 0.34), C.metal)
 	end
 	P("StairHandrail", V(0.06, 0.06, 5.0), at(-w / 2 + 3.1, FLOOR1 / 2 + 0.95, -d / 2 + 4.3), C.trim)
-	exitSign(-w / 2 + 2.2, 2.4, -d / 2 + 1.0)
+	exitSign(-w / 2 + 2.2, 2.6, -d / 2 + 0.35, "N")
 
 	--[[
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if
@@ -1060,8 +1094,8 @@ local function firstFloorUnits()
 	run(-w / 2, -6, 6, "z", -1)
 
 	-- Two boxes up here, which is what makes the upper level navigable at all.
-	exitSign(-w / 2 + 0.6, y + 2.4, -d / 2 + 1.2)
-	exitSign(w / 2 - 0.6, y + 2.4, d / 2 - 1.2)
+	exitSign(-w / 2 + 0.3, y + 2.6, -d / 2 + 2.0, "E")
+	exitSign(w / 2 - 0.3, y + 2.6, d / 2 - 2.0, "W")
 
 	-- Hanging signage over the void, read from the floor below.
 	for _, sz in { -1, 1 } do
@@ -1445,9 +1479,10 @@ local function mallArm(axis, length, entries)
 
 	-- The dead end, with the thing that is legally required to be lit on it.
 	exitSign(
-		(axis == "N") and 0 or start + length - 0.6,
-		2.5,
-		(axis == "N") and start + length - 0.6 or 0)
+		(axis == "N") and 0 or start + length - 0.3,
+		MALL_H - 0.5,
+		(axis == "N") and start + length - 0.3 or 0,
+		if axis == "N" then "S" else "W")
 	P("FireDoor", size(0.15, 1.6, 2.1), pos(length - 0.12, 0, 1.05), C.metal)
 	P("PushBar", size(0.06, 1.4, 0.08), pos(length - 0.22, 0, 1.0), C.trim)
 
@@ -1553,7 +1588,8 @@ local function serviceCorridor()
 		t += 4.5
 	end
 	for _, at_z in { 16, 4, -8, -20 } do
-		exitSign(x + 0.75, 2.2, at_z)
+		-- On the east wall of the corridor, looking back across it.
+		exitSign(x + SERVICE_W / 2 - 0.12, h - 0.45, at_z, "W")
 	end
 	-- Ductwork and conduit overhead, which is what back of house actually looks
 	-- like and what makes it read as behind rather than in front.
@@ -1573,16 +1609,16 @@ local function serviceCorridor()
 
 	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do
-		P("Step", V(1.4, 0.16, 0.34), at(x, -i * (4.2 / 14), sz1 - 0.2 - i * 0.34), C.trim)
+		P("Step", V(1.4, 0.16, 0.34), at(x, -i * (4.6 / 14), sz1 - 0.2 - i * 0.34), C.trim)
 	end
 	-- The shaft the stair falls through, in full height.
 	for _, sx in { -1, 1 } do
-		P("Shaft", V(WALL, 4.2, sz1 - sz0), at(x + sx * SERVICE_W / 2, -2.1, (sz0 + sz1) / 2), C.block)
+		P("Shaft", V(WALL, 4.6, sz1 - sz0), at(x + sx * SERVICE_W / 2, -2.3, (sz0 + sz1) / 2), C.block)
 	end
-	P("Shaft_End", V(SERVICE_W + 0.5, 4.2, WALL), at(x, -2.1, sz0), C.block)
+	P("Shaft_End", V(SERVICE_W + 0.5, 4.6, WALL), at(x, -2.3, sz0), C.block)
 
 	-- Basement corridor. Lower, colder, and the only way to the fuse box.
-	local by, bh = -4.2, 2.4
+	local by, bh = -4.6, 3.0
 	local bz0, bz1 = sz0, 2
 	local bmid = (bz0 + bz1) / 2
 	P("Basement_Floor", V(SERVICE_W, 0.3, bz1 - bz0), at(x, by - 0.15, bmid), C.floor)
@@ -1607,7 +1643,7 @@ end
 	like it belongs: four lockers, a kettle that has boiled dry, a rota from a
 	week that has not happened yet, and a chair pulled out.
 ]]
-local function dressStaffRoom(cx, cz, y)
+local function dressStaffRoom(cx, cz, y, h, w, d)
 	for i = 0, 3 do
 		locker(cx - 2.2 + i * 0.95, y, cz + 2.2)
 	end
@@ -1672,8 +1708,8 @@ local function dressStaffRoom(cx, cz, y)
 		P("ClockCard", V(0.09, 0.22, 0.01), at(cx + 2.53 + i * 0.11, y + 1.0, cz - 1.12), Color3.fromRGB(206, 200, 182))
 	end
 
-	ceilingKit(cx, cz, 6.0, 5.0, y, 2.5, 4101)
-	bulkhead(cx, y + 2.2, cz, 5)
+	ceilingKit(cx, cz, w, d, y, h, 4101)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
@@ -1682,7 +1718,7 @@ end
 	others through the dark, and monitor three comes up, and there is no camera
 	three.
 ]]
-local function dressCameraRoom(cx, cz, y)
+local function dressCameraRoom(cx, cz, y, h, w, d)
 	desk(cx, y, cz - 1.2, 3.4, 0.9)
 	chair(cx, y, cz - 0.3)
 	P("DeskReturn", V(0.9, 0.06, 1.4), at(cx + 1.9, y + 0.74, cz - 0.6), C.wood)
@@ -1719,8 +1755,8 @@ local function dressCameraRoom(cx, cz, y)
 	P("Mug", V(0.09, 0.1, 0.09), at(cx + 0.8, y + 0.83, cz - 0.9), Color3.fromRGB(180, 176, 168))
 	P("Logbook", V(0.3, 0.04, 0.42), at(cx - 1.0, y + 0.8, cz - 0.95), Color3.fromRGB(58, 54, 74))
 
-	ceilingKit(cx, cz, 5.0, 4.2, y, 2.5, 4102)
-	bulkhead(cx, y + 2.2, cz + 0.5, 4.5)
+	ceilingKit(cx, cz, w, d, y, h, 4102)
+	bulkhead(cx, y + h - 0.3, cz + 0.5)
 end
 
 --[[
@@ -1728,7 +1764,7 @@ end
 	returned, so four of the hooks on his board are empty and his jacket is still
 	over the back of the chair.
 ]]
-local function dressSecurityOffice(cx, cz, y)
+local function dressSecurityOffice(cx, cz, y, h, w, d)
 	desk(cx, y, cz, 2.0, 0.9)
 	chair(cx, y, cz + 0.9)
 	P("Jacket", V(0.44, 0.5, 0.1), at(cx, y + 0.95, cz + 1.12), Color3.fromRGB(38, 40, 48))
@@ -1757,8 +1793,8 @@ local function dressSecurityOffice(cx, cz, y)
 	P("Kettle", V(0.2, 0.26, 0.2), at(cx + 1.8, y + 0.87, cz - 1.6), C.metal)
 	P("Fan", V(0.3, 0.3, 0.12), at(cx - 0.9, y + 1.5, cz - 1.7), C.metal)
 	litterBin(cx + 1.6, y, cz + 1.5)
-	ceilingKit(cx, cz, 5.0, 4.2, y, 2.5, 4103)
-	bulkhead(cx, y + 2.2, cz, 4.5)
+	ceilingKit(cx, cz, w, d, y, h, 4103)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
@@ -1767,7 +1803,7 @@ end
 	a player's name from between the racks, and the racks are close enough
 	together that you cannot see down more than one aisle at a time.
 ]]
-local function dressStockroom(cx, cz, y)
+local function dressStockroom(cx, cz, y, h, w, d)
 	for i = 0, 3 do
 		shelfRun(cx - 3.2 + i * 2.2, y, cz, 5.0, false)
 		-- Cartons on the racking, unevenly, with gaps.
@@ -1799,8 +1835,8 @@ local function dressStockroom(cx, cz, y)
 	deck.Name = "TapeDeck"
 	P("DeckBench", V(1.2, 0.08, 0.6), at(cx - 3.8, y + 0.85, cz + 2.6), C.wood)
 	P("DeckLed", V(0.03, 0.02, 0.02), at(cx - 3.95, y + 1.0, cz + 2.45), RED, Enum.Material.Neon)
-	ceilingKit(cx, cz, 9.0, 7.0, y, 2.9, 4104)
-	bulkhead(cx, y + 2.6, cz, 6)
+	ceilingKit(cx, cz, w, d, y, h, 4104)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
@@ -1808,7 +1844,7 @@ end
 	Nora's lane is number one. Her tape is in the drawer and on Night 5 her tag
 	goes back on the belt.
 ]]
-local function dressSupermarket(cx, cz, y)
+local function dressSupermarket(cx, cz, y, h, w, d)
 	for i = 0, 4 do
 		shelfRun(cx, y, cz - 4.0 + i * 2.0, 11.0, true)
 		-- Stock on the shelves, with holes in it.
@@ -1892,15 +1928,15 @@ local function dressSupermarket(cx, cz, y)
 	floorBorder(cx, cz, 16.0, 12.0, y, 1.2, Color3.fromRGB(70, 66, 62))
 
 	speakerGrille(cx, y + 3.05, cz)
-	ceilingKit(cx, cz, 16.0, 12.0, y, 3.2, 4105)
-	bulkhead(cx - 4, y + 2.9, cz + 2, 7)
+	ceilingKit(cx, cz, w, d, y, h, 4105)
+	bulkhead(cx - 4, y + h - 0.3, cz + 2)
 end
 
 --[[
 	Fashion. Rails, a window bay with four mannequins in it, and the mirror wall
 	that Rule 5 says is fine. Rule 5 is crossed out.
 ]]
-local function dressFashion(cx, cz, y)
+local function dressFashion(cx, cz, y, h, w, d)
 	for i = 0, 3 do
 		local rx = cx - 3.0 + i * 2.0
 		P("Rail", V(2.2, 0.07, 0.07), at(rx, y + 1.5, cz - 1.5), C.metal)
@@ -1962,15 +1998,15 @@ local function dressFashion(cx, cz, y)
 	picture(cx + 5.4, y + 2.0, cz + 3.0, "x", 8902)
 	floorBorder(cx, cz, 11.0, 9.0, y, 1.0, Color3.fromRGB(72, 68, 64))
 
-	ceilingKit(cx, cz, 11.0, 9.0, y, 3.2, 4106)
-	bulkhead(cx, y + 2.9, cz, 7)
+	ceilingKit(cx, cz, w, d, y, h, 4106)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
 	The dock. Concrete, a roller shutter to the car park, the bins, and a pump
 	truck that has been in the way since before any of this.
 ]]
-local function dressLoadingDock(cx, cz, y)
+local function dressLoadingDock(cx, cz, y, h, w, d)
 	local shutter = P("DockShutter", V(4.0, 3.0, 0.15), at(cx, y + 1.5, cz - 4.0), C.shutter)
 	for i = 0, 11 do
 		P("ShutterSlat", V(3.96, 0.2, 0.04), at(cx, y + 0.2 + i * 0.25, cz - 3.9), C.trim)
@@ -1993,14 +2029,14 @@ local function dressLoadingDock(cx, cz, y)
 	P("Extinguisher", V(0.16, 0.5, 0.16), at(cx - 4.8, y + 0.3, cz + 3.4), Color3.fromRGB(150, 44, 36))
 	P("DockEdge", V(11.0, 0.12, 0.3), at(cx, y + 0.06, cz - 3.5), Color3.fromRGB(170, 150, 60))
 
-	bulkhead(cx, y + 3.0, cz, 8)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
 	The electrical cupboard. A fuse board, a conduit run, and water on the floor
 	four and a half metres below the nearest tap. Night 1 ends here.
 ]]
-local function dressElectricalCupboard(cx, cz, y)
+local function dressElectricalCupboard(cx, cz, y, h, w, d)
 	local box = P("FuseBox", V(0.7, 0.9, 0.25), at(cx, y + 1.4, cz - 1.15), C.metal)
 	box.Name = "FuseBox"
 	P("FuseBoxDoor", V(0.66, 0.84, 0.04), at(cx, y + 1.4, cz - 1.0), C.trim)
@@ -2018,14 +2054,14 @@ local function dressElectricalCupboard(cx, cz, y)
 	water.Material = Enum.Material.Glass
 	water.CanCollide = false
 	P("FloorDrain", V(0.24, 0.02, 0.24), at(cx + 1.1, y + 0.03, cz + 0.8), C.dark)
-	bulkhead(cx, y + 2.1, cz, 3.5)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
 	The plant room. The building's lungs: an air handler, a pump set, pipework
 	and a generator that on Night 4 somebody has to start in the dark.
 ]]
-local function dressPlantRoom(cx, cz, y)
+local function dressPlantRoom(cx, cz, y, h, w, d)
 	P("AHU", V(2.6, 1.8, 1.6), at(cx - 1.4, y + 0.9, cz), C.metal)
 	P("AHUPanel", V(1.2, 0.9, 0.04), at(cx - 1.4, y + 1.1, cz - 0.82), C.trim)
 	P("Duct", V(0.9, 0.9, 5.0), at(cx - 1.4, y + 1.9, cz), C.metal)
@@ -2040,13 +2076,13 @@ local function dressPlantRoom(cx, cz, y)
 	P("Generator", V(1.6, 1.0, 0.9), at(cx + 1.6, y + 0.5, cz + 1.8), Color3.fromRGB(86, 90, 82))
 	P("GeneratorPanel", V(0.4, 0.3, 0.04), at(cx + 1.6, y + 0.8, cz + 1.3), C.panel)
 	P("PullCord", V(0.03, 0.4, 0.03), at(cx + 2.3, y + 0.9, cz + 1.4), Color3.fromRGB(150, 140, 110))
-	bulkhead(cx, y + 2.1, cz, 5)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
 	The custodial store. Where the mop is, and on Night 2 where Lo's tape is.
 ]]
-local function dressCustodial(cx, cz, y)
+local function dressCustodial(cx, cz, y, h, w, d)
 	P("MopBucket", V(0.5, 0.4, 0.4), at(cx - 0.9, y + 0.2, cz), C.trim)
 	P("MopWringer", V(0.5, 0.2, 0.2), at(cx - 0.9, y + 0.48, cz - 0.16), C.metal)
 	local handle = P("MopHandle", V(0.06, 1.4, 0.06), at(cx - 0.9, y + 1.1, cz - 0.2), C.wood)
@@ -2062,7 +2098,7 @@ local function dressCustodial(cx, cz, y)
 	end
 	P("Cart", V(0.6, 0.9, 1.0), at(cx + 1.1, y + 0.45, cz - 0.6), C.metal)
 	P("WetSign", V(0.3, 0.5, 0.3), at(cx + 1.2, y + 0.25, cz + 0.8), Color3.fromRGB(180, 96, 30))
-	bulkhead(cx, y + 2.1, cz, 3.5)
+	bulkhead(cx, y + h - 0.3, cz)
 end
 
 --[[
@@ -2082,7 +2118,7 @@ end
 	deliberate. A room the player is certain must contain something, that
 	contains nothing, is doing more work than most of the rooms that do.
 ]]
-local function dressToilets(cx, cz, y)
+local function dressToilets(cx, cz, y, h, w, d)
 	-- Cubicles down the back wall, and one of the doors is open.
 	local rng = Random.new(2201)
 	for i = 0, 3 do
@@ -2142,8 +2178,8 @@ local function dressToilets(cx, cz, y)
 	end
 	P("Dado", V(7.8, 0.12, 0.04), at(cx, y + 1.2, cz + 2.94), Color3.fromRGB(56, 66, 70))
 
-	bulkhead(cx, y + 2.4, cz)
-	bulkhead(cx - 2.4, y + 2.4, cz - 1.5)
+	bulkhead(cx, y + h - 0.3, cz)
+	bulkhead(cx - 2.4, y + h - 0.3, cz - 1.5)
 end
 
 --[[
@@ -2166,7 +2202,7 @@ local COUNTERS = {
 	{ "JACKET & CO", "Jacket Potato 2.20 · Cheese 0.40 · Beans 0.40" },
 }
 
-local function dressFoodCourt(cx, cz, y)
+local function dressFoodCourt(cx, cz, y, h, w, d)
 	local rng = Random.new(7001)
 
 	-- Six tables, and the chairs around them are not all the same colour.
@@ -2234,10 +2270,10 @@ local function dressFoodCourt(cx, cz, y)
 	floorBorder(cx, cz, 14.0, 10.0, y, 1.4, Color3.fromRGB(68, 64, 60))
 
 	speakerGrille(cx, y + 2.75, cz)
-	ceilingKit(cx, cz, 14.0, 10.0, y, 2.9, 4107)
-	bulkhead(cx, y + 2.6, cz)
-	bulkhead(cx - 4, y + 2.6, cz + 2)
-	bulkhead(cx + 4, y + 2.6, cz + 2)
+	ceilingKit(cx, cz, w, d, y, h, 4107)
+	bulkhead(cx, y + h - 0.3, cz)
+	bulkhead(cx - 4, y + h - 0.3, cz + 2)
+	bulkhead(cx + 4, y + h - 0.3, cz + 2)
 end
 
 local DRESS = {
@@ -2395,7 +2431,7 @@ local function buildExterior()
 	-- at ten and, five nights later, how you get out.
 	local door = P("StaffDoor", V(1.2, 2.1, 0.15), at(-31, 1.05, -22), C.metal)
 	door.Name = "StaffDoor"
-	exitSign(-31, 2.5, -22.3)
+	exitSign(-31, 2.5, -22.25, "S")
 
 	for i = 0, 3 do
 		P("Bay", V(0.12, 0.02, 5.0), at(-40 + i * 3.0, 0.02, -35), Color3.fromRGB(120, 118, 110))
@@ -2465,10 +2501,18 @@ local function applyLighting()
 		a staff room without the torch, the lighting is too low; if you can read
 		a rota off the wall without it, it is too high.
 	]]
-	Lighting.Ambient = Color3.fromRGB(7, 7, 9)
-	Lighting.OutdoorAmbient = Color3.fromRGB(14, 16, 22)
-	Lighting.Brightness = 0.45
-	Lighting.ExposureCompensation = 0.15
+	--[[
+		The red was clipping. Twenty-odd EXIT boxes at range twenty-two metres
+		meant every surface in sight of one saturated to flat red, which reads as
+		a colour wash rather than as light and made a fully dressed building look
+		like a diagram again. The boxes are much dimmer and much shorter-ranged
+		now; this raises the floor slightly so what they do not reach is dim grey
+		rather than pure black.
+	]]
+	Lighting.Ambient = Color3.fromRGB(11, 11, 14)
+	Lighting.OutdoorAmbient = Color3.fromRGB(18, 20, 28)
+	Lighting.Brightness = 0.6
+	Lighting.ExposureCompensation = 0.1
 	-- Enough environment light for Marble and Metal to have a sheen. These two
 	-- numbers are what make a PBR material read as PBR rather than as paint.
 	Lighting.EnvironmentDiffuseScale = 0.3
@@ -2501,9 +2545,9 @@ local function applyLighting()
 	-- A threshold below the exposure turns the whole frame to soup.
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "NightBloom"
-	bloom.Intensity = 0.55
-	bloom.Size = 20
-	bloom.Threshold = 1.75
+	bloom.Intensity = 0.32
+	bloom.Size = 16
+	bloom.Threshold = 2.1
 	bloom.Parent = Lighting
 
 	--[[
@@ -2514,11 +2558,15 @@ local function applyLighting()
 	]]
 	local grade = Instance.new("ColorCorrectionEffect")
 	grade.Name = "NightColour"
-	grade.Saturation = -0.1
-	-- Contrast was doing the job brightness should have been doing: crushing
-	-- everything below the red fittings into a single flat black.
-	grade.Contrast = 0.18
-	grade.Brightness = 0.02
+	--[[
+		Saturation well down. A building lit by a single hue clips that hue
+		first, and a clipped channel has no detail in it at all — which is why
+		every red wall in the last build looked like painted card. Taking the
+		saturation out gives the red somewhere to go before it flattens.
+	]]
+	grade.Saturation = -0.34
+	grade.Contrast = 0.12
+	grade.Brightness = 0.01
 	grade.TintColor = Color3.fromRGB(238, 238, 248)
 	grade.Parent = Lighting
 
@@ -2580,6 +2628,20 @@ end
 
 local Greybox = {}
 
+--[[
+	The plan, exposed. tools/check_geometry.py reads this to work out which
+	volume every prop is supposed to be inside — parsing it back out of the
+	source worked until a room's position was written as an expression, and a
+	checker that silently stops covering a room is worse than no checker.
+]]
+Greybox.ROOMS = ROOMS
+Greybox.SIZES = {
+	ATRIUM_W = ATRIUM_W, ATRIUM_D = ATRIUM_D, ATRIUM_H = ATRIUM_H,
+	MALL_W = MALL_W, MALL_H = MALL_H,
+	SERVICE_W = SERVICE_W, SERVICE_H = SERVICE_H, SERVICE_X = SERVICE_X,
+	FLOOR1 = FLOOR1,
+}
+
 function Greybox.clear()
 	local old = Workspace:FindFirstChild("Mall")
 	if old then old:Destroy() end
@@ -2632,7 +2694,7 @@ function Greybox.build()
 		room(name, cx, cz, w, d, y, h, doors)
 		local dress = DRESS[name]
 		if dress then
-			dress(cx, cz, y)
+			dress(cx, cz, y, h, w, d)
 		end
 
 		--[[
@@ -2644,17 +2706,17 @@ function Greybox.build()
 		]]
 		for _, door in doors do
 			local side, offset = door[1], door[2]
-			local ox, oz = cx, cz
+			local ox, oz, facing = cx, cz, "S"
 			if side == "E" then
-				ox, oz = cx + w / 2 + 0.45, cz + offset
+				ox, oz, facing = cx + w / 2 + 0.2, cz + offset, "W"
 			elseif side == "W" then
-				ox, oz = cx - w / 2 - 0.45, cz + offset
+				ox, oz, facing = cx - w / 2 - 0.2, cz + offset, "E"
 			elseif side == "N" then
-				ox, oz = cx + offset, cz + d / 2 + 0.45
+				ox, oz, facing = cx + offset, cz + d / 2 + 0.2, "S"
 			else
-				ox, oz = cx + offset, cz - d / 2 - 0.45
+				ox, oz, facing = cx + offset, cz - d / 2 - 0.2, "N"
 			end
-			exitSign(ox, y + math.min(2.35, h - 0.25), oz)
+			exitSign(ox, y + math.min(2.5, h - 0.35), oz, facing)
 		end
 	end
 

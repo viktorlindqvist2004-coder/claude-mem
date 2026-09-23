@@ -654,6 +654,58 @@ end)
 
 -- ── State ───────────────────────────────────────────────────────────────────
 
+--[[
+	The current job, big, under the clock.
+
+	The task list on the left is a list, and a list is something you read when
+	you already know what you are doing. A player who has just walked into a dark
+	building needs one line telling them the next thing, in the present tense,
+	where their eye already is. Everything else on the board is context.
+]]
+local nowLabel = label(gui, "", UDim2.new(0, 460, 0, 26), UDim2.new(1, -480, 0, 80))
+nowLabel.TextXAlignment = Enum.TextXAlignment.Right
+nowLabel.TextColor3 = Color3.fromRGB(198, 192, 184)
+nowLabel.TextSize = 19
+
+local whereLabel = label(gui, "", UDim2.new(0, 460, 0, 20), UDim2.new(1, -480, 0, 104))
+whereLabel.TextXAlignment = Enum.TextXAlignment.Right
+whereLabel.TextColor3 = Color3.fromRGB(122, 116, 110)
+whereLabel.TextSize = 14
+
+-- Where each job is, said the way a colleague would say it.
+local WHERE = {
+	clock_in = "staff room · the machine by the lockers",
+	read_rules = "staff room · taped inside the end locker",
+	face_shelves = "supermarket · off the north arm",
+	mop_landing = "custodial store, then the atrium stair",
+	pull_shutters = "both arms · before 02:00",
+	bins_to_dock = "the loading dock, south end of the corridor",
+	change_fuse = "basement · down the service stair, cupboard on the left",
+	find_out = "basement · beside the fuse box",
+	clock_out = "the staff door, past the loading dock",
+	dress_window = "fashion · the window bay",
+	count_stock = "fashion and the stockroom",
+	find_tape = "custodial store · the cart",
+	put_them_back = "fashion · the window bay",
+	the_collar = "fashion · the red collar",
+	serve = "supermarket · lane one",
+	tape_three = "security office · the key board",
+	the_complaint = "security office · the filing cabinet",
+	the_man = "supermarket · the back of the queue",
+	the_paper = "decide before you leave",
+	generator = "plant room · basement",
+	monitors = "camera room · the rack",
+	walts_office = "security office · the open drawer",
+	the_stair = "behind the food court",
+	the_office = "top of the stair",
+	the_rota = "floor 3 · the office wall",
+	kill_lights = "basement, food court, back of house",
+	tags_back = "one room each · you know where",
+	the_panel = "the atrium · the clock",
+	the_relay = "plant room · hold the panel",
+	name_him = "security office · the board",
+}
+
 local NIGHT_TITLES = { "First Shift", "The Mannequins", "Night Customers", "Blackout", "Closing" }
 
 remotes.Sync.OnClientEvent:Connect(function(state)
@@ -663,6 +715,27 @@ remotes.Sync.OnClientEvent:Connect(function(state)
 	clockText.TextColor3 = if state.power == false then Color3.fromRGB(70, 16, 14) else RED
 	renderObjectives(state.objectives or {})
 	walkie.Text = if state.question then `[ Q ]  {state.question}` else ""
+
+	--[[
+		The next unfinished job, in the present tense, and where it is. The list
+		stays on the left for anybody who wants it; this is the line that stops
+		a player standing in a corridor wondering what the game wants.
+	]]
+	local next_ = nil
+	for _, o in state.objectives or {} do
+		if not o.complete and not o.failed then
+			next_ = o
+			break
+		end
+	end
+	if next_ then
+		local count = if next_.total > 1 then `  ({next_.done}/{next_.total})` else ""
+		nowLabel.Text = `{next_.label}{count}`
+		whereLabel.Text = next_.note or WHERE[next_.id] or ""
+	else
+		nowLabel.Text = ""
+		whereLabel.Text = ""
+	end
 
 	local night = state.night or 1
 	local header = `NIGHT {night} — {NIGHT_TITLES[night] or ""}`
@@ -879,9 +952,13 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 end)
 
--- The mall's own darkness does the work; this only stops the sky washing the
--- glazing out on the brightest quality settings.
-Lighting.ExposureCompensation = -0.15
+-- Belt and braces on the camera: the server sets it, and a character that
+-- reloads mid-night must not come back in third person.
+player.CameraMode = Enum.CameraMode.LockFirstPerson
+player.CameraMaxZoomDistance = 0.5
+player.CharacterAdded:Connect(function()
+	player.CameraMode = Enum.CameraMode.LockFirstPerson
+end)
 
 --[[
 	The version, on screen, for ten seconds. Bottom right, small, and gone before

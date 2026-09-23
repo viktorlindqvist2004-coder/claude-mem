@@ -83,7 +83,7 @@ lands exactly on the frame the game plays it.
 | `FUSE` | [the fuse board clunks] | `switch3.wav` | 0.8 |
 | `MOP` | [water] | `impact_water.mp3` | 0.45 |
 | `MUZAK_TRACK_CHANGE` | [the tape changes track, early] | `snap.mp3` | 0.35 |
-| `PAPER` | [paper] | `swoosh.mp3` | 0.35 |
+| `PAPER` | [paper] | `clickfast.wav` | 0.3 |
 | `PA_CHIME` | [PA chime] | `electronicpingshort.wav` | 0.5 |
 | `PA_CLICK` | [the PA clicks on] | `switch.wav` | 0.28 |
 | `POWER_BACK` | [every light comes on at once] | `unsheath.mp3` | 0.7 |
@@ -102,6 +102,8 @@ lands exactly on the frame the game plays it.
 **DISTANT_FALL** — Something falling over, two rooms away, for no reason.
 
 **DRIP** — The tap in the toilets. It has been dripping since 1998 into a basin nobody is going to turn off, and it is the second landmark sound in the building: Rule 10 is about hearing the fountain, and this is the one that tells you you are in the east arm without looking.
+
+**PAPER** — swoosh.mp3 is not servable — "Asset is not approved for the requester". The tick is the one sound confirmed working in-engine, so paper borrows it until there is a real recording.
 
 **PA_CHIME** — The two-tone chime before every announcement. Station, not shopping centre.
 

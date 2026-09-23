@@ -2692,16 +2692,24 @@ local function dressStaffRoom(cx, cz, y, h, w, d)
 	end
 
 	-- ── What is left: the table ─────────────────────────────────────────────
-	local tx, tz = cx - 0.6, cz - 0.2
-	desk(tx, y, tz, 1.7, 0.85)
-	chair(tx - 0.55, y, tz + 0.75, 180)
-	chair(tx + 0.55, y, tz + 0.75, 194)
-	chair(tx + 0.55, y, tz - 0.75, 6)
+	--[[
+		Smaller, and pushed off centre.
+
+		A 1.7 m table with four chairs round it in a six-by-five room left only
+		a third of the floor standable, and a staff room you have to edge round
+		is a staff room nobody could have worked in. It is 1.4 m now with three
+		chairs and it sits towards the kitchen end, which leaves a clear run
+		from the door to the lockers -- the route everybody actually walks.
+	]]
+	local tx, tz = cx - 1.1, cz - 0.6
+	desk(tx, y, tz, 1.4, 0.8)
+	chair(tx - 0.5, y, tz + 0.72, 180)
+	chair(tx + 0.5, y, tz + 0.72, 194)
 	-- One pushed back and turned, as though somebody stood up in a hurry.
-	chair(tx - 0.95, y, tz - 1.15, 38)
+	chair(tx - 0.85, y, tz - 1.0, 38)
 
 	-- On the table: an ashtray, a mug ring, and last week's paper.
-	P("Ashtray", V(0.16, 0.03, 0.16), at(tx + 0.3, y + 0.79, tz - 0.1), Color3.fromRGB(150, 146, 138))
+	P("Ashtray", V(0.16, 0.03, 0.16), at(tx + 0.25, y + 0.79, tz - 0.1), Color3.fromRGB(150, 146, 138))
 	P("Newspaper", V(0.34, 0.01, 0.26), at(tx - 0.35, y + 0.78, tz + 0.05), Color3.fromRGB(176, 170, 152))
 	P("Mug", V(0.08, 0.09, 0.08), at(tx - 0.1, y + 0.82, tz - 0.22), Color3.fromRGB(180, 176, 168))
 
@@ -2928,11 +2936,20 @@ local function dressSupermarket(cx, cz, y, h, w, d)
 		is laid out so you cannot see across it: solid backs, and you walk
 		each aisle one at a time.
 	]]
-	for i = 0, 4 do
-		gondola(cx, y, cz - 4.0 + i * 2.0, 11.0, true, 5100 + i)
-		local aisle = P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.0 + i * 2.0), C.trim)
+	--[[
+		Four runs at 2.7 m, not five at 2.0.
+
+		A gondola is a metre deep over both sides, so runs two metres apart
+		left aisles a metre wide -- and a metre, once you take off the body
+		that has to walk down it, is not an aisle, it is a gap. Only a quarter
+		of this room could be stood in. A supermarket aisle is around 1.8 m and
+		these are 1.7, which is the difference between a shop floor and a maze.
+	]]
+	for i = 0, 3 do
+		gondola(cx, y, cz - 4.05 + i * 2.7, 11.0, true, 5100 + i)
+		local aisle = P("AisleSign", V(1.0, 0.3, 0.04), at(cx - 5.4, y + 2.3, cz - 4.05 + i * 2.7), C.trim)
 		printed(aisle, Enum.NormalId.Left,
-			({ "1  TINNED", "2  BAKING", "3  HOUSEHOLD", "4  FROZEN", "5  DRINKS" })[i + 1] or "",
+			({ "1  TINNED", "2  BAKING", "3  HOUSEHOLD", "4  FROZEN" })[i + 1] or "",
 			{ color = Color3.fromRGB(198, 196, 190), density = 70 })
 	end
 

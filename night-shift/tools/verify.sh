@@ -63,6 +63,9 @@ python3 tools/check_clearance.py | sed 's/^/  /' || fail=1
 echo "== support =="
 python3 tools/check_floating.py | sed 's/^/  /' || fail=1
 
+echo "== walkable =="
+python3 tools/check_walkable.py | sed 's/^/  /' || fail=1
+
 echo "== z-fighting =="
 python3 tools/check_zfight.py | sed 's/^/  /' || true
 

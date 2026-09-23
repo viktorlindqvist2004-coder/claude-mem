@@ -1,93 +1,115 @@
-# Opening it
+# Getting in, and staying in
 
-> The shortest route from "I have nothing" to "I am standing in the mall".
-> No plugin, no Terminal window left running, nothing to approve.
-
----
-
-## The one-file route
-
-**`NightShift.rbxlx` in the project root is the whole game as a single Roblox
-place file.** Studio opens it like any other file.
-
-1. Download it: on GitHub, open `night-shift/NightShift.rbxlx`, click **Download
-   raw file**. (Or `git pull` if you already have the project.)
-2. Open Roblox Studio.
-3. **File** → **Open from File…** → pick `NightShift.rbxlx`.
-4. Press the blue **▶ Play** button, or **F5**.
-
-That is it. The server builds the mall, Night 1 starts, and you are in the staff
-room.
-
-**What you give up:** it is a snapshot. If a source file changes afterwards, the
-place does not — you download the new `.rbxlx`, or you set up the live route
-below. Anything *you* change inside Studio stays in your copy and is yours.
-
-To rebuild it yourself after editing sources: `tools/build_place.sh`.
+> One place file, open the whole time, that updates itself when something is
+> pushed. Set up once; after that you never touch it again.
 
 ---
 
-## The live route, if you want edits to appear as they happen
+## Why the Workspace looks empty
 
-This is the one with the plugin. It is worth it if you are going to be changing
-things; it is not worth it to play once.
+Open the project in Studio and the viewport is grey and blank. **That is
+correct.** The mall does not exist as saved geometry — it is built by
+`ServerStorage.Greybox` when the game starts, 2080 parts in about a second.
 
-### Where the Rojo button actually is
+- **Press Play** and it appears.
+- To see it *without* playing, paste this into the command bar once:
 
-It is **not** its own tab. It is in the **PLUGINS** tab.
+  ```lua
+  local c=game.ServerStorage.Greybox:Clone() c.Parent=workspace require(c).build() c:Destroy()
+  ```
 
-1. Along the top of Studio is a row of tabs: `HOME` `MODEL` `AVATAR` `TEST`
-   `VIEW` `PLUGINS`.
-2. Click **PLUGINS**.
-3. The ribbon underneath fills with the icons of every plugin you have. **Rojo**
-   is one of them.
-4. Click it. A small panel opens on the right with a **Connect** button.
+  (The command bar is the one-line box at the bottom of Studio. If it is not
+  there: **VIEW** → **Command Bar**.)
 
-**If Rojo is not in that ribbon, the plugin is not installed:**
+The clone matters. `require()` caches a module for the whole Studio session, so
+after a sync a plain `require` runs the old version out of memory with no error
+to explain why.
 
-- **VIEW** tab → **Toolbox** → the dropdown at the top of the Toolbox panel →
-  **Plugins** → search `Rojo` → the one by **rojo-rbx** → **Install**.
-- Restart Studio. It will now be in **PLUGINS**.
+Building it as saved geometry instead would mean a 60 MB place file that goes
+stale every time a wall moves, and it would have to be re-downloaded. This way
+the building is a hundred lines of Luau that arrive in a second.
 
-### The rest of it
+---
 
-In Terminal, with the project downloaded:
+## The live setup
+
+**One command, once. Then leave it running.**
 
 ```bash
 cd ~/Documents/claude-mem/night-shift
-rojo serve
+./tools/live.sh
 ```
 
-Leave that window open — closing it disconnects Studio. Then **PLUGINS** → Rojo
-→ **Connect**.
+Or double-click **`Start Night Shift.command`** in that folder — macOS opens it
+in Terminal for you.
 
-The first time, Studio asks to allow **script injection**. Say yes. Without it
-Rojo connects and then immediately fails with
-`Plugin "Rojo 7" was denied script injection permission.`
+Two things happen in that window:
+
+- it pulls this branch every five seconds, so anything pushed is on your disk
+  without you typing anything
+- it runs `rojo serve`, so anything on your disk is in Studio a second later
+
+When something lands it prints the commit message, so you can see what changed.
+
+Then, in Studio, once:
+
+1. **PLUGINS** tab → the **Rojo** icon → **Connect**
+2. Say yes when Studio asks about **script injection**. Without it Rojo connects
+   and immediately drops with `Plugin "Rojo 7" was denied script injection
+   permission.`
+
+That is the whole setup. From then on: somebody pushes, and about five seconds
+later it is in your open session.
+
+### After a change lands
+
+| what changed | what you do |
+| --- | --- |
+| A script — dialogue, timing, a rule, the HUD | **Nothing.** It is already in. Press Play, or it applies on the next one. |
+| The building — a room, a prop, a light | **F9 → Rebuild the mall**, or just press Play again. |
+
+### If Connect fails
+
+- **"Version mismatch" or it refuses outright** — your plugin is older than the
+  command-line Rojo. **VIEW** → **Toolbox** → the dropdown at the top →
+  **Plugins** → **Rojo** → **Update**.
+- **"denied script injection permission"** — Studio asked and got a no. **FILE**
+  → **Studio Settings** → **Security** → *Allow Studio To Access Scripts*, or
+  disconnect and reconnect and say yes this time.
+- **Nothing in the PLUGINS ribbon at all** — the plugin is not installed.
+  Toolbox → Plugins → search `Rojo` → the one by **rojo-rbx** → Install →
+  restart Studio.
 
 ---
 
-## Which one should you use
+## The snapshot route
 
-| | one file | live |
-| --- | --- | --- |
-| Just play it | ✅ | |
-| Look around, change things in Studio | ✅ | |
-| Pull down changes as they are made | | ✅ |
-| Needs Terminal open while you play | no | yes |
-| Needs the plugin | no | yes |
+`NightShift.rbxlx` in the project root is the entire game baked into one file:
+**File** → **Open from File…** → press Play. No plugin, no Terminal, nothing to
+approve.
+
+It is there for when you want to hand the game to somebody, or look at it on a
+machine with none of this set up. It is **a snapshot** — it does not update, and
+a change pushed after it was built is not in it. `tools/build_place.sh` makes a
+fresh one.
+
+For working on the game, use the live setup. For showing it to somebody, send
+them the file.
 
 ---
 
-## If something is wrong when you press Play
+## Making it a real server
 
-- **You fall through the world, or you are inside a stone column.** The mall did
-  not build. Check the Output window (**VIEW** → **Output**) for a line starting
-  `[Northlight Galleria]`. If it is not there, `ServerStorage.Greybox` is
-  missing from the place.
-- **It is pitch black and you cannot see anything at all.** That is correct.
-  Press **F** for the torch.
-- **Nothing happens and there are no prompts.** You have not clocked in. The
-  time clock is on the wall of the staff room, where you start. Walk up to it
-  and press **E**.
-- **You want to skip to a particular beat.** Press **F9**.
+Everything above is Studio on your own machine. To get a place other people can
+join:
+
+1. **FILE** → **Publish to Roblox As…** → make a new place, or pick an existing
+   one.
+2. After that, **FILE** → **Publish to Roblox** (⌘P) pushes the current state to
+   it, and that is the one command you run when you want other people to see
+   what changed.
+
+The live setup still works exactly the same — it feeds Studio, and you publish
+from Studio when you are ready. Nothing auto-publishes, which is deliberate: a
+half-finished change reaching players because a file saved is not a thing that
+should be able to happen.

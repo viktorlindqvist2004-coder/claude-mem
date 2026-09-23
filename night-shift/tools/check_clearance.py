@@ -37,6 +37,9 @@ STRUCTURE = (
     # curtain that comes down in it are the doorway, not something left in it.
     "Shutter", "ShopReveal", "ShopThreshold", "Mullion", "WindowSill",
     "Flyposting", "Glass",
+    # A fire door and its ironmongery: the leaf, the frame, the push bar and
+    # the plate on it all live in the opening, because they are the door.
+    "ExitDoor", "PushBar", "PushBarMount", "ExitPlate",
 )
 
 dump = """

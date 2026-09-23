@@ -377,28 +377,19 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 			end
 		end
 		--[[
-			And the box over it.
+			No box over this one.
 
-			Every doorway in the building gets one, built here rather than
-			placed by hand, because "over the doors" is a property of a
-			doorway and not a decoration somebody remembers to add. It looks
-			into the room the wall belongs to -- a sign on the north wall
-			looks south -- and it sits just under the door head.
+			Every doorway in the building had one for a while, on the argument
+			that where the light is is where the route out is. That is what an
+			emergency circuit does in a building the size of an airport; in a
+			shopping centre it means a red box over a stockroom door, a
+			cupboard door and the gents, none of which lead anywhere, and the
+			word EXIT stops meaning anything by the fourth time you read it
+			over something that is not one.
 
-			These are the only lights left once the tubes go, and they do not
-			go out. From the far end of a corridor a line of red rectangles is
-			the plan of the building drawn in the dark.
+			They go over the ways out of the building and nowhere else -- which
+			in this building is four green doors. See emergencyExit.
 		]]
-		local centre = (g[1] + g[2]) / 2
-		local into = ({ N = "S", S = "N", E = "W", W = "E" })[side]
-		if into and h > 2.9 then
-			if axis == "x" then
-				exitSign(centre, y + doorH + 0.28, fixed, into)
-			else
-				exitSign(fixed, y + doorH + 0.28, centre, into)
-			end
-		end
-
 		cursor = math.max(cursor, g[2])
 	end
 	wallRun(fixed, cursor, to, axis, y, h, colour)
@@ -1271,7 +1262,6 @@ local function buildAtrium()
 		P("ShutterSlat", V(5.86, 0.18, 0.03), at(0, 0.16 + k * 0.21, -d / 2 + 0.26), C.trim)
 	end
 	P("EntranceMat", V(5.0, 0.03, 1.6), at(0, 0.02, -d / 2 + 1.2), Color3.fromRGB(34, 32, 32))
-	exitSign(0, 3.1, -d / 2 + 0.35, "N")
 
 	--[[
 		The soffit. Five metres over the edges, eight and a half over the middle.
@@ -1332,7 +1322,6 @@ local function buildAtrium()
 			at(-w / 2 + 3.1, i * (FLOOR1 / 14) + 0.5, -d / 2 + 2.0 + i * 0.34), C.metal)
 	end
 	P("StairHandrail", V(0.06, 0.06, 5.0), at(-w / 2 + 3.1, FLOOR1 / 2 + 0.95, -d / 2 + 4.3), C.trim)
-	exitSign(-w / 2 + 2.2, 2.6, -d / 2 + 0.35, "N")
 
 	--[[
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if
@@ -1479,9 +1468,8 @@ local function firstFloorUnits()
 	run(w / 2, -6, 6, "z", 1)
 	run(-w / 2, -6, 6, "z", -1)
 
-	-- Two boxes up here, which is what makes the upper level navigable at all.
-	exitSign(-w / 2 + 0.3, y + 2.6, -d / 2 + 2.0, "E")
-	exitSign(w / 2 - 0.3, y + 2.6, d / 2 - 2.0, "W")
+	-- No boxes up here: there is no way out of the building from this floor,
+	-- and a red box over a shopfront is a lie about where the door is.
 
 	-- Hanging signage over the void, read from the floor below.
 	for _, sz in { -1, 1 } do
@@ -2036,10 +2024,6 @@ local function serviceCorridor()
 	while t < z1 do
 		bulkhead(x, h - 0.25, t)
 		t += 4.5
-	end
-	for _, at_z in { 16, 4, -8, -20 } do
-		-- On the east wall of the corridor, looking back across it.
-		exitSign(x + SERVICE_W / 2 - 0.12, h - 0.45, at_z, "W")
 	end
 	-- Ductwork and conduit overhead, which is what back of house actually looks
 	-- like and what makes it read as behind rather than in front.
@@ -3342,10 +3326,15 @@ local function buildExterior()
 	]]
 	local dockX, dockZ = SERVICE_WEST - 5.5, -22
 	P("Yard", V(26, 0.3, 16), at(dockX, -0.16, dockZ - 8), Color3.fromRGB(46, 46, 48))
-	local door = P("StaffDoor", V(1.2, 2.2, 0.15), at(dockX - 2.5, 1.1, dockZ), C.metal)
+	--[[
+		The staff door. Green, with a push bar and a box over it, like the
+		other three ways out -- it is the one the crew come in through at ten
+		and, on the fifth night, go out through, so it is the most important
+		door in the building and it used to be a grey rectangle.
+	]]
+	emergencyExit(dockX - 2.5, 0, dockZ, "S")
+	local door = P("StaffDoor", V(0.3, 0.3, 0.06), at(dockX - 2.5, 1.02, dockZ - 0.12), EXIT_GREEN)
 	door.Name = "StaffDoor"
-	P("StaffDoorFrame", V(1.5, 2.4, 0.2), at(dockX - 2.5, 1.2, dockZ - 0.03), C.trim)
-	exitSign(dockX - 2.5, 2.8, dockZ - 0.3, "S")
 
 	-- The ramp up to the dock, the bollards, and the bin store.
 	P("DockRamp", V(5.0, 0.6, 4.0), at(dockX + 2.5, 0.3, dockZ - 2.4), Color3.fromRGB(52, 52, 54))
@@ -3636,28 +3625,21 @@ function Greybox.build()
 			dress(cx, cz, y, h, w, d)
 		end
 
-		--[[
-			An EXIT box over every doorway. These are the entire lighting rig
-			now, so where they go is where you can see, and where you can see is
-			the route out — which is exactly the arrangement a real emergency
-			circuit is designed to produce. Getting lost in this building means
-			walking away from the only light in it.
-		]]
-		for _, door in doors do
-			local side, offset = door[1], door[2]
-			local ox, oz, facing = cx, cz, "S"
-			if side == "E" then
-				ox, oz, facing = cx + w / 2 + 0.2, cz + offset, "W"
-			elseif side == "W" then
-				ox, oz, facing = cx - w / 2 - 0.2, cz + offset, "E"
-			elseif side == "N" then
-				ox, oz, facing = cx + offset, cz + d / 2 + 0.2, "S"
-			else
-				ox, oz, facing = cx + offset, cz - d / 2 - 0.2, "N"
-			end
-			exitSign(ox, y + math.min(2.5, h - 0.35), oz, facing)
-		end
 	end
+
+	--[[
+		Nothing over the room doors.
+
+		Every doorway in the building carried a box for a while, on the
+		argument that where the light is is where the route out is. A
+		stockroom door, a cupboard door and the gents are not routes out, and
+		labelling them EXIT in red is how the word stops meaning anything by
+		the fourth time you read it over something that is not one.
+
+		The ways out of this building are four green doors -- both arm dead
+		ends, the north end of the service corridor and the staff door onto
+		the yard -- and they carry the only boxes in it.
+	]]
 
 	-- You start the shift in the staff room, because that is where you clock in.
 	local spawn = Instance.new("SpawnLocation")

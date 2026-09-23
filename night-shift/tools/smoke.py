@@ -22,6 +22,7 @@ os.chdir(ROOT)
 LUAU = os.path.join(os.environ.get("LUAU_DIR", "/tmp"), "luau")
 
 ORDER = [
+    ("Build", "src/shared/Build.luau"),
     ("Types", "src/shared/Types.luau"),
     ("Config", "src/shared/Config.luau"),
     ("Signal", "src/shared/Signal.luau"),

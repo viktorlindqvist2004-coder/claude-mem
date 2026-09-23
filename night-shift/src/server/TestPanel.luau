@@ -233,6 +233,11 @@ end
 
 -- ── Audio ───────────────────────────────────────────────────────────────────
 
+command("Build", "version", "Which build is this", function()
+	local Build = require(Shared.Build)
+	Hud.effect("hint", `{Build.line()} — {Build.SUMMARY}`)
+end)
+
 command("Audio", "voiceReport", "How much voice is recorded", function()
 	local total = 0
 	for _, group in { NightScript.NIGHT1, NightScript.NIGHT2, NightScript.NIGHT3, NightScript.NIGHT4, NightScript.NIGHT5, NightScript.ENDING } do

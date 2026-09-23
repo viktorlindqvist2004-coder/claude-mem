@@ -19,6 +19,8 @@ COMPILE="${LUAU_DIR}/luau-compile"
 ANALYZE="${LUAU_DIR}/luau-analyze"
 fail=0
 
+python3 tools/stamp.py | sed 's/^/== stamp == /'
+
 echo "== compile =="
 for f in $(find src -name '*.luau' | sort); do
   if ! out=$("$COMPILE" --binary "$f" 2>&1 >/dev/null) || [ -n "$out" ]; then

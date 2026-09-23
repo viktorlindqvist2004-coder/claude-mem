@@ -21,6 +21,7 @@ local UserInputService = game:GetService("UserInputService")
 local SoundService = game:GetService("SoundService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Build = require(Shared.Build)
 local Net = require(Shared.Net)
 local SoundBank = require(Shared.SoundBank)
 local VoiceBank = require(Shared.VoiceBank)
@@ -800,6 +801,19 @@ end)
 -- The mall's own darkness does the work; this only stops the sky washing the
 -- glazing out on the brightest quality settings.
 Lighting.ExposureCompensation = -0.15
+
+--[[
+	The version, on screen, for ten seconds. Bottom right, small, and gone before
+	the first line of dialogue — long enough to answer "is this the build that
+	was just pushed?" and short enough never to be part of the game.
+]]
+local stamp = label(gui, Build.line(), UDim2.new(0, 320, 0, 16), UDim2.new(1, -336, 1, -26))
+stamp.TextXAlignment = Enum.TextXAlignment.Right
+stamp.TextColor3 = Color3.fromRGB(86, 82, 78)
+stamp.TextSize = 12
+task.delay(10, function()
+	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
+end)
 
 showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

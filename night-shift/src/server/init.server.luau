@@ -212,4 +212,14 @@ end
 -- take an hour to reach. Studio, or the place owner. See TestPanel.luau.
 require(script.TestPanel)
 
+--[[
+	The build stamp, loud, first thing. If this does not match what was just
+	pushed then the sync is the problem and nothing else is worth looking at.
+]]
+local Build = require(Shared.Build)
+print(`[Night Shift] {Build.line()}`)
+print(`[Night Shift] {Build.SUMMARY}`)
+if Build.DIRTY then
+	print("[Night Shift] (built from a working tree with uncommitted changes)")
+end
 print("[Night Shift] server up — Northlight Galleria, five nights")

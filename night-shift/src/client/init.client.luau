@@ -1149,11 +1149,24 @@ end)
 	the first line of dialogue — long enough to answer "is this the build that
 	was just pushed?" and short enough never to be part of the game.
 ]]
-local stamp = label(gui, Build.line(), UDim2.new(0, 320, 0, 16), UDim2.new(1, -336, 1, -26))
-stamp.TextXAlignment = Enum.TextXAlignment.Right
-stamp.TextColor3 = Color3.fromRGB(86, 82, 78)
-stamp.TextSize = 12
-task.delay(10, function()
+--[[
+	Big, red, and across the top.
+
+	This was twelve-point grey in the bottom right corner, which is invisible
+	in a dark room and sits exactly where Studio puts its Explorer panel. It
+	has now cost several rounds of "I changed that" / "it is unchanged" where
+	the answer both times was that the build on screen was three pushes old,
+	and neither of us could see which one it was.
+
+	A version number nobody can read is not a version number. Eight seconds,
+	at the top, in a colour that survives a screenshot.
+]]
+local stamp = label(gui, Build.line(), UDim2.new(1, -40, 0, 30), UDim2.new(0, 20, 0, 92))
+stamp.TextXAlignment = Enum.TextXAlignment.Center
+stamp.TextColor3 = Color3.fromRGB(255, 92, 78)
+stamp.TextSize = 22
+stamp.Font = Enum.Font.Code
+task.delay(8, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 

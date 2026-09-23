@@ -49,12 +49,31 @@ echo
 				echo
 			fi
 			last="$head"
+			# Say which build this is every time it moves, so the number in
+			# the terminal and the number on screen can be compared.
+			if [ -f src/shared/Build.luau ]; then
+				grep -o 'Build.COMMIT = "[a-z0-9]*"' src/shared/Build.luau | head -1 | sed 's/^/  /'
+			fi
 		fi
 		case "$out" in
-			*"Not possible to fast-forward"*|*"local changes"*|*"would be overwritten"*)
-				echo "  !! cannot pull: you have local edits to project files." >&2
-				echo "     Keep them:   git stash" >&2
-				echo "     Drop them:   git checkout -- ." >&2
+			*"Not possible to fast-forward"*|*"local changes"*|*"would be overwritten"*|*"error:"*|*"fatal:"*)
+				#[[
+				#  Loud, and every time.
+				#
+				#  This used to print once and then sit quietly failing, which
+				#  is how an afternoon goes by with new builds being pushed and
+				#  none of them arriving. A sync that is not working has to be
+				#  more obvious than a sync that is.
+				#]]
+				echo "" >&2
+				echo "  ############################################################" >&2
+				echo "  ##  NOT PULLING. You are stuck on $head." >&2
+				echo "  ##  Nothing pushed since then is on this machine." >&2
+				echo "  ##" >&2
+				echo "  ##  Keep your edits:  git stash" >&2
+				echo "  ##  Throw them away:  git checkout -- ." >&2
+				echo "  ############################################################" >&2
+				echo "" >&2
 				;;
 		esac
 		sleep "$EVERY"

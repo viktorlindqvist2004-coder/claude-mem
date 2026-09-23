@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "0185c06"
-Build.LAST_COMMIT = "c9cf88f"
-Build.SUMMARY = "Furnish the atrium like a room, and finish off the flicker"
-Build.WHEN = "23 Sep 18:10"
+Build.COMMIT = "9f717da"
+Build.LAST_COMMIT = "12950ce"
+Build.SUMMARY = "Make the build number impossible to miss"
+Build.WHEN = "23 Sep 18:12"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -11145,10 +11145,14 @@ local function neonSign(text, x, y, z, letterH, colour, deadIndex)
 	-- Four floods across the run, not one per letter.
 	for i = 0, 3 do
 		local gx = x - total / 2 + (total / 3) * i
-		local glow = P("SignGlow", V(0.2, 0.2, 0.2), at(gx, y, z - 0.6), colour, Enum.Material.Neon)
+		-- Outward only, and short: this is on the roofline and its job is the
+		-- letters above it, not the inside of the building behind it.
+		local glow = P("SignGlow", V(0.2, 0.2, 0.2), at(gx, y, z - 1.4), colour, Enum.Material.Neon)
 		glow.Transparency = 1
 		glow.CanCollide = false
-		bulb(glow, colour, 0.9, 16)
+		-- Short enough to wash the letters and nothing else. At sixteen metres
+		-- these reached through the entrance glazing and lit the atrium.
+		bulb(glow, colour, 0.7, 7)
 	end
 end
 
@@ -11279,7 +11283,8 @@ local function vending(x, y, z, facing, lit)
 		if lit then Color3.fromRGB(150, 138, 96) else Color3.fromRGB(30, 30, 32),
 		if lit then Enum.Material.Neon else Enum.Material.Glass)
 	if lit then
-		bulb(front, Color3.fromRGB(255, 226, 150), 0.7, 7)
+		-- A vending machine is a glowing box you can see, not a light source.
+		bulb(front, Color3.fromRGB(255, 226, 150), 0.25, 3)
 	end
 	-- The rows of stock behind the glass.
 	for row = 0, 4 do
@@ -12061,9 +12066,20 @@ local function buildClock()
 		end
 	end
 
+	--[[
+		The only thing lighting this room, and barely.
+
+		Eleven metres at brightness 1.1 reached the whole atrium and lit the
+		floor, the escalators and both walls -- which is a room with a light in
+		it, not a room with a clock in it. The digits are what should be
+		visible: four red numerals hanging in a space you cannot see the far
+		side of, and just enough spill to know there is a floor under them.
+
+		Six metres at 0.4. Past that the room is the torch's problem.
+	]]
 	local spill = P("ClockSpill", V(0.2, 0.2, 0.2), at(0, 3.4, 0), RED, Enum.Material.Neon)
 	spill.Transparency = 1
-	bulb(spill, RED, 1.1, 11)
+	bulb(spill, RED, 0.4, 6)
 end
 
 --[[
@@ -14168,7 +14184,12 @@ local function buildExterior()
 			head.CastShadow = false
 			-- Shorter than it was. At twenty-two metres a row of these reached
 			-- through the entrance glazing and lit the atrium from outside.
-			bulb(head, Color3.fromRGB(255, 176, 92), 0.75, 15)
+			--[[
+				Shorter again. The atrium is meant to be lit by its clock and
+				nothing else, and a row of sodium lamps outside a glazed
+				entrance is a second light source however far away it is.
+			]]
+			bulb(head, Color3.fromRGB(255, 176, 92), 0.6, 10)
 		end
 	end
 

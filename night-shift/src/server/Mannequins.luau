@@ -157,6 +157,7 @@ local function down(player: Player)
 	-- Positional, so the rest of the crew know which room it happened in.
 	if rescuePoint then
 		SoundBank.play(SoundBank.STARTLE_SMALL, rescuePoint, 0.1)
+		Hud.caption(`[{player.DisplayName} goes down]`, Places.roomAt(rescuePoint.Position))
 	end
 
 	--[[

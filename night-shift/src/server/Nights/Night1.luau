@@ -221,6 +221,7 @@ local function bins(ctx)
 				-- Castors on terrazzo, all the way across the building.
 				local roll = SoundBank.make(SoundBank.BIN_ROLL, bin, "Castors")
 				roll:Play()
+				ctx.caption(SoundBank.BIN_ROLL.caption or "[castors]")
 			end
 		end)
 	end
@@ -442,6 +443,9 @@ Night.beats = {
 		ctx.atmos().setPower(false)
 		ctx.effect("power", false)
 		ctx.effect("blackout", nil)
+		-- The hum stopping is the loudest thing that happens all night, and it
+		-- is the absence of a sound, which is exactly what a caption is for.
+		ctx.caption("[every fitting in the building stops humming]")
 		task.wait(2.5)
 		ctx.say(S.power_cut)
 		ctx.reveal("change_fuse")
@@ -458,6 +462,7 @@ Night.beats = {
 		if movement then
 			SoundBank.play(SoundBank.CLOCK_STRIKE, movement)
 		end
+		ctx.caption("[the clock strikes once]", "the atrium")
 		ctx.effect("strike", { count = 1 })
 	end },
 	{ at = 6.0, id = "shift_end", run = function(ctx)

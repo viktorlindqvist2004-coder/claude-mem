@@ -20,6 +20,13 @@
 
 export type Slot = {
 	id: string,
+	--[[
+		The words for this sound. Captions are not a courtesy feature in a game
+		like this: the whole thing is played by listening, so a player with the
+		sound off — or who cannot hear it — needs to be told that something fell
+		over two rooms away, or they are not playing the same game.
+	]]
+	caption: string?,
 	volume: number,
 	speed: number?,
 	looped: boolean?,
@@ -33,6 +40,7 @@ local SoundBank = {}
 
 -- One per red fixture, at the fixture. 100 Hz mains, a few cents off per unit.
 SoundBank.HUM = {
+	caption = "[the fittings hum]",
 	id = "rbxasset://sounds/bass.mp3",
 	volume = 0.11,
 	speed = 0.24,
@@ -43,6 +51,7 @@ SoundBank.HUM = {
 
 -- The fixtures that are going. One in twelve, and players use them as landmarks.
 SoundBank.HUM_FAILING = {
+	caption = "[a fitting buzzes, irregularly]",
 	id = "rbxasset://sounds/bass.mp3",
 	volume = 0.16,
 	speed = 0.31,
@@ -53,6 +62,7 @@ SoundBank.HUM_FAILING = {
 
 -- Air handling in the plant room, felt through the floor two rooms away.
 SoundBank.PLANT = {
+	caption = "[air handling, below]",
 	id = "rbxasset://sounds/action_falling.mp3",
 	volume = 0.25,
 	speed = 0.45,
@@ -63,6 +73,7 @@ SoundBank.PLANT = {
 
 -- The freezer cabinet, which cycles, so the supermarket is never quite steady.
 SoundBank.FREEZER = {
+	caption = "[a freezer cabinet cycles]",
 	id = "rbxasset://sounds/action_falling.mp3",
 	volume = 0.16,
 	speed = 0.8,
@@ -73,6 +84,7 @@ SoundBank.FREEZER = {
 
 -- Outside the dock shutter. The only weather in the game, and it is all outside.
 SoundBank.WIND = {
+	caption = "[wind against the dock shutter]",
 	id = "rbxasset://sounds/action_falling.mp3",
 	volume = 0.3,
 	speed = 0.6,
@@ -83,6 +95,7 @@ SoundBank.WIND = {
 
 -- The Great Clock. A digital display bolted to a movement that still turns.
 SoundBank.CLOCK_TICK = {
+	caption = "[the clock ticks]",
 	id = "rbxasset://sounds/clickfast.wav",
 	volume = 0.3,
 	speed = 0.55,
@@ -92,6 +105,7 @@ SoundBank.CLOCK_TICK = {
 }
 
 SoundBank.CLOCK_STRIKE = {
+	caption = "[the clock strikes]",
 	id = "rbxasset://sounds/metal.ogg",
 	volume = 1.0,
 	speed = 0.28,
@@ -108,6 +122,7 @@ SoundBank.CLOCK_STRIKE = {
 	about this tape, so it has to be something a player can hear change.
 ]]
 SoundBank.MUZAK = {
+	caption = "[muzak]",
 	id = "rbxasset://sounds/bass.mp3",
 	volume = 0.09,
 	speed = 0.62,
@@ -117,6 +132,7 @@ SoundBank.MUZAK = {
 }
 
 SoundBank.MUZAK_TRACK_CHANGE = {
+	caption = "[the tape changes track, early]",
 	id = "rbxasset://sounds/snap.mp3",
 	volume = 0.35,
 	speed = 0.7,
@@ -126,12 +142,14 @@ SoundBank.MUZAK_TRACK_CHANGE = {
 
 -- The two-tone chime before every announcement. Station, not shopping centre.
 SoundBank.PA_CHIME = {
+	caption = "[PA chime]",
 	id = "rbxasset://sounds/electronicpingshort.wav",
 	volume = 0.5,
 	speed = 0.62,
 }
 
 SoundBank.PA_CLICK = {
+	caption = "[the PA clicks on]",
 	id = "rbxasset://sounds/switch.wav",
 	volume = 0.28,
 	speed = 0.85,
@@ -139,14 +157,14 @@ SoundBank.PA_CLICK = {
 
 -- ── Hands ───────────────────────────────────────────────────────────────────
 
-SoundBank.TORCH_CLICK = { id = "rbxasset://sounds/switch3.wav", volume = 0.45, speed = 1.3 }
-SoundBank.CLOCK_IN = { id = "rbxasset://sounds/switch.wav", volume = 0.7, speed = 0.75 }
-SoundBank.PAPER = { id = "rbxasset://sounds/swoosh.mp3", volume = 0.35, speed = 1.6 }
-SoundBank.SHUTTER = { id = "rbxasset://sounds/metal.ogg", volume = 0.55, speed = 1.15 }
-SoundBank.MOP = { id = "rbxasset://sounds/impact_water.mp3", volume = 0.45, speed = 0.85 }
-SoundBank.BIN_ROLL = { id = "rbxasset://sounds/action_falling.mp3", volume = 0.22, speed = 1.4 }
-SoundBank.FUSE = { id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.5 }
-SoundBank.TASK_DONE = { id = "rbxasset://sounds/pop_mid_up_1.wav", volume = 0.3, speed = 0.9 }
+SoundBank.TORCH_CLICK = { caption = "[torch]", id = "rbxasset://sounds/switch3.wav", volume = 0.45, speed = 1.3 }
+SoundBank.CLOCK_IN = { caption = "[the time clock stamps]", id = "rbxasset://sounds/switch.wav", volume = 0.7, speed = 0.75 }
+SoundBank.PAPER = { caption = "[paper]", id = "rbxasset://sounds/swoosh.mp3", volume = 0.35, speed = 1.6 }
+SoundBank.SHUTTER = { caption = "[a shutter rattles down]", id = "rbxasset://sounds/metal.ogg", volume = 0.55, speed = 1.15 }
+SoundBank.MOP = { caption = "[water]", id = "rbxasset://sounds/impact_water.mp3", volume = 0.45, speed = 0.85 }
+SoundBank.BIN_ROLL = { caption = "[castors on terrazzo]", id = "rbxasset://sounds/action_falling.mp3", volume = 0.22, speed = 1.4 }
+SoundBank.FUSE = { caption = "[the fuse board clunks]", id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.5 }
+SoundBank.TASK_DONE = { caption = "[done]", id = "rbxasset://sounds/pop_mid_up_1.wav", volume = 0.3, speed = 0.9 }
 
 -- ── The other thing ─────────────────────────────────────────────────────────
 --[[
@@ -154,19 +172,20 @@ SoundBank.TASK_DONE = { id = "rbxasset://sounds/pop_mid_up_1.wav", volume = 0.3,
 	scarcity is the entire reason they work. The transient carries the fright; a
 	sustained roar just gets the headphones taken off.
 ]]
-SoundBank.STARTLE_LARGE = { id = "rbxasset://sounds/hit.wav", volume = 1.0, speed = 0.45 }
-SoundBank.STARTLE_SMALL = { id = "rbxasset://sounds/snap.mp3", volume = 0.55, speed = 0.8 }
-SoundBank.POWER_CUT = { id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.35 }
-SoundBank.POWER_BACK = { id = "rbxasset://sounds/unsheath.mp3", volume = 0.7, speed = 0.55 }
+SoundBank.STARTLE_LARGE = { caption = "[BANG]", id = "rbxasset://sounds/hit.wav", volume = 1.0, speed = 0.45 }
+SoundBank.STARTLE_SMALL = { caption = "[a sharp knock, close]", id = "rbxasset://sounds/snap.mp3", volume = 0.55, speed = 0.8 }
+SoundBank.POWER_CUT = { caption = "[everything stops]", id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.35 }
+SoundBank.POWER_BACK = { caption = "[every light comes on at once]", id = "rbxasset://sounds/unsheath.mp3", volume = 0.7, speed = 0.55 }
 
 -- A voice from the stockroom, in a voice the crew have not heard.
-SoundBank.VOICE_CALL = { id = "rbxasset://sounds/uuhhh.mp3", volume = 0.5, speed = 0.72 }
+SoundBank.VOICE_CALL = { caption = "[a voice, from the dark]", id = "rbxasset://sounds/uuhhh.mp3", volume = 0.5, speed = 0.72 }
 
 -- Something falling over, two rooms away, for no reason.
-SoundBank.DISTANT_FALL = { id = "rbxasset://sounds/metal.ogg", volume = 0.7, speed = 0.7 }
+SoundBank.DISTANT_FALL = { caption = "[something falls over, somewhere else]", id = "rbxasset://sounds/metal.ogg", volume = 0.7, speed = 0.7 }
 
 -- Breath, when the building has noticed you and you have not noticed that.
 SoundBank.DREAD_BED = {
+	caption = "[  ]",
 	id = "rbxasset://sounds/action_falling.mp3",
 	volume = 0.0,
 	speed = 0.3,

@@ -251,6 +251,7 @@ Night.beats = {
 		for i = 1, 5 do
 			Mannequins.add({ R.Fashion.x + 3.0, 0.2, R.Fashion.z + 1.0 + i * 0.4 })
 		end
+		ctx.caption("[the fashion circuit strobes]", "the fashion floor")
 		task.spawn(function()
 			for _ = 1, 14 do
 				for _, fitting in ctx.findAll("Bulkhead") do

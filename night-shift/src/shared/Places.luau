@@ -71,6 +71,45 @@ Places.BINS = {
 	{ 1.8, 0.0, 12.0 }, -- in the north arm, outside the supermarket doorway
 }
 
+--[[
+	Which room a point is in, as the crew would say it. Used by captions: a noise
+	somewhere else is only useful information if you are told where else.
+
+	Nearest centre wins, which is wrong at the boundaries and right everywhere a
+	sound actually happens, because sounds happen at props and props are in the
+	middles of rooms.
+]]
+Places.ROOM_NAMES = {
+	StaffRoom = "the staff room",
+	SecurityOffice = "the security office",
+	CameraRoom = "the camera room",
+	CustodialStore = "the custodial store",
+	Stockroom = "the stockroom",
+	LoadingDock = "the loading dock",
+	Supermarket = "the supermarket",
+	Fashion = "the fashion floor",
+	FoodCourt = "the food court",
+	PlantRoom = "the plant room",
+	ElectricalCupboard = "the electrical cupboard",
+	Atrium = "the atrium",
+	CarPark = "the car park",
+}
+
+function Places.roomAt(position: Vector3): string
+	local best, bestDistance = "the mall", math.huge
+	for key, room in Places.ROOM do
+		local dx = position.X / Places.METRE - room.x
+		local dy = position.Y / Places.METRE - room.y
+		local dz = position.Z / Places.METRE - room.z
+		-- Height counts double: the food court is directly above the arm.
+		local d = dx * dx + (dy * 2) * (dy * 2) + dz * dz
+		if d < bestDistance then
+			best, bestDistance = Places.ROOM_NAMES[key] or key, d
+		end
+	end
+	return best
+end
+
 function Places.cf(point: { number }): CFrame
 	return CFrame.new(point[1] * Places.METRE, point[2] * Places.METRE, point[3] * Places.METRE)
 end

@@ -33,19 +33,19 @@ along it is.
 
 ## Casting
 
-**NIGHT MANAGER** — Male, 60s, northern English, warm and unhurried. Station announcer cadence: even stress, a beat of air before each clause, never raises his voice. Never sinister. He is helping you.
+**NIGHT MANAGER** — Arthur30fc8796-ceb6-4a66-b3a7-4a145ef7f346Male, 60s, northern English, warm and unhurried. Station announcer cadence: even stress, a beat of air before each clause, never raises his voice. Never sinister. He is helping you.
 
-**DS CALDER** — Female, 50s, northern English, tired and precise. Has been carrying this file since 1998 and is not impressed by any of it.
+**DS CALDER** — Vera0c51919f-0756-5f8d-8169-026a339d8fd7Female, 50s, northern English, tired and precise. Has been carrying this file since 1998 and is not impressed by any of it.
 
-**NORA** — Female, 30s. Checkout supervisor. Speaking into a cassette recorder in a stockroom, quietly, because somebody might hear.
+**NORA** — Isla7367e919-3069-5a0b-939e-dfb1c0fd91b4Female, 30s. Checkout supervisor. Speaking into a cassette recorder in a stockroom, quietly, because somebody might hear.
 
-**WALT** — Male, 50s. Night security. Flat, embarrassed to be recording at all, and going to do it anyway.
+**WALT** — Desmond563f728c-e249-5a85-97ab-8461e8c09da6Male, 50s. Night security. Flat, embarrassed to be recording at all, and going to do it anyway.
 
-**LO** — Female, 20s. Custodial. Talking too fast because she is frightened and trying to sound as though she is not.
+**LO** — Daisy032386ec-491b-5bdc-81ac-49e9a6a2c89dFemale, 20s. Custodial. Talking too fast because she is frightened and trying to sound as though she is not.
 
-**ERIC HALVARD** — Male, 50s, Norwegian-accented English, 1986, pleased with himself, on a PA in a room full of people.
+**ERIC HALVARD** — Fraser6705e465-7b52-5915-a1d8-b1222885e01dMale, 50s, Norwegian-accented English, 1986, pleased with himself, on a PA in a room full of people.
 
-**—** — The other voice. Same warmth as the Night Manager, recorded further from the mic, with a large room behind it. It should be obvious on a second listen that it is the same person and not obvious on the first.
+**—** — Arthur30fc8796-ceb6-4a66-b3a7-4a145ef7f346The other voice. Same warmth as the Night Manager, recorded further from the mic, with a large room behind it. It should be obvious on a second listen that it is the same person and not obvious on the first.
 
 
 ## Night 1 — First Shift

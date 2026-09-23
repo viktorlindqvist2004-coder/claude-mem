@@ -124,55 +124,107 @@ end
 
 -- ── Subtitles ───────────────────────────────────────────────────────────────
 
-local subtitleFrame = Instance.new("Frame")
-subtitleFrame.Size = UDim2.new(0, 760, 0, 84)
-subtitleFrame.Position = UDim2.new(0.5, -380, 1, -150)
-subtitleFrame.BackgroundTransparency = 1
-subtitleFrame.Parent = gui
-
-local speaker = Instance.new("TextLabel")
-speaker.BackgroundTransparency = 1
-speaker.Size = UDim2.new(1, 0, 0, 16)
-speaker.Font = Enum.Font.Code
-speaker.TextSize = 12
-speaker.TextColor3 = DIM
-speaker.Text = ""
-speaker.Parent = subtitleFrame
-
-local line = Instance.new("TextLabel")
-line.BackgroundTransparency = 1
-line.Size = UDim2.new(1, 0, 0, 64)
-line.Position = UDim2.new(0, 0, 0, 18)
-line.Font = Enum.Font.Code
-line.TextSize = 19
-line.TextColor3 = BONE
-line.TextWrapped = true
-line.TextYAlignment = Enum.TextYAlignment.Top
-line.Text = ""
-line.Parent = subtitleFrame
-
 --[[
-	Everything the player hears that is not in the world is here: the PA chime,
-	the startle stinger, the torch switch. They are parented to SoundService so
-	they are flat and centred — the point of a 2D sound in this game is that it
-	is not coming from anywhere, and you cannot walk away from it.
+	Captions.
+
+	Not a courtesy feature. This game is played by listening — which way the hum
+	is coming from, whether the tape is still running on the other side of the
+	service door, whether that was a bin going over two rooms away — so a player
+	with the sound off has to be told all of it in words or they are not playing
+	the same game.
+
+	Three lines, newest at the bottom, older ones dimmed rather than removed, so
+	a line you looked away from is still there when you look back. Speech carries
+	the speaker's name; a sound is bracketed, italic, and says which room it came
+	from, because for a noise somewhere else that is the only part that matters.
+
+	Everything said or heard tonight is kept, and C opens it.
 ]]
-local flat: { [string]: Sound } = {}
-local function flatSound(key: string, slot: any): Sound
-	local existing = flat[key]
-	if existing then
-		return existing
-	end
-	local sound = SoundBank.make(slot, SoundService, key)
-	flat[key] = sound
-	return sound
+local CAPTION_LINES = 3
+
+local captionFrame = Instance.new("Frame")
+captionFrame.Name = "Captions"
+captionFrame.Size = UDim2.new(0, 860, 0, 108)
+captionFrame.Position = UDim2.new(0.5, -430, 1, -176)
+captionFrame.BackgroundTransparency = 1
+captionFrame.Parent = gui
+
+local captionLayout = Instance.new("UIListLayout")
+captionLayout.Padding = UDim.new(0, 2)
+captionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+captionLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+captionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+captionLayout.Parent = captionFrame
+
+local captionRows: { TextLabel } = {}
+for i = 1, CAPTION_LINES do
+	local row = Instance.new("TextLabel")
+	row.Name = `Caption{i}`
+	row.BackgroundColor3 = Color3.new(0, 0, 0)
+	row.BackgroundTransparency = 1
+	row.BorderSizePixel = 0
+	row.Size = UDim2.new(1, 0, 0, 30)
+	row.AutomaticSize = Enum.AutomaticSize.Y
+	row.Font = Enum.Font.GothamMedium
+	row.TextSize = 19
+	row.TextColor3 = BONE
+	row.TextWrapped = true
+	row.RichText = true
+	row.Text = ""
+	row.TextTransparency = 1
+	row.LayoutOrder = i
+	row.Parent = captionFrame
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 12)
+	pad.PaddingRight = UDim.new(0, 12)
+	pad.PaddingTop = UDim.new(0, 2)
+	pad.PaddingBottom = UDim.new(0, 2)
+	pad.Parent = row
+	table.insert(captionRows, row)
 end
 
-local function playFlat(key: string, slot: any)
-	local sound = flatSound(key, slot)
-	sound.TimePosition = 0
-	sound:Play()
+local captionsOn = true
+local transcript: { string } = {}
+local captionStack: { { text: string, at: number } } = {}
+
+local function renderCaptions()
+	for i, row in captionRows do
+		-- The oldest of the three sits at the top and is the faintest.
+		local entry = captionStack[#captionStack - (CAPTION_LINES - i)]
+		if entry and captionsOn then
+			row.Text = entry.text
+			local age = #captionStack - (#captionStack - (CAPTION_LINES - i))
+			row.TextTransparency = math.clamp(age * 0.34, 0, 0.72)
+			row.BackgroundTransparency = if age == 0 then 0.55 else 0.78
+		else
+			row.Text = ""
+			row.TextTransparency = 1
+			row.BackgroundTransparency = 1
+		end
+	end
 end
+
+local function pushCaption(text: string, seconds: number)
+	table.insert(captionStack, { text = text, at = os.clock() + math.max(seconds, 2) })
+	while #captionStack > CAPTION_LINES do
+		table.remove(captionStack, 1)
+	end
+	table.insert(transcript, text)
+	renderCaptions()
+end
+
+-- Time out the stack from the bottom, so a held line does not sit there all night.
+RunService.Heartbeat:Connect(function()
+	local now = os.clock()
+	local changed = false
+	while captionStack[1] and now > captionStack[1].at + (CAPTION_LINES - 1) * 2.5 do
+		table.remove(captionStack, 1)
+		changed = true
+	end
+	if changed then
+		renderCaptions()
+	end
+end)
 
 --[[
 	The voice, when there is one. It is flat rather than positional: he is on the
@@ -202,15 +254,35 @@ local function speak(key: string?, who: string)
 	voice = sound
 end
 
-local subtitleToken = 0
+--[[
+	Everything the player hears that is not in the world: the PA chime, the
+	startle stinger, the torch switch. Parented to SoundService so they are flat
+	and centred — the point of a 2D sound here is that it is not coming from
+	anywhere and you cannot walk away from it.
+]]
+local flat: { [string]: Sound } = {}
+local function playFlat(key: string, slot: any)
+	local sound = flat[key]
+	if not sound then
+		sound = SoundBank.make(slot, SoundService, key)
+		flat[key] = sound
+	end
+	sound.TimePosition = 0
+	sound:Play()
+end
+
 local lastSpeaker = ""
-remotes.Say.OnClientEvent:Connect(function(who: string, text: string, seconds: number, key: string?)
-	subtitleToken += 1
-	local token = subtitleToken
-	speak(key, who)
-	-- The two-tone chime, before he starts, and only when he starts. Station
+remotes.Say.OnClientEvent:Connect(function(who: string, text: string, seconds: number, key: string?, where: string?)
+	if who == "" then
+		-- A sound, not a line. Bracketed, italic, and located.
+		local located = if where then `{text} <font color="#6f6b66">— {where}</font>` else text
+		pushCaption(`<i><font color="#b4aea6">{located}</font></i>`, seconds)
+		return
+	end
+
+	-- The two-tone chime, before he starts and only when he starts. Station
 	-- cadence, not shopping-centre cadence, and nobody is meant to notice.
-	if who ~= lastSpeaker or line.TextTransparency > 0.5 then
+	if who ~= lastSpeaker then
 		if who == "NIGHT MANAGER" then
 			playFlat("chime", SoundBank.PA_CHIME)
 		elseif who == "—" then
@@ -218,17 +290,8 @@ remotes.Say.OnClientEvent:Connect(function(who: string, text: string, seconds: n
 		end
 	end
 	lastSpeaker = who
-	speaker.Text = who
-	line.Text = text
-	line.TextTransparency = 0
-	speaker.TextTransparency = 0
-	task.delay(seconds, function()
-		if token ~= subtitleToken then
-			return
-		end
-		TweenService:Create(line, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
-		TweenService:Create(speaker, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
-	end)
+	speak(key, who)
+	pushCaption(`<font color="#8d8880">{who}</font>  {text}`, seconds)
 end)
 
 -- ── The walkie, and hints ───────────────────────────────────────────────────
@@ -691,6 +754,33 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		remotes.Torch:FireServer(torchOn)
 	elseif input.KeyCode == Enum.KeyCode.Q then
 		remotes.Ask:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.C then
+		--[[
+			The transcript. Everything said and heard tonight, in order. A game
+			where the plot arrives through a tannoy while you are three rooms
+			away and holding a bin needs somewhere to read back what you missed.
+		]]
+		if paper.Visible then
+			paper.Visible = false
+			return
+		end
+		local lines = { `{#transcript} lines tonight.`, "" }
+		local from = math.max(1, #transcript - 120)
+		if from > 1 then
+			table.insert(lines, `(showing the last {#transcript - from + 1})`)
+			table.insert(lines, "")
+		end
+		for i = from, #transcript do
+			table.insert(lines, (transcript[i]:gsub("<[^>]->", "")))
+		end
+		if #transcript == 0 then
+			table.insert(lines, "Nothing yet.")
+		end
+		openSheet("TONIGHT, SO FAR", lines)
+	elseif input.KeyCode == Enum.KeyCode.V then
+		captionsOn = not captionsOn
+		renderCaptions()
+		showHint(if captionsOn then "Captions on." else "Captions off.", DIM)
 	elseif input.KeyCode == Enum.KeyCode.F9 then
 		if not panelAllowed then
 			return
@@ -711,5 +801,5 @@ end)
 -- glazing out on the brightest quality settings.
 Lighting.ExposureCompensation = -0.15
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [X] put it down", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

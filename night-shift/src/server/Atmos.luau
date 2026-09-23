@@ -24,6 +24,7 @@ local Config = require(Shared.Config)
 local Places = require(Shared.Places)
 local SoundBank = require(Shared.SoundBank)
 
+local Hud = require(script.Parent.Hud)
 local World = require(script.Parent.World)
 
 local Atmos = {}
@@ -162,6 +163,7 @@ end
 
 -- Rule 2. The tape changes track early, and then there is nothing at all.
 function Atmos.tapeSkips()
+	Hud.caption(SoundBank.MUZAK_TRACK_CHANGE.caption or "[the tape changes track]")
 	local anchor = World.nodes():FindFirstChild("CeilingSpeaker1")
 	if anchor and anchor:IsA("BasePart") then
 		SoundBank.play(SoundBank.MUZAK_TRACK_CHANGE, anchor)
@@ -199,6 +201,7 @@ end
 function Atmos.distantFall(point: { number })
 	local anchor = World.marker("Noise", point, 0.6)
 	SoundBank.play(SoundBank.DISTANT_FALL, anchor, 0.12)
+	Hud.caption(SoundBank.DISTANT_FALL.caption or "[something falls]", Places.roomAt(anchor.Position))
 	task.delay(12, function()
 		anchor:Destroy()
 	end)

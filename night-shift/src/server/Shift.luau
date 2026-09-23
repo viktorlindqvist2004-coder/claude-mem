@@ -181,6 +181,17 @@ function ctx.prompt(part: BasePart, options: any, handler: (Player) -> ())
 end
 function ctx.noise(part: Instance, slot: any)
 	SoundBank.play(slot, part, 0.05)
+	if part:IsA("BasePart") then
+		Hud.captionSlot(slot, Places.roomAt(part.Position))
+	else
+		Hud.captionSlot(slot)
+	end
+end
+
+-- A caption with no sound attached: for the things the building does that have
+-- no single emitter, like every light in the basement coming on at once.
+function ctx.caption(text: string, where: string?)
+	Hud.caption(text, where)
 end
 function ctx.nodes()
 	return World.nodes()
@@ -352,6 +363,7 @@ function ctx.callFromTheDark(point: { number }, ruleId: string?)
 
 	local node = World.marker("VoiceInTheDark", point, 3.0)
 	SoundBank.play(SoundBank.VOICE_CALL, node)
+	Hud.caption(`[a voice says "{who}"]`, Places.roomAt(node.Position))
 	local answered = false
 	World.prompt(node, { action = "Answer", object = "Someone said your name", distanceMetres = 6 }, function()
 		if answered then
@@ -360,6 +372,7 @@ function ctx.callFromTheDark(point: { number }, ruleId: string?)
 		answered = true
 		ctx.violation(ruleId or "stockroom_name")
 		SoundBank.play(SoundBank.VOICE_CALL, node, 0.15)
+		Hud.caption("[it says your name again]", Places.roomAt(node.Position))
 		Hud.effect("startle", { shake = 0.5, flash = false, large = false })
 	end)
 

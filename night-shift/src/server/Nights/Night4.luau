@@ -264,6 +264,7 @@ function Night.build(ctx)
 	ctx.power().cut(0)
 	ctx.atmos().setPower(false)
 	ctx.effect("power", false)
+	ctx.caption("[no mains. the building is silent]")
 
 	generator(ctx)
 	monitors(ctx)

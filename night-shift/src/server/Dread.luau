@@ -247,6 +247,15 @@ local function fireStartle(player: Player, large: boolean)
 		large = large,
 		label = scare and scare.name or nil,
 	})
+	--[[
+		Captioned by what it actually was, from the catalogue, not by "[scary
+		noise]". A player reading captions should know a fascia came off a shop
+		front and not merely that they are supposed to be frightened.
+	]]
+	Hud.caption(
+		if scare then `[{scare.name:lower()}]` else (if large then "[BANG]" else "[a sharp knock, close]"),
+		Places.roomAt(at.Position)
+	)
 
 	-- Something real does it: a fitting goes, a bin goes over, a shutter drops.
 	local nearest, best = nil, math.huge

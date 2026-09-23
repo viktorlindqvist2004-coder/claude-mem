@@ -201,6 +201,7 @@ function Night.theStrike(ctx)
 	task.wait(2)
 	ctx.effect("display", "88:88")
 	ctx.atmos().setPower(false)
+	ctx.caption("[the hum stops. the display reads 88:88]", "the atrium")
 	ctx.reveal("the_relay", "It resets if it is left for more than eight seconds.")
 
 	-- The master timer panel, in the plant room, in the basement.
@@ -225,6 +226,12 @@ function Night.theStrike(ctx)
 			if movement then
 				SoundBank.play(SoundBank.CLOCK_STRIKE, movement)
 			end
+			--[[
+				The count is the timer, so it has to be in the captions as well
+				as in the air. A player reading captions should be able to count
+				along with the crew, because counting is the whole mechanic.
+			]]
+			ctx.caption(`[the clock strikes — {strikeCount} of 33]`, "the atrium")
 			ctx.effect("strike", { count = strikeCount, of = 33 })
 			ctx.effect("display", if strikeCount % 2 == 1 then "88:88" else "03:33")
 

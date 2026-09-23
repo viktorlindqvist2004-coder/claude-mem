@@ -123,6 +123,7 @@ command("Fright", "startleSmall", "Small startle", function(player)
 	local root = Shift.ctx.root(player)
 	if root then
 		SoundBank.play(SoundBank.STARTLE_SMALL, root)
+		Hud.captionSlot(SoundBank.STARTLE_SMALL, Places.roomAt(root.Position))
 	end
 end)
 
@@ -131,6 +132,7 @@ command("Fright", "startleLarge", "Large startle", function(player)
 	local root = Shift.ctx.root(player)
 	if root then
 		SoundBank.play(SoundBank.STARTLE_LARGE, root)
+		Hud.captionSlot(SoundBank.STARTLE_LARGE, Places.roomAt(root.Position))
 	end
 end)
 

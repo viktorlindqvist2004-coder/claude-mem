@@ -85,6 +85,29 @@ function Hud.effect(kind: string, payload: any?)
 	remotes.Effect:FireAllClients(kind, payload)
 end
 
+--[[
+	A caption for something that is not speech.
+
+	The whole game is played by listening — which way the hum is coming from,
+	whether the tape is still running on the other side of the service door,
+	whether that was a bin going over two rooms away. A player who cannot hear
+	that is not playing the same game, so every sound that carries information
+	says so in words as well.
+
+	`where` is optional and is the room it happened in, which for a noise
+	somewhere else is the only part that matters.
+]]
+function Hud.caption(text: string, where: string?)
+	remotes.Say:FireAllClients("", text, 3.5, nil, where)
+end
+
+-- Caption a SoundBank slot, using the words that live on the slot itself.
+function Hud.captionSlot(slot: any, where: string?)
+	if slot and slot.caption then
+		Hud.caption(slot.caption, where)
+	end
+end
+
 function Hud.sheet(player: Player?, title: string, lines: { any })
 	if player then
 		remotes.Sheet:FireClient(player, title, lines)

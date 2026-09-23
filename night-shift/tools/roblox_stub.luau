@@ -50,8 +50,16 @@ local function newInstance(class)
 			if k == "GetChildren" then return function() return self.Children end end
 			if k == "Destroy" then return function() end end
 			if k == "Play" then return function() end end
-			if k == "SetAttribute" then return function() end end
-			if k == "GetAttribute" then return function() return nil end end
+			if k == "SetAttribute" then
+				return function(_, name, value)
+					store["@" .. name] = value
+				end
+			end
+			if k == "GetAttribute" then
+				return function(_, name)
+					return store["@" .. name]
+				end
+			end
 			if k == "Clone" then return function() return newInstance(class) end end
 			if k == "WaitForChild" then return function() return newInstance("Folder") end end
 			if k == "IsA" then

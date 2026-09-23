@@ -16,6 +16,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Build = require(Shared.Build)
 local Places = require(Shared.Places)
 
 local World = {}
@@ -26,9 +27,29 @@ function World.mall(): Instance?
 	return Workspace:FindFirstChild("Mall")
 end
 
+--[[
+	Build the mall, unless the one standing there was built from this same
+	commit.
+
+	The building costs about a second, so it is not rebuilt for its own sake.
+	But a Mall folder can outlive the code that made it — anybody who ran the
+	edit-mode build line has one saved in their place — and then every Play
+	reuses geometry from whenever that was, while scripts carry on syncing
+	normally. Nothing errors, nothing looks broken, and every change to the
+	building silently does nothing.
+
+	So the folder is signed with the commit it came from and thrown away when
+	that no longer matches.
+]]
 function World.ensureBuilt()
-	if World.mall() then
-		return
+	local existing = World.mall()
+	if existing then
+		local built = existing:GetAttribute("Build")
+		if built ~= nil and built == Build.COMMIT then
+			return
+		end
+		print(`[world] the mall in this place was built from {built or "an unknown build"} — rebuilding for {Build.COMMIT}`)
+		existing:Destroy()
 	end
 	local source = ServerStorage:FindFirstChild("Greybox")
 	if not source then

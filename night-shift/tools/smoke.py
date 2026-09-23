@@ -70,7 +70,21 @@ for name, path in ORDER:
 parts.append(r"""
 -- ── The run ─────────────────────────────────────────────────────────────────
 
+--[[
+	Put the module where the game looks for it, and sign the mall with the build
+	it came from, so World.ensureBuilt treats it as current rather than throwing
+	it away and hunting for a Greybox that a stub has no way to require.
+]]
+local ServerStorage = game:GetService("ServerStorage")
+local greyboxStub = Instance.new("ModuleScript")
+greyboxStub.Name = "Greybox"
+greyboxStub.Parent = ServerStorage
+
 __M.Greybox.build()
+local mall = workspace:FindFirstChild("Mall")
+if mall then
+	mall:SetAttribute("Build", __M.Build.COMMIT)
+end
 __M.World.reindex()
 
 local Shift = __M.Shift

@@ -2594,6 +2594,25 @@ function Greybox.build()
 
 	root = Instance.new("Folder")
 	root.Name = "Mall"
+	--[[
+		Sign it with the commit it was built from.
+
+		Building the mall is expensive enough that it is only done once, which
+		means something has to decide when "once" has expired. Without this, a
+		Mall folder that ended up saved in the place — from running the build
+		line in edit mode, say — is reused by every Play from then on, and no
+		amount of syncing new code will ever change what you see. That failure is
+		silent and it is indistinguishable from the sync being broken.
+	]]
+	local stamp = "unknown"
+	pcall(function()
+		local shared = game:GetService("ReplicatedStorage"):FindFirstChild("Shared")
+		local build = shared and shared:FindFirstChild("Build")
+		if build then
+			stamp = (require(build) :: any).COMMIT
+		end
+	end)
+	root:SetAttribute("Build", stamp)
 	root.Parent = Workspace
 	lightCount = 0
 

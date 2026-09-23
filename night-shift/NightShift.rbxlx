@@ -31,11 +31,11 @@
 
 local Build = {}
 
-Build.COMMIT = "45ada71"
-Build.SUMMARY = "Start the torch on, and bring the README up to date"
+Build.COMMIT = "9d723d0"
+Build.SUMMARY = "Rebuild the place file against the current commit"
 Build.WHEN = "23 Sep 02:10"
 -- True when the working tree had uncommitted source changes at stamp time.
-Build.DIRTY = false
+Build.DIRTY = true
 
 function Build.line(): string
 	return `Night Shift · {Build.COMMIT}{if Build.DIRTY then "+" else ""} · {Build.WHEN}`
@@ -7928,6 +7928,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Build = require(Shared.Build)
 local Places = require(Shared.Places)
 
 local World = {}
@@ -7938,9 +7939,29 @@ function World.mall(): Instance?
 	return Workspace:FindFirstChild("Mall")
 end
 
+--[[
+	Build the mall, unless the one standing there was built from this same
+	commit.
+
+	The building costs about a second, so it is not rebuilt for its own sake.
+	But a Mall folder can outlive the code that made it — anybody who ran the
+	edit-mode build line has one saved in their place — and then every Play
+	reuses geometry from whenever that was, while scripts carry on syncing
+	normally. Nothing errors, nothing looks broken, and every change to the
+	building silently does nothing.
+
+	So the folder is signed with the commit it came from and thrown away when
+	that no longer matches.
+]]
 function World.ensureBuilt()
-	if World.mall() then
-		return
+	local existing = World.mall()
+	if existing then
+		local built = existing:GetAttribute("Build")
+		if built ~= nil and built == Build.COMMIT then
+			return
+		end
+		print(`[world] the mall in this place was built from {built or "an unknown build"} — rebuilding for {Build.COMMIT}`)
+		existing:Destroy()
 	end
 	local source = ServerStorage:FindFirstChild("Greybox")
 	if not source then
@@ -10685,6 +10706,25 @@ function Greybox.build()
 
 	root = Instance.new("Folder")
 	root.Name = "Mall"
+	--[[
+		Sign it with the commit it was built from.
+
+		Building the mall is expensive enough that it is only done once, which
+		means something has to decide when "once" has expired. Without this, a
+		Mall folder that ended up saved in the place — from running the build
+		line in edit mode, say — is reused by every Play from then on, and no
+		amount of syncing new code will ever change what you see. That failure is
+		silent and it is indistinguishable from the sync being broken.
+	]]
+	local stamp = "unknown"
+	pcall(function()
+		local shared = game:GetService("ReplicatedStorage"):FindFirstChild("Shared")
+		local build = shared and shared:FindFirstChild("Build")
+		if build then
+			stamp = (require(build) :: any).COMMIT
+		end
+	end)
+	root:SetAttribute("Build", stamp)
 	root.Parent = Workspace
 	lightCount = 0
 

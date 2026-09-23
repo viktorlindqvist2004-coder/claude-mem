@@ -12,8 +12,8 @@
 
 local Build = {}
 
-Build.COMMIT = "45ada71"
-Build.SUMMARY = "Start the torch on, and bring the README up to date"
+Build.COMMIT = "9d723d0"
+Build.SUMMARY = "Rebuild the place file against the current commit"
 Build.WHEN = "23 Sep 02:10"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true

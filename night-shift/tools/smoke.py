@@ -49,6 +49,7 @@ ORDER = [
     ("Case", "src/server/Case.luau"),
     ("Mannequins", "src/server/Mannequins.luau"),
     ("Customers", "src/server/Customers.luau"),
+    ("Scares", "src/server/Scares.luau"),
     ("Dread", "src/server/Dread.luau"),
     ("Shift", "src/server/Shift.luau"),
     ("Night1", "src/server/Nights/Night1.luau"),

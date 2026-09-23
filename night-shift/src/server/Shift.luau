@@ -509,6 +509,22 @@ function Shift.begin(night: number)
 	Shift.clock = ShiftClock.new(night)
 	ctx.clock = Shift.clock
 	Shift.clock.running = definition.startsImmediately ~= false
+	--[[
+		The card. Where you are, when it is, and the one thing you are trying to
+		find out — held over black before anything else happens. A horror game
+		that is coy about its premise is not mysterious, it is confusing, and a
+		player who does not know what they are doing is lost rather than afraid.
+	]]
+	local card = NightScript.CARDS[night]
+	if card then
+		Hud.effect("card", {
+			place = card.place,
+			when = card.when,
+			what = card.what,
+			question = NightScript.THE_QUESTION,
+		})
+	end
+
 	Hud.state.night = night
 	Hud.set("phase", "Shift")
 	Hud.set("time", Shift.clock:format())

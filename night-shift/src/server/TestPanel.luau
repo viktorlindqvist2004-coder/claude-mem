@@ -33,6 +33,7 @@ local Hud = require(script.Parent.Hud)
 local Mannequins = require(script.Parent.Mannequins)
 local Objectives = require(script.Parent.Objectives)
 local Power = require(script.Parent.Power)
+local Scares = require(script.Parent.Scares)
 local Shift = require(script.Parent.Shift)
 local World = require(script.Parent.World)
 
@@ -135,6 +136,14 @@ command("Fright", "startleLarge", "Large startle", function(player)
 		Hud.captionSlot(SoundBank.STARTLE_LARGE, Places.roomAt(root.Position))
 	end
 end)
+
+for _, scare in Scares.catalogue() do
+	command("Fright", `scare_{scare.id}`, scare.name, function(player)
+		if not Scares.fire(player, scare.id) then
+			Hud.effect("hint", `Nothing near you to do "{scare.name}" with. Try a corridor.`)
+		end
+	end)
+end
 
 command("Fright", "presence", "Put the Presence behind me", function(player)
 	Dread.testPresence(player)

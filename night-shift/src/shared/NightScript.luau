@@ -384,6 +384,56 @@ NightScript.SPEAKER_OF = {
 	["end"] = NightScript.CALDER,
 }
 
+
+--[[
+	The cards.
+
+	One at the top of every night, three lines, held for eight seconds over
+	black. They exist because a horror game that is coy about its premise is not
+	mysterious, it is confusing — a player who does not know what they are
+	supposed to be doing is not frightened, they are lost, and the two feel
+	nothing alike.
+
+	So the game says it out loud, every night, in the same three slots: where you
+	are, when it is, and the one thing you are trying to find out. The mystery is
+	not *what is going on* — the mystery is *who*, and the player should be
+	holding that question from the first minute.
+]]
+NightScript.CARDS = {
+	[1] = {
+		place = "NORTHLIGHT GALLERIA — NORTHMOOR",
+		when = "TONIGHT · 22:00",
+		what = "You are the new night crew.\nThe centre closed to the public in 1998.\nIt has never, technically, closed since.",
+	},
+	[2] = {
+		place = "NORTHLIGHT GALLERIA — SECOND NIGHT",
+		when = "22:00",
+		what = "Four people clocked in here on 14 November 1998.\nNone of them clocked out.\nThe man on the tannoy was already working here.",
+	},
+	[3] = {
+		place = "NORTHLIGHT GALLERIA — THIRD NIGHT",
+		when = "22:00",
+		what = "Somebody has been adding lines to Nora's list.\nIt is not her handwriting.\nFind out whose.",
+	},
+	[4] = {
+		place = "NORTHLIGHT GALLERIA — FOURTH NIGHT",
+		when = "22:00 · NO MAINS",
+		what = "He is not in the office.\nHe is not on the cameras.\nThere is a floor that is on no directory in this building.",
+	},
+	[5] = {
+		place = "NORTHLIGHT GALLERIA — LAST NIGHT",
+		when = "22:00 · CLOSING",
+		what = "Put the four of them back where they worked.\nOpen the clock.\nThen tell Calder who it is.",
+	},
+}
+
+--[[
+	And the question itself, on the HUD, all five nights. One line. It is the
+	spine of the whole game and it was never written down anywhere the player
+	could see it.
+]]
+NightScript.THE_QUESTION = "Who is the man on the tannoy?"
+
 NightScript.STOCKROOM_CALL = {
 	{ text = "[from the stockroom] ...that you?", seconds = 4 },
 }

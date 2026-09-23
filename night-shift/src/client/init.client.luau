@@ -578,6 +578,8 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 		clockText.Text = tostring(payload)
 	elseif kind == "power" then
 		clockText.TextColor3 = if payload == true then RED else Color3.fromRGB(70, 16, 14)
+	elseif kind == "card" then
+		showCard(payload)
 	elseif kind == "hint" then
 		showHint(tostring(payload))
 	elseif kind == "order" then
@@ -651,6 +653,82 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 		openSheet("CASE FILE — NORTHLIGHT GALLERIA, 1998", lines)
 	end
 end)
+
+--[[
+	The card at the top of a night, and the question under the clock.
+
+	Three lines over black for eight seconds. The question stays on screen all
+	night, small, because it is the spine of the entire game and it was never
+	written anywhere the player could see it — a mystery nobody has been told
+	they are solving is not a mystery, it is a confusing evening at work.
+]]
+local card = Instance.new("Frame")
+card.Name = "Card"
+card.Size = UDim2.fromScale(1, 1)
+card.BackgroundColor3 = Color3.new(0, 0, 0)
+card.BackgroundTransparency = 1
+card.BorderSizePixel = 0
+card.ZIndex = 60
+card.Visible = false
+card.Parent = gui
+
+local cardPlace = label(card, "", UDim2.new(1, -160, 0, 30), UDim2.new(0, 80, 0.30, 0))
+cardPlace.TextXAlignment = Enum.TextXAlignment.Center
+cardPlace.TextColor3 = RED
+cardPlace.TextSize = 24
+cardPlace.ZIndex = 61
+
+local cardWhen = label(card, "", UDim2.new(1, -160, 0, 22), UDim2.new(0, 80, 0.30, 34))
+cardWhen.TextXAlignment = Enum.TextXAlignment.Center
+cardWhen.TextColor3 = DIM
+cardWhen.TextSize = 15
+cardWhen.ZIndex = 61
+
+local cardWhat = label(card, "", UDim2.new(1, -240, 0, 120), UDim2.new(0, 120, 0.30, 84))
+cardWhat.TextXAlignment = Enum.TextXAlignment.Center
+cardWhat.TextColor3 = BONE
+cardWhat.TextSize = 20
+cardWhat.ZIndex = 61
+
+local cardQuestion = label(card, "", UDim2.new(1, -160, 0, 26), UDim2.new(0, 80, 0.30, 216))
+cardQuestion.TextXAlignment = Enum.TextXAlignment.Center
+cardQuestion.TextColor3 = RED
+cardQuestion.TextSize = 19
+cardQuestion.ZIndex = 61
+
+-- The question, small, under the clock, for the whole shift.
+local questionLine = label(gui, "", UDim2.new(0, 300, 0, 18), UDim2.new(1, -320, 0, 58))
+questionLine.TextXAlignment = Enum.TextXAlignment.Right
+questionLine.TextColor3 = Color3.fromRGB(122, 74, 70)
+questionLine.TextSize = 13
+
+local function showCard(payload)
+	cardPlace.Text = payload.place or ""
+	cardWhen.Text = payload.when or ""
+	cardWhat.Text = payload.what or ""
+	cardQuestion.Text = payload.question or ""
+	questionLine.Text = payload.question or ""
+
+	card.Visible = true
+	card.BackgroundTransparency = 0
+	for _, l in { cardPlace, cardWhen, cardWhat, cardQuestion } do
+		l.TextTransparency = 1
+	end
+	-- In one at a time, out all together.
+	task.spawn(function()
+		for i, l in { cardPlace, cardWhen, cardWhat, cardQuestion } do
+			task.wait(if i == 1 then 0.6 else 0.9)
+			TweenService:Create(l, TweenInfo.new(0.8), { TextTransparency = 0 }):Play()
+		end
+		task.wait(4.5)
+		for _, l in { cardPlace, cardWhen, cardWhat, cardQuestion } do
+			TweenService:Create(l, TweenInfo.new(1.0), { TextTransparency = 1 }):Play()
+		end
+		TweenService:Create(card, TweenInfo.new(2.2), { BackgroundTransparency = 1 }):Play()
+		task.wait(2.3)
+		card.Visible = false
+	end)
+end
 
 -- ── State ───────────────────────────────────────────────────────────────────
 

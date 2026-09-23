@@ -32,6 +32,7 @@ local ScareCatalog = require(Shared.ScareCatalog)
 local Atmos = require(script.Parent.Atmos)
 local AttentionService = require(script.Parent.AttentionService)
 local Gaze = require(script.Parent.Gaze)
+local Scares = require(script.Parent.Scares)
 local Hud = require(script.Parent.Hud)
 local Power = require(script.Parent.Power)
 local World = require(script.Parent.World)
@@ -212,76 +213,18 @@ local function showEyes(player: Player)
 	end)
 end
 
--- ── Startles ────────────────────────────────────────────────────────────────
-
-local function fireStartle(player: Player, large: boolean)
-	local at = root(player)
-	if not at then
-		return
-	end
+-- ── Startles ───────────────────────────────────────────────────────────────
+--[[
+	The loud ones live in Scares, which stages them on real parts of the
+	building: a fascia coming off a shop front, a shutter closing on its own, a
+	trolley rolling the length of an arm. This decides *who* and *when*; that
+	decides *what*, from whatever happens to be near them.
+]]
+local function fireStartle(player: Player, _large: boolean)
 	lastStartle = os.clock()
-	startlesLeft -= 1
-	if large then
-		largeLeft -= 1
+	if Scares.fire(player) then
+		startlesLeft -= 1
 	end
-
-	-- Pick something from the catalogue that fits where the player is standing.
-	local pool = {}
-	for _, scare in ScareCatalog.STARTLES do
-		if (scare.size == "large") == large and scare.fromNight <= Dread.night then
-			table.insert(pool, scare)
-		end
-	end
-	local scare = if #pool > 0 then pool[math.random(1, #pool)] else nil
-
-	--[[
-		The silence ramp. Nobody notices it and it roughly doubles the startle,
-		which is why the loudest moment does not have to be the loudest sound.
-	]]
-	Atmos.setMuzak(false)
-	task.wait(Config.STARTLE_MIX.FULL_CUT_SECONDS)
-
-	Hud.effect("startle", {
-		shake = if large then 1.0 else 0.45,
-		flash = large,
-		large = large,
-		label = scare and scare.name or nil,
-	})
-	--[[
-		Captioned by what it actually was, from the catalogue, not by "[scary
-		noise]". A player reading captions should know a fascia came off a shop
-		front and not merely that they are supposed to be frightened.
-	]]
-	Hud.caption(
-		if scare then `[{scare.name:lower()}]` else (if large then "[BANG]" else "[a sharp knock, close]"),
-		Places.roomAt(at.Position)
-	)
-
-	-- Something real does it: a fitting goes, a bin goes over, a shutter drops.
-	-- Something real does it, and what it does is take the light away. The
-	-- bulkheads have been dark since the building went onto the emergency
-	-- circuit, so the only thing left to put out is the way out.
-	local nearest, best = nil, math.huge
-	for _, fitting in World.all("ExitSign") do
-		local d = (fitting.Position - at.Position).Magnitude
-		if d < best then
-			nearest, best = fitting, d
-		end
-	end
-	if nearest and best < 24 * METRE then
-		Power.douse(nearest, large and 22 or 7)
-	end
-	Atmos.distantFall({
-		(at.Position.X / METRE) + math.random(-14, 14),
-		at.Position.Y / METRE,
-		(at.Position.Z / METRE) + math.random(-14, 14),
-	})
-
-	task.delay(Config.STARTLE_MIX.DUCK_SECONDS, function()
-		if Power.on then
-			Atmos.setMuzak(true)
-		end
-	end)
 end
 
 -- ── The director ────────────────────────────────────────────────────────────
@@ -305,6 +248,7 @@ function Dread.start()
 	startlesLeft = Config.DREAD.STARTLES_PER_NIGHT
 	largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
 	lastStartle = os.clock() + Config.DREAD.OPENING_QUIET_SECONDS
+	Scares.reset(Dread.night)
 
 	--[[
 		The presence resolution loop, at 15 Hz. This is the one piece of the game

@@ -471,11 +471,58 @@ end
 
 -- ── Props ───────────────────────────────────────────────────────────────────
 
+--[[
+	Pallet racking.
+
+	It was a solid box 1.8 m tall with a lid on it, which is a wall, not
+	racking. What makes racking read is that you can see through it: two
+	uprights per bay with bracing between them, horizontal beams at three
+	levels, and timber decking laid on the beams. The gaps are the whole
+	point -- a stockroom is frightening because you can see one aisle over and
+	not the one past that, and you cannot do that through a wall.
+]]
 local function shelfRun(x, y, z, len, alongX)
-	local s = alongX and V(len, 1.8, 0.8) or V(0.8, 1.8, len)
-	P("Shelving", s, at(x, y + 0.9, z), C.metal)
-	local t = alongX and V(len, 0.08, 0.95) or V(0.95, 0.08, len)
-	P("ShelfTop", t, at(x, y + 1.85, z), C.trim)
+	local levels = { 0.12, 0.78, 1.44 }
+	local frames = math.max(2, math.floor(len / 1.35) + 1)
+	local pitch = len / (frames - 1)
+
+	for i = 0, frames - 1 do
+		local o = -len / 2 + i * pitch
+		local ux = if alongX then x + o else x
+		local uz = if alongX then z else z + o
+		-- Two uprights per frame, one at each side of the bay's depth.
+		for _, side in { -1, 1 } do
+			local px = if alongX then ux else ux + side * 0.38
+			local pz = if alongX then uz + side * 0.38 else uz
+			P("RackUpright", V(0.09, 2.0, 0.09), at(px, y + 1.0, pz), Color3.fromRGB(96, 62, 46))
+			P("RackFoot", V(0.2, 0.05, 0.2), at(px, y + 0.02, pz), C.metal)
+		end
+		-- The diagonal bracing between them, which is what says "racking".
+		for k = 0, 2 do
+			local brace = P("RackBrace",
+				(if alongX then V(0.05, 0.05, 0.86) else V(0.86, 0.05, 0.05)),
+				at(ux, y + 0.4 + k * 0.62, uz), Color3.fromRGB(96, 62, 46))
+			brace.Orientation = Vector3.new(if alongX then (if k % 2 == 0 then 38 else -38) else 0,
+				0, if alongX then 0 else (if k % 2 == 0 then 38 else -38))
+		end
+	end
+
+	for _, ly in levels do
+		for _, side in { -1, 1 } do
+			local bx = if alongX then x else x + side * 0.38
+			local bz = if alongX then z + side * 0.38 else z
+			P("RackBeam", (if alongX then V(len, 0.11, 0.05) else V(0.05, 0.11, len)),
+				at(bx, y + ly + 0.05, bz), Color3.fromRGB(150, 118, 40))
+		end
+		-- Decking: boards laid across the beams, with gaps between them.
+		for b = 0, 2 do
+			local o = (b - 1) * 0.26
+			P("RackDeck",
+				(if alongX then V(len - 0.06, 0.03, 0.22) else V(0.22, 0.03, len - 0.06)),
+				at(if alongX then x else x + o, y + ly + 0.12, if alongX then z + o else z),
+				C.wood)
+		end
+	end
 end
 
 --[[
@@ -2374,76 +2421,130 @@ local function dressStaffRoom(cx, cz, y, h, w, d)
 	tube(cx, y + h - 0.16, cz, true)
 end
 
-local function dressCameraRoom(cx, cz, y, h, w, d)
-	desk(cx, y, cz - 1.2, 3.4, 0.9)
-	chair(cx, y, cz - 0.3)
-	P("DeskReturn", V(0.9, 0.06, 1.4), at(cx - 1.9, y + 0.74, cz - 0.6), C.wood)
+--[[
+	The camera room.
 
+	You come in through the east wall, so the monitors go on the west wall:
+	you open the door and you are looking at them, and whoever is sitting there
+	has their back to you. That is the correct arrangement for a CCTV room and
+	it is also the one that makes Night 4 work, because somebody has to sit in
+	that chair with their back to the door for twenty minutes.
+]]
+local function dressCameraRoom(cx, cz, y, h, w, d)
+	local north = cz + d / 2 - WALL / 2
+	local south = cz - d / 2 + WALL / 2
+	local west = cx - w / 2 + WALL / 2
+	local east = cx + w / 2 - WALL / 2
+
+	-- ── West wall: the bench, the monitors, the rack ────────────────────────
+	local bx = west + 0.42
+	P("DeskTop", V(0.8, 0.05, 2.6), at(bx, y + 0.75, cz), C.wood)
+	P("DeskEdge", V(0.83, 0.02, 2.63), at(bx, y + 0.725, cz), C.trim)
+	P("DeskApron", V(0.6, 0.09, 2.4), at(bx, y + 0.67, cz), C.wood)
+	for _, sz in { -1, 1 } do
+		P("DeskLeg", V(0.05, 0.66, 0.05), at(bx + 0.28, y + 0.33, cz + sz * 1.15), C.metal)
+		P("DeskLeg", V(0.05, 0.66, 0.05), at(bx - 0.28, y + 0.33, cz + sz * 1.15), C.metal)
+	end
+	chair(bx + 0.95, y, cz - 0.1, 270)
+
+	--[[
+		Six monitors, stacked two high and three across, on the wall above the
+		bench. Two of them have been nothing but noise for years, which is the
+		detail that makes the other four worth looking at.
+	]]
 	for i = 0, 5 do
-		local mx = cx - 1.4 + (i % 3) * 1.4
-		local my = y + 1.25 + math.floor(i / 3) * 0.75
-		P("Monitor", V(0.6, 0.45, 0.1), at(mx, my, cz - 1.9), C.panel)
-		local glass = P("MonitorGlass", V(0.52, 0.37, 0.03), at(mx, my, cz - 1.84), Color3.fromRGB(26, 30, 34))
-		-- Two of them are just noise, and have been for years.
+		local mz = cz - 1.0 + (i % 3) * 1.0
+		local my = y + 1.28 + math.floor(i / 3) * 0.66
+		P("MonitorBracket", V(0.1, 0.06, 0.4), at(west + 0.12, my - 0.24, mz), C.metal)
+		P("Monitor", V(0.44, 0.44, 0.58), at(west + 0.32, my, mz), C.panel)
+		P("MonitorHood", V(0.1, 0.06, 0.62), at(west + 0.56, my + 0.25, mz), C.dark)
+		local glass = P("MonitorGlass", V(0.03, 0.36, 0.5), at(west + 0.55, my, mz), Color3.fromRGB(26, 30, 34))
 		if i == 1 or i == 4 then
 			glass.Color = Color3.fromRGB(54, 58, 62)
 			glass.Material = Enum.Material.Neon
 			bulb(glass, Color3.fromRGB(40, 60, 70), 0.12, 1.6)
 		end
-		P("MonitorNumber", V(0.06, 0.06, 0.01), at(mx - 0.22, my - 0.24, cz - 1.82), C.trim)
+		P("MonitorNumber", V(0.01, 0.05, 0.05), at(west + 0.57, my - 0.24, mz - 0.2), C.trim)
 	end
 
-	-- The rack: a switcher, four recorders, and a shelf of tapes going back years.
-	P("Rack", V(0.7, 1.9, 0.6), at(cx - 2.0, y + 0.95, cz - 1.7), C.dark)
+	-- The rack, at the north end of the same wall.
+	P("Rack", V(0.62, 1.9, 0.7), at(west + 0.35, y + 0.95, north - 0.45), C.dark)
 	for i = 0, 5 do
-		P("RackUnit", V(0.62, 0.16, 0.02), at(cx - 2.0, y + 0.5 + i * 0.26, cz - 1.38), C.metal)
-		P("RackLed", V(0.03, 0.03, 0.02), at(cx - 2.24, y + 0.5 + i * 0.26, cz - 1.36), RED, Enum.Material.Neon)
-	end
-	P("TapeShelf", V(1.4, 0.05, 0.28), at(cx + 1.6, y + 1.7, cz - 2.0), C.trim)
-	for i = 0, 11 do
-		P("Cassette", V(0.02, 0.11, 0.2), at(cx + 1.05 + i * 0.1, y + 1.8, cz - 2.0), Color3.fromRGB(38, 36, 34))
+		P("RackUnit", V(0.04, 0.16, 0.62), at(west + 0.66, y + 0.5 + i * 0.26, north - 0.45), C.metal)
+		P("RackLed", V(0.02, 0.03, 0.03), at(west + 0.69, y + 0.5 + i * 0.26, north - 0.7), RED, Enum.Material.Neon)
 	end
 
-	local pa = P("PASpeaker", V(0.4, 0.28, 0.2), at(cx, y + 2.2, cz + 1.9), C.trim)
+	-- ── North wall: the tapes, going back years ─────────────────────────────
+	for row = 0, 1 do
+		P("TapeShelf", V(1.5, 0.05, 0.3), at(cx + 0.8, y + 1.3 + row * 0.42, north - 0.17), C.trim)
+		for i = 0, 11 do
+			P("Cassette", V(0.1, 0.19, 0.02), at(cx + 0.2 + i * 0.1, y + 1.4 + row * 0.42, north - 0.17),
+				Color3.fromRGB(38, 36, 34))
+		end
+	end
+
+	-- ── South wall: the log, the kettle nobody cleans, the radio ────────────
+	P("SideTable", V(1.1, 0.05, 0.4), at(cx + 0.9, y + 0.78, south + 0.22), C.wood)
+	for _, sx in { -1, 1 } do
+		P("DeskLeg", V(0.05, 0.76, 0.05), at(cx + 0.9 + sx * 0.48, y + 0.38, south + 0.22), C.metal)
+	end
+	P("Logbook", V(0.3, 0.04, 0.42), at(cx + 0.7, y + 0.82, south + 0.22), Color3.fromRGB(58, 54, 74))
+	P("Radio", V(0.3, 0.18, 0.2), at(cx + 1.25, y + 0.89, south + 0.22), C.metal)
+	P("Mug", V(0.08, 0.09, 0.08), at(cx + 0.35, y + 0.84, south + 0.24), Color3.fromRGB(180, 176, 168))
+
+	-- High on the east wall, over the door, where a tannoy speaker goes.
+	local pa = P("PASpeaker", V(0.18, 0.3, 0.42), at(east - 0.12, y + 2.3, cz + 1.4), C.trim)
 	pa.Name = "PASpeaker"
-	P("PAGrille", V(0.32, 0.2, 0.03), at(cx, y + 2.2, cz + 1.78), C.dark)
-	P("Radio", V(0.3, 0.18, 0.2), at(cx + 1.2, y + 0.88, cz - 1.2), C.metal)
-	P("Mug", V(0.09, 0.1, 0.09), at(cx + 0.8, y + 0.83, cz - 0.9), Color3.fromRGB(180, 176, 168))
-	P("Logbook", V(0.3, 0.04, 0.42), at(cx - 1.0, y + 0.8, cz - 0.95), Color3.fromRGB(58, 54, 74))
+	P("PAGrille", V(0.03, 0.22, 0.34), at(east - 0.22, y + 2.3, cz + 1.4), C.dark)
 
 	ceilingKit(cx, cz, w, d, y, h, 4102)
-	bulkhead(cx, y + h - 0.3, cz + 0.5)
+	tube(cx, y + h - 0.16, cz, false)
 end
 
 --[[
-	Walt's office. He was night security here from 1994 and his keys were never
-	returned, so four of the hooks on his board are empty and his jacket is still
-	over the back of the chair.
+	The security office.
+
+	A desk you sit behind facing the door, which is what a security office is:
+	the filing down one wall, the key board on another, and the kettle in the
+	corner, because whoever worked in here worked twelve-hour nights and the
+	kettle is the single most used object in the room.
 ]]
 local function dressSecurityOffice(cx, cz, y, h, w, d)
-	desk(cx, y, cz, 2.0, 0.9)
-	chair(cx, y, cz + 0.9)
-	P("Jacket", V(0.44, 0.5, 0.1), at(cx, y + 0.95, cz + 1.12), Color3.fromRGB(38, 40, 48))
+	local north = cz + d / 2 - WALL / 2
+	local south = cz - d / 2 + WALL / 2
+	local west = cx - w / 2 + WALL / 2
+	local east = cx + w / 2 - WALL / 2
 
-	P("Filing", V(0.6, 1.3, 0.7), at(cx - 1.8, y + 0.65, cz - 1.2), C.metal)
-	P("Filing", V(0.6, 1.3, 0.7), at(cx - 1.8, y + 0.65, cz + 0.2), C.metal)
-	for i = 0, 2 do
-		P("DrawerFront", V(0.56, 0.36, 0.03), at(cx - 1.5, y + 0.3 + i * 0.42, cz - 1.2), C.trim)
-		P("DrawerFront", V(0.56, 0.36, 0.03), at(cx - 1.5, y + 0.3 + i * 0.42, cz + 0.2), C.trim)
+	-- ── The desk, facing the door ───────────────────────────────────────────
+	local dx = west + 1.1
+	desk(dx, y, cz, 1.9, 0.9)
+	chair(dx - 0.75, y, cz, 90)
+	P("Jacket", V(0.12, 0.5, 0.44), at(dx - 1.02, y + 0.95, cz), Color3.fromRGB(38, 40, 48))
+	P("Blotter", V(0.5, 0.01, 0.36), at(dx + 0.1, y + 0.78, cz), Color3.fromRGB(56, 52, 60))
+	P("Telephone", V(0.2, 0.12, 0.24), at(dx + 0.55, y + 0.83, cz + 0.22), C.dark)
+	P("Mug", V(0.08, 0.09, 0.08), at(dx + 0.5, y + 0.82, cz - 0.24), Color3.fromRGB(180, 176, 168))
+
+	-- ── North wall: the filing ──────────────────────────────────────────────
+	for i = 0, 1 do
+		local fx = west + 0.9 + i * 0.7
+		P("Filing", V(0.64, 1.32, 0.68), at(fx, y + 0.66, north - 0.38), C.metal)
+		P("FilingTop", V(0.68, 0.04, 0.72), at(fx, y + 1.34, north - 0.38), C.trim)
+		for k = 0, 2 do
+			P("DrawerFront", V(0.58, 0.38, 0.03), at(fx, y + 0.32 + k * 0.44, north - 0.72), C.trim)
+			P("DrawerHandle", V(0.22, 0.03, 0.03), at(fx, y + 0.44 + k * 0.44, north - 0.75), C.metal)
+			P("DrawerLabel", V(0.14, 0.05, 0.01), at(fx, y + 0.24 + k * 0.44, north - 0.74),
+				Color3.fromRGB(198, 194, 180))
+		end
 	end
 	-- One drawer is open, and has been since somebody went through it in 1998.
-	P("OpenDrawer", V(0.56, 0.34, 0.5), at(cx - 1.25, y + 1.14, cz + 0.2), C.metal)
+	P("OpenDrawer", V(0.58, 0.36, 0.5), at(west + 1.6, y + 1.2, north - 0.98), C.metal)
+	P("OpenDrawerFront", V(0.58, 0.38, 0.03), at(west + 1.6, y + 1.2, north - 1.23), C.trim)
+	P("FileTab", V(0.5, 0.22, 0.24), at(west + 1.6, y + 1.3, north - 1.02), Color3.fromRGB(176, 168, 144))
 
-	--[[
-		The key board. Four hooks are empty and the labels under them are still
-		there.
-
-		On the south wall, not the east one. The door is in the middle of the
-		east wall, and a board hung on the middle of the east wall is a board
-		hung across the only way in.
-	]]
-	local bz = cz - d / 2 + 0.06
+	-- ── South wall: the key board ───────────────────────────────────────────
+	local bz = south + 0.06
 	P("KeyBoard", V(1.2, 0.8, 0.05), at(cx - 0.6, y + 1.5, bz), C.wood)
+	P("KeyBoardFrame", V(1.28, 0.88, 0.03), at(cx - 0.6, y + 1.5, bz - 0.02), C.trim)
 	for i = 0, 11 do
 		local kx = cx - 1.05 + (i % 6) * 0.18
 		local ky = y + 1.72 - math.floor(i / 6) * 0.34
@@ -2454,11 +2555,19 @@ local function dressSecurityOffice(cx, cz, y, h, w, d)
 		P("KeyLabel", V(0.1, 0.04, 0.01), at(kx, ky - 0.21, bz + 0.04), Color3.fromRGB(196, 190, 170))
 	end
 
-	P("Kettle", V(0.2, 0.26, 0.2), at(cx + 1.8, y + 0.87, cz - 1.6), C.metal)
-	P("Fan", V(0.3, 0.3, 0.12), at(cx - 0.9, y + 1.5, cz - 1.7), C.metal)
-	litterBin(cx + 1.6, y, cz + 1.5)
+	-- ── The corner: the kettle, the fan, the bin ────────────────────────────
+	P("SideTable", V(0.6, 0.05, 0.5), at(east - 0.45, y + 0.78, south + 0.35), C.wood)
+	for _, sx in { -1, 1 } do
+		P("DeskLeg", V(0.05, 0.76, 0.05), at(east - 0.45 + sx * 0.24, y + 0.38, south + 0.35), C.metal)
+	end
+	P("Kettle", V(0.19, 0.24, 0.19), at(east - 0.45, y + 0.92, south + 0.35), C.metal)
+	P("KettleSpout", V(0.05, 0.05, 0.11), at(east - 0.45, y + 1.0, south + 0.23), C.metal)
+	P("Fan", V(0.28, 0.28, 0.12), at(east - 0.2, y + 1.6, south + 0.12), C.metal)
+	P("FanCage", V(0.3, 0.3, 0.03), at(east - 0.2, y + 1.6, south + 0.19), C.dark)
+	litterBin(east - 0.45, y, cz + 1.2)
+
 	ceilingKit(cx, cz, w, d, y, h, 4103)
-	bulkhead(cx, y + h - 0.3, cz)
+	tube(cx, y + h - 0.16, cz, false)
 end
 
 --[[
@@ -2777,43 +2886,82 @@ end
 --[[
 	The custodial store. Where the mop is, and on Night 2 where Lo's tape is.
 ]]
+--[[
+	The custodial store.
+
+	Three and a half metres by three, with the door in the east wall, which
+	means there is exactly one arrangement: shelving on the wall opposite the
+	door so you can see what is on it from the doorway, the Belfast sink and
+	the mop rack on one side wall, and the floor kept clear because the cart
+	has to come out. A cleaner's cupboard is the most rigorously organised room
+	in any building, because it is the smallest.
+]]
 local function dressCustodial(cx, cz, y, h, w, d)
-	P("MopBucket", V(0.5, 0.4, 0.4), at(cx - 0.9, y + 0.2, cz), C.trim)
-	P("MopWringer", V(0.5, 0.2, 0.2), at(cx - 0.9, y + 0.48, cz - 0.16), C.metal)
-	local handle = P("MopHandle", V(0.06, 1.4, 0.06), at(cx - 0.9, y + 1.1, cz - 0.2), C.wood)
-	handle.Name = "MopHandle"
-	P("MopHead", V(0.24, 0.2, 0.14), at(cx - 0.9, y + 0.42, cz - 0.2), Color3.fromRGB(150, 146, 134))
-	P("Shelf", V(2.8, 0.06, 0.5), at(cx, y + 1.5, cz + 1.2), C.trim)
-	P("Shelf", V(2.8, 0.06, 0.5), at(cx, y + 1.0, cz + 1.2), C.trim)
+	local north = cz + d / 2 - WALL / 2
+	local south = cz - d / 2 + WALL / 2
+	local west = cx - w / 2 + WALL / 2
+
+	-- ── West wall: the shelving, facing the door ────────────────────────────
+	for row = 0, 2 do
+		local sy = y + 0.85 + row * 0.5
+		P("Shelf", V(0.42, 0.04, 2.5), at(west + 0.23, sy, cz), C.trim)
+		P("ShelfLip", V(0.03, 0.05, 2.5), at(west + 0.43, sy + 0.04, cz), C.metal)
+	end
+	for _, sz in { -1, 1 } do
+		P("ShelfUpright", V(0.05, 1.9, 0.05), at(west + 0.42, y + 0.95, cz + sz * 1.2), C.metal)
+		P("ShelfUpright", V(0.05, 1.9, 0.05), at(west + 0.06, y + 0.95, cz + sz * 1.2), C.metal)
+	end
+	-- Bottles on the top shelf, spare tubes on the middle, rags on the bottom.
 	for i = 0, 7 do
-		P("Bottle", V(0.11, 0.3, 0.11), at(cx - 1.2 + i * 0.34, y + 1.68, cz + 1.2), Color3.fromRGB(78, 88, 76))
+		P("Bottle", V(0.11, 0.28, 0.11), at(west + 0.23, y + 1.99, cz - 1.05 + i * 0.3),
+			Color3.fromRGB(78, 88, 76))
+		P("BottleCap", V(0.06, 0.04, 0.06), at(west + 0.23, y + 2.15, cz - 1.05 + i * 0.3), C.dark)
 	end
 	for i = 0, 4 do
-		P("SpareTube", V(0.05, 0.05, 0.9), at(cx - 1.0 + i * 0.12, y + 1.06, cz + 1.2), Color3.fromRGB(180, 176, 168))
+		P("SpareTube", V(0.05, 0.05, 0.8), at(west + 0.2 + (i % 2) * 0.1, y + 1.42 + math.floor(i / 2) * 0.06, cz),
+			Color3.fromRGB(180, 176, 168))
 	end
-	-- Pushed to the back wall. The door is the east one and it is 1 m wide.
-	P("Cart", V(0.6, 0.9, 1.0), at(cx - 1.2, y + 0.45, cz - 0.8), C.metal)
-	P("WetSign", V(0.3, 0.5, 0.3), at(cx - 1.3, y + 0.25, cz + 0.9), Color3.fromRGB(180, 96, 30))
-	bulkhead(cx, y + h - 0.3, cz)
+	for i = 0, 2 do
+		P("Rags", V(0.3, 0.16, 0.34), at(west + 0.23, y + 0.95, cz - 0.7 + i * 0.7), Color3.fromRGB(122, 118, 108))
+	end
+
+	-- ── North wall: the sink and the mop rack over it ───────────────────────
+	P("BelfastSink", V(0.72, 0.42, 0.5), at(cx - 0.3, y + 0.62, north - 0.3), Color3.fromRGB(198, 196, 190))
+	P("SinkBasin", V(0.6, 0.06, 0.38), at(cx - 0.3, y + 0.8, north - 0.3), Color3.fromRGB(58, 60, 62))
+	P("SinkBracket", V(0.72, 0.4, 0.06), at(cx - 0.3, y + 0.2, north - 0.14), C.metal)
+	P("Tap", V(0.04, 0.3, 0.04), at(cx - 0.3, y + 0.98, north - 0.12), C.metal)
+	P("TapSpout", V(0.04, 0.04, 0.16), at(cx - 0.3, y + 1.11, north - 0.2), C.metal)
+	P("MopRail", V(1.2, 0.05, 0.05), at(cx - 0.2, y + 1.6, north - 0.1), C.metal)
+	for i = 0, 2 do
+		P("MopClip", V(0.06, 0.08, 0.06), at(cx - 0.7 + i * 0.5, y + 1.6, north - 0.14), C.dark)
+	end
+	-- One broom stays on the rail. The mop is the one you take.
+	P("Broom", V(0.04, 1.2, 0.04), at(cx + 0.3, y + 1.1, north - 0.16), C.wood)
+	P("BroomHead", V(0.34, 0.1, 0.12), at(cx + 0.3, y + 0.52, north - 0.16), Color3.fromRGB(122, 96, 56))
+
+	-- ── South wall: the bucket, the mop, the cart ───────────────────────────
+	P("MopBucket", V(0.44, 0.4, 0.38), at(cx - 1.05, y + 0.2, south + 0.3), C.trim)
+	P("MopWringer", V(0.44, 0.18, 0.2), at(cx - 1.05, y + 0.48, south + 0.44), C.metal)
+	for _, sx in { -1, 1 } do
+		P("BucketCastor", V(0.07, 0.07, 0.07), at(cx - 1.05 + sx * 0.16, y + 0.035, south + 0.3), C.dark)
+	end
+	local handle = P("MopHandle", V(0.05, 1.4, 0.05), at(cx - 1.05, y + 1.1, south + 0.2), C.wood)
+	handle.Name = "MopHandle"
+	P("MopHead", V(0.22, 0.2, 0.14), at(cx - 1.05, y + 0.42, south + 0.2), Color3.fromRGB(150, 146, 134))
+
+	P("Cart", V(0.56, 0.9, 0.92), at(cx - 0.35, y + 0.5, south + 0.55), C.metal)
+	P("CartShelf", V(0.56, 0.03, 0.9), at(cx - 0.35, y + 0.5, south + 0.55), C.trim)
+	P("CartHandle", V(0.06, 0.06, 0.9), at(cx - 0.35, y + 0.98, south + 0.55), C.metal)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			P("Castor", V(0.08, 0.1, 0.08), at(cx - 0.35 + sx * 0.22, y + 0.05, south + 0.55 + sz * 0.38), C.dark)
+		end
+	end
+	P("WetSign", V(0.28, 0.5, 0.26), at(cx - 0.3, y + 0.25, north - 0.9), Color3.fromRGB(180, 96, 30))
+
+	tube(cx, y + h - 0.16, cz, false)
 end
 
---[[
-	The food court, on the balcony level. Six tables, a servery that closed in
-	1996, and a menu board with the prices still on it.
-]]
---[[
-	The toilets.
-
-	Every shopping centre has them, the wayfinding in the east arm has pointed at
-	them since the building went up, and they are one of the two or three best
-	rooms a horror game can be given: hard surfaces, a row of doors that are
-	either open or not, a wall of mirror, and a tap that has been dripping for
-	twenty-eight years into a basin nobody is going to turn off.
-
-	Nothing scripted happens in here on any of the five nights. That is
-	deliberate. A room the player is certain must contain something, that
-	contains nothing, is doing more work than most of the rooms that do.
-]]
 local function dressToilets(cx, cz, y, h, w, d)
 	-- Cubicles down the back wall, and one of the doors is open.
 	local rng = Random.new(2201)

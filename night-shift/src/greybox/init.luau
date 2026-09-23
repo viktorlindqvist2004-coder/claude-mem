@@ -193,13 +193,22 @@ function exitSign(x, y, z, facing)
 	local nz = if facing == "N" then 0.3 elseif facing == "S" then -0.3 else 0
 
 	P("ExitBracket", if alongX then V(0.05, 0.05, 0.36) else V(0.36, 0.05, 0.05),
-		at(x + nx / 2, y + 0.19, z + nz / 2), C.metal)
+		at(x + nx / 2, y + 0.23, z + nz / 2), C.metal)
 
-	-- The housing, and the face in it. Neither glows.
-	P("ExitHousing", if alongX then V(0.78, 0.34, 0.1) else V(0.1, 0.34, 0.78),
+	--[[
+		The housing, and the face in it. Neither glows.
+
+		Bigger than it was, and the face is now nearly the size of the box it
+		sits in. The word was small twice over: the face was 8 cm shorter than
+		the housing all the way round, so there was a dark border eating the
+		area before the lettering started, and then the lettering took 86% of
+		what was left. A sign whose entire content is one word should be that
+		word, edge to edge.
+	]]
+	P("ExitHousing", if alongX then V(0.98, 0.42, 0.1) else V(0.1, 0.42, 0.98),
 		at(x + nx, y, z + nz), Color3.fromRGB(26, 25, 25))
 
-	local sign = P("ExitSign", if alongX then V(0.7, 0.26, 0.13) else V(0.13, 0.26, 0.7),
+	local sign = P("ExitSign", if alongX then V(0.92, 0.36, 0.13) else V(0.13, 0.36, 0.92),
 		at(x + nx, y, z + nz), EXIT_FACE)
 	sign.CastShadow = false
 
@@ -214,6 +223,7 @@ function exitSign(x, y, z, facing)
 	for _, face in faces do
 		Surfaces.label(sign, face, "EXIT", {
 			lit = true,
+			fill = true,
 			brightness = 4.5,
 			color = EXIT_RED,
 			font = Enum.Font.GothamBold,

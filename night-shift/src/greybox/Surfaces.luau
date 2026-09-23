@@ -282,8 +282,20 @@ function Surfaces.label(part: BasePart, face: Enum.NormalId, text: string, optio
 
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
-	label.Size = UDim2.fromScale(0.92, 0.86)
-	label.Position = UDim2.fromScale(0.04, 0.07)
+	--[[
+		Most lettering wants a margin round it -- a notice with text touching
+		its own edge reads as a mistake. A sign whose entire job is one word
+		does not: `fill` gives the label the whole face, so TextScaled has the
+		full height to work with and the word comes out as tall as the thing
+		it is written on.
+	]]
+	if options.fill then
+		label.Size = UDim2.fromScale(1, 1)
+		label.Position = UDim2.fromScale(0, 0)
+	else
+		label.Size = UDim2.fromScale(0.92, 0.86)
+		label.Position = UDim2.fromScale(0.04, 0.07)
+	end
 	label.Text = text
 	label.Font = options.font or Enum.Font.GothamMedium
 	label.TextColor3 = options.color or Color3.fromRGB(226, 222, 212)

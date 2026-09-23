@@ -12,11 +12,11 @@
 
 local Build = {}
 
-Build.COMMIT = "1eb6848"
-Build.SUMMARY = "Never leave the player outside the building"
-Build.WHEN = "23 Sep 01:35"
+Build.COMMIT = "dfafedb"
+Build.SUMMARY = "Print which build this is, so nobody has to guess"
+Build.WHEN = "23 Sep 01:37"
 -- True when the working tree had uncommitted source changes at stamp time.
-Build.DIRTY = true
+Build.DIRTY = false
 
 function Build.line(): string
 	return `Night Shift · {Build.COMMIT}{if Build.DIRTY then "+" else ""} · {Build.WHEN}`

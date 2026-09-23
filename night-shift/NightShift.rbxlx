@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "c4570d5"
-Build.LAST_COMMIT = "305e21e"
-Build.SUMMARY = "The lights go once, together, and take the hum with them"
-Build.WHEN = "23 Sep 16:46"
+Build.COMMIT = "334cbfc"
+Build.LAST_COMMIT = "55b8cfb"
+Build.SUMMARY = "Put the EXIT boxes only where there is a way out"
+Build.WHEN = "23 Sep 17:05"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -338,8 +338,17 @@ Config.FLASHLIGHT = {
 		So: a few metres of usable light, and a focused mode that reaches down a
 		corridor but only shows you a doorway's worth when it gets there.
 	]]
-	WIDE = { angle = 70, range = 15, brightness = 0.85, drainPerSecond = 0.8 },
-	FOCUS = { angle = 22, range = 28, brightness = 1.5, drainPerSecond = 2.4 },
+	--[[
+		Overcorrected, then corrected.
+
+		It was a 55 m floodlight at brightness 4.5, which lit whole rooms and
+		left the building with no dark in it. Cutting it to 15 m at 0.85 went
+		too far the other way: you could not see anything with it, which is not
+		tension, it is a broken tool. A torch shows you a room's worth at a
+		time and makes you choose which room's worth.
+	]]
+	WIDE = { angle = 72, range = 24, brightness = 1.9, drainPerSecond = 0.8 },
+	FOCUS = { angle = 24, range = 42, brightness = 3.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),
@@ -469,11 +478,13 @@ Config.DREAD = {
 		How often leaving a room sets one off.
 
 		Not every doorway, or crossing one becomes a mechanic and the player
-		starts avoiding them. About one in six means a lap of the back of house
-		produces one, somewhere, and never the same one twice -- and the other
-		five doorways are what make that one work.
+		starts avoiding them. One in six was still far too many: the back of
+		house is a corridor with eight doors off it, so a single lap set off
+		two or three and "something falls over, somewhere else" stopped being
+		an event by the second one. One in twenty means a lap usually produces
+		nothing, which is what makes the lap that does produce something land.
 	]]
-	DOORWAY_CHANCE = 0.16,
+	DOORWAY_CHANCE = 0.05,
 	-- Hard gates, not weights.
 	STARTLE_GLOBAL_COOLDOWN = 90,
 	STARTLE_AFTER_PRESENCE_COOLDOWN = 25,
@@ -2669,6 +2680,84 @@ return SoundBank
       </Item>
       <Item class="ModuleScript" referent="16">
         <Properties>
+          <string name="Name">Targets</string>
+          <string name="Source"><![CDATA[--!strict
+--[[
+	Targets — what the current job is pointing at.
+
+	The board says "Fetch the mop, and mop the landing". The building is dark,
+	the torch shows you a few metres of it, and a mop against a wall is a dark
+	shape among dark shapes. A player who cannot find the thing they have been
+	told to fetch does not conclude that they are standing next to it; they
+	conclude the game is broken.
+
+	So the thing the current job wants glows. Not everything you could touch --
+	that was the first attempt and it lights up half a room at once, which is
+	the same as lighting up nothing. One job, its own targets, and they go dark
+	the moment it is done and the next one lights instead.
+
+	This is the map from an objective to the parts it is about, by name. It
+	lives here rather than in the nights because it is one table you can read
+	top to bottom and check against the objective list, and because a lookup
+	spread across five files is a lookup nobody ever checks.
+
+	A name with no part in the building is not an error: plenty of objectives
+	are about a decision, a conversation or a place rather than an object, and
+	those simply do not glow.
+]]
+
+local Targets = {}
+
+Targets.FOR = {
+	-- Every night
+	get_inside = { "ExitDoor", "StaffDoor" },
+
+	-- Night 1 — First Shift
+	clock_in = { "TimeClock" },
+	read_rules = { "RuleSheet" },
+	face_shelves = { "ShelfBay" },
+	mop_landing = { "MopHandle", "WetLanding" },
+	pull_shutters = { "Shutter" },
+	bins_to_dock = { "Bin", "DockDropOff" },
+	change_fuse = { "FuseBox" },
+	find_out = { "FuseBox" },
+	clock_out = { "StaffDoor", "ExitDoor" },
+
+	-- Night 2 — Stocktake
+	dress_window = { "MannequinTorso", "Plinth" },
+	count_stock = { "StockBook", "Lectern" },
+	find_tape = { "Cart" },
+	put_them_back = { "MannequinTorso", "Plinth" },
+	the_collar = { "RedCollar" },
+
+	-- Night 3 — The Register
+	serve = { "CheckoutOne" },
+	tape_three = { "KeyBoard" },
+	the_complaint = { "Filing", "OpenDrawer" },
+	the_man = { "CheckoutOne" },
+
+	-- Night 4 — The Generator
+	generator = { "Generator", "GeneratorPanel", "PullCord" },
+	monitors = { "MonitorGlass", "Rack" },
+	walts_office = { "OpenDrawer" },
+	the_stair = { "StairFoot", "F3_Step" },
+	the_office = { "Microphone" },
+	the_rota = { "Rota" },
+
+	-- Night 5 — Closing
+	kill_lights = { "Backing" },
+	tags_back = { "CheckoutOne", "KeyBoard", "Cart", "StockBook" },
+	the_panel = { "MasterTimer" },
+	the_relay = { "MasterTimer" },
+	name_him = { "Radio" },
+}
+
+return Targets
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="17">
+        <Properties>
           <string name="Name">Types</string>
           <string name="Source"><![CDATA[--!strict
 --[[
@@ -2759,7 +2848,7 @@ return {}
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">VoiceBank</string>
           <string name="Source"><![CDATA[--!strict
@@ -2908,11 +2997,11 @@ return VoiceBank
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="18">
+  <Item class="ServerScriptService" referent="19">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Script" referent="19">
+    <Item class="Script" referent="20">
       <Properties>
         <string name="Name">Server</string>
         <token name="RunContext">0</token>
@@ -3176,7 +3265,7 @@ end
 print("[Night Shift] server up — Northlight Galleria, five nights")
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">Atmos</string>
           <string name="Source"><![CDATA[--!strict
@@ -3546,7 +3635,7 @@ return Atmos
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">AttentionService</string>
           <string name="Source"><![CDATA[--!strict
@@ -3659,7 +3748,7 @@ return AttentionService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">Case</string>
           <string name="Source"><![CDATA[--!strict
@@ -3771,7 +3860,7 @@ return Case
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">Customers</string>
           <string name="Source"><![CDATA[--!strict
@@ -3985,7 +4074,7 @@ return Customers
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">Dread</string>
           <string name="Source"><![CDATA[--!strict
@@ -4237,6 +4326,7 @@ end
 ]]
 local lastRoom: { [Player]: string } = {}
 local lastDoorway = 0
+local lastFall = 0
 
 local function watchDoorways()
 	task.spawn(function()
@@ -4299,6 +4389,7 @@ function Dread.start()
 	largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
 	lastStartle = os.clock() + Config.DREAD.OPENING_QUIET_SECONDS
 	lastDoorway = lastStartle
+	lastFall = lastStartle
 	table.clear(lastRoom)
 	Scares.reset(Dread.night)
 	watchDoorways()
@@ -4373,18 +4464,33 @@ function Dread.start()
 				fireStartle(pick, largeLeft > 0 and math.random() < 0.4)
 			elseif roll2 < 0.6 and sincePresence > 30 then
 				showPresence(pick)
-			elseif roll2 < 0.82 then
+			elseif roll2 < 0.94 then
 				showEyes(pick)
-			else
-				-- A build-up that resolves into nothing. Free, and the most
-				-- valuable thing in the catalogue.
+			elseif now - lastFall > Config.DREAD.STARTLE_GLOBAL_COOLDOWN then
+				--[[
+					A build-up that resolves into nothing -- in a room, not at a
+					random offset.
+
+					This used to fire on about one loop in five at the player's
+					position plus up to twenty metres in each direction, which
+					lands inside a wall as often as not. The result was
+					"something falls over, somewhere else" every minute or so,
+					from nowhere in particular, and a noise you cannot place and
+					cannot walk to is not a noise worth making. Now it picks a
+					real room eight to twenty-five metres off, so the caption
+					names somewhere you could go and find nothing.
+				]]
 				local at = root(pick)
-				if at then
-					Atmos.distantFall({
-						(at.Position.X / METRE) + math.random(-20, 20),
-						at.Position.Y / METRE,
-						(at.Position.Z / METRE) + math.random(-20, 20),
-					})
+				local nearby = if at then World.roomsNear(at.Position, 8, 25) else {}
+				if #nearby > 0 then
+					local key = nearby[math.random(1, math.min(3, #nearby))]
+					local centre = World.roomCentre(key)
+					if centre then
+						lastFall = now
+						Atmos.distantFall({
+							centre.X / METRE, centre.Y / METRE, centre.Z / METRE,
+						})
+					end
 				end
 			end
 
@@ -4416,7 +4522,7 @@ return Dread
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">Gaze</string>
           <string name="Source"><![CDATA[--!strict
@@ -4542,7 +4648,7 @@ return Gaze
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="27">
         <Properties>
           <string name="Name">Hud</string>
           <string name="Source"><![CDATA[--!strict
@@ -4700,7 +4806,7 @@ return Hud
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="27">
+      <Item class="ModuleScript" referent="28">
         <Properties>
           <string name="Name">Mannequins</string>
           <string name="Source"><![CDATA[--!strict
@@ -5026,11 +5132,11 @@ return Mannequins
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="28">
+      <Item class="Folder" referent="29">
         <Properties>
           <string name="Name">Nights</string>
         </Properties>
-        <Item class="ModuleScript" referent="29">
+        <Item class="ModuleScript" referent="30">
           <Properties>
             <string name="Name">Night1</string>
             <string name="Source"><![CDATA[--!strict
@@ -5518,7 +5624,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="30">
+        <Item class="ModuleScript" referent="31">
           <Properties>
             <string name="Name">Night2</string>
             <string name="Source"><![CDATA[--!strict
@@ -5841,7 +5947,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="31">
+        <Item class="ModuleScript" referent="32">
           <Properties>
             <string name="Name">Night3</string>
             <string name="Source"><![CDATA[--!strict
@@ -6138,7 +6244,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="32">
+        <Item class="ModuleScript" referent="33">
           <Properties>
             <string name="Name">Night4</string>
             <string name="Source"><![CDATA[--!strict
@@ -6504,7 +6610,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="33">
+        <Item class="ModuleScript" referent="34">
           <Properties>
             <string name="Name">Night5</string>
             <string name="Source"><![CDATA[--!strict
@@ -6963,7 +7069,7 @@ return Night
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="34">
+      <Item class="ModuleScript" referent="35">
         <Properties>
           <string name="Name">Objectives</string>
           <string name="Source"><![CDATA[--!strict
@@ -7129,7 +7235,7 @@ return Objectives
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="35">
+      <Item class="ModuleScript" referent="36">
         <Properties>
           <string name="Name">Power</string>
           <string name="Source"><![CDATA[--!strict
@@ -7264,7 +7370,7 @@ return Power
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="36">
+      <Item class="ModuleScript" referent="37">
         <Properties>
           <string name="Name">Scares</string>
           <string name="Source"><![CDATA[--!strict
@@ -7717,7 +7823,7 @@ return Scares
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="37">
+      <Item class="ModuleScript" referent="38">
         <Properties>
           <string name="Name">Shift</string>
           <string name="Source"><![CDATA[--!strict
@@ -7743,6 +7849,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
 local NightScript = require(Shared.NightScript)
 local Places = require(Shared.Places)
+local Targets = require(Shared.Targets)
 local RuleBook = require(Shared.RuleBook)
 local ShiftClock = require(Shared.ShiftClock)
 local SoundBank = require(Shared.SoundBank)
@@ -7768,10 +7875,26 @@ Shift.clock = nil :: any
 Shift.definition = nil :: any
 Shift.finished = false
 
+--[[
+	The glow on whatever the current job is about.
+
+	Server-side, so the whole crew sees the same thing lit -- four people
+	hunting for the same mop in the dark is not co-operation, it is four people
+	lost separately. Occluded, so it stops at the first wall: a glow that came
+	through the building would turn it into a map and throw away every sightline
+	the place has. You see it when you could see the object.
+
+	One job's targets at a time. Lighting everything a player could touch was
+	the first attempt, and that lights half a room at once, which is the same as
+	lighting nothing.
+]]
+local glowing: { Highlight } = {}
+
 local heartbeat: RBXScriptConnection? = nil
 local cancelTubes: (() -> ())? = nil
 local insideWatch: RBXScriptConnection? = nil
 local lightsWatch: any = nil
+local jobGlowWatch: any = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -7783,6 +7906,32 @@ local standStill: { until_: number, positions: { [Player]: Vector3 } }? = nil
 
 local ctx = {}
 Shift.ctx = ctx
+
+local function lightTheJob()
+	for _, glow in glowing do
+		glow:Destroy()
+	end
+	table.clear(glowing)
+
+	local current = Objectives.current()
+	if not current then
+		return
+	end
+	for _, name in Targets.FOR[current.id] or {} do
+		for _, part in World.all(name) do
+			local glow = Instance.new("Highlight")
+			glow.Name = "TheJob"
+			glow.Adornee = part
+			glow.DepthMode = Enum.HighlightDepthMode.Occluded
+			glow.FillColor = Color3.fromRGB(255, 236, 198)
+			glow.FillTransparency = 0.78
+			glow.OutlineColor = Color3.fromRGB(255, 244, 214)
+			glow.OutlineTransparency = 0.12
+			glow.Parent = part
+			table.insert(glowing, glow)
+		end
+	end
+end
 
 ctx.MANAGER = NightScript.MANAGER
 ctx.VOICE = NightScript.VOICE
@@ -8205,6 +8354,14 @@ function Shift.stop()
 		lightsWatch:disconnect()
 		lightsWatch = nil
 	end
+	if jobGlowWatch then
+		jobGlowWatch:disconnect()
+		jobGlowWatch = nil
+	end
+	for _, glow in glowing do
+		glow:Destroy()
+	end
+	table.clear(glowing)
 	-- And nothing from last night is allowed to still be putting lights out.
 	if cancelTubes then
 		cancelTubes()
@@ -8353,6 +8510,12 @@ function Shift.begin(night: number)
 		})
 	end
 
+	if jobGlowWatch then
+		jobGlowWatch:disconnect()
+	end
+	jobGlowWatch = Objectives.changed:connect(lightTheJob)
+	lightTheJob()
+
 	local firstJob = definition.objectives[1] and definition.objectives[1][1]
 	if lightsWatch then
 		lightsWatch:disconnect()
@@ -8362,7 +8525,16 @@ function Shift.begin(night: number)
 		if id ~= firstJob or Tubes.isBroken() then
 			return
 		end
-		task.wait(1.1)
+		--[[
+			Let them finish, look up, and start walking.
+
+			At a second it landed while the player was still standing at the
+			machine reading the card, so it read as a consequence of pressing
+			the button rather than as the building doing something. Six
+			seconds is long enough that they have turned round and are on
+			their way somewhere, which is when it should happen to them.
+		]]
+		task.wait(6)
 		Tubes.breakAll()
 	end)
 
@@ -8485,7 +8657,7 @@ return Shift
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="38">
+      <Item class="ModuleScript" referent="39">
         <Properties>
           <string name="Name">TestPanel</string>
           <string name="Source"><![CDATA[--!strict
@@ -8927,7 +9099,7 @@ return TestPanel
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="39">
+      <Item class="ModuleScript" referent="40">
         <Properties>
           <string name="Name">Tubes</string>
           <string name="Source"><![CDATA[--!strict
@@ -9127,7 +9299,7 @@ return Tubes
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="40">
+      <Item class="ModuleScript" referent="41">
         <Properties>
           <string name="Name">World</string>
           <string name="Source"><![CDATA[--!strict
@@ -9282,6 +9454,39 @@ function World.roomOf(position: Vector3): string?
 	return best
 end
 
+--[[
+	The rooms around a point, by name, nearest first.
+
+	For putting a noise somewhere real. A sound placed at a random offset from
+	the player lands inside a wall as often as not, and then it has no room to
+	be in and the caption cannot say where it came from -- which is the whole
+	value of the sound. These are rooms, with floors and doors, and a player
+	who walks towards one arrives somewhere.
+]]
+function World.roomsNear(position: Vector3, minMetres: number, maxMetres: number): { string }
+	local here = World.roomOf(position)
+	local found, seen = {}, {}
+	for _, f in floors do
+		if f.key == here or seen[f.key] then
+			continue
+		end
+		local cx, cz = (f.x0 + f.x1) / 2, (f.z0 + f.z1) / 2
+		local dx = position.X / Places.METRE - cx
+		local dz = position.Z / Places.METRE - cz
+		local d = math.sqrt(dx * dx + dz * dz)
+		if d >= minMetres and d <= maxMetres then
+			seen[f.key] = true
+			table.insert(found, { key = f.key, distance = d })
+		end
+	end
+	table.sort(found, function(a, b) return a.distance < b.distance end)
+	local keys = {}
+	for _, r in found do
+		table.insert(keys, r.key)
+	end
+	return keys
+end
+
 -- The middle of a room's floor, for staging something in a room nobody is in.
 function World.roomCentre(key: string): Vector3?
 	for _, f in floors do
@@ -9410,11 +9615,11 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="41">
+  <Item class="ServerStorage" referent="42">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="ModuleScript" referent="42">
+    <Item class="ModuleScript" referent="43">
       <Properties>
         <string name="Name">Greybox</string>
         <string name="Source"><![CDATA[--[[
@@ -9761,7 +9966,16 @@ local function wallRun(fixed, from, to, axis, y, h, colour)
 	end
 end
 
-local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
+--[[
+	Where the holes in a wall are, in the wall's own along-axis coordinates.
+
+	Pulled out of wallWithDoors because the wall was not the only thing that
+	had to know: the skirting, the dado rail and the shadow gap were each drawn
+	as one part the full width of the wall, straight through every opening in
+	it. That put a board across the floor of every doorway in the building and
+	a second one at waist height above it, which is what they looked like.
+]]
+local function doorGaps(doors, side, from, to)
 	local gaps = {}
 	for _, d in doors do
 		if d[1] == side then
@@ -9770,6 +9984,11 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 		end
 	end
 	table.sort(gaps, function(a, b) return a[1] < b[1] end)
+	return gaps
+end
+
+local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
+	local gaps = doorGaps(doors, side, from, to)
 
 	local cursor = from
 	for _, g in gaps do
@@ -9823,18 +10042,50 @@ local function room(name, cx, cz, w, d, y, h, doors, colour)
 	P(name .. "_Floor", V(w, 0.3, d), at(cx, y - 0.15, cz), C.floor)
 	P(name .. "_Ceiling", V(w, 0.3, d), at(cx, y + h + 0.15, cz), C.ceiling)
 
-	for _, band in {
+	--[[
+		Skirting, dado and shadow gap -- in segments between the doorways, not
+		straight through them.
+
+		Each of these used to be a single part the full width of its wall. A
+		skirting board across the floor of a doorway and a dado rail across it
+		at waist height is a plank nailed over every entrance in the building,
+		and that is exactly what it looked like.
+	]]
+	local function band(label, by, bh, bc, side, fixedAxis, along0, along1, offset)
+		if bh >= h then
+			return
+		end
+		local gaps = doorGaps(doors, side, along0, along1)
+		-- The gap is the doorway plus a little, so the band stops clear of the
+		-- frame rather than dying against it.
+		local cursor = along0 + 0.01
+		local function seg(a, b)
+			if b - a < 0.06 then
+				return
+			end
+			if side == "N" or side == "S" then
+				P(label, V(b - a, bh, 0.06), at((a + b) / 2, y + by, fixedAxis + offset), bc)
+			else
+				P(label, V(0.06, bh, b - a), at(fixedAxis + offset, y + by, (a + b) / 2), bc)
+			end
+		end
+		for _, g in gaps do
+			seg(cursor, math.max(cursor, g[1] - 0.09))
+			cursor = math.max(cursor, g[2] + 0.09)
+		end
+		seg(cursor, along1 - 0.01)
+	end
+
+	for _, spec in {
 		{ "Skirting", 0.06, 0.14, C.trim },   -- kicked, mopped, scuffed
 		{ "Dado", 1.0, 0.05, C.trim },        -- trolley rail, at trolley height
 		{ "ShadowGap", h - 0.06, 0.06, C.dark }, -- the dark line under a ceiling
 	} do
-		local label, by, bh, bc = band[1], band[2], band[3], band[4]
-		if bh < h then
-			P(label, V(w - 0.02, bh, 0.06), at(cx, y + by, cz + d / 2 - 0.12), bc)
-			P(label, V(w - 0.02, bh, 0.06), at(cx, y + by, cz - d / 2 + 0.12), bc)
-			P(label, V(0.06, bh, d - 0.02), at(cx + w / 2 - 0.12, y + by, cz), bc)
-			P(label, V(0.06, bh, d - 0.02), at(cx - w / 2 + 0.12, y + by, cz), bc)
-		end
+		local label, by, bh, bc = spec[1], spec[2], spec[3], spec[4]
+		band(label, by, bh, bc, "N", z1, x0, x1, -0.12)
+		band(label, by, bh, bc, "S", z0, x0, x1, 0.12)
+		band(label, by, bh, bc, "E", x1, z0, z1, -0.12)
+		band(label, by, bh, bc, "W", x0, z0, z1, 0.12)
 	end
 	wallWithDoors(z1, x0, x1, "x", y, h, doors, "N", colour)
 	wallWithDoors(z0, x0, x1, "x", y, h, doors, "S", colour)
@@ -11571,10 +11822,20 @@ local function dressStaffRoom(cx, cz, y, h, w, d)
 	P("Coat", V(0.42, 1.0, 0.16), at(cx - 1.8, y + 1.25, cz - 2.3), Color3.fromRGB(48, 46, 52))
 	litterBin(cx + 2.6, y, cz + 1.4)
 
-	-- The time clock. You clock in here at 22:00, and Rule 1 is about it.
-	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(cx + 2.7, y + 1.4, cz - 1.0), C.metal)
+	--[[
+		The time clock. You clock in here at 22:00, and Rule 1 is about it.
+
+		Screwed to the east wall, measured from the wall rather than from the
+		room's centre -- written as an offset from the centre it ended up
+		floating nine centimetres clear of the plaster, which at this distance
+		is exactly far enough to look like it is hovering. Anything that hangs
+		on a wall should be positioned from that wall.
+	]]
+	local wallFace = cx + w / 2 - WALL / 2
+	P("TimeClockBoard", V(0.52, 0.72, 0.04), at(wallFace - 0.02, y + 1.34, cz - 1.0), C.wood)
+	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(wallFace - 0.13, y + 1.4, cz - 1.0), C.metal)
 	clock.Name = "TimeClock"
-	local face = P("TimeClockFace", V(0.24, 0.16, 0.03), at(cx + 2.7, y + 1.46, cz - 1.1), RED, Enum.Material.Neon)
+	local face = P("TimeClockFace", V(0.24, 0.16, 0.03), at(wallFace - 0.23, y + 1.46, cz - 1.0), RED, Enum.Material.Neon)
 	-- Every display in the building runs off the same master clock, and the
 	-- master clock has read the same thing since 1998.
 	Surfaces.label(face, Enum.NormalId.Front, "03:33", {
@@ -12669,7 +12930,9 @@ local function buildExterior()
 			local head = P("CarParkLamp", V(0.8, 0.22, 0.45), at(lx + 1.2, 6.94, lz),
 				Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
 			head.CastShadow = false
-			bulb(head, Color3.fromRGB(255, 176, 92), 1.1, 22)
+			-- Shorter than it was. At twenty-two metres a row of these reached
+			-- through the entrance glazing and lit the atrium from outside.
+			bulb(head, Color3.fromRGB(255, 176, 92), 0.75, 15)
 		end
 	end
 
@@ -12781,11 +13044,20 @@ local function buildExterior()
 	local bay2 = P("BayNumber", V(0.4, 0.02, 0.4), at(dockX - 6, 0.022, dockZ - 8.6), Color3.fromRGB(150, 146, 136))
 	printed(bay2, Enum.NormalId.Top, "2", { color = Color3.fromRGB(40, 40, 42), density = 60 })
 
-	local yardLamp = P("CarParkLamp", V(0.7, 0.22, 0.4), at(dockX + 4, 6.0, dockZ - 8),
+	--[[
+		The yard lamp. Moved west, away from the mouth of the service corridor.
+
+		It used to stand four metres east of the dock, which put it at the open
+		south end of the corridor shining straight up it -- twenty metres of
+		sodium down the one route the game spends most of its time in, which is
+		why the far end of that corridor was lit like a forecourt. It is the
+		only light out here and it belongs over the bins, not over the building.
+	]]
+	local yardLamp = P("CarParkLamp", V(0.7, 0.22, 0.4), at(dockX - 7, 6.0, dockZ - 9),
 		Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
 	yardLamp.CastShadow = false
-	P("LampColumn", V(0.2, 6.0, 0.2), at(dockX + 4.6, 3.0, dockZ - 8), C.metal)
-	bulb(yardLamp, Color3.fromRGB(255, 176, 92), 1.2, 20)
+	P("LampColumn", V(0.2, 6.0, 0.2), at(dockX - 6.4, 3.0, dockZ - 9), C.metal)
+	bulb(yardLamp, Color3.fromRGB(255, 176, 92), 0.8, 14)
 	trolley(dockX + 7, 0, dockZ - 13, 63)
 	P("Kerb", V(26, 0.14, 0.3), at(dockX, 0.07, dockZ - 0.4), Color3.fromRGB(122, 118, 112))
 end
@@ -13091,7 +13363,7 @@ end
 return Greybox
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="43">
+      <Item class="ModuleScript" referent="44">
         <Properties>
           <string name="Name">Surfaces</string>
           <string name="Source"><![CDATA[--[[
@@ -13460,15 +13732,15 @@ return Surfaces
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="44">
+  <Item class="StarterPlayer" referent="45">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="45">
+    <Item class="StarterPlayerScripts" referent="46">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="46">
+      <Item class="LocalScript" referent="47">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--!strict
@@ -14637,7 +14909,7 @@ print("[Night Shift] client up — night 1, Northlight Galleria")
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="47">
+  <Item class="Workspace" referent="48">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>

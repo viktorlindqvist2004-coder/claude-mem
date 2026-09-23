@@ -150,6 +150,39 @@ function World.roomOf(position: Vector3): string?
 	return best
 end
 
+--[[
+	The rooms around a point, by name, nearest first.
+
+	For putting a noise somewhere real. A sound placed at a random offset from
+	the player lands inside a wall as often as not, and then it has no room to
+	be in and the caption cannot say where it came from -- which is the whole
+	value of the sound. These are rooms, with floors and doors, and a player
+	who walks towards one arrives somewhere.
+]]
+function World.roomsNear(position: Vector3, minMetres: number, maxMetres: number): { string }
+	local here = World.roomOf(position)
+	local found, seen = {}, {}
+	for _, f in floors do
+		if f.key == here or seen[f.key] then
+			continue
+		end
+		local cx, cz = (f.x0 + f.x1) / 2, (f.z0 + f.z1) / 2
+		local dx = position.X / Places.METRE - cx
+		local dz = position.Z / Places.METRE - cz
+		local d = math.sqrt(dx * dx + dz * dz)
+		if d >= minMetres and d <= maxMetres then
+			seen[f.key] = true
+			table.insert(found, { key = f.key, distance = d })
+		end
+	end
+	table.sort(found, function(a, b) return a.distance < b.distance end)
+	local keys = {}
+	for _, r in found do
+		table.insert(keys, r.key)
+	end
+	return keys
+end
+
 -- The middle of a room's floor, for staging something in a room nobody is in.
 function World.roomCentre(key: string): Vector3?
 	for _, f in floors do

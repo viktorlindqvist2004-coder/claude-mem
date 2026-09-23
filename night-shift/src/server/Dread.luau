@@ -247,6 +247,7 @@ end
 ]]
 local lastRoom: { [Player]: string } = {}
 local lastDoorway = 0
+local lastFall = 0
 
 local function watchDoorways()
 	task.spawn(function()
@@ -309,6 +310,7 @@ function Dread.start()
 	largeLeft = Config.DREAD.LARGE_STARTLES_PER_NIGHT
 	lastStartle = os.clock() + Config.DREAD.OPENING_QUIET_SECONDS
 	lastDoorway = lastStartle
+	lastFall = lastStartle
 	table.clear(lastRoom)
 	Scares.reset(Dread.night)
 	watchDoorways()
@@ -383,18 +385,33 @@ function Dread.start()
 				fireStartle(pick, largeLeft > 0 and math.random() < 0.4)
 			elseif roll2 < 0.6 and sincePresence > 30 then
 				showPresence(pick)
-			elseif roll2 < 0.82 then
+			elseif roll2 < 0.94 then
 				showEyes(pick)
-			else
-				-- A build-up that resolves into nothing. Free, and the most
-				-- valuable thing in the catalogue.
+			elseif now - lastFall > Config.DREAD.STARTLE_GLOBAL_COOLDOWN then
+				--[[
+					A build-up that resolves into nothing -- in a room, not at a
+					random offset.
+
+					This used to fire on about one loop in five at the player's
+					position plus up to twenty metres in each direction, which
+					lands inside a wall as often as not. The result was
+					"something falls over, somewhere else" every minute or so,
+					from nowhere in particular, and a noise you cannot place and
+					cannot walk to is not a noise worth making. Now it picks a
+					real room eight to twenty-five metres off, so the caption
+					names somewhere you could go and find nothing.
+				]]
 				local at = root(pick)
-				if at then
-					Atmos.distantFall({
-						(at.Position.X / METRE) + math.random(-20, 20),
-						at.Position.Y / METRE,
-						(at.Position.Z / METRE) + math.random(-20, 20),
-					})
+				local nearby = if at then World.roomsNear(at.Position, 8, 25) else {}
+				if #nearby > 0 then
+					local key = nearby[math.random(1, math.min(3, #nearby))]
+					local centre = World.roomCentre(key)
+					if centre then
+						lastFall = now
+						Atmos.distantFall({
+							centre.X / METRE, centre.Y / METRE, centre.Z / METRE,
+						})
+					end
 				end
 			end
 

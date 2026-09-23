@@ -37,6 +37,7 @@ ORDER = [
     ("Net", "src/shared/Net.luau"),
     ("VoiceBank", "src/shared/VoiceBank.luau"),
     ("NightScript", "src/shared/NightScript.luau"),
+    ("Targets", "src/shared/Targets.luau"),
     ("Surfaces", "src/greybox/Surfaces.luau"),
     ("Greybox", "src/greybox/init.luau"),
     ("Objectives", "src/server/Objectives.luau"),

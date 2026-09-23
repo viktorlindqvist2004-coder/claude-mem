@@ -21,6 +21,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
 local NightScript = require(Shared.NightScript)
 local Places = require(Shared.Places)
+local Targets = require(Shared.Targets)
 local RuleBook = require(Shared.RuleBook)
 local ShiftClock = require(Shared.ShiftClock)
 local SoundBank = require(Shared.SoundBank)
@@ -46,10 +47,26 @@ Shift.clock = nil :: any
 Shift.definition = nil :: any
 Shift.finished = false
 
+--[[
+	The glow on whatever the current job is about.
+
+	Server-side, so the whole crew sees the same thing lit -- four people
+	hunting for the same mop in the dark is not co-operation, it is four people
+	lost separately. Occluded, so it stops at the first wall: a glow that came
+	through the building would turn it into a map and throw away every sightline
+	the place has. You see it when you could see the object.
+
+	One job's targets at a time. Lighting everything a player could touch was
+	the first attempt, and that lights half a room at once, which is the same as
+	lighting nothing.
+]]
+local glowing: { Highlight } = {}
+
 local heartbeat: RBXScriptConnection? = nil
 local cancelTubes: (() -> ())? = nil
 local insideWatch: RBXScriptConnection? = nil
 local lightsWatch: any = nil
+local jobGlowWatch: any = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -61,6 +78,32 @@ local standStill: { until_: number, positions: { [Player]: Vector3 } }? = nil
 
 local ctx = {}
 Shift.ctx = ctx
+
+local function lightTheJob()
+	for _, glow in glowing do
+		glow:Destroy()
+	end
+	table.clear(glowing)
+
+	local current = Objectives.current()
+	if not current then
+		return
+	end
+	for _, name in Targets.FOR[current.id] or {} do
+		for _, part in World.all(name) do
+			local glow = Instance.new("Highlight")
+			glow.Name = "TheJob"
+			glow.Adornee = part
+			glow.DepthMode = Enum.HighlightDepthMode.Occluded
+			glow.FillColor = Color3.fromRGB(255, 236, 198)
+			glow.FillTransparency = 0.78
+			glow.OutlineColor = Color3.fromRGB(255, 244, 214)
+			glow.OutlineTransparency = 0.12
+			glow.Parent = part
+			table.insert(glowing, glow)
+		end
+	end
+end
 
 ctx.MANAGER = NightScript.MANAGER
 ctx.VOICE = NightScript.VOICE
@@ -483,6 +526,14 @@ function Shift.stop()
 		lightsWatch:disconnect()
 		lightsWatch = nil
 	end
+	if jobGlowWatch then
+		jobGlowWatch:disconnect()
+		jobGlowWatch = nil
+	end
+	for _, glow in glowing do
+		glow:Destroy()
+	end
+	table.clear(glowing)
 	-- And nothing from last night is allowed to still be putting lights out.
 	if cancelTubes then
 		cancelTubes()
@@ -631,6 +682,12 @@ function Shift.begin(night: number)
 		})
 	end
 
+	if jobGlowWatch then
+		jobGlowWatch:disconnect()
+	end
+	jobGlowWatch = Objectives.changed:connect(lightTheJob)
+	lightTheJob()
+
 	local firstJob = definition.objectives[1] and definition.objectives[1][1]
 	if lightsWatch then
 		lightsWatch:disconnect()
@@ -640,7 +697,16 @@ function Shift.begin(night: number)
 		if id ~= firstJob or Tubes.isBroken() then
 			return
 		end
-		task.wait(1.1)
+		--[[
+			Let them finish, look up, and start walking.
+
+			At a second it landed while the player was still standing at the
+			machine reading the card, so it read as a consequence of pressing
+			the button rather than as the building doing something. Six
+			seconds is long enough that they have turned round and are on
+			their way somewhere, which is when it should happen to them.
+		]]
+		task.wait(6)
 		Tubes.breakAll()
 	end)
 

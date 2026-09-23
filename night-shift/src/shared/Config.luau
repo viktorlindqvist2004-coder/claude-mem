@@ -82,8 +82,17 @@ Config.FLASHLIGHT = {
 		So: a few metres of usable light, and a focused mode that reaches down a
 		corridor but only shows you a doorway's worth when it gets there.
 	]]
-	WIDE = { angle = 70, range = 15, brightness = 0.85, drainPerSecond = 0.8 },
-	FOCUS = { angle = 22, range = 28, brightness = 1.5, drainPerSecond = 2.4 },
+	--[[
+		Overcorrected, then corrected.
+
+		It was a 55 m floodlight at brightness 4.5, which lit whole rooms and
+		left the building with no dark in it. Cutting it to 15 m at 0.85 went
+		too far the other way: you could not see anything with it, which is not
+		tension, it is a broken tool. A torch shows you a room's worth at a
+		time and makes you choose which room's worth.
+	]]
+	WIDE = { angle = 72, range = 24, brightness = 1.9, drainPerSecond = 0.8 },
+	FOCUS = { angle = 24, range = 42, brightness = 3.0, drainPerSecond = 2.4 },
 
 	-- 2900K incandescent. A pure white beam reads as a game asset.
 	COLOR = Color3.fromRGB(255, 214, 170),
@@ -213,11 +222,13 @@ Config.DREAD = {
 		How often leaving a room sets one off.
 
 		Not every doorway, or crossing one becomes a mechanic and the player
-		starts avoiding them. About one in six means a lap of the back of house
-		produces one, somewhere, and never the same one twice -- and the other
-		five doorways are what make that one work.
+		starts avoiding them. One in six was still far too many: the back of
+		house is a corridor with eight doors off it, so a single lap set off
+		two or three and "something falls over, somewhere else" stopped being
+		an event by the second one. One in twenty means a lap usually produces
+		nothing, which is what makes the lap that does produce something land.
 	]]
-	DOORWAY_CHANCE = 0.16,
+	DOORWAY_CHANCE = 0.05,
 	-- Hard gates, not weights.
 	STARTLE_GLOBAL_COOLDOWN = 90,
 	STARTLE_AFTER_PRESENCE_COOLDOWN = 25,

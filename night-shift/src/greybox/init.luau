@@ -342,7 +342,16 @@ local function wallRun(fixed, from, to, axis, y, h, colour)
 	end
 end
 
-local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
+--[[
+	Where the holes in a wall are, in the wall's own along-axis coordinates.
+
+	Pulled out of wallWithDoors because the wall was not the only thing that
+	had to know: the skirting, the dado rail and the shadow gap were each drawn
+	as one part the full width of the wall, straight through every opening in
+	it. That put a board across the floor of every doorway in the building and
+	a second one at waist height above it, which is what they looked like.
+]]
+local function doorGaps(doors, side, from, to)
 	local gaps = {}
 	for _, d in doors do
 		if d[1] == side then
@@ -351,6 +360,11 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 		end
 	end
 	table.sort(gaps, function(a, b) return a[1] < b[1] end)
+	return gaps
+end
+
+local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
+	local gaps = doorGaps(doors, side, from, to)
 
 	local cursor = from
 	for _, g in gaps do
@@ -404,18 +418,50 @@ local function room(name, cx, cz, w, d, y, h, doors, colour)
 	P(name .. "_Floor", V(w, 0.3, d), at(cx, y - 0.15, cz), C.floor)
 	P(name .. "_Ceiling", V(w, 0.3, d), at(cx, y + h + 0.15, cz), C.ceiling)
 
-	for _, band in {
+	--[[
+		Skirting, dado and shadow gap -- in segments between the doorways, not
+		straight through them.
+
+		Each of these used to be a single part the full width of its wall. A
+		skirting board across the floor of a doorway and a dado rail across it
+		at waist height is a plank nailed over every entrance in the building,
+		and that is exactly what it looked like.
+	]]
+	local function band(label, by, bh, bc, side, fixedAxis, along0, along1, offset)
+		if bh >= h then
+			return
+		end
+		local gaps = doorGaps(doors, side, along0, along1)
+		-- The gap is the doorway plus a little, so the band stops clear of the
+		-- frame rather than dying against it.
+		local cursor = along0 + 0.01
+		local function seg(a, b)
+			if b - a < 0.06 then
+				return
+			end
+			if side == "N" or side == "S" then
+				P(label, V(b - a, bh, 0.06), at((a + b) / 2, y + by, fixedAxis + offset), bc)
+			else
+				P(label, V(0.06, bh, b - a), at(fixedAxis + offset, y + by, (a + b) / 2), bc)
+			end
+		end
+		for _, g in gaps do
+			seg(cursor, math.max(cursor, g[1] - 0.09))
+			cursor = math.max(cursor, g[2] + 0.09)
+		end
+		seg(cursor, along1 - 0.01)
+	end
+
+	for _, spec in {
 		{ "Skirting", 0.06, 0.14, C.trim },   -- kicked, mopped, scuffed
 		{ "Dado", 1.0, 0.05, C.trim },        -- trolley rail, at trolley height
 		{ "ShadowGap", h - 0.06, 0.06, C.dark }, -- the dark line under a ceiling
 	} do
-		local label, by, bh, bc = band[1], band[2], band[3], band[4]
-		if bh < h then
-			P(label, V(w - 0.02, bh, 0.06), at(cx, y + by, cz + d / 2 - 0.12), bc)
-			P(label, V(w - 0.02, bh, 0.06), at(cx, y + by, cz - d / 2 + 0.12), bc)
-			P(label, V(0.06, bh, d - 0.02), at(cx + w / 2 - 0.12, y + by, cz), bc)
-			P(label, V(0.06, bh, d - 0.02), at(cx - w / 2 + 0.12, y + by, cz), bc)
-		end
+		local label, by, bh, bc = spec[1], spec[2], spec[3], spec[4]
+		band(label, by, bh, bc, "N", z1, x0, x1, -0.12)
+		band(label, by, bh, bc, "S", z0, x0, x1, 0.12)
+		band(label, by, bh, bc, "E", x1, z0, z1, -0.12)
+		band(label, by, bh, bc, "W", x0, z0, z1, 0.12)
 	end
 	wallWithDoors(z1, x0, x1, "x", y, h, doors, "N", colour)
 	wallWithDoors(z0, x0, x1, "x", y, h, doors, "S", colour)
@@ -2152,10 +2198,20 @@ local function dressStaffRoom(cx, cz, y, h, w, d)
 	P("Coat", V(0.42, 1.0, 0.16), at(cx - 1.8, y + 1.25, cz - 2.3), Color3.fromRGB(48, 46, 52))
 	litterBin(cx + 2.6, y, cz + 1.4)
 
-	-- The time clock. You clock in here at 22:00, and Rule 1 is about it.
-	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(cx + 2.7, y + 1.4, cz - 1.0), C.metal)
+	--[[
+		The time clock. You clock in here at 22:00, and Rule 1 is about it.
+
+		Screwed to the east wall, measured from the wall rather than from the
+		room's centre -- written as an offset from the centre it ended up
+		floating nine centimetres clear of the plaster, which at this distance
+		is exactly far enough to look like it is hovering. Anything that hangs
+		on a wall should be positioned from that wall.
+	]]
+	local wallFace = cx + w / 2 - WALL / 2
+	P("TimeClockBoard", V(0.52, 0.72, 0.04), at(wallFace - 0.02, y + 1.34, cz - 1.0), C.wood)
+	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(wallFace - 0.13, y + 1.4, cz - 1.0), C.metal)
 	clock.Name = "TimeClock"
-	local face = P("TimeClockFace", V(0.24, 0.16, 0.03), at(cx + 2.7, y + 1.46, cz - 1.1), RED, Enum.Material.Neon)
+	local face = P("TimeClockFace", V(0.24, 0.16, 0.03), at(wallFace - 0.23, y + 1.46, cz - 1.0), RED, Enum.Material.Neon)
 	-- Every display in the building runs off the same master clock, and the
 	-- master clock has read the same thing since 1998.
 	Surfaces.label(face, Enum.NormalId.Front, "03:33", {
@@ -3250,7 +3306,9 @@ local function buildExterior()
 			local head = P("CarParkLamp", V(0.8, 0.22, 0.45), at(lx + 1.2, 6.94, lz),
 				Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
 			head.CastShadow = false
-			bulb(head, Color3.fromRGB(255, 176, 92), 1.1, 22)
+			-- Shorter than it was. At twenty-two metres a row of these reached
+			-- through the entrance glazing and lit the atrium from outside.
+			bulb(head, Color3.fromRGB(255, 176, 92), 0.75, 15)
 		end
 	end
 
@@ -3362,11 +3420,20 @@ local function buildExterior()
 	local bay2 = P("BayNumber", V(0.4, 0.02, 0.4), at(dockX - 6, 0.022, dockZ - 8.6), Color3.fromRGB(150, 146, 136))
 	printed(bay2, Enum.NormalId.Top, "2", { color = Color3.fromRGB(40, 40, 42), density = 60 })
 
-	local yardLamp = P("CarParkLamp", V(0.7, 0.22, 0.4), at(dockX + 4, 6.0, dockZ - 8),
+	--[[
+		The yard lamp. Moved west, away from the mouth of the service corridor.
+
+		It used to stand four metres east of the dock, which put it at the open
+		south end of the corridor shining straight up it -- twenty metres of
+		sodium down the one route the game spends most of its time in, which is
+		why the far end of that corridor was lit like a forecourt. It is the
+		only light out here and it belongs over the bins, not over the building.
+	]]
+	local yardLamp = P("CarParkLamp", V(0.7, 0.22, 0.4), at(dockX - 7, 6.0, dockZ - 9),
 		Color3.fromRGB(255, 166, 70), Enum.Material.Neon)
 	yardLamp.CastShadow = false
-	P("LampColumn", V(0.2, 6.0, 0.2), at(dockX + 4.6, 3.0, dockZ - 8), C.metal)
-	bulb(yardLamp, Color3.fromRGB(255, 176, 92), 1.2, 20)
+	P("LampColumn", V(0.2, 6.0, 0.2), at(dockX - 6.4, 3.0, dockZ - 9), C.metal)
+	bulb(yardLamp, Color3.fromRGB(255, 176, 92), 0.8, 14)
 	trolley(dockX + 7, 0, dockZ - 13, 63)
 	P("Kerb", V(26, 0.14, 0.3), at(dockX, 0.07, dockZ - 0.4), Color3.fromRGB(122, 118, 112))
 end

@@ -34,7 +34,9 @@ To take the building out again: `workspace.Mall:Destroy()`
 | **F** | torch |
 | **E** | interact — everything in the game is a proximity prompt |
 | **Q** | walkie — only when there is a line open, and there is one once a night |
+| **SHIFT** | run |
 | **X** | put down whatever you are reading |
+| **F9** | test panel — every event in the game as a button. See [`18-testing.md`](18-testing.md) |
 
 ---
 
@@ -84,6 +86,25 @@ to.
 holds it.
 
 ---
+
+## The voice
+
+Every spoken line has a key, and `src/shared/VoiceBank.luau` maps that key to a
+Roblox audio asset id. A line with no id plays as a subtitle, which is a
+supported state and not a broken one — the game is fully playable with none of
+the audio done, and every beat is timed to be readable.
+
+`audio/VOICE_SCRIPT.md` is the recording script: all 123 lines, in the order
+they are heard, with the key, the speaker and the hold time. The key is also the
+filename to record it as and the field to paste the id into, so the three cannot
+drift apart. Regenerate it with `tools/voice_script.py` after changing any
+dialogue.
+
+Roblox will not play audio that has not been uploaded to Roblox — no streaming
+from a URL, no text-to-speech, nothing bundled into the place file — so that
+upload is a step somebody has to do by hand. It is the only one in the project.
+
+Press **F9** → *How much voice is recorded* to see how far along it is.
 
 ## The sound
 

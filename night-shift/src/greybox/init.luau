@@ -995,6 +995,154 @@ local function buildAtrium()
 end
 
 --[[
+	The first floor, seen from the balcony.
+
+	A two-storey mall where the upper storey is a bare walkway is a mall with one
+	storey and a mistake in it. The units up here are all shut and none of them
+	can be entered — the food court is the only room on this level the game uses
+	— but they have to be there, because the thing you actually look at from the
+	atrium floor is the row of fascias above your head.
+]]
+local FIRST_FLOOR_UNITS = {
+	"THE TOY BOX", "HAIR BY JEAN", "NORTHMOOR BOOKS", "SPORTS DIRECT",
+	"NORTHERN ROCK", "SOUND & VISION", "CARD FACTORY", "UNIT 22  TO LET",
+}
+
+local function firstFloorUnits()
+	local w, d = ATRIUM_W, ATRIUM_D
+	local y, h = FLOOR1, 3.6
+	local rng = Random.new(3301)
+	local n = 0
+
+	local function run(fixed, from, to, axis, side, skipFrom, skipTo)
+		local t = from
+		while to - t > 2.4 do
+			local uw = rng:NextNumber(3.0, 5.2)
+			if to - (t + uw) < 2.4 then
+				uw = to - t
+			end
+			local mid = t + uw / 2
+			if not (skipFrom and mid > skipFrom and mid < skipTo) then
+				n += 1
+				local recess = rng:NextNumber(0, 0.4)
+				local sx = if axis == "x" then mid else fixed - side * recess
+				local sz = if axis == "x" then fixed - side * recess else mid
+				local front = if axis == "x" then V(uw, h, WALL) else V(WALL, h, uw)
+				local shut = if axis == "x" then V(uw - 0.5, 2.6, 0.12) else V(0.12, 2.6, uw - 0.5)
+				local fascia = if axis == "x" then V(uw - 0.3, 0.44, 0.1) else V(0.1, 0.44, uw - 0.3)
+
+				P("FF_Shopfront", front, at(sx, y + h / 2, sz), C.wall)
+				P("FF_Shutter", shut, at(
+					if axis == "x" then mid else fixed - side * (recess + 0.14),
+					y + 1.3,
+					if axis == "x" then fixed - side * (recess + 0.14) else mid), C.shutter)
+				local box = P("FF_Fascia", fascia, at(
+					if axis == "x" then mid else fixed - side * (recess + 0.2),
+					y + 2.95,
+					if axis == "x" then fixed - side * (recess + 0.2) else mid), C.panel)
+				printed(box,
+					if axis == "x" then (if side > 0 then Enum.NormalId.Front else Enum.NormalId.Back)
+					else (if side > 0 then Enum.NormalId.Right else Enum.NormalId.Left),
+					FIRST_FLOOR_UNITS[(n - 1) % #FIRST_FLOOR_UNITS + 1],
+					{ color = Color3.fromRGB(118, 114, 118), density = 46, font = Enum.Font.GothamBold })
+			end
+			t += uw
+		end
+	end
+
+	-- North wall, skipping the food court doorway; then south, east and west.
+	run(d / 2, -w / 2, w / 2, "x", 1, -2.0, 2.0)
+	run(-d / 2, -w / 2, w / 2, "x", -1)
+	run(w / 2, -6, 6, "z", 1)
+	run(-w / 2, -6, 6, "z", -1)
+
+	-- Two boxes up here, which is what makes the upper level navigable at all.
+	exitSign(-w / 2 + 0.6, y + 2.4, -d / 2 + 1.2)
+	exitSign(w / 2 - 0.6, y + 2.4, d / 2 - 1.2)
+
+	-- Hanging signage over the void, read from the floor below.
+	for _, sz in { -1, 1 } do
+		P("HangingSignBar", V(6.0, 0.08, 0.08), at(0, FLOOR1 + 2.6, sz * 5.4), C.metal)
+		local sign = P("HangingSign", V(5.4, 0.9, 0.06), at(0, FLOOR1 + 2.1, sz * 5.4), C.panel)
+		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+			printed(sign, face, if sz > 0 then "FOOD COURT" else "CAR PARK  ·  TOILETS",
+				{ color = Color3.fromRGB(150, 146, 148), density = 42, font = Enum.Font.GothamBold })
+		end
+	end
+
+	planterBed(w / 2 - 1.4, y, 0, 8.0, false, 3302)
+	planterBed(-(w / 2 - 1.4), y, 0, 8.0, false, 3303)
+	for _, sx in { -1, 1 } do
+		bench(sx * 9.4, y, 3.5, false)
+		litterBin(sx * 9.4, y, -3.5)
+	end
+	picture(0, y + 2.1, d / 2 - 0.2, "z", 3304)
+	pottedTree(-9.4, y, -5.2, 3305)
+	pottedTree(9.4, y, 5.2, 3306)
+end
+
+--[[
+	The scenic lift.
+
+	Rule 3 says: "There is no third floor. If the lift offers you a 3, take the
+	stairs." Until now there was no lift in the building for it to be about,
+	which is the kind of thing that turns a rule from a warning into a riddle.
+
+	It is glazed, it is stopped at the ground floor with its doors open, and the
+	call panel has two buttons on it. On Night 4 it has three.
+]]
+local function scenicLift()
+	local lx, lz = -6.2, -7.0
+	local top = FLOOR1 + 2.4
+
+	-- Shaft: three glazed sides and a solid back, floor to first.
+	for _, side in { { -1, 0 }, { 1, 0 }, { 0, -1 } } do
+		local glass = P("LiftGlass",
+			if side[1] ~= 0 then V(0.08, top, 2.2) else V(2.2, top, 0.08),
+			at(lx + side[1] * 1.1, top / 2, lz + side[2] * 1.1),
+			Color3.fromRGB(56, 62, 72))
+		glass.Transparency = 0.55
+		glass.Reflectance = 0.18
+	end
+	P("LiftBack", V(2.4, top, 0.16), at(lx, top / 2, lz + 1.1), C.wall)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			P("LiftMullion", V(0.12, top, 0.12), at(lx + sx * 1.1, top / 2, lz + sz * 1.1), C.metal)
+		end
+	end
+	P("LiftHead", V(2.6, 0.5, 2.6), at(lx, top + 0.25, lz), C.metal)
+	P("LiftMotor", V(1.2, 0.6, 1.0), at(lx, top + 0.8, lz), C.metal)
+
+	-- The car, stopped at the ground floor with its doors open.
+	P("LiftFloor", V(2.0, 0.12, 2.0), at(lx, 0.06, lz), C.metal)
+	P("LiftCeiling", V(2.0, 0.12, 2.0), at(lx, 2.42, lz), C.metal)
+	local lamp = P("LiftLamp", V(0.7, 0.06, 0.7), at(lx, 2.33, lz), Color3.fromRGB(40, 38, 38))
+	P("LiftHandrail", V(1.9, 0.07, 0.07), at(lx, 0.95, lz + 0.95), C.metal)
+	for _, sx in { -1, 1 } do
+		P("LiftDoor", V(0.85, 2.3, 0.1), at(lx + sx * 1.42, 1.15, lz - 1.1), C.metal)
+	end
+	P("LiftMirror", V(1.9, 1.6, 0.04), at(lx, 1.5, lz + 1.0), Color3.fromRGB(84, 90, 100)).Reflectance = 0.5
+
+	--[[
+		The panel. Two buttons, G and 1, and a blank where a third would be. The
+		blank is machined, not drilled — somebody took a button out.
+	]]
+	local panel = P("LiftPanel", V(0.22, 0.9, 0.05), at(lx + 0.85, 1.35, lz - 1.0), C.trim)
+	panel.Name = "LiftPanel"
+	P("LiftButton", V(0.09, 0.09, 0.03), at(lx + 0.85, 1.15, lz - 1.03), Color3.fromRGB(180, 172, 150))
+	P("LiftButton", V(0.09, 0.09, 0.03), at(lx + 0.85, 1.38, lz - 1.03), Color3.fromRGB(180, 172, 150))
+	local blank = P("LiftBlank", V(0.09, 0.09, 0.02), at(lx + 0.85, 1.61, lz - 1.03), Color3.fromRGB(96, 92, 88))
+	blank.Name = "LiftBlank"
+	local indicator = P("LiftIndicator", V(0.34, 0.16, 0.04), at(lx + 0.85, 1.82, lz - 1.02), C.panel)
+	indicator.Name = "LiftIndicator"
+	printed(indicator, Enum.NormalId.Right, "G", { color = Color3.fromRGB(150, 60, 54), density = 130, font = Enum.Font.Code })
+
+	local plate = P("LiftNotice", V(0.02, 0.3, 0.22), at(lx + 1.05, 1.9, lz - 0.2), Color3.fromRGB(186, 182, 168))
+	printed(plate, Enum.NormalId.Right, "MAX 8 PERSONS\n630 kg\n\nIN CASE OF FIRE\nUSE STAIRS",
+		{ color = Color3.fromRGB(48, 46, 44), scaled = false, density = 150 })
+end
+
+--[[
 	The Great Clock: a 1986 seven-segment display bolted to the case of a 1904
 	movement Halvard never restored. It reads 03:33 and it is the brightest thing
 	in the building by a distance.
@@ -2192,6 +2340,8 @@ function Greybox.build()
 	lightCount = 0
 
 	buildAtrium()
+	firstFloorUnits()
+	scenicLift()
 	buildClock()
 	mallArm("N", 30, { { -1, 14, 3.2 } })
 	mallArm("E", 24, { { 1, 12, 3.0 } })

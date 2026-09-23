@@ -156,22 +156,35 @@ function World.prompt(part: BasePart, options: PromptOptions, onTriggered: (Play
 	return prompt
 end
 
--- Pull a half-open shutter the rest of the way down, over a second and a half.
+--[[
+	Pull a shutter down.
+
+	It unrolls: the curtain grows out of its housing to the geometry the greybox
+	built it to become, and the slats are a SurfaceGui so they redistribute as it
+	goes rather than being left hanging in the opening, which is what the old
+	version did.
+
+	Fast, and it stops hard, because that is what they do.
+]]
 function World.lowerShutter(part: BasePart)
-	local full = 2.3 * Places.METRE
-	local p = part.Position
+	local closedSize = part:GetAttribute("ClosedSize")
+	local closedCFrame = part:GetAttribute("ClosedCFrame")
+	if typeof(closedSize) ~= "Vector3" or typeof(closedCFrame) ~= "CFrame" then
+		return
+	end
+	part:SetAttribute("ClosedSize", nil)
 	TweenService:Create(
 		part,
-		TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{ Size = Vector3.new(part.Size.X, full, part.Size.Z), CFrame = CFrame.new(p.X, full / 2, p.Z) }
+		TweenInfo.new(1.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+		{ Size = closedSize, CFrame = closedCFrame }
 	):Play()
 end
 
--- The shutters that are still up: the half-height ones, with dark glass below.
+-- The shutters that are still up: the ones with somewhere left to travel.
 function World.openShutters(): { BasePart }
 	local out = {}
 	for _, part in World.all("Shutter") do
-		if part.Size.Y < 2.0 * Places.METRE then
+		if typeof(part:GetAttribute("ClosedSize")) == "Vector3" then
 			table.insert(out, part)
 		end
 	end

@@ -177,6 +177,78 @@ local function exitSign(x, y, z, facing)
 	return sign
 end
 
+--[[
+	A roller shutter.
+
+	The old one was a flat plate that grew downwards when you pulled it, and it
+	looked exactly as bad as that sounds: the slats were separate parts that
+	stayed where they were while the plate stretched through them, and it stopped
+	a metre and a half short of a ceiling that had since been raised.
+
+	This is the real arrangement. A housing box across the top of the opening, a
+	guide channel down each side, and a curtain that is already full height and
+	starts retracted inside the housing. Pulling it down slides it; nothing
+	scales, nothing stretches, and the slats are drawn on the curtain so they
+	travel with it.
+
+	It unrolls rather than slides. Sliding needs somewhere to hide the retracted
+	curtain, and over a mall arm that somewhere is the food court floor — the
+	first attempt put six shutters through it. So the curtain grows downwards out
+	of the housing, which is what the eye reads a roller shutter as doing anyway.
+
+	The slats are a SurfaceGui rather than parts, which is the whole reason this
+	works: they redistribute when the curtain resizes. Separate slat parts is
+	what made the old one look broken — the plate stretched straight through them
+	and left them hanging in the opening.
+
+	The closed geometry goes on the part as attributes, so World.lowerShutter
+	animates to exactly what it was built to become rather than to a number typed
+	in a second file that stops being true when a ceiling changes.
+]]
+local function shutterCurtain(name, sizeM, cf, closedSizeM, closedCf)
+	local curtain = P(name, sizeM, cf, Color3.fromRGB(78, 76, 74), Enum.Material.CorrodedMetal)
+	if closedSizeM then
+		curtain:SetAttribute("ClosedSize", Vector3.new(st(closedSizeM.X), st(closedSizeM.Y), st(closedSizeM.Z)))
+		curtain:SetAttribute("ClosedCFrame", closedCf)
+	end
+
+	--[[
+		Slats, drawn rather than built, on the two faces you can see. Four faces
+		and twenty-two slats each across thirty shutters is two and a half
+		thousand Frames for a detail nobody looks at twice, and the edges of a
+		hundred-millimetre curtain are not among them.
+	]]
+	local faces = if sizeM.X < sizeM.Z
+		then { Enum.NormalId.Left, Enum.NormalId.Right }
+		else { Enum.NormalId.Front, Enum.NormalId.Back }
+	for _, face in faces do
+		local gui = Instance.new("SurfaceGui")
+		gui.Name = "Slats"
+		gui.Face = face
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 26
+		gui.LightInfluence = 1
+		gui.Parent = curtain
+
+		local rows = Instance.new("UIListLayout")
+		rows.FillDirection = Enum.FillDirection.Vertical
+		rows.Padding = UDim.new(0, 0)
+		rows.Parent = gui
+
+		for i = 1, 14 do
+			local slat = Instance.new("Frame")
+			slat.Size = UDim2.new(1, 0, 1 / 14, 0)
+			slat.BackgroundColor3 = if i % 2 == 0
+				then Color3.fromRGB(96, 94, 92)
+				else Color3.fromRGB(64, 62, 60)
+			slat.BorderSizePixel = 0
+			slat.LayoutOrder = i
+			slat.Parent = gui
+		end
+	end
+	return curtain
+end
+
 -- Printed, not lit. Anything that glows in a dark room gives a building away.
 local function printed(part, face, text, options)
 	options = options or {}
@@ -1321,14 +1393,24 @@ local function mallArm(axis, length, entries)
 					generated four closed ones in a row would be a night the crew
 					could not finish.
 				]]
+				--[[
+					The housing and the guides. Both are there whichever state
+					the unit is in, because a shop with no shutter box over the
+					door is a shop nobody ever shuttered.
+				]]
+				local openTop = MALL_H - 0.75
+				P("ShutterHousing", size(w - 0.2, 0.62, 0.55), pos(mid, side * (half - recess - 0.2), openTop + 0.3), C.metal)
+				for _, e in { -1, 1 } do
+					P("ShutterGuide", size(0.12, 0.26, openTop),
+						pos(mid + e * (w / 2 - 0.2), side * (half - recess - 0.2), openTop / 2), C.trim)
+				end
+
 				local mode = if unit % 3 == 1 then 2 else rng:NextInteger(1, 3)
 				if mode == 1 then
 					-- Shut, and has been for years. The fascia name is still up.
-					P("Shutter", size(w - 0.5, 0.12, 2.3), pos(mid, face, 1.15), C.shutter)
-					for k = 0, 9 do
-						P("ShutterSlat", size(w - 0.56, 0.03, 0.18),
-							pos(mid, side * (half - recess - 0.08), 0.12 + k * 0.23), C.trim)
-					end
+					shutterCurtain("ShutterClosed", size(w - 0.44, 0.1, openTop),
+						pos(mid, side * (half - recess - 0.2), openTop / 2))
+					P("ShutterRail", size(w - 0.4, 0.2, 0.1), pos(mid, side * (half - recess - 0.2), 0.05), C.dark)
 					-- Somebody flyposted it, and somebody else scraped that off.
 					if rng:NextNumber() < 0.45 then
 						local bill = P("Flyposting", size(rng:NextNumber(0.4, 0.9), 0.02, 0.6),
@@ -1340,11 +1422,22 @@ local function mallArm(axis, length, entries)
 				elseif mode == 2 then
 					-- Half up, with the window below it. These are the ones Rule
 					-- 11 is about, and the ones you can see into.
-					P("Shutter", size(w - 0.5, 0.12, 1.2), pos(mid, face, 1.75), C.shutter)
-					P("DarkGlass", size(w - 0.5, 0.08, 1.9), pos(mid, face, 1.0), C.glass)
+					--[[
+						Still up. The curtain is full height and sitting inside
+						its housing, so pulling it slides a real shutter down a
+						real guide instead of growing a plate out of a wall.
+					]]
+					shutterCurtain("Shutter",
+						-- Retracted: a hand's width of curtain showing under the housing.
+						size(w - 0.44, 0.1, 0.34),
+						pos(mid, side * (half - recess - 0.2), openTop - 0.17),
+						-- Closed: the whole opening.
+						size(w - 0.44, 0.1, openTop),
+						pos(mid, side * (half - recess - 0.2), openTop / 2))
+					P("DarkGlass", size(w - 0.5, 0.08, openTop - 0.2), pos(mid, face, openTop / 2), C.glass)
 					P("WindowSill", size(w - 0.5, 0.28, 0.12), pos(mid, side * (half - recess + 0.02), 0.06), C.trim)
 					for k = -1, 1 do
-						P("Mullion", size(0.08, 0.16, 1.9), pos(mid + k * (w / 3.2), face, 1.0), C.trim)
+						P("Mullion", size(0.08, 0.16, openTop - 0.2), pos(mid + k * (w / 3.2), face, openTop / 2), C.trim)
 					end
 					--[[
 						A dressed window. Two mannequins on a riser and a card in
@@ -1378,7 +1471,7 @@ local function mallArm(axis, length, entries)
 					end
 				else
 					-- Boarded, with a letting agent's board screwed to the ply.
-					P("Hoarding", size(w - 0.5, 0.1, 2.3), pos(mid, face, 1.15), C.trim)
+					P("Hoarding", size(w - 0.5, 0.1, openTop), pos(mid, face, openTop / 2), C.trim)
 					local board = P("ToLet", size(0.9, 0.03, 0.62), pos(mid, side * (half - recess - 0.1), 1.6),
 						Color3.fromRGB(178, 174, 160))
 					printed(board,

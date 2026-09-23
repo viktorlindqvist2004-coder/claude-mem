@@ -17,10 +17,10 @@
 
 local Build = {}
 
-Build.COMMIT = "016023d"
-Build.LAST_COMMIT = "9ffaf81"
-Build.SUMMARY = "The torch: stop asking for a range Roblox will not give"
-Build.WHEN = "23 Sep 17:43"
+Build.COMMIT = "875fd0e"
+Build.LAST_COMMIT = "41a13e4"
+Build.SUMMARY = "Give the torch a hotspot, and stop it casting shadows"
+Build.WHEN = "23 Sep 17:48"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 

@@ -48,7 +48,9 @@ VOLUMES = [
     # Outside. Generous: a car park is the one place a prop is allowed to be
     # anywhere, and the only thing worth catching out here is something that has
     # ended up under the tarmac or floating above the lamps.
-    ("forecourt",     -40,  40,  -0.8,  13.0,  -50,  -8),
+    # Out to the boundary wall, the verge beyond it and the entrance barrier,
+    # which stand a few metres past the tarmac.
+    ("forecourt",     -46,  46,  -0.8,  13.0,  -62,  -8),
     ("service yard",  -56, -12,  -0.8,   9.0,  -42,  -19),
     ("facade",        -34,  34,  -0.8,  13.5,  -12,  -8),
     ("clock",          -3,   3,  -0.4,   6.6,   -3,   3),

@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "016023d"
-Build.LAST_COMMIT = "9ffaf81"
-Build.SUMMARY = "The torch: stop asking for a range Roblox will not give"
-Build.WHEN = "23 Sep 17:43"
+Build.COMMIT = "875fd0e"
+Build.LAST_COMMIT = "41a13e4"
+Build.SUMMARY = "Give the torch a hotspot, and stop it casting shadows"
+Build.WHEN = "23 Sep 17:48"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -13968,7 +13968,7 @@ local function buildExterior()
 		{ color = Color3.fromRGB(48, 46, 44), scaled = false, density = 130 })
 
 	-- ── The forecourt ───────────────────────────────────────────────────────
-	P("Forecourt", V(64, 0.3, 38), at(0, -0.16, frontZ - 21), Color3.fromRGB(44, 44, 46))
+	P("Forecourt", V(68, 0.3, 44), at(0, -0.16, frontZ - 24), Color3.fromRGB(44, 44, 46))
 	P("Pavement", V(64, 0.18, 4), at(0, -0.06, frontZ - 3), Color3.fromRGB(96, 94, 90))
 	P("Kerb", V(64, 0.22, 0.4), at(0, 0.05, frontZ - 5.1), Color3.fromRGB(122, 118, 112))
 
@@ -13976,7 +13976,7 @@ local function buildExterior()
 		Bays. Six rows of them with a line between every pair, which is the thing
 		that makes a stretch of tarmac read as a car park instead of a road.
 	]]
-	for row = 0, 1 do
+	for row = 0, 2 do
 		local bz = frontZ - 11 - row * 13
 		for i = -8, 8 do
 			if outside(i * 2.7, bz, 3.0) then
@@ -14015,6 +14015,81 @@ local function buildExterior()
 			-- through the entrance glazing and lit the atrium from outside.
 			bulb(head, Color3.fromRGB(255, 176, 92), 0.75, 15)
 		end
+	end
+
+	--[[
+		The edge of the car park, which is the reason the far end read as a
+		sheet of tarmac that somebody had simply stopped drawing.
+
+		A car park has a boundary: a low wall with a coping on it, a palisade
+		fence above that, and a strip of planting the other side which has not
+		been cut since the centre closed. Past the fence the ground keeps
+		going, so the eye reaches something rather than falling off the world.
+
+		And it has a way in. A splitter island with a keep-left bollard, a
+		height restriction barrier -- the single most recognisable object in
+		any car park of this age -- and a pay and display machine beside it.
+	]]
+	local edgeZ, edgeX = frontZ - 46, 33
+
+	local function boundary(cx2, cz2, w2, d2)
+		P("BoundaryWall", V(w2, 0.9, d2), at(cx2, 0.45, cz2), Color3.fromRGB(76, 72, 68))
+		P("WallCoping", V(w2 + 0.14, 0.12, d2 + 0.14), at(cx2, 0.96, cz2), Color3.fromRGB(104, 100, 94))
+		-- The palisade above it, in pales with gaps.
+		local along = if w2 > d2 then w2 else d2
+		local n2 = math.floor(along / 0.34)
+		for i = 0, n2 - 1 do
+			local o = -along / 2 + 0.2 + i * 0.34
+			P("Palisade", (if w2 > d2 then V(0.05, 1.5, 0.05) else V(0.05, 1.5, 0.05)),
+				at(if w2 > d2 then cx2 + o else cx2, 1.75, if w2 > d2 then cz2 else cz2 + o), C.metal)
+		end
+		for _, ry in { 1.2, 2.4 } do
+			P("PalisadeRail", (if w2 > d2 then V(along, 0.07, 0.05) else V(0.05, 0.07, along)),
+				at(cx2, ry, cz2), C.metal)
+		end
+	end
+
+	-- The far edge, in two runs with the entrance between them.
+	boundary(-16, edgeZ, 34, 0.5)
+	boundary(24, edgeZ, 16, 0.5)
+	for _, sx in { -1, 1 } do
+		boundary(sx * edgeX, frontZ - 28, 0.5, 36)
+	end
+
+	-- Planting outside the fence, and ground that keeps going past it.
+	P("Verge", V(76, 0.3, 9), at(0, -0.2, edgeZ - 5), Color3.fromRGB(46, 52, 42))
+	for i = -11, 11 do
+		local hx = i * 3.2
+		P("Hedge", V(3.0, 1.5, 1.6), at(hx, 0.6, edgeZ - 2.2), Color3.fromRGB(38, 48, 36)).Material = Enum.Material.Grass
+	end
+	P("Verge", V(9, 0.3, 44), at(-edgeX - 5, -0.2, frontZ - 24), Color3.fromRGB(46, 52, 42))
+	P("Verge", V(9, 0.3, 44), at(edgeX + 5, -0.2, frontZ - 24), Color3.fromRGB(46, 52, 42))
+
+	--[[
+		The way in. A splitter island between in and out, the barrier over it,
+		and the machine nobody ever had the right change for.
+	]]
+	local gateX = 10
+	P("Island", V(2.2, 0.22, 7.0), at(gateX, 0.09, edgeZ + 2), Color3.fromRGB(96, 94, 90))
+	P("IslandKerb", V(2.4, 0.16, 7.2), at(gateX, 0.06, edgeZ + 2), Color3.fromRGB(122, 118, 112))
+	P("KeepLeft", V(0.3, 1.1, 0.3), at(gateX, 0.75, edgeZ - 0.4), Color3.fromRGB(150, 146, 136))
+	P("KeepLeftDisc", V(0.5, 0.5, 0.06), at(gateX, 1.4, edgeZ - 0.45), Color3.fromRGB(40, 60, 120))
+
+	for _, sx in { -1, 1 } do
+		P("BarrierPost", V(0.22, 3.2, 0.22), at(gateX + sx * 4.4, 1.6, edgeZ + 0.4), C.metal)
+	end
+	P("BarrierBeam", V(9.2, 0.26, 0.16), at(gateX, 3.1, edgeZ + 0.4), Color3.fromRGB(190, 170, 60))
+	local limit = P("HeightLimit", V(1.2, 0.5, 0.05), at(gateX, 3.1, edgeZ + 0.3), Color3.fromRGB(196, 192, 178))
+	printed(limit, Enum.NormalId.Front, "2.0m", { color = Color3.fromRGB(40, 38, 36), density = 120 })
+
+	P("PayMachine", V(0.6, 1.5, 0.45), at(gateX - 6.5, 0.75, edgeZ + 3), Color3.fromRGB(64, 70, 66))
+	P("PayFascia", V(0.5, 0.5, 0.06), at(gateX - 6.5, 1.25, edgeZ + 2.75), C.panel)
+	P("PayPlinth", V(0.7, 0.12, 0.55), at(gateX - 6.5, 0.06, edgeZ + 3), C.dark)
+
+	-- Arrows on the deck, worn most of the way off.
+	for i = 0, 2 do
+		P("DeckArrow", V(0.5, 0.02, 2.2), at(gateX - 3.2, 0.02, edgeZ + 5 + i * 5),
+			Color3.fromRGB(128, 124, 116))
 	end
 
 	-- A trolley shelter, and trolleys in it, because that is what is out here.

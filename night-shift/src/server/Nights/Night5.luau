@@ -91,7 +91,12 @@ local function lights(ctx)
 				By the third one the only light left in the mall is the clock, and
 				the clock is about to be the loudest thing any of them have heard.
 			]]
-			local fittings = ctx.findAll("Bulkhead")
+			--[[
+				Each panel takes a third of the EXIT circuit out for good. By the
+				third one the only light left in the building is the clock, and
+				the clock is about to be the loudest thing any of them has heard.
+			]]
+			local fittings = ctx.findAll("ExitSign")
 			for k = i, #fittings, #PANELS do
 				ctx.power().douse(fittings[k], 100000)
 			end
@@ -217,7 +222,7 @@ function Night.theStrike(ctx)
 	end)
 
 	local movement = ctx.nodes():FindFirstChild("ClockMovement")
-	local fittings = ctx.findAll("Bulkhead")
+	local fittings = ctx.findAll("ExitSign")
 
 	task.spawn(function()
 		while strikeCount < 33 and striking do

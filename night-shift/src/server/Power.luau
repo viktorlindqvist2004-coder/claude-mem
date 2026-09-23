@@ -32,8 +32,16 @@ local function collect()
 	end
 	for _, d in mall:GetDescendants() do
 		if d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then
-			-- The car park lamp is on the street supply and stays on. It is the
-			-- only light outside and the only way to find the door.
+			--[[
+				The car park lamp is on the street supply and stays on: it is the
+				only light outside and the only way to find the door. Everything
+				else goes, the EXIT boxes included.
+
+				An emergency circuit is the thing that is supposed to survive a
+				power cut, so taking it out is the whole point of the beat — at
+				03:00 on Night 1 the last light in the building goes, and what is
+				left is four torches and whatever the clock is doing.
+			]]
 			if d.Parent and d.Parent.Name ~= "CarParkLamp" and d.Parent.Name ~= "StripLight" then
 				table.insert(saved, { light = d, brightness = d.Brightness })
 			end

@@ -31,9 +31,9 @@
 
 local Build = {}
 
-Build.COMMIT = "cf2a1c3"
-Build.SUMMARY = "Write the sound brief and the cast list"
-Build.WHEN = "23 Sep 02:07"
+Build.COMMIT = "f96da4f"
+Build.SUMMARY = "Stop the arms repeating themselves"
+Build.WHEN = "23 Sep 02:08"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -3012,10 +3012,14 @@ function Atmos.build()
 	SoundService.DistanceFactor = 3.33 -- one stud is 0.3 m, and the mix should know
 
 	-- ── The hum, one per fixture ────────────────────────────────────────────
+	--[[
+		The hum belongs to what is energised, and since the building went onto
+		the emergency circuit that is the EXIT boxes and nothing else. The dead
+		bulkheads are silent, which is the point: a fitting you can see and
+		cannot hear is a fitting that is off, and the crew learn to read the
+		building that way within about ten minutes.
+	]]
 	local fixtures = {}
-	for _, part in World.all("Bulkhead") do
-		table.insert(fixtures, part)
-	end
 	for _, part in World.all("ExitSign") do
 		table.insert(fixtures, part)
 	end
@@ -3890,8 +3894,11 @@ local function fireStartle(player: Player, large: boolean)
 	)
 
 	-- Something real does it: a fitting goes, a bin goes over, a shutter drops.
+	-- Something real does it, and what it does is take the light away. The
+	-- bulkheads have been dark since the building went onto the emergency
+	-- circuit, so the only thing left to put out is the way out.
 	local nearest, best = nil, math.huge
-	for _, fitting in World.all("Bulkhead") do
+	for _, fitting in World.all("ExitSign") do
 		local d = (fitting.Position - at.Position).Magnitude
 		if d < best then
 			nearest, best = fitting, d
@@ -5409,7 +5416,7 @@ Night.beats = {
 		ctx.caption("[the fashion circuit strobes]", "the fashion floor")
 		task.spawn(function()
 			for _ = 1, 14 do
-				for _, fitting in ctx.findAll("Bulkhead") do
+				for _, fitting in ctx.findAll("ExitSign") do
 					Power.douse(fitting, 0.35)
 				end
 				ctx.effect("strobe", nil)
@@ -5841,8 +5848,13 @@ local function generator(ctx)
 			A building on standby is darker than a building with its lights off,
 			because now you can see how much of it there is.
 		]]
+		--[[
+			Standby brings the EXIT circuit back at less than half strength and
+			nothing else. A building on standby is darker than a building with
+			its lights off, because now you can see how much of it there is.
+		]]
 		ctx.power().restore()
-		for _, fitting in ctx.findAll("Bulkhead") do
+		for _, fitting in ctx.findAll("ExitSign") do
 			local light = fitting:FindFirstChildWhichIsA("Light")
 			if light then
 				light.Brightness *= 0.45
@@ -6220,7 +6232,12 @@ local function lights(ctx)
 				By the third one the only light left in the mall is the clock, and
 				the clock is about to be the loudest thing any of them have heard.
 			]]
-			local fittings = ctx.findAll("Bulkhead")
+			--[[
+				Each panel takes a third of the EXIT circuit out for good. By the
+				third one the only light left in the building is the clock, and
+				the clock is about to be the loudest thing any of them has heard.
+			]]
+			local fittings = ctx.findAll("ExitSign")
 			for k = i, #fittings, #PANELS do
 				ctx.power().douse(fittings[k], 100000)
 			end
@@ -6346,7 +6363,7 @@ function Night.theStrike(ctx)
 	end)
 
 	local movement = ctx.nodes():FindFirstChild("ClockMovement")
-	local fittings = ctx.findAll("Bulkhead")
+	local fittings = ctx.findAll("ExitSign")
 
 	task.spawn(function()
 		while strikeCount < 33 and striking do
@@ -6736,8 +6753,16 @@ local function collect()
 	end
 	for _, d in mall:GetDescendants() do
 		if d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then
-			-- The car park lamp is on the street supply and stays on. It is the
-			-- only light outside and the only way to find the door.
+			--[[
+				The car park lamp is on the street supply and stays on: it is the
+				only light outside and the only way to find the door. Everything
+				else goes, the EXIT boxes included.
+
+				An emergency circuit is the thing that is supposed to survive a
+				power cut, so taking it out is the whole point of the beat — at
+				03:00 on Night 1 the last light in the building goes, and what is
+				left is four torches and whatever the clock is doing.
+			]]
 			if d.Parent and d.Parent.Name ~= "CarParkLamp" and d.Parent.Name ~= "StripLight" then
 				table.insert(saved, { light = d, brightness = d.Brightness })
 			end
@@ -7148,9 +7173,16 @@ local function stepStandStill()
 		if root and (root.Position - origin).Magnitude > 2.2 * METRE then
 			window.positions[player] = root.Position
 			ctx.violation("music_changes")
+			--[[
+				The fittings ahead of the walker go out, one at a time, down the
+				corridor. Since the bulkheads went dark these are the EXIT boxes
+				— which is much worse, because they are the only light in the
+				building and because going out one by one ahead of you is the
+				building closing the route you were taking.
+			]]
 			task.spawn(function()
 				local ahead = {}
-				for _, fitting in World.all("Bulkhead") do
+				for _, fitting in World.all("ExitSign") do
 					local delta = fitting.Position - root.Position
 					if delta.Magnitude < 22 * METRE and delta.Unit:Dot(root.CFrame.LookVector) > 0.3 then
 						table.insert(ahead, fitting)

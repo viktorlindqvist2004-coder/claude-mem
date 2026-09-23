@@ -328,9 +328,16 @@ local function stepStandStill()
 		if root and (root.Position - origin).Magnitude > 2.2 * METRE then
 			window.positions[player] = root.Position
 			ctx.violation("music_changes")
+			--[[
+				The fittings ahead of the walker go out, one at a time, down the
+				corridor. Since the bulkheads went dark these are the EXIT boxes
+				— which is much worse, because they are the only light in the
+				building and because going out one by one ahead of you is the
+				building closing the route you were taking.
+			]]
 			task.spawn(function()
 				local ahead = {}
-				for _, fitting in World.all("Bulkhead") do
+				for _, fitting in World.all("ExitSign") do
 					local delta = fitting.Position - root.Position
 					if delta.Magnitude < 22 * METRE and delta.Unit:Dot(root.CFrame.LookVector) > 0.3 then
 						table.insert(ahead, fitting)

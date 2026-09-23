@@ -258,8 +258,11 @@ local function fireStartle(player: Player, large: boolean)
 	)
 
 	-- Something real does it: a fitting goes, a bin goes over, a shutter drops.
+	-- Something real does it, and what it does is take the light away. The
+	-- bulkheads have been dark since the building went onto the emergency
+	-- circuit, so the only thing left to put out is the way out.
 	local nearest, best = nil, math.huge
-	for _, fitting in World.all("Bulkhead") do
+	for _, fitting in World.all("ExitSign") do
 		local d = (fitting.Position - at.Position).Magnitude
 		if d < best then
 			nearest, best = fitting, d

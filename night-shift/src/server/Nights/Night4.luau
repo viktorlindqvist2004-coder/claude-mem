@@ -66,8 +66,13 @@ local function generator(ctx)
 			A building on standby is darker than a building with its lights off,
 			because now you can see how much of it there is.
 		]]
+		--[[
+			Standby brings the EXIT circuit back at less than half strength and
+			nothing else. A building on standby is darker than a building with
+			its lights off, because now you can see how much of it there is.
+		]]
 		ctx.power().restore()
-		for _, fitting in ctx.findAll("Bulkhead") do
+		for _, fitting in ctx.findAll("ExitSign") do
 			local light = fitting:FindFirstChildWhichIsA("Light")
 			if light then
 				light.Brightness *= 0.45

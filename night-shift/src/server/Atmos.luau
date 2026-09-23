@@ -60,10 +60,14 @@ function Atmos.build()
 	SoundService.DistanceFactor = 3.33 -- one stud is 0.3 m, and the mix should know
 
 	-- ── The hum, one per fixture ────────────────────────────────────────────
+	--[[
+		The hum belongs to what is energised, and since the building went onto
+		the emergency circuit that is the EXIT boxes and nothing else. The dead
+		bulkheads are silent, which is the point: a fitting you can see and
+		cannot hear is a fitting that is off, and the crew learn to read the
+		building that way within about ten minutes.
+	]]
 	local fixtures = {}
-	for _, part in World.all("Bulkhead") do
-		table.insert(fixtures, part)
-	end
 	for _, part in World.all("ExitSign") do
 		table.insert(fixtures, part)
 	end

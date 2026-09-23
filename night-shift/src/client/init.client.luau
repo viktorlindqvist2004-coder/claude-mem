@@ -18,6 +18,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local SoundService = game:GetService("SoundService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -323,12 +324,44 @@ end
 
 -- ── Documents ───────────────────────────────────────────────────────────────
 
+--[[
+	Reading something.
+
+	Everything in this game that has words on it opens the same panel: the rule
+	sheet, the tapes, the shift log, the case file. Which means closing it is one
+	of the two or three most-repeated actions in the whole game, and it wants to
+	be impossible to get wrong.
+
+	So it closes on **anything**: Escape, E, X, Backspace, Enter, Space, or a
+	click anywhere on the screen. The dimmed backdrop behind it is a button —
+	that is the discoverable one, because a player who cannot find a key will
+	always eventually click.
+
+	Proximity prompts are switched off while it is open, which matters more than
+	it sounds: the prompt you just pressed E on is still under your feet, and
+	without this, closing with E would reopen the thing you were closing.
+]]
+local paperOpen = false
+
+local backdrop = Instance.new("TextButton")
+backdrop.Name = "PaperBackdrop"
+backdrop.Size = UDim2.fromScale(1, 1)
+backdrop.BackgroundColor3 = Color3.new(0, 0, 0)
+backdrop.BackgroundTransparency = 0.5
+backdrop.BorderSizePixel = 0
+backdrop.Text = ""
+backdrop.AutoButtonColor = false
+backdrop.Visible = false
+backdrop.ZIndex = 20
+backdrop.Parent = gui
+
 local paper = Instance.new("Frame")
-paper.Size = UDim2.fromOffset(620, 520)
-paper.Position = UDim2.new(0.5, -310, 0.5, -260)
+paper.Size = UDim2.fromOffset(620, 540)
+paper.Position = UDim2.new(0.5, -310, 0.5, -270)
 paper.BackgroundColor3 = Color3.fromRGB(216, 210, 190)
 paper.BorderSizePixel = 0
 paper.Visible = false
+paper.ZIndex = 21
 paper.Parent = gui
 Instance.new("UICorner").Parent = paper
 
@@ -339,7 +372,8 @@ paperPad.PaddingRight = UDim.new(0, 28)
 paperPad.Parent = paper
 
 local paperScroll = Instance.new("ScrollingFrame")
-paperScroll.Size = UDim2.new(1, 0, 1, -30)
+paperScroll.ZIndex = 22
+paperScroll.Size = UDim2.new(1, 0, 1, -42)
 paperScroll.BackgroundTransparency = 1
 paperScroll.BorderSizePixel = 0
 paperScroll.ScrollBarThickness = 3
@@ -352,18 +386,43 @@ paperLayout.Padding = UDim.new(0, 6)
 paperLayout.SortOrder = Enum.SortOrder.LayoutOrder
 paperLayout.Parent = paperScroll
 
+--[[
+	The close line. It is a button, it is the width of the panel, it has a rule
+	above it, and it says the key — because a player who has just had a jump
+	scare and is holding a sheet of paper they cannot put down is not going to
+	go hunting.
+]]
+local paperRule = Instance.new("Frame")
+paperRule.Size = UDim2.new(1, 0, 0, 1)
+paperRule.Position = UDim2.new(0, 0, 1, -34)
+paperRule.BackgroundColor3 = Color3.fromRGB(168, 160, 142)
+paperRule.BorderSizePixel = 0
+paperRule.ZIndex = 22
+paperRule.Parent = paper
+
 local paperClose = Instance.new("TextButton")
-paperClose.Size = UDim2.new(1, 0, 0, 20)
-paperClose.Position = UDim2.new(0, 0, 1, -24)
+paperClose.Size = UDim2.new(1, 0, 0, 26)
+paperClose.Position = UDim2.new(0, 0, 1, -28)
 paperClose.BackgroundTransparency = 1
-paperClose.Font = Enum.Font.Code
-paperClose.Text = "[ X ]  put it back"
-paperClose.TextColor3 = Color3.fromRGB(96, 88, 72)
-paperClose.TextSize = 13
+paperClose.Font = Enum.Font.GothamMedium
+paperClose.Text = "ESC  ·  put it back"
+paperClose.TextColor3 = Color3.fromRGB(104, 94, 76)
+paperClose.TextSize = 15
+paperClose.ZIndex = 22
 paperClose.Parent = paper
-paperClose.Activated:Connect(function()
+
+local function closePaper()
+	if not paperOpen then
+		return
+	end
+	paperOpen = false
 	paper.Visible = false
-end)
+	backdrop.Visible = false
+	ProximityPromptService.Enabled = true
+end
+
+paperClose.Activated:Connect(closePaper)
+backdrop.Activated:Connect(closePaper)
 
 local function paperLine(text: string, size: number, colour: Color3, order: number, strike: boolean?)
 	local l = label(paperScroll, text, UDim2.new(1, -10, 0, 0), UDim2.new())
@@ -405,7 +464,12 @@ local function openSheet(title: string, body: any)
 			order += 1
 		end
 	end
+	paperOpen = true
 	paper.Visible = true
+	backdrop.Visible = true
+	-- The prompt you pressed E on is still under your feet. Without this,
+	-- closing with E reopens the thing you are closing.
+	ProximityPromptService.Enabled = false
 end
 
 remotes.Sheet.OnClientEvent:Connect(function(title, body)
@@ -792,10 +856,26 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		else
 			remotes.Test:FireServer("__menu")
 		end
-	elseif input.KeyCode == Enum.KeyCode.X and paper.Visible then
-		-- Not E: E is the interact key, and the prompt you just used is still
-		-- under your feet.
-		paper.Visible = false
+	elseif paperOpen then
+		--[[
+			Anything closes it. Escape is the one it advertises, and the rest are
+			there because somebody will try them: E and X because those are the
+			game's other two keys, Backspace because that is what people press
+			when they want something to go away, and Return and Space because
+			they are the two biggest keys on the keyboard.
+		]]
+		local key = input.KeyCode
+		if
+			key == Enum.KeyCode.Escape
+			or key == Enum.KeyCode.X
+			or key == Enum.KeyCode.E
+			or key == Enum.KeyCode.Q
+			or key == Enum.KeyCode.Backspace
+			or key == Enum.KeyCode.Return
+			or key == Enum.KeyCode.Space
+		then
+			closePaper()
+		end
 	end
 end)
 
@@ -816,5 +896,5 @@ task.delay(10, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [ESC] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

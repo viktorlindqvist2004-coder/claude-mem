@@ -36,13 +36,32 @@ export type Slot = {
 
 local SoundBank = {}
 
+--[[
+	The loops are off.
+
+	Every looping slot below points at a built-in Roblox sound, and there is no
+	built-in Roblox sound that loops as room tone. `bass.mp3` at a quarter speed
+	is not a mains hum, it is a musical note repeating every second and a half;
+	`action_falling.mp3` is not air handling, it is a whoosh on a timer. Played
+	under everything all night they are drones, and a drone is the one thing a
+	player cannot stop hearing.
+
+	So they are silent until there are real recordings for them, and the game is
+	the clock ticking, a tap dripping, and events. That is a cleaner soundscape
+	than the placeholders were ever going to be.
+
+	Set this to true the moment the loops in audio/SOUND_SCRIPT.md are recorded
+	and their ids are in. Nothing else changes.
+]]
+SoundBank.LOOPS_ENABLED = false
+
 -- ── The building ────────────────────────────────────────────────────────────
 
 -- One per red fixture, at the fixture. 100 Hz mains, a few cents off per unit.
 SoundBank.HUM = {
 	caption = "[the fittings hum]",
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.11,
+	volume = if SoundBank.LOOPS_ENABLED then 0.11 else 0,
 	speed = 0.24,
 	looped = true,
 	rollOffMinMetres = 1.5,
@@ -53,7 +72,7 @@ SoundBank.HUM = {
 SoundBank.HUM_FAILING = {
 	caption = "[a fitting buzzes, irregularly]",
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.16,
+	volume = if SoundBank.LOOPS_ENABLED then 0.16 else 0,
 	speed = 0.31,
 	looped = true,
 	rollOffMinMetres = 1.5,
@@ -64,7 +83,7 @@ SoundBank.HUM_FAILING = {
 SoundBank.PLANT = {
 	caption = "[air handling, below]",
 	id = "rbxasset://sounds/action_falling.mp3",
-	volume = 0.25,
+	volume = if SoundBank.LOOPS_ENABLED then 0.25 else 0,
 	speed = 0.45,
 	looped = true,
 	rollOffMinMetres = 4,
@@ -75,7 +94,7 @@ SoundBank.PLANT = {
 SoundBank.FREEZER = {
 	caption = "[a freezer cabinet cycles]",
 	id = "rbxasset://sounds/action_falling.mp3",
-	volume = 0.16,
+	volume = if SoundBank.LOOPS_ENABLED then 0.16 else 0,
 	speed = 0.8,
 	looped = true,
 	rollOffMinMetres = 2,
@@ -86,7 +105,7 @@ SoundBank.FREEZER = {
 SoundBank.WIND = {
 	caption = "[wind against the dock shutter]",
 	id = "rbxasset://sounds/action_falling.mp3",
-	volume = 0.3,
+	volume = if SoundBank.LOOPS_ENABLED then 0.3 else 0,
 	speed = 0.6,
 	looped = true,
 	rollOffMinMetres = 6,
@@ -154,7 +173,7 @@ SoundBank.MUZAK = {
 		the slot keeps everything else about it so that is a one-line change.
 	]]
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0,
+	volume = 0, -- see LOOPS_ENABLED; this one stays at zero regardless
 	speed = 0.62,
 	looped = true,
 	rollOffMinMetres = 6,

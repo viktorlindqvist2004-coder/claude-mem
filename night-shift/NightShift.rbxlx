@@ -31,9 +31,9 @@
 
 local Build = {}
 
-Build.COMMIT = "9d723d0"
-Build.SUMMARY = "Rebuild the place file against the current commit"
-Build.WHEN = "23 Sep 02:10"
+Build.COMMIT = "c6f8e3a"
+Build.SUMMARY = "Rebuild the mall when the one standing there is from an older commit"
+Build.WHEN = "23 Sep 11:30"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -2245,13 +2245,32 @@ export type Slot = {
 
 local SoundBank = {}
 
+--[[
+	The loops are off.
+
+	Every looping slot below points at a built-in Roblox sound, and there is no
+	built-in Roblox sound that loops as room tone. `bass.mp3` at a quarter speed
+	is not a mains hum, it is a musical note repeating every second and a half;
+	`action_falling.mp3` is not air handling, it is a whoosh on a timer. Played
+	under everything all night they are drones, and a drone is the one thing a
+	player cannot stop hearing.
+
+	So they are silent until there are real recordings for them, and the game is
+	the clock ticking, a tap dripping, and events. That is a cleaner soundscape
+	than the placeholders were ever going to be.
+
+	Set this to true the moment the loops in audio/SOUND_SCRIPT.md are recorded
+	and their ids are in. Nothing else changes.
+]]
+SoundBank.LOOPS_ENABLED = false
+
 -- ── The building ────────────────────────────────────────────────────────────
 
 -- One per red fixture, at the fixture. 100 Hz mains, a few cents off per unit.
 SoundBank.HUM = {
 	caption = "[the fittings hum]",
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.11,
+	volume = if SoundBank.LOOPS_ENABLED then 0.11 else 0,
 	speed = 0.24,
 	looped = true,
 	rollOffMinMetres = 1.5,
@@ -2262,7 +2281,7 @@ SoundBank.HUM = {
 SoundBank.HUM_FAILING = {
 	caption = "[a fitting buzzes, irregularly]",
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0.16,
+	volume = if SoundBank.LOOPS_ENABLED then 0.16 else 0,
 	speed = 0.31,
 	looped = true,
 	rollOffMinMetres = 1.5,
@@ -2273,7 +2292,7 @@ SoundBank.HUM_FAILING = {
 SoundBank.PLANT = {
 	caption = "[air handling, below]",
 	id = "rbxasset://sounds/action_falling.mp3",
-	volume = 0.25,
+	volume = if SoundBank.LOOPS_ENABLED then 0.25 else 0,
 	speed = 0.45,
 	looped = true,
 	rollOffMinMetres = 4,
@@ -2284,7 +2303,7 @@ SoundBank.PLANT = {
 SoundBank.FREEZER = {
 	caption = "[a freezer cabinet cycles]",
 	id = "rbxasset://sounds/action_falling.mp3",
-	volume = 0.16,
+	volume = if SoundBank.LOOPS_ENABLED then 0.16 else 0,
 	speed = 0.8,
 	looped = true,
 	rollOffMinMetres = 2,
@@ -2295,7 +2314,7 @@ SoundBank.FREEZER = {
 SoundBank.WIND = {
 	caption = "[wind against the dock shutter]",
 	id = "rbxasset://sounds/action_falling.mp3",
-	volume = 0.3,
+	volume = if SoundBank.LOOPS_ENABLED then 0.3 else 0,
 	speed = 0.6,
 	looped = true,
 	rollOffMinMetres = 6,
@@ -2363,7 +2382,7 @@ SoundBank.MUZAK = {
 		the slot keeps everything else about it so that is a one-line change.
 	]]
 	id = "rbxasset://sounds/bass.mp3",
-	volume = 0,
+	volume = 0, -- see LOOPS_ENABLED; this one stays at zero regardless
 	speed = 0.62,
 	looped = true,
 	rollOffMinMetres = 6,
@@ -3010,6 +3029,13 @@ local function anchorAt(name: string, point: { number }): BasePart
 	return World.marker(name, point, 0.6)
 end
 
+-- A slot at zero is a slot with no recording yet. Do not build an emitter for
+-- it: thirty silent Sounds is thirty things for the engine to think about and
+-- nothing at all for the player to hear.
+local function audible(slot: any): boolean
+	return slot.volume > 0
+end
+
 function Atmos.clear()
 	for _, sound in emitters do
 		sound:Destroy()
@@ -3038,7 +3064,7 @@ function Atmos.build()
 	end
 
 	local cents = Config.HUM.DETUNE_CENTS / 1200
-	for i, part in fixtures do
+	for i, part in (if audible(SoundBank.HUM) then fixtures else {}) do
 		local failing = (i % math.floor(1 / Config.HUM.FAILING_FIXTURE_RATIO)) == 0
 		local slot = if failing then SoundBank.HUM_FAILING else SoundBank.HUM
 		local sound = SoundBank.make(slot, part, "Hum")
@@ -3082,19 +3108,23 @@ function Atmos.build()
 	}
 	for i, point in speakerPoints do
 		local anchor = anchorAt(`CeilingSpeaker{i}`, point)
-		local sound = SoundBank.make(SoundBank.MUZAK, anchor, "Muzak")
-		sound:Play()
-		table.insert(emitters, sound)
-		table.insert(muzak, sound)
+		if audible(SoundBank.MUZAK) then
+			local sound = SoundBank.make(SoundBank.MUZAK, anchor, "Muzak")
+			sound:Play()
+			table.insert(emitters, sound)
+			table.insert(muzak, sound)
+		end
 	end
 
 	-- ── Plant, freezer, weather ─────────────────────────────────────────────
-	local plant = anchorAt("PlantNoise", { Places.ROOM.PlantRoom.x, -3.2, Places.ROOM.PlantRoom.z })
-	local plantSound = SoundBank.make(SoundBank.PLANT, plant, "Plant")
-	plantSound:Play()
-	table.insert(emitters, plantSound)
+	if audible(SoundBank.PLANT) then
+		local plant = anchorAt("PlantNoise", { Places.ROOM.PlantRoom.x, -3.2, Places.ROOM.PlantRoom.z })
+		local plantSound = SoundBank.make(SoundBank.PLANT, plant, "Plant")
+		plantSound:Play()
+		table.insert(emitters, plantSound)
+	end
 
-	local freezer = World.first("Freezer")
+	local freezer = if audible(SoundBank.FREEZER) then World.first("Freezer") else nil
 	if freezer then
 		local cold = SoundBank.make(SoundBank.FREEZER, freezer, "Compressor")
 		cold:SetAttribute("BaseVolume", SoundBank.FREEZER.volume)
@@ -3133,10 +3163,12 @@ function Atmos.build()
 		end)
 	end
 
-	local outside = anchorAt("Weather", { Places.ROOM.LoadingDock.x, 2.0, Places.ROOM.LoadingDock.z - 5 })
-	local wind = SoundBank.make(SoundBank.WIND, outside, "Wind")
-	wind:Play()
-	table.insert(emitters, wind)
+	if audible(SoundBank.WIND) then
+		local outside = anchorAt("Weather", { Places.ROOM.LoadingDock.x, 2.0, Places.ROOM.LoadingDock.z - 5 })
+		local wind = SoundBank.make(SoundBank.WIND, outside, "Wind")
+		wind:Play()
+		table.insert(emitters, wind)
+	end
 
 	--[[
 		The clock. A 1904 movement under a 1986 display, and it has never been
@@ -3152,7 +3184,13 @@ function Atmos.build()
 		end
 	end)
 
-	print(`[atmos] {#emitters} emitters — {#fixtures} fixtures humming`)
+	--[[
+		Right now that is two things: the clock, and the tap. Every looping slot
+		is silent until it has a real recording, so the building is quiet and
+		what you hear is what happens in it.
+	]]
+	print(`[atmos] {#emitters} emitters, {#fixtures} fixtures`
+		.. (if SoundBank.LOOPS_ENABLED then "" else " — room tone is off until the loops are recorded"))
 end
 
 -- Rule 2. The tape changes track early, and then there is nothing at all.
@@ -11188,6 +11226,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local SoundService = game:GetService("SoundService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -11493,12 +11532,44 @@ end
 
 -- ── Documents ───────────────────────────────────────────────────────────────
 
+--[[
+	Reading something.
+
+	Everything in this game that has words on it opens the same panel: the rule
+	sheet, the tapes, the shift log, the case file. Which means closing it is one
+	of the two or three most-repeated actions in the whole game, and it wants to
+	be impossible to get wrong.
+
+	So it closes on **anything**: Escape, E, X, Backspace, Enter, Space, or a
+	click anywhere on the screen. The dimmed backdrop behind it is a button —
+	that is the discoverable one, because a player who cannot find a key will
+	always eventually click.
+
+	Proximity prompts are switched off while it is open, which matters more than
+	it sounds: the prompt you just pressed E on is still under your feet, and
+	without this, closing with E would reopen the thing you were closing.
+]]
+local paperOpen = false
+
+local backdrop = Instance.new("TextButton")
+backdrop.Name = "PaperBackdrop"
+backdrop.Size = UDim2.fromScale(1, 1)
+backdrop.BackgroundColor3 = Color3.new(0, 0, 0)
+backdrop.BackgroundTransparency = 0.5
+backdrop.BorderSizePixel = 0
+backdrop.Text = ""
+backdrop.AutoButtonColor = false
+backdrop.Visible = false
+backdrop.ZIndex = 20
+backdrop.Parent = gui
+
 local paper = Instance.new("Frame")
-paper.Size = UDim2.fromOffset(620, 520)
-paper.Position = UDim2.new(0.5, -310, 0.5, -260)
+paper.Size = UDim2.fromOffset(620, 540)
+paper.Position = UDim2.new(0.5, -310, 0.5, -270)
 paper.BackgroundColor3 = Color3.fromRGB(216, 210, 190)
 paper.BorderSizePixel = 0
 paper.Visible = false
+paper.ZIndex = 21
 paper.Parent = gui
 Instance.new("UICorner").Parent = paper
 
@@ -11509,7 +11580,8 @@ paperPad.PaddingRight = UDim.new(0, 28)
 paperPad.Parent = paper
 
 local paperScroll = Instance.new("ScrollingFrame")
-paperScroll.Size = UDim2.new(1, 0, 1, -30)
+paperScroll.ZIndex = 22
+paperScroll.Size = UDim2.new(1, 0, 1, -42)
 paperScroll.BackgroundTransparency = 1
 paperScroll.BorderSizePixel = 0
 paperScroll.ScrollBarThickness = 3
@@ -11522,18 +11594,43 @@ paperLayout.Padding = UDim.new(0, 6)
 paperLayout.SortOrder = Enum.SortOrder.LayoutOrder
 paperLayout.Parent = paperScroll
 
+--[[
+	The close line. It is a button, it is the width of the panel, it has a rule
+	above it, and it says the key — because a player who has just had a jump
+	scare and is holding a sheet of paper they cannot put down is not going to
+	go hunting.
+]]
+local paperRule = Instance.new("Frame")
+paperRule.Size = UDim2.new(1, 0, 0, 1)
+paperRule.Position = UDim2.new(0, 0, 1, -34)
+paperRule.BackgroundColor3 = Color3.fromRGB(168, 160, 142)
+paperRule.BorderSizePixel = 0
+paperRule.ZIndex = 22
+paperRule.Parent = paper
+
 local paperClose = Instance.new("TextButton")
-paperClose.Size = UDim2.new(1, 0, 0, 20)
-paperClose.Position = UDim2.new(0, 0, 1, -24)
+paperClose.Size = UDim2.new(1, 0, 0, 26)
+paperClose.Position = UDim2.new(0, 0, 1, -28)
 paperClose.BackgroundTransparency = 1
-paperClose.Font = Enum.Font.Code
-paperClose.Text = "[ X ]  put it back"
-paperClose.TextColor3 = Color3.fromRGB(96, 88, 72)
-paperClose.TextSize = 13
+paperClose.Font = Enum.Font.GothamMedium
+paperClose.Text = "ESC  ·  put it back"
+paperClose.TextColor3 = Color3.fromRGB(104, 94, 76)
+paperClose.TextSize = 15
+paperClose.ZIndex = 22
 paperClose.Parent = paper
-paperClose.Activated:Connect(function()
+
+local function closePaper()
+	if not paperOpen then
+		return
+	end
+	paperOpen = false
 	paper.Visible = false
-end)
+	backdrop.Visible = false
+	ProximityPromptService.Enabled = true
+end
+
+paperClose.Activated:Connect(closePaper)
+backdrop.Activated:Connect(closePaper)
 
 local function paperLine(text: string, size: number, colour: Color3, order: number, strike: boolean?)
 	local l = label(paperScroll, text, UDim2.new(1, -10, 0, 0), UDim2.new())
@@ -11575,7 +11672,12 @@ local function openSheet(title: string, body: any)
 			order += 1
 		end
 	end
+	paperOpen = true
 	paper.Visible = true
+	backdrop.Visible = true
+	-- The prompt you pressed E on is still under your feet. Without this,
+	-- closing with E reopens the thing you are closing.
+	ProximityPromptService.Enabled = false
 end
 
 remotes.Sheet.OnClientEvent:Connect(function(title, body)
@@ -11962,10 +12064,26 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		else
 			remotes.Test:FireServer("__menu")
 		end
-	elseif input.KeyCode == Enum.KeyCode.X and paper.Visible then
-		-- Not E: E is the interact key, and the prompt you just used is still
-		-- under your feet.
-		paper.Visible = false
+	elseif paperOpen then
+		--[[
+			Anything closes it. Escape is the one it advertises, and the rest are
+			there because somebody will try them: E and X because those are the
+			game's other two keys, Backspace because that is what people press
+			when they want something to go away, and Return and Space because
+			they are the two biggest keys on the keyboard.
+		]]
+		local key = input.KeyCode
+		if
+			key == Enum.KeyCode.Escape
+			or key == Enum.KeyCode.X
+			or key == Enum.KeyCode.E
+			or key == Enum.KeyCode.Q
+			or key == Enum.KeyCode.Backspace
+			or key == Enum.KeyCode.Return
+			or key == Enum.KeyCode.Space
+		then
+			closePaper()
+		end
 	end
 end)
 
@@ -11986,7 +12104,7 @@ task.delay(10, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [ESC] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")
 ]]></string>
         </Properties>

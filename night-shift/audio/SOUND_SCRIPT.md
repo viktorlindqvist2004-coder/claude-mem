@@ -42,12 +42,12 @@ to fake and the most valuable to get right: the game is navigated by them.
 | slot | caption | now | level |
 | --- | --- | --- | --- |
 | `DREAD_BED` | [  ] | `action_falling.mp3` **(silent)** | 0.0 |
-| `FREEZER` | [a freezer cabinet cycles] | `action_falling.mp3` | 0.16 |
-| `HUM` | [the fittings hum] | `bass.mp3` | 0.11 |
-| `HUM_FAILING` | [a fitting buzzes, irregularly] | `bass.mp3` | 0.16 |
+| `FREEZER` | [a freezer cabinet cycles] | `action_falling.mp3` |  |
+| `HUM` | [the fittings hum] | `bass.mp3` |  |
+| `HUM_FAILING` | [a fitting buzzes, irregularly] | `bass.mp3` |  |
 | `MUZAK` | [muzak] | `bass.mp3` **(silent)** | 0 |
-| `PLANT` | [air handling, below] | `action_falling.mp3` | 0.25 |
-| `WIND` | [wind against the dock shutter] | `action_falling.mp3` | 0.3 |
+| `PLANT` | [air handling, below] | `action_falling.mp3` |  |
+| `WIND` | [wind against the dock shutter] | `action_falling.mp3` |  |
 
 ### What each loop needs
 

@@ -12,9 +12,9 @@
 
 local Build = {}
 
-Build.COMMIT = "9d723d0"
-Build.SUMMARY = "Rebuild the place file against the current commit"
-Build.WHEN = "23 Sep 02:10"
+Build.COMMIT = "c6f8e3a"
+Build.SUMMARY = "Rebuild the mall when the one standing there is from an older commit"
+Build.WHEN = "23 Sep 11:30"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 

@@ -45,6 +45,13 @@ local function anchorAt(name: string, point: { number }): BasePart
 	return World.marker(name, point, 0.6)
 end
 
+-- A slot at zero is a slot with no recording yet. Do not build an emitter for
+-- it: thirty silent Sounds is thirty things for the engine to think about and
+-- nothing at all for the player to hear.
+local function audible(slot: any): boolean
+	return slot.volume > 0
+end
+
 function Atmos.clear()
 	for _, sound in emitters do
 		sound:Destroy()
@@ -73,7 +80,7 @@ function Atmos.build()
 	end
 
 	local cents = Config.HUM.DETUNE_CENTS / 1200
-	for i, part in fixtures do
+	for i, part in (if audible(SoundBank.HUM) then fixtures else {}) do
 		local failing = (i % math.floor(1 / Config.HUM.FAILING_FIXTURE_RATIO)) == 0
 		local slot = if failing then SoundBank.HUM_FAILING else SoundBank.HUM
 		local sound = SoundBank.make(slot, part, "Hum")
@@ -117,19 +124,23 @@ function Atmos.build()
 	}
 	for i, point in speakerPoints do
 		local anchor = anchorAt(`CeilingSpeaker{i}`, point)
-		local sound = SoundBank.make(SoundBank.MUZAK, anchor, "Muzak")
-		sound:Play()
-		table.insert(emitters, sound)
-		table.insert(muzak, sound)
+		if audible(SoundBank.MUZAK) then
+			local sound = SoundBank.make(SoundBank.MUZAK, anchor, "Muzak")
+			sound:Play()
+			table.insert(emitters, sound)
+			table.insert(muzak, sound)
+		end
 	end
 
 	-- ── Plant, freezer, weather ─────────────────────────────────────────────
-	local plant = anchorAt("PlantNoise", { Places.ROOM.PlantRoom.x, -3.2, Places.ROOM.PlantRoom.z })
-	local plantSound = SoundBank.make(SoundBank.PLANT, plant, "Plant")
-	plantSound:Play()
-	table.insert(emitters, plantSound)
+	if audible(SoundBank.PLANT) then
+		local plant = anchorAt("PlantNoise", { Places.ROOM.PlantRoom.x, -3.2, Places.ROOM.PlantRoom.z })
+		local plantSound = SoundBank.make(SoundBank.PLANT, plant, "Plant")
+		plantSound:Play()
+		table.insert(emitters, plantSound)
+	end
 
-	local freezer = World.first("Freezer")
+	local freezer = if audible(SoundBank.FREEZER) then World.first("Freezer") else nil
 	if freezer then
 		local cold = SoundBank.make(SoundBank.FREEZER, freezer, "Compressor")
 		cold:SetAttribute("BaseVolume", SoundBank.FREEZER.volume)
@@ -168,10 +179,12 @@ function Atmos.build()
 		end)
 	end
 
-	local outside = anchorAt("Weather", { Places.ROOM.LoadingDock.x, 2.0, Places.ROOM.LoadingDock.z - 5 })
-	local wind = SoundBank.make(SoundBank.WIND, outside, "Wind")
-	wind:Play()
-	table.insert(emitters, wind)
+	if audible(SoundBank.WIND) then
+		local outside = anchorAt("Weather", { Places.ROOM.LoadingDock.x, 2.0, Places.ROOM.LoadingDock.z - 5 })
+		local wind = SoundBank.make(SoundBank.WIND, outside, "Wind")
+		wind:Play()
+		table.insert(emitters, wind)
+	end
 
 	--[[
 		The clock. A 1904 movement under a 1986 display, and it has never been
@@ -187,7 +200,13 @@ function Atmos.build()
 		end
 	end)
 
-	print(`[atmos] {#emitters} emitters — {#fixtures} fixtures humming`)
+	--[[
+		Right now that is two things: the clock, and the tap. Every looping slot
+		is silent until it has a real recording, so the building is quiet and
+		what you hear is what happens in it.
+	]]
+	print(`[atmos] {#emitters} emitters, {#fixtures} fixtures`
+		.. (if SoundBank.LOOPS_ENABLED then "" else " — room tone is off until the loops are recorded"))
 end
 
 -- Rule 2. The tape changes track early, and then there is nothing at all.

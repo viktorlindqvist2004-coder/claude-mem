@@ -12,11 +12,11 @@
 
 local Build = {}
 
-Build.COMMIT = "17a3613"
+Build.COMMIT = "b85cedd"
 Build.SUMMARY = "Silence the drone at the clock, and let the building be seen"
 Build.WHEN = "23 Sep 01:48"
 -- True when the working tree had uncommitted source changes at stamp time.
-Build.DIRTY = false
+Build.DIRTY = true
 
 function Build.line(): string
 	return `Night Shift · {Build.COMMIT}{if Build.DIRTY then "+" else ""} · {Build.WHEN}`

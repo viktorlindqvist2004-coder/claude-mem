@@ -32,7 +32,7 @@ done
 echo "== identifiers =="
 KNOWN="Color3|Enum|Instance|Vector3|Vector2|CFrame|Random|game|workspace|task|UDim|UDim2"
 KNOWN="$KNOWN|TweenInfo|RaycastParams|Ray|script|typeof|Font|NumberRange|ColorSequence"
-KNOWN="$KNOWN|NumberSequence|BrickColor|Rect|os|debug|utf8|warn"
+KNOWN="$KNOWN|NumberSequence|NumberSequenceKeypoint|ColorSequenceKeypoint|BrickColor|Rect|os|debug|utf8|warn"
 found=0
 for f in $(find src -name '*.luau' | sort); do
   out=$("$ANALYZE" "$f" 2>&1 | grep "Unknown global" | grep -vE "Unknown global '($KNOWN)'")

@@ -48,7 +48,7 @@ export type Floor = {
 
 MallLayout.FLOORS = {
 	{ id = "LG", name = "Lower Ground", elevation = -4.6, hasWings = false, fitOut = false,
-		note = "Loading dock, plant rooms, electrical cupboard, staff corridor, the dry fountain's pump room." },
+		note = "Loading dock, plant rooms, electrical cupboard, staff corridor, the escalator drive pits." },
 	{ id = "G", name = "Ground", elevation = 0, hasWings = true, fitOut = true,
 		note = "Supermarket, atrium, the Great Clock, the main entrance shutter." },
 	{ id = "F1", name = "Floor 1", elevation = 4.6, hasWings = true, fitOut = true,
@@ -67,7 +67,6 @@ MallLayout.ATRIUM = {
 	-- overlook it, and so does Floor 3, which is not supposed to be there.
 	clearHeight = 16.6,
 	clockPlinthRadius = 3.0,
-	fountainRadius = 4.5,
 }
 
 -- ─── Wings ──────────────────────────────────────────────────────────────────

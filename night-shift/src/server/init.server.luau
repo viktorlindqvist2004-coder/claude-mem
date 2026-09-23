@@ -191,6 +191,41 @@ Hud.onTorch(function(player, on)
 end)
 
 --[[
+	Footsteps, right down.
+
+	A default Roblox character is mixed for a game where hearing yourself move
+	is the point. Here the soundscape is a clock two rooms away, a fitting that
+	has stopped, and whatever is at the far end of the arm -- and a crew
+	member's own boots walked straight over all of it. You cannot listen to a
+	building you are drowning out.
+
+	Low, not off. Your own footsteps are how you know you are the one moving,
+	which matters a great deal the first time you hear a set that is not yours.
+]]
+local BODY_SOUND_VOLUME = {
+	Running = 0.05,
+	Landing = 0.10,
+	Jumping = 0.08,
+	Climbing = 0.06,
+	GettingUp = 0.08,
+	FreeFalling = 0,
+	Splash = 0.12,
+}
+
+local function quietenFootsteps(character: Model)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return
+	end
+	for name, volume in BODY_SOUND_VOLUME do
+		local sound = root:FindFirstChild(name)
+		if sound and sound:IsA("Sound") then
+			sound.Volume = volume
+		end
+	end
+end
+
+--[[
 	Walking and running. A default Roblox character moves at 16 studs a second,
 	which at this project's scale — 1 stud is 0.3 m — is 4.8 m/s, a sprint. The
 	whole game is paced around corridors being long, so the walk is a walk and
@@ -241,6 +276,7 @@ Players.PlayerAdded:Connect(function(player)
 		if humanoid then
 			humanoid.WalkSpeed = WALK
 		end
+		quietenFootsteps(character)
 		--[[
 			The torch starts on.
 

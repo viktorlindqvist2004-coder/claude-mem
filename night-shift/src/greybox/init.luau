@@ -1786,77 +1786,22 @@ local function buildAtrium()
 		everybody has walked past it four nights running knowing it cannot.
 	]]
 	--[[
-		Eight sides, not four. A square pool is a paddling pool; a shopping
-		centre fountain from 1986 is a faceted basin with a kerb wide enough
-		to sit on, a tiled lining, a dry bed with the drain still in it, and a
-		bowl on a plinth in the middle with nothing coming out of it.
+		There is no fountain.
 
-		The chipboard capping is the detail that does the work: somebody
-		screwed a lid over it in 1991 and nobody has taken it off, and you can
-		see the screws.
+		There was a dry one here: an octagonal kerb, a tiled basin, a tiered
+		bowl. It was rebuilt once to stop it reading as a cartwheel, which
+		worked -- it was then correctly identified as a fountain and called
+		ugly, which is a fair verdict on a 1986 municipal water feature and not
+		one a rebuild fixes.
+
+		It cost nothing structural. Rule 10 hung off it and Rule 10 is flavour
+		-- no trigger, no violation -- so it now hangs off the escalators,
+		which are also stopped, are also in this hall, and are the thing you
+		actually strain to hear in an empty shopping centre.
+
+		The middle of the atrium is empty now apart from the clock, which is
+		what the room was always for.
 	]]
-	--[[
-		It has to read as a fountain, and it did not. It read as a wheel.
-
-		The shape was an octagonal kerb 4.4 m across with a flat chipboard lid
-		screwed over the whole thing and a stem and a bowl sticking up out of
-		the middle of the lid. Eight segments round a rim with a hub in the
-		centre is a cartwheel, and in a room lit by nothing but the clock the
-		silhouette is all you get. Twice now it has been reported as "a big
-		wheel or whatever it is", which is the only review that matters.
-
-		What makes a fountain read is the basin -- the fact that the floor
-		inside the kerb is lower than the floor you are standing on, and that
-		you can see down into it. So the lid comes off. You get a kerb you
-		could sit on, a tiled lining, a dry bed thirty centimetres down with
-		the drain still in it and the leaves that have blown in since, and the
-		tiered bowl above. Nobody mistakes that for anything else.
-
-		The lid was a nice idea -- somebody boarded it over in 1991 and you
-		could see the screws -- but a nice idea that hides the only part of the
-		object that identifies it is not worth the object.
-	]]
-	for i = 0, 7 do
-		local a = i * math.pi / 4 + math.pi / 8
-		local deg = -math.deg(a)
-		local seg = P("FountainKerb", V(1.95, 0.46, 0.4),
-			at(math.cos(a) * 2.2, 0.23, 5.5 + math.sin(a) * 2.2), C.trim)
-		seg.Orientation = Vector3.new(0, deg, 0)
-		-- The capping you sit on, and the tiled lining below it on the inside.
-		local cap = P("FountainCapping", V(1.95, 0.06, 0.44),
-			at(math.cos(a) * 2.2, 0.49, 5.5 + math.sin(a) * 2.2), C.trim)
-		cap.Orientation = Vector3.new(0, deg, 0)
-		local lining = P("FountainLining", V(1.8, 0.34, 0.05),
-			at(math.cos(a) * 1.98, 0.3, 5.5 + math.sin(a) * 1.98), Color3.fromRGB(96, 116, 120))
-		lining.Orientation = Vector3.new(0, deg, 0)
-	end
-	-- The bed, thirty centimetres down, with the drain in the middle of it.
-	P("FountainBed", V(3.6, 0.12, 3.6), at(0, 0.09, 5.5), Color3.fromRGB(70, 82, 86))
-	P("FountainDrain", V(0.34, 0.03, 0.34), at(0, 0.16, 5.5), C.dark)
-	P("FountainDrainRim", V(0.44, 0.02, 0.44), at(0, 0.15, 5.5), C.metal)
-	--[[
-		What has blown in since 1998. Four leaves and a cup, at angles, because
-		a dry basin with nothing in it is a paddling pool.
-	]]
-	local litter = Random.new(4410)
-	for i = 1, 7 do
-		local a = litter:NextNumber(0, math.pi * 2)
-		local r = litter:NextNumber(0.5, 1.7)
-		local leaf = P("FountainLeaf", V(litter:NextNumber(0.1, 0.18), 0.02, litter:NextNumber(0.08, 0.14)),
-			at(math.cos(a) * r, 0.17, 5.5 + math.sin(a) * r), Color3.fromRGB(88, 74, 52))
-		leaf.Orientation = Vector3.new(0, litter:NextNumber(0, 180), 0)
-	end
-	local cup = P("FountainCup", V(0.16, 0.2, 0.16), at(-1.1, 0.25, 5.5 + 0.8), Color3.fromRGB(176, 172, 164))
-	cup.Orientation = Vector3.new(0, 24, 74)
-	-- The tiered centre: plinth, stem, and two bowls.
-	P("FountainPlinth", V(0.8, 0.5, 0.8), at(0, 0.4, 5.5), C.trim)
-	P("FountainStem", V(0.26, 0.7, 0.26), at(0, 0.98, 5.5), C.metal)
-	P("FountainBowl", V(1.6, 0.14, 1.6), at(0, 1.3, 5.5), C.metal)
-	P("FountainBowlLip", V(1.7, 0.06, 1.7), at(0, 1.38, 5.5), C.trim)
-	P("FountainStem", V(0.18, 0.5, 0.18), at(0, 1.66, 5.5), C.metal)
-	P("FountainBowl", V(0.9, 0.12, 0.9), at(0, 1.94, 5.5), C.metal)
-	P("FountainBowlLip", V(1.0, 0.05, 1.0), at(0, 2.0, 5.5), C.trim)
-	P("FountainJet", V(0.09, 0.16, 0.09), at(0, 2.08, 5.5), C.metal)
 
 	--[[
 		Nearly empty, on purpose.
@@ -1898,7 +1843,7 @@ local function buildAtrium()
 	kiosk(8.2, -5.4, 2.2, 2.6, 0, 5503, false)
 
 	--[[
-		Seating round the fountain, in one place and facing it.
+		Seating against the side walls, facing across the hall.
 
 		There were five benches here and they were placed twice: the fountain
 		put two down the sides of itself and this list put three more round it,
@@ -1906,17 +1851,15 @@ local function buildAtrium()
 		with another bench through it is the thing that reads as "huller om
 		buller" from across a room, because it is not a thing at all.
 
-		One each side facing in, and the bins beside them instead of out in
-		open floor. The old third bench sat 60 cm in front of the north
-		doorway, which is the one place in this room nobody can put anything.
+		One against each side wall with its bin beside it, and the middle of
+		the room left alone -- which is also what makes the middle of the room
+		worth being afraid of. The old third bench sat 60 cm in front of the
+		north doorway, which is the one place in here nobody can put anything.
 	]]
-	bench(-3.6, 0, 5.5, false)
-	bench(3.6, 0, 5.5, false)
-	bench(0, 0, 2.3, true)
-	litterBin(-5.3, 0, 5.5)
-	litterBin(5.3, 0, 5.5)
-	pottedTree(-3.4, 0, 8.2, 4401)
-	pottedTree(3.4, 0, 8.2, 4402)
+	bench(-9.3, 0, 4.4, false)
+	bench(9.3, 0, 4.4, false)
+	litterBin(-9.3, 0, 6.2)
+	litterBin(9.3, 0, 6.2)
 
 	-- Planting at the corners, out of the way of everything.
 	pottedTree(-8.6, 0, 8.0, 6603)
@@ -2655,8 +2598,20 @@ local function serviceCorridor()
 		people walk across it.
 	]]
 	local against = x - SERVICE_W / 2 + 0.45
-	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.07, -6), C.wood)
-	P("Pallet", V(0.9, 0.14, 0.8), at(against, 0.21, -6.1), C.wood)
+	--[[
+		Empty pallets, on edge against the wall.
+
+		They were lying flat in a stack of two, and a wooden slab on the floor
+		of a corridor is not a pallet to anybody walking past it -- it is a box
+		somebody left there, which is exactly what it got called. Nobody stores
+		empties flat anyway: they go up on edge against the nearest wall,
+		because that is the only way they take no floor.
+	]]
+	for i = 0, 2 do
+		local pal = P("Pallet", V(0.16, 0.9, 0.8),
+			at(x - SERVICE_W / 2 + 0.34 + i * 0.13, 0.46, -6 + i * 0.06), C.wood)
+		pal.Orientation = Vector3.new(0, 0, -9 - i * 2)
+	end
 	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -16), C.trim)
 	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -15.3), C.trim)
 	--[[

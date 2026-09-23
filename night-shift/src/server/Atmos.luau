@@ -255,14 +255,18 @@ function Atmos.build()
 	end
 
 	--[[
-		The tap. Every four to nine seconds, never on a beat, because a drip you
-		can predict stops being a drip and starts being a metronome.
+		The tap. Every nine to twenty-four seconds, never on a beat, because a
+		drip you can predict stops being a drip and starts being a metronome.
+
+		It was four to nine, which at a 22 m rolloff was a splash every few
+		seconds across half the building. A tap that drips on a four second
+		cycle is not a fault, it is a tap left running.
 	]]
 	local tap = World.first("DrippingTap")
 	if tap then
 		task.spawn(function()
 			while tap.Parent do
-				task.wait(math.random(40, 90) / 10)
+				task.wait(math.random(90, 240) / 10)
 				if tap.Parent then
 					SoundBank.play(SoundBank.DRIP, tap, 0.2)
 				end

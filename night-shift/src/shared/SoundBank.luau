@@ -169,17 +169,28 @@ SoundBank.WIND = {
 --[[
 	The tap in the toilets. It has been dripping since 1998 into a basin nobody
 	is going to turn off, and it is the second landmark sound in the building:
-	Rule 10 is about hearing the fountain, and this is the one that tells you
+	Rule 10 is about hearing the escalator, and this is the one that tells you
 	you are in the east arm without looking.
+]]
+--[[
+	Audible in the gents, and nowhere else.
+
+	It was 0.3 at 22 m, which in a building this size is most of the east arm
+	and a good part of the atrium. A landmark sound you can hear from two rooms
+	away is not a landmark, it is weather -- and while there was still a
+	fountain in the atrium, standing at it and hearing running water was enough
+	to conclude it was on.
+
+	Seven metres, and quieter. You have to be in the room.
 ]]
 SoundBank.DRIP = {
 	caption = "[a tap, dripping]",
 	id = "rbxasset://sounds/impact_water.mp3",
-	volume = 0.3,
+	volume = 0.14,
 	speed = 1.6,
 	looped = false,
-	rollOffMinMetres = 1.5,
-	rollOffMaxMetres = 22,
+	rollOffMinMetres = 1.0,
+	rollOffMaxMetres = 7,
 }
 
 -- The Great Clock. A digital display bolted to a movement that still turns.

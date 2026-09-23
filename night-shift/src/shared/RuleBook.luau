@@ -117,10 +117,10 @@ RuleBook.RULES = {
 		violationSeverity = "none",
 	},
 	{
-		id = "fountain",
+		id = "escalator",
 		number = "10",
-		text = "If you can hear the fountain, you're near the fountain.",
-		provenance = "nora_struck", -- "The fountain has been off since 1991."
+		text = "If you can hear the escalator, you're near the escalator.",
+		provenance = "nora_struck", -- "The escalators have been off since 1991."
 		appearsOnNight = 1,
 		trigger = "—",
 		violationSeverity = "none",

@@ -739,30 +739,82 @@ local function sign(x, y, z, w, h, facing, colour, name)
 	return s
 end
 
+--[[
+	A mall bench.
+
+	It was a plank on two legs. A public bench is slatted -- five boards with
+	gaps between them on a cast frame -- and the gaps are what make it read as
+	a bench rather than a shelf at knee height. The armrest in the middle is
+	the other half: every bench in every shopping centre has one, and it is
+	there so nobody can lie down on it.
+]]
 local function bench(x, y, z, alongX)
-	local seat = alongX and V(1.8, 0.08, 0.45) or V(0.45, 0.08, 1.8)
-	P("BenchSeat", seat, at(x, y + 0.44, z), C.wood)
-	for i = -1, 1, 2 do
-		local ox = alongX and i * 0.75 or 0
-		local oz = alongX and 0 or i * 0.75
-		P("BenchLeg", V(0.08, 0.44, 0.35), at(x + ox, y + 0.22, z + oz), C.metal)
-	end
-end
-
-local function planter(x, y, z)
-	P("Planter", V(1.0, 0.55, 1.0), at(x, y + 0.27, z), C.trim)
-	P("Soil", V(0.86, 0.06, 0.86), at(x, y + 0.57, z), Color3.fromRGB(38, 34, 30))
-	-- Dead since the fountain was capped.
 	for i = 0, 4 do
-		local a = i * 1.3
-		P("Stem", V(0.03, 0.55, 0.03),
-			at(x + math.cos(a) * 0.2, y + 0.85, z + math.sin(a) * 0.2), Color3.fromRGB(58, 52, 40))
+		local o = -0.18 + i * 0.09
+		P("BenchSlat", (if alongX then V(1.75, 0.05, 0.075) else V(0.075, 0.05, 1.75)),
+			at(if alongX then x else x + o, y + 0.44, if alongX then z + o else z), C.wood)
+	end
+	for i = -1, 1, 2 do
+		local fx = if alongX then x + i * 0.72 else x
+		local fz = if alongX then z else z + i * 0.72
+		-- A cast frame: a foot, a splayed leg and the rail the slats sit on.
+		P("BenchFoot", (if alongX then V(0.1, 0.04, 0.5) else V(0.5, 0.04, 0.1)), at(fx, y + 0.02, fz), C.dark)
+		P("BenchLeg", (if alongX then V(0.07, 0.4, 0.07) else V(0.07, 0.4, 0.07)),
+			at(fx, y + 0.22, fz + (if alongX then 0.16 else 0)), C.metal)
+		P("BenchLeg", V(0.07, 0.4, 0.07), at(fx + (if alongX then 0 else 0.16), y + 0.22, fz - (if alongX then 0.16 else 0)), C.metal)
+		P("BenchRail", (if alongX then V(0.08, 0.05, 0.46) else V(0.46, 0.05, 0.08)), at(fx, y + 0.41, fz), C.metal)
+	end
+	-- The armrest, so nobody sleeps on it.
+	P("BenchArm", (if alongX then V(0.06, 0.05, 0.42) else V(0.42, 0.05, 0.06)), at(x, y + 0.66, z), C.metal)
+	for _, e in { -1, 1 } do
+		P("BenchArmPost", V(0.05, 0.22, 0.05),
+			at(if alongX then x else x + e * 0.17, y + 0.55, if alongX then z + e * 0.17 else z), C.metal)
 	end
 end
 
+--[[
+	A square planter, with nothing alive in it.
+
+	The rim is what makes it furniture: a planter with a lip you could sit on
+	is a thing people sit on, and a box of soil is a box of soil. The stems are
+	dead and have been since the fountain was capped, which is a detail nobody
+	will name and everybody will feel.
+]]
+local function planter(x, y, z)
+	P("Planter", V(1.0, 0.5, 1.0), at(x, y + 0.25, z), C.trim)
+	for _, side in { -1, 1 } do
+		P("PlanterPanel", V(0.92, 0.36, 0.02), at(x, y + 0.26, z + side * 0.51), C.wood)
+		P("PlanterPanel", V(0.02, 0.36, 0.92), at(x + side * 0.51, y + 0.26, z), C.wood)
+	end
+	P("PlanterRim", V(1.1, 0.07, 1.1), at(x, y + 0.53, z), C.metal)
+	P("Soil", V(0.86, 0.06, 0.86), at(x, y + 0.5, z), Color3.fromRGB(38, 34, 30))
+	for i = 0, 6 do
+		local a = i * 0.9
+		local stem = P("Stem", V(0.03, 0.42 + (i % 3) * 0.12, 0.03),
+			at(x + math.cos(a) * 0.22, y + 0.72, z + math.sin(a) * 0.22), Color3.fromRGB(58, 52, 40))
+		stem.Orientation = Vector3.new(math.cos(a) * 12, 0, math.sin(a) * 12)
+	end
+end
+
+--[[
+	A mall litter bin.
+
+	Two boxes stacked was a pedal bin. The public ones are a square housing on
+	a plinth with a sloped hood and an aperture in the front you post things
+	through -- and the aperture is the only part that matters, because a bin
+	with no hole in it is a box.
+]]
 local function litterBin(x, y, z)
-	P("LitterBin", V(0.45, 0.85, 0.45), at(x, y + 0.42, z), C.metal)
-	P("LitterLid", V(0.5, 0.06, 0.5), at(x, y + 0.88, z), C.trim)
+	P("LitterPlinth", V(0.48, 0.07, 0.48), at(x, y + 0.035, z), C.dark)
+	P("LitterBin", V(0.44, 0.82, 0.44), at(x, y + 0.45, z), C.metal)
+	for _, side in { -1, 1 } do
+		P("LitterPanel", V(0.38, 0.62, 0.02), at(x, y + 0.44, z + side * 0.23), C.trim)
+		P("LitterPanel", V(0.02, 0.62, 0.38), at(x + side * 0.23, y + 0.44, z), C.trim)
+	end
+	-- The hood, and the hole in it.
+	P("LitterHood", V(0.5, 0.1, 0.5), at(x, y + 0.91, z), C.trim)
+	P("LitterMouth", V(0.26, 0.12, 0.26), at(x, y + 0.86, z), Color3.fromRGB(16, 15, 15))
+	P("LitterLip", V(0.3, 0.03, 0.3), at(x, y + 0.93, z), C.metal)
 end
 
 --[[

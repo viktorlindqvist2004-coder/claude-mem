@@ -17,10 +17,10 @@
 
 local Build = {}
 
-Build.COMMIT = "ecce8ad"
-Build.LAST_COMMIT = "731dca9"
-Build.SUMMARY = "Make the job glow unmistakable, and check that it glows at all"
-Build.WHEN = "23 Sep 17:09"
+Build.COMMIT = "cbbcfc4"
+Build.LAST_COMMIT = "636a39c"
+Build.SUMMARY = "Glow only what is left of the job in hand, four at a time"
+Build.WHEN = "23 Sep 17:12"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 

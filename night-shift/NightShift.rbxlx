@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "ecce8ad"
-Build.LAST_COMMIT = "731dca9"
-Build.SUMMARY = "Make the job glow unmistakable, and check that it glows at all"
-Build.WHEN = "23 Sep 17:09"
+Build.COMMIT = "cbbcfc4"
+Build.LAST_COMMIT = "636a39c"
+Build.SUMMARY = "Glow only what is left of the job in hand, four at a time"
+Build.WHEN = "23 Sep 17:12"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -10201,24 +10201,109 @@ local function shelfRun(x, y, z, len, alongX)
 	P("ShelfTop", t, at(x, y + 1.85, z), C.trim)
 end
 
-local function locker(x, y, z)
-	P("Locker", V(0.9, 1.9, 0.5), at(x, y + 0.95, z), C.metal)
-	P("LockerDoor", V(0.86, 1.8, 0.04), at(x, y + 0.95, z - 0.27), C.trim)
+--[[
+	A steel locker.
+
+	It was a box with a flat plate on the front of it. A locker is a box with a
+	flat plate on the front of it, and the difference between that reading as a
+	locker and reading as a box is about eight small parts: the door is inset
+	in its frame rather than stuck to it, there are three vent slots near the
+	top, there is a handle and a hasp for a padlock that is not there, and it
+	stands on a plinth so there is a shadow under it.
+
+	`out` is which way the door faces, as a unit offset in plan. A run of these
+	against a wall all facing the wall is a wall.
+]]
+local function locker(x, y, z, outX, outZ)
+	outX, outZ = outX or 0, outZ or -1
+	local alongX = math.abs(outZ) > math.abs(outX)
+	local w, dp = 0.92, 0.52
+
+	P("LockerPlinth", (if alongX then V(w, 0.1, dp) else V(dp, 0.1, w)), at(x, y + 0.05, z), C.dark)
+	P("Locker", (if alongX then V(w, 1.82, dp) else V(dp, 1.82, w)), at(x, y + 1.01, z), C.metal)
+	P("LockerTop", (if alongX then V(w + 0.04, 0.05, dp + 0.04) else V(dp + 0.04, 0.05, w + 0.04)),
+		at(x, y + 1.94, z), C.trim)
+
+	-- The door, inset, with a shadow line round it.
+	local fx, fz = x + outX * (dp / 2 - 0.01), z + outZ * (dp / 2 - 0.01)
+	P("LockerDoor", (if alongX then V(w - 0.09, 1.7, 0.05) else V(0.05, 1.7, w - 0.09)),
+		at(fx, y + 1.0, fz), C.trim)
+	P("LockerHandle", (if alongX then V(0.05, 0.2, 0.05) else V(0.05, 0.2, 0.05)),
+		at(fx + outX * 0.04 + (if alongX then w / 2 - 0.16 else 0),
+			y + 1.0,
+			fz + outZ * 0.04 + (if alongX then 0 else w / 2 - 0.16)), C.metal)
+	P("LockerHasp", V(0.05, 0.08, 0.05),
+		at(fx + outX * 0.04 + (if alongX then w / 2 - 0.16 else 0),
+			y + 1.18,
+			fz + outZ * 0.04 + (if alongX then 0 else w / 2 - 0.16)), C.dark)
+
+	-- Vents, and the card holder nobody has updated.
+	for i = 0, 2 do
+		P("LockerVent", (if alongX then V(w - 0.34, 0.03, 0.02) else V(0.02, 0.03, w - 0.34)),
+			at(fx + outX * 0.03, y + 1.66 - i * 0.07, fz + outZ * 0.03), C.dark)
+	end
+	P("LockerLabel", (if alongX then V(0.16, 0.08, 0.02) else V(0.02, 0.08, 0.16)),
+		at(fx + outX * 0.03, y + 1.42, fz + outZ * 0.03), Color3.fromRGB(198, 194, 180))
 end
 
-local function desk(x, y, z, w, d)
-	P("DeskTop", V(w, 0.08, d), at(x, y + 0.74, z), C.wood)
+--[[
+	A table, or a desk. Same thing with a different top.
+
+	Four legs and a slab is a trestle. What makes it furniture is the apron --
+	the rail the top sits on, set in from the edge -- and legs that are inset
+	rather than flush with the corners, which is what puts a shadow under it
+	and stops the whole thing reading as one extruded box.
+]]
+local function desk(x, y, z, w, d, colour)
+	colour = colour or C.wood
+	P("DeskTop", V(w, 0.05, d), at(x, y + 0.75, z), colour)
+	P("DeskEdge", V(w + 0.03, 0.02, d + 0.03), at(x, y + 0.725, z), C.trim)
+	P("DeskApron", V(w - 0.16, 0.09, d - 0.3), at(x, y + 0.67, z), colour)
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
-			P("DeskLeg", V(0.07, 0.74, 0.07), at(x + sx * (w / 2 - 0.1), y + 0.37, z + sz * (d / 2 - 0.1)), C.metal)
+			local lx, lz = x + sx * (w / 2 - 0.14), z + sz * (d / 2 - 0.12)
+			P("DeskLeg", V(0.05, 0.66, 0.05), at(lx, y + 0.33, lz), C.metal)
+			P("DeskFoot", V(0.08, 0.02, 0.08), at(lx, y + 0.01, lz), C.dark)
 		end
 	end
 end
 
-local function chair(x, y, z)
-	P("Seat", V(0.5, 0.07, 0.5), at(x, y + 0.45, z), C.fabric)
-	P("SeatBack", V(0.5, 0.55, 0.07), at(x, y + 0.75, z + 0.22), C.fabric)
-	P("SeatPost", V(0.09, 0.45, 0.09), at(x, y + 0.22, z), C.metal)
+--[[
+	A stacking chair. The one in every staff room in the country.
+
+	The gap between the seat and the back is the whole thing: a seat with a
+	slab behind it is an armchair, and a seat with a hand's width of air under
+	the backrest is a canteen chair. Legs splay, because a chair with four
+	vertical posts is a stool.
+]]
+local function chair(x, y, z, turn)
+	turn = turn or 0
+	local rad = math.rad(turn)
+	local cosT, sinT = math.cos(rad), math.sin(rad)
+	local function at2(ox, oy, oz)
+		return at(x + ox * cosT + oz * sinT, oy, z - ox * sinT + oz * cosT)
+	end
+	local function part(name, size, ox, oy, oz, colour)
+		local made = P(name, size, at2(ox, oy, oz), colour)
+		if turn ~= 0 then
+			made.Orientation = Vector3.new(0, turn, 0)
+		end
+		return made
+	end
+
+	part("Seat", V(0.46, 0.05, 0.44), 0, y + 0.45, 0, C.fabric)
+	part("SeatRim", V(0.5, 0.03, 0.48), 0, y + 0.42, 0, C.metal)
+	-- Back, tilted, with daylight under it.
+	local back = part("SeatBack", V(0.44, 0.34, 0.05), 0, y + 0.78, 0.2, C.fabric)
+	back.Orientation = Vector3.new(-8, turn, 0)
+	for _, sx in { -1, 1 } do
+		part("SeatUpright", V(0.04, 0.42, 0.04), sx * 0.2, y + 0.65, 0.22, C.metal)
+		for _, sz in { -1, 1 } do
+			local leg = part("SeatLeg", V(0.04, 0.46, 0.04), sx * 0.19, y + 0.22, sz * 0.18, C.metal)
+			leg.Orientation = Vector3.new(sz * 4, turn, -sx * 4)
+		end
+		part("SeatRail", V(0.04, 0.03, 0.36), sx * 0.19, y + 0.14, 0, C.metal)
+	end
 end
 
 -- ── Fittings ────────────────────────────────────────────────────────────────
@@ -11870,91 +11955,148 @@ end
 	like it belongs: four lockers, a kettle that has boiled dry, a rota from a
 	week that has not happened yet, and a chair pulled out.
 ]]
+--[[
+	The staff room.
+
+	Laid out from the walls, not from the middle.
+
+	Everything in here used to be written as an offset from the room's centre,
+	which is how the worktop ended up standing in front of the noticeboard and
+	the time clock ended up hanging nine centimetres clear of the plaster. A
+	room is not a centre with things at distances from it; it is four walls,
+	each of which has a job.
+
+	So: lockers down the north wall, the kitchen run down the south wall, the
+	noticeboard and the coat hooks on the west wall where you see them as you
+	come in, and the time clock beside the door on the east wall because that
+	is the one thing you must not be able to miss. The table sits in what is
+	left, which is how a real staff room ends up with a table in the middle --
+	not because somebody put it there, but because it is the only place left.
+]]
 local function dressStaffRoom(cx, cz, y, h, w, d)
+	-- The inside face of each wall. Every measurement below starts from one.
+	local north = cz + d / 2 - WALL / 2
+	local south = cz - d / 2 + WALL / 2
+	local east = cx + w / 2 - WALL / 2
+	local west = cx - w / 2 + WALL / 2
+
+	-- ── North wall: the lockers ─────────────────────────────────────────────
 	for i = 0, 3 do
-		locker(cx - 2.2 + i * 0.95, y, cz + 2.2)
+		locker(west + 0.75 + i * 0.96, y, north - 0.27, 0, -1)
 	end
-	local sheet = P("RuleSheet", V(0.42, 0.6, 0.02), at(cx - 2.2, y + 1.3, cz + 1.92), Color3.fromRGB(196, 188, 164))
-	sheet.Name = "RuleSheet"
 	--[[
-		Legible from where you stand, so you know what it is before you press
-		anything. The whole list is on the prompt; this is the headline and the
-		signature, which is all you can read on a sheet of A4 at two metres.
+		Rule 13 is taped inside the end locker. It is the first thing you read
+		and the only document in the building anybody wrote on purpose.
 	]]
-	printed(sheet, Enum.NormalId.Back,
+	local sheet = P("RuleSheet", V(0.42, 0.6, 0.02),
+		at(west + 0.75, y + 1.3, north - 0.55), Color3.fromRGB(196, 188, 164))
+	sheet.Name = "RuleSheet"
+	printed(sheet, Enum.NormalId.Front,
 		"<b>RULES FOR NIGHT STAFF</b>\n<font size=\"8\">1. 2. 3. 4. 5. 6. 7.\n8. 9. 10. 11. 12. 13.</font>\n<i>— N.</i>",
 		{ color = Color3.fromRGB(46, 44, 56), scaled = false, density = 130, font = Enum.Font.Code })
-	P("LockerTape", V(0.06, 0.04, 0.02), at(cx - 2.2, y + 1.62, cz + 1.9), Color3.fromRGB(210, 206, 190))
-
-	-- The table, and a chair pushed back from it as though somebody stood up.
-	desk(cx + 1.2, y, cz - 1.2, 1.8, 0.8)
-	chair(cx + 1.2, y, cz - 0.2)
-	local pulled = P("Seat", V(0.5, 0.07, 0.5), at(cx + 0.3, y + 0.45, cz - 2.0), C.fabric)
-	pulled.Orientation = Vector3.new(0, 28, 0)
-	P("SeatBack", V(0.5, 0.55, 0.07), at(cx + 0.3, y + 0.75, cz - 2.2), C.fabric).Orientation = Vector3.new(0, 28, 0)
-	P("SeatPost", V(0.09, 0.45, 0.09), at(cx + 0.3, y + 0.22, cz - 2.0), C.metal)
-
-	-- Worktop, kettle, four mugs, one of them still out.
-	P("Worktop", V(2.4, 0.06, 0.6), at(cx + 1.6, y + 0.9, cz - 2.1), C.trim)
-	P("Cupboard", V(2.4, 0.85, 0.58), at(cx + 1.6, y + 0.45, cz - 2.1), C.wood)
-	P("Kettle", V(0.22, 0.28, 0.22), at(cx + 1.9, y + 1.07, cz - 2.1), C.metal)
-	P("Sink", V(0.5, 0.04, 0.4), at(cx + 2.5, y + 0.92, cz - 2.1), C.metal)
-	P("Tap", V(0.04, 0.26, 0.04), at(cx + 2.5, y + 1.05, cz - 2.3), C.metal)
-	for i = 0, 3 do
-		P("Mug", V(0.09, 0.1, 0.09), at(cx + 0.9 + i * 0.18, y + 0.99, cz - 2.0), Color3.fromRGB(180, 176, 168))
+	P("LockerTape", V(0.06, 0.04, 0.02), at(west + 0.75, y + 1.62, north - 0.54), Color3.fromRGB(210, 206, 190))
+	-- A bench in front of them, because you sit down to put your boots on.
+	P("LockerBench", V(2.0, 0.06, 0.34), at(west + 1.6, y + 0.44, north - 0.82), C.wood)
+	for _, bx in { west + 0.8, west + 2.4 } do
+		P("BenchLeg", V(0.06, 0.42, 0.28), at(bx, y + 0.21, north - 0.82), C.metal)
 	end
 
-	-- The noticeboard. This week's rota is on it, and it has this week's names.
-	local noticeboard = P("Noticeboard", V(1.8, 1.1, 0.06), at(cx, y + 1.5, cz - 2.4), C.wood)
-	printed(noticeboard, Enum.NormalId.Front,
+	-- ── South wall: the kitchen run ─────────────────────────────────────────
+	--[[
+		Base units, worktop, upstand, sink, kettle, and a wall cupboard over
+		it. One continuous run against one wall, the way a fitted kitchen is,
+		rather than a worktop floating where a noticeboard already was.
+	]]
+	local runX, runW = cx + 0.9, 3.4
+	P("KitchenPlinth", V(runW, 0.1, 0.56), at(runX, y + 0.05, south + 0.3), C.dark)
+	P("Cupboard", V(runW, 0.78, 0.6), at(runX, y + 0.49, south + 0.31), C.wood)
+	for i = 0, 2 do
+		local dx = runX - runW / 2 + 0.58 + i * 1.12
+		P("CupboardDoor", V(1.06, 0.7, 0.04), at(dx, y + 0.49, south + 0.6), C.trim)
+		P("CupboardHandle", V(0.16, 0.03, 0.03), at(dx + 0.42, y + 0.72, south + 0.63), C.metal)
+	end
+	P("Worktop", V(runW + 0.06, 0.05, 0.64), at(runX, y + 0.9, south + 0.32), C.trim)
+	P("Upstand", V(runW + 0.06, 0.1, 0.03), at(runX, y + 0.97, south + 0.03), C.trim)
+
+	P("Sink", V(0.52, 0.12, 0.4), at(runX + 1.1, y + 0.88, south + 0.32), C.metal)
+	P("Tap", V(0.04, 0.24, 0.04), at(runX + 1.1, y + 1.04, south + 0.1), C.metal)
+	P("TapSpout", V(0.04, 0.03, 0.16), at(runX + 1.1, y + 1.15, south + 0.18), C.metal)
+	P("Kettle", V(0.19, 0.24, 0.19), at(runX - 1.1, y + 1.04, south + 0.34), C.metal)
+	P("KettleSpout", V(0.05, 0.05, 0.11), at(runX - 1.1, y + 1.12, south + 0.22), C.metal)
+	P("KettleBase", V(0.23, 0.03, 0.23), at(runX - 1.1, y + 0.94, south + 0.34), C.dark)
+	for i = 0, 3 do
+		P("Mug", V(0.08, 0.09, 0.08), at(runX - 0.55 + i * 0.16, y + 0.97, south + 0.28),
+			Color3.fromRGB(180, 176, 168))
+	end
+	P("TeaCaddy", V(0.12, 0.16, 0.12), at(runX - 0.1, y + 1.0, south + 0.42), Color3.fromRGB(120, 92, 54))
+
+	-- The wall cupboard over the run, and the strip of nothing under it.
+	P("WallUnit", V(runW - 0.8, 0.62, 0.34), at(runX, y + 1.72, south + 0.17), C.wood)
+	for _, sx in { -1, 1 } do
+		P("WallUnitDoor", V((runW - 0.88) / 2, 0.56, 0.04),
+			at(runX + sx * (runW - 0.84) / 4, y + 1.72, south + 0.36), C.trim)
+	end
+
+	-- ── West wall: the noticeboard, the coats, the bin ──────────────────────
+	local board = P("Noticeboard", V(0.06, 1.05, 1.7), at(west + 0.04, y + 1.5, cz + 0.2), C.wood)
+	printed(board, Enum.NormalId.Right,
 		"NIGHT STAFF\n<font size=\"10\">rota · fire notice · hygiene · no lone working after 02:00</font>",
 		{ color = Color3.fromRGB(196, 190, 174), scaled = false, density = 60 })
-	P("NoticeFrame", V(1.9, 1.2, 0.03), at(cx, y + 1.5, cz - 2.45), C.trim)
+	P("NoticeFrame", V(0.03, 1.14, 1.8), at(west + 0.02, y + 1.5, cz + 0.2), C.trim)
 	for i = 0, 5 do
-		paper(cx - 0.6 + (i % 3) * 0.6, y + 1.75 - math.floor(i / 3) * 0.42, cz - 2.36, "z")
+		paper(west + 0.09, y + 1.78 - math.floor(i / 3) * 0.44, cz - 0.3 + (i % 3) * 0.55, "x")
 	end
-	local fire = P("FireNotice", V(0.25, 0.35, 0.02), at(cx + 0.78, y + 1.5, cz - 2.36), Color3.fromRGB(150, 44, 36))
-	printed(fire, Enum.NormalId.Front, "FIRE\nACTION", { color = Color3.fromRGB(240, 236, 230), density = 120 })
+	local fire = P("FireNotice", V(0.02, 0.34, 0.24), at(west + 0.09, y + 1.5, cz + 1.2),
+		Color3.fromRGB(150, 44, 36))
+	printed(fire, Enum.NormalId.Right, "FIRE\nACTION",
+		{ color = Color3.fromRGB(240, 236, 230), density = 120 })
 
-	-- Coat hooks, and one coat that has been on the same hook since 1998.
-	P("HookRail", V(1.2, 0.06, 0.06), at(cx - 1.8, y + 1.8, cz - 2.4), C.metal)
-	P("Coat", V(0.42, 1.0, 0.16), at(cx - 1.8, y + 1.25, cz - 2.3), Color3.fromRGB(48, 46, 52))
-	litterBin(cx + 2.6, y, cz + 1.4)
+	P("HookRail", V(0.05, 0.05, 1.1), at(west + 0.1, y + 1.78, cz - 1.5), C.metal)
+	for i = 0, 3 do
+		P("Hook", V(0.06, 0.09, 0.03), at(west + 0.16, y + 1.72, cz - 1.95 + i * 0.3), C.metal)
+	end
+	P("Coat", V(0.16, 1.0, 0.42), at(west + 0.28, y + 1.22, cz - 1.75), Color3.fromRGB(48, 46, 52))
+	litterBin(west + 0.45, y, cz - 2.1)
 
+	-- ── East wall: the door, and the clock you cannot miss ──────────────────
 	--[[
-		The time clock. You clock in here at 22:00, and Rule 1 is about it.
-
-		Screwed to the east wall, measured from the wall rather than from the
-		room's centre -- written as an offset from the centre it ended up
-		floating nine centimetres clear of the plaster, which at this distance
-		is exactly far enough to look like it is hovering. Anything that hangs
-		on a wall should be positioned from that wall.
+		Measured from the wall, not from the room's centre. Written the other
+		way it hung nine centimetres clear of the plaster, which at this
+		distance is exactly far enough to look like it is hovering.
 	]]
-	local wallFace = cx + w / 2 - WALL / 2
-	P("TimeClockBoard", V(0.52, 0.72, 0.04), at(wallFace - 0.02, y + 1.34, cz - 1.0), C.wood)
-	local clock = P("TimeClock", V(0.34, 0.44, 0.18), at(wallFace - 0.13, y + 1.4, cz - 1.0), C.metal)
+	P("TimeClockBoard", V(0.04, 0.74, 0.54), at(east - 0.02, y + 1.34, cz - 1.5), C.wood)
+	local clock = P("TimeClock", V(0.18, 0.44, 0.34), at(east - 0.13, y + 1.4, cz - 1.5), C.metal)
 	clock.Name = "TimeClock"
-	local face = P("TimeClockFace", V(0.24, 0.16, 0.03), at(wallFace - 0.23, y + 1.46, cz - 1.0), RED, Enum.Material.Neon)
+	local face = P("TimeClockFace", V(0.03, 0.16, 0.24), at(east - 0.23, y + 1.46, cz - 1.5), RED, Enum.Material.Neon)
 	-- Every display in the building runs off the same master clock, and the
 	-- master clock has read the same thing since 1998.
-	Surfaces.label(face, Enum.NormalId.Front, "03:33", {
+	Surfaces.label(face, Enum.NormalId.Left, "03:33", {
 		lit = true, color = Color3.fromRGB(255, 120, 110), font = Enum.Font.Code, density = 140,
 	})
-	P("CardRack", V(0.5, 0.3, 0.06), at(cx + 2.7, y + 1.0, cz - 1.05), C.wood)
+	P("CardRack", V(0.06, 0.3, 0.5), at(east - 0.05, y + 0.98, cz - 1.5), C.wood)
 	for i = 0, 3 do
-		P("ClockCard", V(0.09, 0.22, 0.01), at(cx + 2.53 + i * 0.11, y + 1.0, cz - 1.12), Color3.fromRGB(206, 200, 182))
+		P("ClockCard", V(0.01, 0.22, 0.09), at(east - 0.12, y + 0.98, cz - 1.67 + i * 0.11),
+			Color3.fromRGB(206, 200, 182))
 	end
 
+	-- ── What is left: the table ─────────────────────────────────────────────
+	local tx, tz = cx - 0.6, cz - 0.2
+	desk(tx, y, tz, 1.7, 0.85)
+	chair(tx - 0.55, y, tz + 0.75, 180)
+	chair(tx + 0.55, y, tz + 0.75, 194)
+	chair(tx + 0.55, y, tz - 0.75, 6)
+	-- One pushed back and turned, as though somebody stood up in a hurry.
+	chair(tx - 0.95, y, tz - 1.15, 38)
+
+	-- On the table: an ashtray, a mug ring, and last week's paper.
+	P("Ashtray", V(0.16, 0.03, 0.16), at(tx + 0.3, y + 0.79, tz - 0.1), Color3.fromRGB(150, 146, 138))
+	P("Newspaper", V(0.34, 0.01, 0.26), at(tx - 0.35, y + 0.78, tz + 0.05), Color3.fromRGB(176, 170, 152))
+	P("Mug", V(0.08, 0.09, 0.08), at(tx - 0.1, y + 0.82, tz - 0.22), Color3.fromRGB(180, 176, 168))
+
 	ceilingKit(cx, cz, w, d, y, h, 4101)
-	bulkhead(cx, y + h - 0.3, cz)
+	tube(cx, y + h - 0.16, cz, true)
 end
 
---[[
-	The camera room. Six monitors, four of which work, a PA rack, and the speaker
-	his voice comes out of. On Night 4 one player sits in this chair and talks the
-	others through the dark, and monitor three comes up, and there is no camera
-	three.
-]]
 local function dressCameraRoom(cx, cz, y, h, w, d)
 	desk(cx, y, cz - 1.2, 3.4, 0.9)
 	chair(cx, y, cz - 0.3)

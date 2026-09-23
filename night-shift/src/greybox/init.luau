@@ -1050,7 +1050,14 @@ local ROOMS = {
 	{ "CameraRoom", SERVICE_WEST - 2.5, 3.5, 5.0, 4.2, 0, 3.1, { { "E", 0, 1.1 } } },
 	{ "CustodialStore", SERVICE_WEST - 1.8, -2, 3.6, 3.0, 0, 3.1, { { "E", 0, 1.0 } } },
 	{ "Stockroom", SERVICE_WEST - 4.5, -9, 9.0, 7.0, 0, 3.5, { { "E", 0, 1.4 } } },
-	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 4.2, { { "E", 0, 2.6 } } },
+	--[[
+		The dock has two ways in. The east one is the corridor, and the south one
+		is the staff door onto the yard -- which the crew come in through at ten
+		and, on the fifth night, go out through. It had a door leaf screwed to a
+		solid wall for a long time, which is not a door.
+	]]
+	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 4.2,
+		{ { "E", 0, 2.6 }, { "S", -2.5, 1.3 } } },
 	-- Shop floor: east face flush with the west side of the north arm.
 	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 4.0, { { "E", 0, 3.2 } } },
 	-- South face flush with the north side of the east arm.
@@ -2343,7 +2350,9 @@ local function dressLoadingDock(cx, cz, y, h, w, d)
 	for i = 0, 11 do
 		P("ShutterSlat", V(3.96, 0.2, 0.04), at(cx, y + 0.2 + i * 0.25, cz - 3.9), C.trim)
 	end
-	P("StripCurtain", V(3.8, 2.6, 0.06), at(cx, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
+	-- Hung over the roller shutter and only over the roller shutter: the staff
+	-- door is 2.5 m west of here and the crew come in through it every night.
+	P("StripCurtain", V(3.2, 2.6, 0.06), at(cx + 0.3, y + 1.3, cz - 3.7), Color3.fromRGB(150, 148, 140)).Transparency = 0.55
 
 	P("Bin", V(1.2, 1.2, 1.0), at(cx - 3.5, y + 0.6, cz + 2.0), C.trim)
 	P("Bin", V(1.2, 1.2, 1.0), at(cx - 2.0, y + 0.6, cz + 2.0), C.trim)
@@ -2869,8 +2878,10 @@ local MASSES = envelopeMasses()
 ]]
 local ENVELOPE_OPENINGS = {
 	{ "Atrium", "S", -8.2, 8.2 },
-	{ "LoadingDock", "S", -31.6, -26.0 },   -- the roller shutter
-	{ "LoadingDock", "S", -34.8, -32.6 },   -- the staff door
+	-- The dock's own south wall is the elevation on that side, with the roller
+	-- shutter and the staff door in it. A second wall 0.25 m behind it is what
+	-- bricked them both up.
+	{ "LoadingDock", "S", -35.0, -22.8 },
 }
 
 local function buildEnvelope(_facadeH)

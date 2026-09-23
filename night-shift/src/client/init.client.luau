@@ -100,19 +100,43 @@ boardTitle.LayoutOrder = 0
 
 local rows: { TextLabel } = {}
 
+--[[
+	The board.
+
+	What has been done, the one thing being done now, and how many are left.
+	The current job is the only bright line on it and it carries an arrow; the
+	finished ones are struck through and dim, because seeing four of them
+	crossed off is the only thing that tells a player the night is going
+	anywhere. Everything still to come is one grey line with a number on it.
+
+	The server decides what is on this list. Anything past the current job is
+	not sent, so there is nothing here that can leak a job early.
+]]
 local function renderObjectives(objectives: { any })
 	for _, row in rows do
 		row:Destroy()
 	end
 	table.clear(rows)
 	for i, o in objectives do
-		local mark = if o.complete then "[x]" elseif o.failed then "[-]" else "[ ]"
-		local count = if o.total > 1 and not o.complete then ` <font color="#7a7670">{o.done}/{o.total}</font>` else ""
+		if o.id == "__more" then
+			local more = label(board,
+				`    <i>{o.remaining} more after that</i>`,
+				UDim2.new(1, 0, 0, 18), UDim2.new())
+			more.LayoutOrder = i
+			more.TextColor3 = Color3.fromRGB(104, 100, 96)
+			more.TextSize = 13
+			table.insert(rows, more)
+			continue
+		end
+
+		local mark = if o.complete then "[x]" elseif o.failed then "[-]" else "──▶"
+		local count = if o.total > 1 and not o.complete then ` <font color="#9a9690">{o.done}/{o.total}</font>` else ""
+		local text = if o.complete then `<s>{o.label}</s>` else o.label
 		local colour = if o.complete then DIM elseif o.failed then RED else BONE
-		local row = label(board, `{mark} {o.label}{count}`, UDim2.new(1, 0, 0, 18), UDim2.new())
+		local row = label(board, `{mark} {text}{count}`, UDim2.new(1, 0, 0, 20), UDim2.new())
 		row.LayoutOrder = i
 		row.TextColor3 = colour
-		row.TextSize = 14
+		row.TextSize = if o.current then 16 else 14
 		if o.note then
 			local note = label(board, `    <i>{o.note}</i>`, UDim2.new(1, 0, 0, 16), UDim2.new())
 			note.LayoutOrder = i
@@ -772,6 +796,7 @@ whereLabel.TextSize = 14
 
 -- Where each job is, said the way a colleague would say it.
 local WHERE = {
+	get_inside = "the yard · the green door with the light over it",
 	clock_in = "staff room · the machine by the lockers",
 	read_rules = "staff room · taped inside the end locker",
 	face_shelves = "supermarket · off the north arm",
@@ -819,17 +844,26 @@ remotes.Sync.OnClientEvent:Connect(function(state)
 		stays on the left for anybody who wants it; this is the line that stops
 		a player standing in a corridor wondering what the game wants.
 	]]
-	local next_ = nil
+	local next_, done, total = nil, 0, 0
 	for _, o in state.objectives or {} do
-		if not o.complete and not o.failed then
+		if o.id == "__more" then
+			total += o.remaining
+			continue
+		end
+		total += 1
+		if o.complete then
+			done += 1
+		elseif not o.failed and not next_ then
 			next_ = o
-			break
 		end
 	end
 	if next_ then
 		local count = if next_.total > 1 then `  ({next_.done}/{next_.total})` else ""
 		nowLabel.Text = `{next_.label}{count}`
-		whereLabel.Text = next_.note or WHERE[next_.id] or ""
+		-- Always a where. A job with no location attached is the state this
+		-- whole line exists to prevent.
+		whereLabel.Text = `{next_.note or WHERE[next_.id] or "ask over the walkie"}`
+			.. `   <font color="#6e6a66">· job {done + 1} of {total}</font>`
 	else
 		nowLabel.Text = ""
 		whereLabel.Text = ""

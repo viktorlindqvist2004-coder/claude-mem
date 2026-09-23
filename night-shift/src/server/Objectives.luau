@@ -92,12 +92,47 @@ function Objectives.isComplete(id: string): boolean
 	return o ~= nil and o.complete
 end
 
--- The shape the client gets. Hidden objectives are not sent at all: an empty
--- line on the board is still information.
+--[[
+	The shape the client gets.
+
+	In order, and only as far as the job in hand.
+
+	Six tasks listed at once is a wall of text at the exact moment a player has
+	walked into a dark building and has no idea what any of it wants. It reads
+	as noise, and worse, it reads as six things that are all equally urgent. So
+	the board carries what has been done, the one thing being done now, and a
+	count of what is still to come -- and nothing beyond the current job gets a
+	line of its own until it is the current job.
+
+	This gates the *board*, not the game. Every objective stays advanceable the
+	whole night, so a player who happens to pull a shutter early still gets the
+	credit, and a job with a deadline can never be hidden past it: the deadline
+	is on the label and the label is shown the moment it comes up. Nothing here
+	can make a night impossible to finish.
+]]
+function Objectives.current(): Objective?
+	for _, o in Objectives.list do
+		if not o.hidden and not o.complete and not o.failed then
+			return o
+		end
+	end
+	return nil
+end
+
 function Objectives.snapshot(): { any }
 	local out = {}
+	local remaining = 0
+	local reachedCurrent = false
+
 	for _, o in Objectives.list do
-		if not o.hidden then
+		if o.hidden then
+			continue
+		end
+		local isCurrent = not reachedCurrent and not o.complete and not o.failed
+		if isCurrent then
+			reachedCurrent = true
+		end
+		if o.complete or o.failed or isCurrent then
 			table.insert(out, {
 				id = o.id,
 				label = o.label,
@@ -106,8 +141,18 @@ function Objectives.snapshot(): { any }
 				complete = o.complete,
 				failed = o.failed,
 				note = o.note,
+				current = isCurrent,
+				step = #out + 1,
 			})
+		else
+			remaining += 1
 		end
+	end
+
+	-- Carried on the list itself rather than as a separate field, because the
+	-- client is handed one array and nothing else.
+	if remaining > 0 then
+		table.insert(out, { id = "__more", remaining = remaining })
 	end
 	return out
 end

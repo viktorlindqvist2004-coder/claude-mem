@@ -52,6 +52,17 @@ Places.POINT = {
 	FuseBox = { R.ElectricalCupboard.x, -2.8, R.ElectricalCupboard.z - 1.1 },
 	StandingWater = { R.ElectricalCupboard.x + 0.7, -4.05, R.ElectricalCupboard.z + 0.4 },
 	DockFloor = { R.LoadingDock.x + 2.5, 0.0, R.LoadingDock.z + 1.0 },
+	--[[
+		Outside, in the service yard, a few metres from the staff door.
+
+		This is where a night starts. The whole exterior -- the frontage, the
+		neon, the car park -- existed only as something to look at through the
+		entrance glazing, which nobody ever did, because the crew were put
+		straight into the staff room with the building already around them.
+		Arriving is worth more than that: you stand in a yard at ten at night,
+		you can see the one door, and you go in through it.
+	]]
+	StaffEntrance = { R.LoadingDock.x - 2.5, 0.3, R.LoadingDock.z - 8.0 },
 	StaffDoor = { -31, 1.05, -21.7 },
 	Filing = { R.SecurityOffice.x - 1.8, 1.0, R.SecurityOffice.z - 1.2 },
 }

@@ -48,6 +48,7 @@ Shift.finished = false
 
 local heartbeat: RBXScriptConnection? = nil
 local cancelTubes: (() -> ())? = nil
+local insideWatch: RBXScriptConnection? = nil
 local fired: { [string]: boolean } = {}
 local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
@@ -473,6 +474,10 @@ function Shift.stop()
 		heartbeat = nil
 	end
 	Dread.stop()
+	if insideWatch then
+		insideWatch:Disconnect()
+		insideWatch = nil
+	end
 	-- And nothing from last night is allowed to still be putting lights out.
 	if cancelTubes then
 		cancelTubes()
@@ -504,6 +509,14 @@ function Shift.begin(night: number)
 	Shift.finished = false
 
 	Objectives.reset()
+	--[[
+		Every night's first job, before anything the night itself asks for: get
+		in the building. The crew start in the yard now, and this is the one
+		instruction that cannot be misread -- there is a door eight metres away
+		with a light over it, and the board says to go through it. A player who
+		has understood the first job understands the shape of all the others.
+	]]
+	Objectives.add("get_inside", "Get inside. The staff door is at the loading dock", 1, false)
 	for _, o in definition.objectives do
 		Objectives.add(o[1], o[2], o[3], o[4])
 	end
@@ -530,7 +543,61 @@ function Shift.begin(night: number)
 	ctx.night = night
 	definition.build(ctx)
 	buildLift(ctx)
-	ctx.move({ Places.ROOM.StaffRoom.x, 0.3, Places.ROOM.StaffRoom.z - 1.0 })
+	--[[
+		Start outside, at the staff door.
+
+		A night used to begin with the crew already standing in the staff room,
+		which meant the building simply was, and the outside of it -- the
+		frontage, the sign, the car park with one car in it -- was scenery
+		nobody ever stood in. Now the shift starts in the yard: it is ten at
+		night, there is one door, and the first thing anybody does is walk
+		through it. It also makes the opening instruction impossible to
+		misread, which is worth as much as the atmosphere.
+	]]
+	ctx.move(Places.POINT.StaffEntrance)
+
+	--[[
+		Watch for them crossing the threshold. The dock's south wall is the
+		outside of the building on that side, so anyone north of it and inside
+		the dock's width is in -- which is cheaper and far more reliable than
+		asking which room a position is nearest to.
+	]]
+	local dock = Places.ROOM.LoadingDock
+	--[[
+		And a fallback, because a board that is stuck on job one is a board that
+		is showing nothing at all. If ninety seconds pass and this has not
+		fired -- somebody got in another way, somebody was teleported by the
+		test panel, the check is wrong -- it completes itself and the night goes
+		on. The cost of being wrong here is one crossed-off line; the cost of
+		being stuck is the whole list.
+	]]
+	task.delay(90, function()
+		if Shift.night == night and not Shift.finished then
+			ctx.advance("get_inside")
+		end
+	end)
+
+	insideWatch = RunService.Heartbeat:Connect(function()
+		if Objectives.isComplete("get_inside") then
+			if insideWatch then
+				insideWatch:Disconnect()
+				insideWatch = nil
+			end
+			return
+		end
+		for _, player in Players:GetPlayers() do
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if not root then
+				continue
+			end
+			local p = (root :: BasePart).Position / METRE
+			if p.Z > dock.z - 3.4 and math.abs(p.X - dock.x) < 5.5 then
+				ctx.advance("get_inside")
+				ctx.hint("Door shut behind you. The time clock is in the staff room.")
+				return
+			end
+		end
+	end)
 
 	Shift.clock = ShiftClock.new(night)
 	ctx.clock = Shift.clock

@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "30ce9c1"
-Build.LAST_COMMIT = "b7cb1c3"
-Build.SUMMARY = "Rebuild the furniture the whole mall is made of"
-Build.WHEN = "23 Sep 17:20"
+Build.COMMIT = "20d2385"
+Build.LAST_COMMIT = "5598b9f"
+Build.SUMMARY = "Build the loading dock out of things instead of boxes"
+Build.WHEN = "23 Sep 17:22"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -12749,12 +12749,25 @@ end
 	four and a half metres below the nearest tap. Night 1 ends here.
 ]]
 local function dressElectricalCupboard(cx, cz, y, h, w, d)
-	local box = P("FuseBox", V(0.7, 0.9, 0.25), at(cx, y + 1.4, cz - 1.15), C.metal)
+	--[[
+		The board. A back box, a hinged door standing open, a busbar cover
+		across the middle and six rewireable carriers in a row under it -- one
+		of which is the fuse Night 1 comes down here to change, in standing
+		water, which is the point of the whole room.
+	]]
+	local box = P("FuseBox", V(0.74, 0.92, 0.22), at(cx, y + 1.4, cz - 1.18), C.metal)
 	box.Name = "FuseBox"
-	P("FuseBoxDoor", V(0.66, 0.84, 0.04), at(cx, y + 1.4, cz - 1.0), C.trim)
+	P("FuseBoxBack", V(0.68, 0.86, 0.03), at(cx, y + 1.4, cz - 1.09), C.dark)
+	-- The door, open, hinged at one side.
+	local door = P("FuseBoxDoor", V(0.7, 0.88, 0.03), at(cx - 0.52, y + 1.4, cz - 0.86), C.trim)
+	door.Orientation = Vector3.new(0, 68, 0)
+	P("FuseBoxCover", V(0.66, 0.18, 0.04), at(cx, y + 1.62, cz - 1.05), C.trim)
 	for i = 0, 5 do
-		P("Fuse", V(0.07, 0.12, 0.03), at(cx - 0.24 + (i % 3) * 0.24, y + 1.55 - math.floor(i / 3) * 0.26, cz - 1.02), C.dark)
+		local fx = cx - 0.27 + i * 0.108
+		P("FuseCarrier", V(0.09, 0.2, 0.08), at(fx, y + 1.36, cz - 1.05), Color3.fromRGB(58, 52, 46))
+		P("FuseLabel", V(0.08, 0.04, 0.01), at(fx, y + 1.2, cz - 1.02), Color3.fromRGB(196, 192, 178))
 	end
+	P("MainSwitch", V(0.12, 0.2, 0.08), at(cx + 0.28, y + 1.62, cz - 1.05), Color3.fromRGB(140, 40, 32))
 	P("Conduit", V(0.09, 2.2, 0.09), at(cx + 1.2, y + 1.1, cz - 1.2), C.metal)
 	P("Conduit", V(0.09, 2.2, 0.09), at(cx - 1.2, y + 1.1, cz - 1.2), C.metal)
 	P("ConduitRun", V(2.4, 0.09, 0.09), at(cx, y + 2.2, cz - 1.2), C.metal)
@@ -12766,7 +12779,10 @@ local function dressElectricalCupboard(cx, cz, y, h, w, d)
 	water.Material = Enum.Material.Glass
 	water.CanCollide = false
 	P("FloorDrain", V(0.24, 0.02, 0.24), at(cx + 1.1, y + 0.03, cz + 0.8), C.dark)
-	bulkhead(cx, y + h - 0.3, cz)
+	for i = 0, 3 do
+		P("DrainGrate", V(0.2, 0.01, 0.03), at(cx + 1.1, y + 0.04, cz + 0.72 + i * 0.05), C.metal)
+	end
+	tube(cx, y + h - 0.2, cz, false)
 end
 
 --[[
@@ -12774,8 +12790,27 @@ end
 	and a generator that on Night 4 somebody has to start in the dark.
 ]]
 local function dressPlantRoom(cx, cz, y, h, w, d)
-	P("AHU", V(2.6, 1.8, 1.6), at(cx - 1.4, y + 0.9, cz), C.metal)
-	P("AHUPanel", V(1.2, 0.9, 0.04), at(cx - 1.4, y + 1.1, cz - 0.82), C.trim)
+	--[[
+		The air handling unit. It is the biggest object down here and it was a
+		grey block: an AHU is a cased machine, and what says so is the panelled
+		skin with a seam every panel-width, the access door with its two latch
+		handles, the filter slot at one end and the flexible connector where
+		the duct leaves it. None of that is modelled -- it is nine flat parts,
+		and it is the difference between machinery and a crate.
+	]]
+	local ax = cx - 1.4
+	P("AHUPlinth", V(2.7, 0.14, 1.7), at(ax, y + 0.07, cz), C.dark)
+	P("AHU", V(2.6, 1.8, 1.6), at(ax, y + 1.0, cz), C.metal)
+	for i = -1, 1 do
+		P("AHUSeam", V(0.03, 1.74, 1.64), at(ax + i * 0.86, y + 1.0, cz), Color3.fromRGB(94, 94, 98))
+	end
+	P("AHUPanel", V(1.2, 0.9, 0.04), at(ax - 0.5, y + 1.1, cz - 0.82), C.trim)
+	for _, sy in { -0.28, 0.28 } do
+		P("AHULatch", V(0.07, 0.16, 0.07), at(ax - 0.02, y + 1.1 + sy, cz - 0.86), C.metal)
+	end
+	P("AHUFilterSlot", V(0.05, 1.2, 1.3), at(ax + 1.32, y + 1.1, cz), C.dark)
+	P("AHUFlex", V(0.9, 0.9, 0.24), at(ax, y + 2.0, cz - 0.9), Color3.fromRGB(86, 84, 80))
+	P("AHULabel", V(0.34, 0.22, 0.02), at(ax - 0.5, y + 1.64, cz - 0.85), Color3.fromRGB(196, 192, 178))
 	--[[
 		Duct and pipework at high level, which is where a plant room puts them
 		and, more to the point, where they are not across the doorway at head
@@ -12784,16 +12819,56 @@ local function dressPlantRoom(cx, cz, y, h, w, d)
 	P("Duct", V(0.9, 0.9, 5.0), at(cx - 1.4, y + 2.45, cz), C.metal)
 	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 2.45, cz - 1.8), C.trim)
 	P("DuctStrap", V(1.0, 0.06, 0.1), at(cx - 1.4, y + 2.45, cz + 1.8), C.trim)
-	P("Pump", V(0.8, 0.9, 0.8), at(cx + 2.0, y + 0.45, cz - 1.5), C.metal)
-	P("PumpMotor", V(0.45, 0.45, 0.7), at(cx + 2.0, y + 1.1, cz - 1.5), Color3.fromRGB(70, 82, 78))
+	--[[
+		The circulating pump: a motor on a bedplate with a volute under it and
+		flanged pipe either side. Flanges are the detail -- a pipe that runs
+		into a box is a pipe that runs into a box, and a pipe that arrives at a
+		bolted flange is plumbing.
+	]]
+	local mx = cx + 2.0
+	P("PumpBase", V(0.9, 0.16, 0.9), at(mx, y + 0.08, cz - 1.5), C.dark)
+	P("Pump", V(0.7, 0.6, 0.7), at(mx, y + 0.46, cz - 1.5), C.metal)
+	local motor = P("PumpMotor", V(0.42, 0.42, 0.66), at(mx, y + 1.02, cz - 1.5), Color3.fromRGB(70, 82, 78))
+	motor.Shape = Enum.PartType.Cylinder
+	motor.Orientation = Vector3.new(90, 0, 0)
+	P("PumpFan", V(0.3, 0.3, 0.1), at(mx, y + 1.02, cz - 1.87), C.dark)
+	for _, sz in { -1, 1 } do
+		P("PumpFlange", V(0.3, 0.3, 0.05), at(mx, y + 0.46, cz - 1.5 + sz * 0.38), C.trim)
+		P("PumpPipe", V(0.16, 0.16, 0.5), at(mx, y + 0.46, cz - 1.5 + sz * 0.62), C.metal)
+	end
 	P("Pipework", V(0.14, 0.14, 5.0), at(cx + 2.4, y + 2.6, cz), C.metal)
 	P("Pipework", V(0.1, 0.1, 5.0), at(cx + 2.7, y + 2.35, cz), C.metal)
 	P("ValveWheel", V(0.34, 0.06, 0.34), at(cx + 2.4, y + 2.3, cz + 2.0), C.trim)
 	P("Gauge", V(0.14, 0.14, 0.05), at(cx + 2.2, y + 2.1, cz - 1.9), Color3.fromRGB(190, 188, 180))
-	P("Generator", V(1.6, 1.0, 0.9), at(cx + 1.6, y + 0.5, cz + 1.8), Color3.fromRGB(86, 90, 82))
-	P("GeneratorPanel", V(0.4, 0.3, 0.04), at(cx + 1.6, y + 0.8, cz + 1.3), C.panel)
-	P("PullCord", V(0.03, 0.4, 0.03), at(cx + 2.3, y + 0.9, cz + 1.4), Color3.fromRGB(150, 140, 110))
-	bulkhead(cx, y + h - 0.3, cz)
+	--[[
+		The standby generator, which Night 4 is entirely about.
+
+		A skid, an engine block with a rocker cover, an alternator on the end
+		of it, an exhaust that goes up and out, a fuel tank you can see the
+		level in, and the recoil cord you pull. Every one of those is a thing
+		the night asks a player to look at or touch, so every one of them has
+		to be findable by shape in a torch beam.
+	]]
+	local gx, gz = cx + 1.5, cz + 1.9
+	P("GeneratorSkid", V(1.9, 0.14, 1.0), at(gx, y + 0.07, gz), C.dark)
+	P("Generator", V(1.1, 0.72, 0.82), at(gx - 0.3, y + 0.5, gz), Color3.fromRGB(86, 90, 82))
+	P("GeneratorHead", V(0.9, 0.16, 0.7), at(gx - 0.3, y + 0.94, gz), Color3.fromRGB(70, 74, 68))
+	local alt = P("Alternator", V(0.56, 0.56, 0.5), at(gx + 0.5, y + 0.5, gz), Color3.fromRGB(96, 92, 84))
+	alt.Shape = Enum.PartType.Cylinder
+	alt.Orientation = Vector3.new(0, 0, 90)
+	P("GeneratorTank", V(1.0, 0.36, 0.5), at(gx - 0.35, y + 1.2, gz), Color3.fromRGB(64, 66, 62))
+	P("TankGauge", V(0.05, 0.22, 0.05), at(gx - 0.84, y + 1.2, gz - 0.2), Color3.fromRGB(188, 184, 170))
+	P("Exhaust", V(0.16, 1.5, 0.16), at(gx - 0.85, y + 1.6, gz + 0.3), C.dark)
+	P("ExhaustElbow", V(0.16, 0.16, 0.5), at(gx - 0.85, y + 2.3, gz + 0.5), C.dark)
+	local panel = P("GeneratorPanel", V(0.34, 0.3, 0.06), at(gx + 0.2, y + 0.82, gz - 0.44), C.panel)
+	panel.Name = "GeneratorPanel"
+	for i = 0, 1 do
+		P("PanelLamp", V(0.05, 0.05, 0.02), at(gx + 0.1 + i * 0.14, y + 0.9, gz - 0.48), C.dark)
+	end
+	P("PullCord", V(0.03, 0.4, 0.03), at(gx + 0.62, y + 0.86, gz - 0.3), Color3.fromRGB(150, 140, 110))
+	P("PullGrip", V(0.1, 0.05, 0.05), at(gx + 0.62, y + 0.64, gz - 0.3), C.wood)
+
+	tube(cx - 1.4, y + h - 0.2, cz, false)
 end
 
 --[[

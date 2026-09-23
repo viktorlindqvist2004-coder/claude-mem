@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "bfa8789"
-Build.LAST_COMMIT = "94e58d2"
-Build.SUMMARY = "Nothing floats, nothing flickers, and the ceiling has real holes in it"
-Build.WHEN = "23 Sep 18:00"
+Build.COMMIT = "fe08c4c"
+Build.LAST_COMMIT = "3a3de00"
+Build.SUMMARY = "Measure whether you can actually walk through the building"
+Build.WHEN = "23 Sep 18:05"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -10368,15 +10368,18 @@ local function wallWithDoors(fixed, from, to, axis, y, h, doors, side, colour)
 			local len = g[2] - g[1]
 			if axis == "x" then
 				P("DoorHead", V(len, h - doorH, WALL), at((g[1] + g[2]) / 2, y + doorH + (h - doorH) / 2, fixed), colour)
-				P("DoorFrame", V(len + 0.16, 0.1, WALL + 0.06), at((g[1] + g[2]) / 2, y + doorH, fixed), C.trim)
+				-- Wider than the posts reach, so the two do not share an edge.
+				P("DoorFrame", V(len + 0.22, 0.1, WALL + 0.07), at((g[1] + g[2]) / 2, y + doorH, fixed), C.trim)
+				-- The posts are a shade thinner than the header, so the two do
+				-- not meet face to face at the corners.
 				for _, sx in { -1, 1 } do
-					P("DoorFrame", V(0.08, doorH, WALL + 0.06), at((g[1] + g[2]) / 2 + sx * (len / 2 + 0.04), y + doorH / 2, fixed), C.trim)
+					P("DoorFrame", V(0.08, doorH, WALL + 0.02), at((g[1] + g[2]) / 2 + sx * (len / 2 + 0.04), y + doorH / 2, fixed), C.trim)
 				end
 			else
 				P("DoorHead", V(WALL, h - doorH, len), at(fixed, y + doorH + (h - doorH) / 2, (g[1] + g[2]) / 2), colour)
-				P("DoorFrame", V(WALL + 0.06, 0.1, len + 0.16), at(fixed, y + doorH, (g[1] + g[2]) / 2), C.trim)
+				P("DoorFrame", V(WALL + 0.07, 0.1, len + 0.22), at(fixed, y + doorH, (g[1] + g[2]) / 2), C.trim)
 				for _, sz in { -1, 1 } do
-					P("DoorFrame", V(WALL + 0.06, doorH, 0.08), at(fixed, y + doorH / 2, (g[1] + g[2]) / 2 + sz * (len / 2 + 0.04)), C.trim)
+					P("DoorFrame", V(WALL + 0.02, doorH, 0.08), at(fixed, y + doorH / 2, (g[1] + g[2]) / 2 + sz * (len / 2 + 0.04)), C.trim)
 				end
 			end
 		end
@@ -11596,14 +11599,14 @@ local ROOMS = {
 	{ "SecurityOffice", SERVICE_WEST - 2.5, 9, 5.0, 4.2, 0, 3.1, { { "E", 0, 1.1 } } },
 	{ "CameraRoom", SERVICE_WEST - 2.5, 3.5, 5.0, 4.2, 0, 3.1, { { "E", 0, 1.1 } } },
 	{ "CustodialStore", SERVICE_WEST - 1.8, -2, 3.6, 3.0, 0, 3.1, { { "E", 0, 1.0 } } },
-	{ "Stockroom", SERVICE_WEST - 4.5, -9, 9.0, 7.0, 0, 3.5, { { "E", 0, 1.4 } } },
+	{ "Stockroom", SERVICE_WEST - 4.53, -9, 9.0, 7.0, 0, 3.5, { { "E", 0, 1.4 } } },
 	--[[
 		The dock has two ways in. The east one is the corridor, and the south one
 		is the staff door onto the yard -- which the crew come in through at ten
 		and, on the fifth night, go out through. It had a door leaf screwed to a
 		solid wall for a long time, which is not a door.
 	]]
-	{ "LoadingDock", SERVICE_WEST - 5.5, -18, 11.0, 8.0, 0, 4.2,
+	{ "LoadingDock", SERVICE_WEST - 5.53, -18, 11.0, 8.0, 0, 4.2,
 		{ { "E", 0, 2.6 }, { "S", -2.5, 1.3 } } },
 	-- Shop floor: east face flush with the west side of the north arm.
 	{ "Supermarket", -ARM_HALF - 8.0, 23, 16.0, 12.0, 0, 4.0, { { "E", 0, 3.2 } } },
@@ -11613,7 +11616,10 @@ local ROOMS = {
 	-- pointed at these since the building went up and there was nothing behind it.
 	{ "Toilets", 17, -(ARM_HALF + 3.0), 8.0, 6.0, 0, 3.3, { { "N", 0, 2.4 } } },
 	-- First floor: south face flush with the atrium's north balcony.
-	{ "FoodCourt", 0, ATRIUM_D / 2 + 5.0, 14.0, 10.0, FLOOR1, 3.6, { { "S", 0, 3.0 } } },
+	-- Four centimetres north of flush. Its south wall and the atrium's north
+	-- wall were centred on one plane, which is twelve pairs of shimmering
+	-- surfaces right where the balcony route crosses.
+	{ "FoodCourt", 0, ATRIUM_D / 2 + 5.04, 14.0, 10.0, FLOOR1, 3.6, { { "S", 0, 3.0 } } },
 	-- Basement.
 	{ "PlantRoom", SERVICE_WEST - 3.5, -6, 7.0, 5.5, -4.6, 3.0, { { "E", 0, 1.1 } } },
 	{ "ElectricalCupboard", SERVICE_WEST - 1.6, -13, 3.2, 2.6, -4.6, 3.0, { { "E", 0, 1.0 } } },
@@ -11783,17 +11789,69 @@ local function buildAtrium()
 	pottedTree(-3.2, 0, 7.4, 4401)
 	pottedTree(3.2, 0, 7.4, 4402)
 
-	-- Island units in the middle of the floor, so crossing the room is not a
-	-- straight line and the far side is never entirely in view.
-	kiosk(-5.4, 1.2, 2.6, 1.8, 0, 5501, true)
-	kiosk(-5.4, -3.4, 2.4, 1.8, 0, 5502, true)
-	kiosk(6.6, 4.2, 2.2, 2.2, 0, 5503, false)
+	--[[
+		Nearly empty, on purpose.
 
-	-- Seating, planting and the things people leave behind in it.
-	seatingCluster(-7.0, 0, 5.0, 6601, true)
-	seatingCluster(8.0, 0, -0.5, 6602, false)
-	pottedTree(-9.2, 0, -6.6, 6603)
-	pottedTree(9.2, 0, 7.0, 6604)
+		This room had three kiosks, two seating clusters, two trees, two
+		trolleys and two bins scattered round a clock and a capped fountain,
+		and it was too much happening in one space -- every square metre of it
+		had something to look at, so none of it was worth looking at.
+
+		An abandoned shopping centre is not cluttered. It is a very large room
+		with almost nothing in it and a few things nobody bothered to remove,
+		and the emptiness is the frightening part: twenty-two metres by
+		eighteen with a clock ticking in the middle and your torch reaching
+		about a fifth of the way across it.
+
+		So: one kiosk, shuttered, off to the side where it does not divide the
+		floor. One bench. Two trees at the corners. The clock, the fountain and
+		the escalators are the room, and the rest of it is floor.
+	]]
+	--[[
+		Furnished, and mostly floor.
+
+		This went from too much to too little in one go. It had three kiosks,
+		two seating clusters, two trees, two trolleys and two bins scattered
+		across it, which was every square metre having something to look at and
+		so none of it worth looking at; then it had one bench and a kiosk,
+		which is not a shopping centre, it is a warehouse with a clock in it.
+
+		What a real atrium this size has is a seating group round the feature,
+		a couple of island units pushed to one end where they do not break the
+		route across, planting at the edges, bins where the seating is and a
+		directory by the doors. Six or seven things, all of them against
+		something, and the middle of the room left alone -- which is also what
+		makes the middle of the room worth being afraid of.
+	]]
+
+	-- Two island units, both shuttered, at the entrance end.
+	kiosk(-8.0, -5.4, 2.2, 2.6, 0, 5502, false)
+	kiosk(8.2, -5.4, 2.2, 2.6, 0, 5503, false)
+
+	-- Seating round the fountain: three benches and the bins beside them.
+	bench(-4.4, 0, 5.4, true)
+	bench(4.4, 0, 5.4, true)
+	bench(0, 0, 8.4, true)
+	litterBin(-6.8, 0, 5.4)
+	litterBin(6.8, 0, 5.4)
+
+	-- Planting at the corners, out of the way of everything.
+	pottedTree(-8.6, 0, 8.0, 6603)
+	pottedTree(8.6, 0, 8.0, 6604)
+	pottedTree(-8.8, 0, 1.2, 6605)
+	pottedTree(8.8, 0, 1.2, 6606)
+
+	--[[
+		The directory, by the doors, with half the units struck through. It is
+		the first thing anybody reads in a shopping centre and the first thing
+		that tells you how much of this one is still trading.
+	]]
+	P("DirectoryPost", V(0.1, 2.1, 0.1), at(-3.4, 1.05, -7.4), C.metal)
+	P("DirectoryPost", V(0.1, 2.1, 0.1), at(-1.6, 1.05, -7.4), C.metal)
+	local board = P("Directory", V(2.1, 1.5, 0.08), at(-2.5, 1.45, -7.4), C.panel)
+	printed(board, Enum.NormalId.Back,
+		"NORTHLIGHT GALLERIA\n<font size=\"9\">GROUND  supermarket · fashion · toilets\nFIRST  food court\n\nUNITS 3 6 9 11 14 17 TO LET</font>",
+		{ color = Color3.fromRGB(148, 144, 146), scaled = false, density = 58 })
 	-- The north run is split: the middle of that edge is the food court door.
 	planterBed(-(w / 4 + 0.4), FLOOR1, d / 2 - 1.2, w / 2 - 4, true, 6605)
 	planterBed(w / 4 + 0.4, FLOOR1, d / 2 - 1.2, w / 2 - 4, true, 6615)
@@ -11830,10 +11888,9 @@ local function buildAtrium()
 		printed(banner, Enum.NormalId.Front, ({ "WINTER", "SALE", "NOW ON" })[i + 2],
 			{ color = Color3.fromRGB(140, 128, 120), density = 40, font = Enum.Font.GothamBold })
 	end
-	trolley(-w / 2 + 2.4, 0, d / 2 - 2.2, 34)
-	trolley(-w / 2 + 3.4, 0, d / 2 - 2.4, 20)
-	litterBin(w / 2 - 1.6, 0, -d / 2 + 2.2)
-	litterBin(-w / 2 + 1.6, 0, d / 2 - 4.0)
+	-- Trolleys by the entrance, which is where trolleys end up.
+	trolley(-9.0, 0, -d / 2 + 2.6, 34)
+	trolley(-9.0, 0, -d / 2 + 3.6, 20)
 
 	-- The floor: a field, a border two metres in, and something geometric under
 	-- the void. This costs nothing and does more than any prop in the room.
@@ -11888,7 +11945,8 @@ local function firstFloorUnits()
 				local shut = if axis == "x" then V(uw - 0.5, 2.6, 0.12) else V(0.12, 2.6, uw - 0.5)
 				local fascia = if axis == "x" then V(uw - 0.3, 0.44, 0.1) else V(0.1, 0.44, uw - 0.3)
 
-				P("FF_Shopfront", front, at(sx, y + h / 2, sz), C.wall)
+				-- A few millimetres in front of the arm wall it backs on to.
+				P("FF_Shopfront", front, at(sx, y + h / 2 - 0.01, sz), C.wall)
 				P("FF_Shutter", shut, at(
 					if axis == "x" then mid else fixed - side * (recess + 0.14),
 					y + 1.3,
@@ -12081,10 +12139,11 @@ local function mallArm(axis, length, entries)
 				P("Shopfront", size(w, WALL, MALL_H), pos(mid, side * (half + 0.3), MALL_H / 2), C.wall)
 				if recess > 0.12 then
 					-- The reveal into the recess, top and both sides.
-					P("ShopReveal", size(w, recess + 0.3, 0.3), pos(mid, side * (half - recess / 2), MALL_H - 0.15), C.wall)
+					-- Just under the ceiling margin rather than flush with it.
+					P("ShopReveal", size(w - 0.04, recess + 0.3, 0.28), pos(mid, side * (half - recess / 2), MALL_H - 0.17), C.wall)
 					for _, e in { -1, 1 } do
-						P("ShopReveal", size(0.3, recess + 0.3, MALL_H),
-							pos(mid + e * (w / 2 - 0.15), side * (half - recess / 2), MALL_H / 2), C.wall)
+						P("ShopReveal", size(0.28, recess + 0.3, MALL_H - 0.04),
+							pos(mid + e * (w / 2 - 0.15), side * (half - recess / 2), MALL_H / 2 - 0.02), C.wall)
 					end
 					P("ShopThreshold", size(w - 0.3, recess, 0.04), pos(mid, side * (half - recess / 2), 0.02), C.trim)
 				end
@@ -12502,7 +12561,9 @@ local function serviceCorridor()
 	end
 	-- The shaft the stair falls through, in full height.
 	for _, sx in { -1, 1 } do
-		P("Shaft", V(WALL, 4.6, sz1 - sz0), at(x + sx * SERVICE_W / 2, -2.3, (sz0 + sz1) / 2), C.block)
+		-- Outboard of the corridor walls above them, which are themselves
+		-- nudged out: three surfaces on one plane was two too many.
+		P("Shaft", V(WALL, 4.6, sz1 - sz0), at(x + sx * (SERVICE_W / 2 + 0.08), -2.3, (sz0 + sz1) / 2), C.block)
 	end
 	P("Shaft_End", V(SERVICE_W + 0.5, 4.6, WALL), at(x, -2.3, sz0), C.block)
 
@@ -12512,14 +12573,16 @@ local function serviceCorridor()
 	local bmid = (bz0 + bz1) / 2
 	P("Basement_Floor", V(SERVICE_W, 0.3, bz1 - bz0), at(x, by - 0.15, bmid), C.floor)
 	P("Basement_Ceiling", V(SERVICE_W, 0.3, sz1 - bz1), at(x, by + bh + 0.15, (bz1 + sz1) / 2), C.ceiling)
-	wallWithDoors(x + SERVICE_W / 2, bz0, bz1, "z", by, bh, {}, "E", C.block)
+	-- The same four centimetres as the corridor above: the basement rooms tile
+	-- flush against this too.
+	wallWithDoors(x + SERVICE_W / 2 + 0.04, bz0, bz1, "z", by, bh, {}, "E", C.block)
 	local bdoors = {}
 	for _, r in ROOMS do
 		if r[6] == by then
 			table.insert(bdoors, { "W", r[3] - bmid, r[8][1][3] })
 		end
 	end
-	wallWithDoors(x - SERVICE_W / 2, bz0, bz1, "z", by, bh, bdoors, "W", C.block)
+	wallWithDoors(x - SERVICE_W / 2 - 0.04, bz0, bz1, "z", by, bh, bdoors, "W", C.block)
 	P("Basement_EndN", V(SERVICE_W + 0.5, bh, WALL), at(x, by + bh / 2, bz1), C.block)
 	bulkhead(x, by + bh - 0.3, -9, 5)
 end
@@ -13660,7 +13723,11 @@ local function buildFloorThree()
 		PA, and rotas on the wall going back to 1986 — with this week's already
 		typed, and the crew's names on it. Malik's tag is outside the door.
 	]]
-	room("ManagerOffice", 9, 6, 6.0, 5.0, y, 2.6, { { "W", 0, 1.1 } }, C.wall)
+	-- Two centimetres up: room() lays a slab of its own and Floor 3 already
+	-- has one, so at the same level they are the same plane.
+	-- Two centimetres up: room() lays a slab of its own and Floor 3 already
+	-- has a screed, so at the same level they are the same plane.
+	room("ManagerOffice", 9, 6, 6.0, 5.0, y + 0.06, 2.6, { { "W", 0, 1.1 } }, C.wall)
 	desk(9, y, 6, 2.2, 1.0)
 	chair(9, y, 7.2)
 	local mic = P("Microphone", V(0.1, 0.5, 0.1), at(9, y + 1.05, 5.6), C.metal)
@@ -13908,7 +13975,15 @@ local function buildEnvelope(_facadeH)
 				local len = runEnd - runStart
 				local wx = if alongX then mid else fixed + ox * 0.25
 				local wz = if alongX then fixed + oz * 0.25 else mid
-				local wall = if alongX then V(len, top, 0.5) else V(0.5, top, len)
+				--[[
+					A hair thinner than the 0.5 m the panels are set out on.
+
+					Two masses meeting at a corner each put a panel up along
+					the same line, and two 0.5 m panels on one 0.5 m setting-out
+					share both faces. At 0.46 a corner overlaps rather than
+					coincides, which the depth buffer can resolve.
+				]]
+				local wall = if alongX then V(len, top, 0.46) else V(0.46, top, len)
 				P("Envelope", wall, at(wx, top / 2, wz), BRICK, Enum.Material.Brick)
 				--[[
 					Sunk 6 cm into the wall it caps.
@@ -13921,11 +13996,11 @@ local function buildEnvelope(_facadeH)
 					pushed into it slightly for the same reason.
 				]]
 				local cap = if alongX then V(len + 0.14, 0.9, 0.86) else V(0.86, 0.9, len + 0.14)
-				P("Parapet", cap, at(wx, top + 0.39, wz), CAP)
+				P("Parapet", cap, at(wx, top + 0.39 - ((math.abs(x0) + math.abs(z0)) % 5) * 0.005, wz), CAP)
 				-- A string course, two thirds up, so the brick has a horizon.
 				-- Shorter than its wall, so the two do not end on one plane.
 				local band = if alongX then V(len - 0.06, 0.35, 0.62) else V(0.62, 0.35, len - 0.06)
-				P("FacadeBand", band, at(wx, top * 0.66, wz), C.trim)
+				P("FacadeBand", band, at(wx, top * 0.66 - ((math.abs(x0) + math.abs(z0)) % 4) * 0.006, wz), C.trim)
 				runStart = nil
 			end
 
@@ -13947,9 +14022,14 @@ local function buildEnvelope(_facadeH)
 		end
 
 		-- The roof. Flat, felted, and set down inside its own parapet.
-		-- Set down inside its parapet, and not level with anything.
+		--[[
+			Set down inside its parapet, and nudged a few millimetres per mass
+			so two roofs at the same height -- an arm and the room beside it --
+			are not laid in one plane.
+		]]
+		local jitter = ((math.abs(x0) + math.abs(z0)) % 7) * 0.004
 		P("Roof", V(x1 - x0 + 0.34, 0.4, z1 - z0 + 0.34),
-			at((x0 + x1) / 2, top - 0.27, (z0 + z1) / 2), Color3.fromRGB(46, 44, 44))
+			at((x0 + x1) / 2, top - 0.27 - jitter, (z0 + z1) / 2), Color3.fromRGB(46, 44, 44))
 	end
 
 	--[[
@@ -14146,7 +14226,7 @@ local function buildExterior()
 	]]
 	local gateX = 10
 	P("Island", V(2.2, 0.22, 7.0), at(gateX, 0.09, edgeZ + 2), Color3.fromRGB(96, 94, 90))
-	P("IslandKerb", V(2.4, 0.16, 7.2), at(gateX, 0.06, edgeZ + 2), Color3.fromRGB(122, 118, 112))
+	P("IslandKerb", V(2.4, 0.16, 7.2), at(gateX, 0.05, edgeZ + 2), Color3.fromRGB(122, 118, 112))
 	P("KeepLeft", V(0.3, 1.1, 0.3), at(gateX, 0.75, edgeZ - 0.4), Color3.fromRGB(150, 146, 136))
 	P("KeepLeftDisc", V(0.5, 0.5, 0.06), at(gateX, 1.4, edgeZ - 0.45), Color3.fromRGB(40, 60, 120))
 

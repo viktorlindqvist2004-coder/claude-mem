@@ -287,6 +287,31 @@ end
 	anywhere and you cannot walk away from it.
 ]]
 local flat: { [string]: Sound } = {}
+--[[
+	A flat sound that keeps going until it is told to stop, as against
+	playFlat, which is a one-shot. Same cache, so a loop and a one-shot never
+	share a key.
+]]
+local function flatLoop(key: string, slot: any): Sound
+	local sound = flat[key]
+	if not sound then
+		sound = SoundBank.make(slot, SoundService, key)
+		flat[key] = sound
+	end
+	if not sound.IsPlaying then
+		sound.TimePosition = 0
+		sound:Play()
+	end
+	return sound
+end
+
+local function stopFlatLoop(key: string)
+	local sound = flat[key]
+	if sound then
+		sound:Stop()
+	end
+end
+
 local function playFlat(key: string, slot: any)
 	local sound = flat[key]
 	if not sound then
@@ -703,18 +728,34 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 				bang(1.6, true)
 				showHint("RUN. GET THROUGH A DOOR.", RED)
 			end
+			--[[
+				The heartbeat and the bed, in the player rather than in the
+				building: flat, unattenuated, and running until it gives up.
+				The rate is driven off how close it is, so putting a door
+				between you and it is audible before it is visible -- which is
+				the only feedback this game gives that running was right.
+			]]
+			local heart = flatLoop("heartbeat", SoundBank.HEARTBEAT)
+			heart.PlaybackSpeed = 0.7 + huntClose * 0.85
+			heart.Volume = 0.55 + huntClose * 0.45
+			flatLoop("chaseBed", SoundBank.CHASE_BED)
 		else
 			huntClose = 0
 			hunted.Visible = false
 			hunted.BackgroundTransparency = 0.82
+			stopFlatLoop("heartbeat")
+			stopFlatLoop("chaseBed")
 			showHint("It's stopped.", BONE)
 		end
+	elseif kind == "clock_armed" then
+		showHint("DON'T MOVE.", RED)
 	elseif kind == "contradiction" then
 		showHint(`Rule {payload.rule} was right about him.`, RED)
 	elseif kind == "clue" then
 		showHint(`Evidence: {payload.name}`, Color3.fromRGB(198, 190, 160))
 	elseif kind == "clock_stop" then
-		showHint("THE CLOCK HAS STOPPED. Stand still. Rule 3.", RED)
+		local grace = (payload and tonumber(payload.grace)) or 5
+		showHint(`THE CLOCK HAS STOPPED. Stand still — Rule 3. You have {grace} seconds.`, RED)
 	elseif kind == "clock_resume" then
 		showHint("It's ticking again.", BONE)
 	elseif kind == "downed" then

@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "d4cb86a"
-Build.LAST_COMMIT = "50f720e"
-Build.SUMMARY = "Make breaking a rule cost something, and fix the stair, the glow and the box"
-Build.WHEN = "24 Sep 01:52"
+Build.COMMIT = "1e036a7"
+Build.LAST_COMMIT = "41c5f35"
+Build.SUMMARY = "Make the mannequins R15 rigs, which are an actual human mesh"
+Build.WHEN = "24 Sep 01:58"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -1289,8 +1289,8 @@ NightScript.NIGHT1 = {
 		{ text = "Good. That's you on the payroll.", seconds = 3.5 },
 	},
 	helpful_wet_floor = {
-		{ text = "Careful at the foot of the stairs — there's water down there, and it isn't yours.", seconds = 6 },
-		{ text = "Mop it before someone slips. That's a genuine one, that.", seconds = 4.5 },
+		{ text = "There's water at the foot of the atrium stairs. Pipe's been weeping since the nineties.", seconds = 6 },
+		{ text = "Mop it before someone goes over on it. The mop's in the custodial store, off the service corridor.", seconds = 6 },
 	},
 	music_changes_early = {
 		{ text = "...", seconds = 2 },
@@ -2737,6 +2737,35 @@ SoundBank.DUMMY_CLOSE = {
 	it does not stop until you have got somewhere with a door. A player who
 	breaks Rule 3 should be typing "sorry" into the chat.
 ]]
+--[[
+	The heartbeat, and the music under it.
+
+	Both are flat -- not positional, not attenuated, played on SoundService at
+	the client -- because they are not in the building, they are in the player.
+	The heartbeat's rate is driven off how close the thing is, so a player who
+	has put a door between themselves and it hears it slow down before they
+	can see anything, which is the only feedback the game gives that running
+	was the right call.
+
+	They start the moment a rule is broken and they stop when it gives up.
+	Nothing else in this game has music.
+]]
+SoundBank.HEARTBEAT = {
+	caption = "[your own heart]",
+	id = "rbxasset://sounds/action_falling.mp3",
+	volume = 0.85,
+	speed = 0.6,
+	looped = true,
+}
+
+SoundBank.CHASE_BED = {
+	caption = "",
+	id = "rbxasset://sounds/uuhhh.mp3",
+	volume = 0.6,
+	speed = 0.45,
+	looped = true,
+}
+
 SoundBank.HUNT_START = {
 	caption = "[SOMETHING IS COMING]",
 	id = "rbxasset://sounds/hit.wav",
@@ -5452,6 +5481,26 @@ function Mannequins.freezeAll(seconds: number)
 	end
 end
 
+--[[
+	Connect the loop that moves them, without touching the night's tally.
+
+	Mannequins.start() is Night 2's call and it resets takenThisNight. The Hunt
+	can begin on any night, from any rule break, and it needs the same loop --
+	so the connecting half is its own function.
+
+	This was the bug behind "nothing chased me". The Hunt built a walker, put it
+	eight metres behind the player, played the sound and turned the screen red,
+	and then nothing moved it, because on Nights 1, 3, 4 and 5 the heartbeat had
+	never been connected. It stood in the dark, silently, exactly where it
+	spawned, for eighteen seconds.
+]]
+local function ensureRunning()
+	if connection then
+		return
+	end
+	Mannequins.start()
+end
+
 function Mannequins.start()
 	if connection then
 		return
@@ -5700,6 +5749,8 @@ function Mannequins.hunt(target: Player, seconds: number?)
 	if not root then
 		return
 	end
+	-- Nothing moves without this.
+	ensureRunning()
 
 	--[[
 		Behind them, and far enough back that the first thing they know about
@@ -8851,7 +8902,18 @@ local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
 local question: string? = nil
 local askHandler: ((Player) -> ())? = nil
-local standStill: { until_: number, positions: { [Player]: Vector3 } }? = nil
+--[[
+	How long you get to come to a stop after the clock does, before Rule 3
+	starts counting. See ctx.standStillWindow.
+]]
+local STAND_STILL_GRACE = 5
+
+local standStill: {
+	until_: number,
+	armsAt: number,
+	armed: boolean,
+	positions: { [Player]: Vector3 },
+}? = nil
 
 -- ── The context every night is handed ───────────────────────────────────────
 
@@ -9278,11 +9340,26 @@ function ctx.standStillWindow(seconds: number?)
 			positions[player] = root.Position
 		end
 	end
+	--[[
+		Five seconds to stop, and then it counts.
+
+		The window used to start measuring the instant the clock stopped, from
+		wherever everybody happened to be standing -- which punished a player
+		for the two steps they were already in the middle of taking. Nobody
+		stops dead on a noise; they hear it, they process it, and then they
+		stop. That is about three seconds, so this allows five, and re-takes
+		everybody's position at the end of it.
+
+		The grace is announced, because a rule you are given time to obey is a
+		rule, and one you are not is a trap.
+	]]
 	standStill = {
 		until_ = os.clock() + (seconds or ctx.rule("the_clock_stops").complianceWindowSeconds or 20),
+		armsAt = os.clock() + STAND_STILL_GRACE,
+		armed = false,
 		positions = positions,
 	}
-	Hud.effect("clock_stop", nil)
+	Hud.effect("clock_stop", { grace = STAND_STILL_GRACE })
 	task.spawn(Atmos.clockStops)
 end
 
@@ -9296,6 +9373,24 @@ local function stepStandStill()
 		Atmos.clockResumes(Power.on)
 		Hud.effect("clock_resume", nil)
 		return
+	end
+	--[[
+		Still inside the grace: take everybody's position every frame, so the
+		one that finally counts is where they came to rest rather than where
+		they were when the clock stopped.
+	]]
+	if not window.armed then
+		if os.clock() < window.armsAt then
+			for _, player in Players:GetPlayers() do
+				local root = ctx.root(player)
+				if root then
+					window.positions[player] = root.Position
+				end
+			end
+			return
+		end
+		window.armed = true
+		Hud.effect("clock_armed", nil)
 	end
 	for player, origin in window.positions do
 		local root = ctx.root(player)
@@ -9888,6 +9983,23 @@ command("Building", "power", "Cut / restore the power", function()
 		Hud.set("power", true)
 		Hud.effect("power", true)
 	end
+end)
+
+--[[
+	The two halves of Rule 3, on their own buttons.
+
+	"Nothing chased me" is the hardest kind of bug to confirm fixed, because
+	reproducing it meant playing Night 1 to 01:00 and then deliberately walking
+	during the one scripted beat that stops the clock. These make it two
+	presses.
+]]
+command("Building", "clockstops", "Stop the clock (Rule 3)", function()
+	Shift.ctx.standStillWindow()
+end)
+
+command("Building", "hunt", "Send one after me (the Hunt)", function(player)
+	local Mannequins = require(script.Parent.Mannequins)
+	Mannequins.hunt(player)
 end)
 
 command("Building", "strike", "The Strike (33)", function()
@@ -12608,47 +12720,19 @@ local function buildAtrium()
 	end
 
 	--[[
-		The stair to the balcony -- a stair, this time, and one that arrives
-		somewhere.
+		There is no stair here.
 
-		It was fourteen treads 16 cm thick spaced 37 cm apart, which is 21 cm
-		of air between each one: a ladder of floating slabs you could see
-		straight through, with a horizontal handrail hanging in space beside
-		it. And it climbed northward into the middle of the atrium void, five
-		metres up, where there is no floor. It went nowhere and it looked like
-		it went nowhere.
+		There was one for a long time and it never did anything. It climbed to
+		a balcony nobody has a reason to stand on: the only room on the first
+		floor is the food court, and you reach that off the arm. So it was a
+		large piece of geometry in the most-looked-at room in the building whose
+		entire function was to be walked past.
 
-		So: twenty solid steps running west to east along the north side of
-		the balcony, 26 cm rise on a 36 cm going -- 36 degrees, which is a real
-		stair -- landing on a slab that meets the balcony deck. Each step is
-		one block from the floor to its own tread, so there is nothing to see
-		through and nothing to fall between. A handrail that follows the
-		pitch, on posts, on the open side.
+		It was also wrong for most of that time -- fourteen floating treads
+		climbing into the middle of the void -- and rebuilding it properly only
+		made it a correct thing that still had no purpose. The escalators are
+		the way up and they always were.
 	]]
-	local stairZ, stairW = -5.1, 1.5
-	local stairX0, stairGo, stairRise = -10.4, 0.36, FLOOR1 / 20
-	for i = 0, 19 do
-		local top = (i + 1) * stairRise
-		P("F1_Step", V(stairGo, top, stairW),
-			at(stairX0 + 0.18 + i * stairGo, top / 2, stairZ), C.trim)
-	end
-	-- The landing, which oversails south far enough to meet the balcony deck.
-	P("StairLanding", V(1.4, 0.3, 2.1), at(-2.6, FLOOR1 - 0.15, stairZ - 0.3), C.trim)
-	--[[
-		The handrail, on the open north side, following the pitch. The old one
-		was level, floating, and on the wrong side.
-	]]
-	local stairRun = 20 * stairGo
-	local stairSpan = math.sqrt(FLOOR1 * FLOOR1 + stairRun * stairRun)
-	local stairAngle = math.deg(math.atan2(FLOOR1, stairRun))
-	local rail = P("StairHandrail", V(stairSpan, 0.06, 0.06),
-		at(stairX0 + stairRun / 2, FLOOR1 / 2 + 0.98, stairZ + stairW / 2 - 0.05), C.trim)
-	rail.Orientation = Vector3.new(0, 0, stairAngle)
-	for i = 0, 4 do
-		local px = stairX0 + 0.6 + i * (stairRun / 4.6)
-		local py = (px - stairX0) * (FLOOR1 / stairRun)
-		P("StairPost", V(0.05, 0.98, 0.05), at(px, py + 0.49, stairZ + stairW / 2 - 0.05), C.metal)
-	end
 
 	--[[
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if
@@ -16564,6 +16648,31 @@ end
 	anywhere and you cannot walk away from it.
 ]]
 local flat: { [string]: Sound } = {}
+--[[
+	A flat sound that keeps going until it is told to stop, as against
+	playFlat, which is a one-shot. Same cache, so a loop and a one-shot never
+	share a key.
+]]
+local function flatLoop(key: string, slot: any): Sound
+	local sound = flat[key]
+	if not sound then
+		sound = SoundBank.make(slot, SoundService, key)
+		flat[key] = sound
+	end
+	if not sound.IsPlaying then
+		sound.TimePosition = 0
+		sound:Play()
+	end
+	return sound
+end
+
+local function stopFlatLoop(key: string)
+	local sound = flat[key]
+	if sound then
+		sound:Stop()
+	end
+end
+
 local function playFlat(key: string, slot: any)
 	local sound = flat[key]
 	if not sound then
@@ -16980,18 +17089,34 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 				bang(1.6, true)
 				showHint("RUN. GET THROUGH A DOOR.", RED)
 			end
+			--[[
+				The heartbeat and the bed, in the player rather than in the
+				building: flat, unattenuated, and running until it gives up.
+				The rate is driven off how close it is, so putting a door
+				between you and it is audible before it is visible -- which is
+				the only feedback this game gives that running was right.
+			]]
+			local heart = flatLoop("heartbeat", SoundBank.HEARTBEAT)
+			heart.PlaybackSpeed = 0.7 + huntClose * 0.85
+			heart.Volume = 0.55 + huntClose * 0.45
+			flatLoop("chaseBed", SoundBank.CHASE_BED)
 		else
 			huntClose = 0
 			hunted.Visible = false
 			hunted.BackgroundTransparency = 0.82
+			stopFlatLoop("heartbeat")
+			stopFlatLoop("chaseBed")
 			showHint("It's stopped.", BONE)
 		end
+	elseif kind == "clock_armed" then
+		showHint("DON'T MOVE.", RED)
 	elseif kind == "contradiction" then
 		showHint(`Rule {payload.rule} was right about him.`, RED)
 	elseif kind == "clue" then
 		showHint(`Evidence: {payload.name}`, Color3.fromRGB(198, 190, 160))
 	elseif kind == "clock_stop" then
-		showHint("THE CLOCK HAS STOPPED. Stand still. Rule 3.", RED)
+		local grace = (payload and tonumber(payload.grace)) or 5
+		showHint(`THE CLOCK HAS STOPPED. Stand still — Rule 3. You have {grace} seconds.`, RED)
 	elseif kind == "clock_resume" then
 		showHint("It's ticking again.", BONE)
 	elseif kind == "downed" then

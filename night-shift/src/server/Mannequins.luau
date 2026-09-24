@@ -309,6 +309,26 @@ function Mannequins.freezeAll(seconds: number)
 	end
 end
 
+--[[
+	Connect the loop that moves them, without touching the night's tally.
+
+	Mannequins.start() is Night 2's call and it resets takenThisNight. The Hunt
+	can begin on any night, from any rule break, and it needs the same loop --
+	so the connecting half is its own function.
+
+	This was the bug behind "nothing chased me". The Hunt built a walker, put it
+	eight metres behind the player, played the sound and turned the screen red,
+	and then nothing moved it, because on Nights 1, 3, 4 and 5 the heartbeat had
+	never been connected. It stood in the dark, silently, exactly where it
+	spawned, for eighteen seconds.
+]]
+local function ensureRunning()
+	if connection then
+		return
+	end
+	Mannequins.start()
+end
+
 function Mannequins.start()
 	if connection then
 		return
@@ -557,6 +577,8 @@ function Mannequins.hunt(target: Player, seconds: number?)
 	if not root then
 		return
 	end
+	-- Nothing moves without this.
+	ensureRunning()
 
 	--[[
 		Behind them, and far enough back that the first thing they know about

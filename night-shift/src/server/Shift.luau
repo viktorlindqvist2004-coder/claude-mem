@@ -73,7 +73,18 @@ local carrying: { [Player]: BasePart } = {}
 local carryConnections: { [Player]: RBXScriptConnection } = {}
 local question: string? = nil
 local askHandler: ((Player) -> ())? = nil
-local standStill: { until_: number, positions: { [Player]: Vector3 } }? = nil
+--[[
+	How long you get to come to a stop after the clock does, before Rule 3
+	starts counting. See ctx.standStillWindow.
+]]
+local STAND_STILL_GRACE = 5
+
+local standStill: {
+	until_: number,
+	armsAt: number,
+	armed: boolean,
+	positions: { [Player]: Vector3 },
+}? = nil
 
 -- ── The context every night is handed ───────────────────────────────────────
 
@@ -500,11 +511,26 @@ function ctx.standStillWindow(seconds: number?)
 			positions[player] = root.Position
 		end
 	end
+	--[[
+		Five seconds to stop, and then it counts.
+
+		The window used to start measuring the instant the clock stopped, from
+		wherever everybody happened to be standing -- which punished a player
+		for the two steps they were already in the middle of taking. Nobody
+		stops dead on a noise; they hear it, they process it, and then they
+		stop. That is about three seconds, so this allows five, and re-takes
+		everybody's position at the end of it.
+
+		The grace is announced, because a rule you are given time to obey is a
+		rule, and one you are not is a trap.
+	]]
 	standStill = {
 		until_ = os.clock() + (seconds or ctx.rule("the_clock_stops").complianceWindowSeconds or 20),
+		armsAt = os.clock() + STAND_STILL_GRACE,
+		armed = false,
 		positions = positions,
 	}
-	Hud.effect("clock_stop", nil)
+	Hud.effect("clock_stop", { grace = STAND_STILL_GRACE })
 	task.spawn(Atmos.clockStops)
 end
 
@@ -518,6 +544,24 @@ local function stepStandStill()
 		Atmos.clockResumes(Power.on)
 		Hud.effect("clock_resume", nil)
 		return
+	end
+	--[[
+		Still inside the grace: take everybody's position every frame, so the
+		one that finally counts is where they came to rest rather than where
+		they were when the clock stopped.
+	]]
+	if not window.armed then
+		if os.clock() < window.armsAt then
+			for _, player in Players:GetPlayers() do
+				local root = ctx.root(player)
+				if root then
+					window.positions[player] = root.Position
+				end
+			end
+			return
+		end
+		window.armed = true
+		Hud.effect("clock_armed", nil)
 	end
 	for player, origin in window.positions do
 		local root = ctx.root(player)

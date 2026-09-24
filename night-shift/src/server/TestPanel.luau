@@ -193,6 +193,23 @@ command("Building", "power", "Cut / restore the power", function()
 	end
 end)
 
+--[[
+	The two halves of Rule 3, on their own buttons.
+
+	"Nothing chased me" is the hardest kind of bug to confirm fixed, because
+	reproducing it meant playing Night 1 to 01:00 and then deliberately walking
+	during the one scripted beat that stops the clock. These make it two
+	presses.
+]]
+command("Building", "clockstops", "Stop the clock (Rule 3)", function()
+	Shift.ctx.standStillWindow()
+end)
+
+command("Building", "hunt", "Send one after me (the Hunt)", function(player)
+	local Mannequins = require(script.Parent.Mannequins)
+	Mannequins.hunt(player)
+end)
+
 command("Building", "strike", "The Strike (33)", function()
 	local Night5 = require(script.Parent.Nights.Night5)
 	Night5.theStrike(Shift.ctx)

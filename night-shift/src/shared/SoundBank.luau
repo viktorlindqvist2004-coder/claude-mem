@@ -330,6 +330,35 @@ SoundBank.DUMMY_CLOSE = {
 	it does not stop until you have got somewhere with a door. A player who
 	breaks Rule 3 should be typing "sorry" into the chat.
 ]]
+--[[
+	The heartbeat, and the music under it.
+
+	Both are flat -- not positional, not attenuated, played on SoundService at
+	the client -- because they are not in the building, they are in the player.
+	The heartbeat's rate is driven off how close the thing is, so a player who
+	has put a door between themselves and it hears it slow down before they
+	can see anything, which is the only feedback the game gives that running
+	was the right call.
+
+	They start the moment a rule is broken and they stop when it gives up.
+	Nothing else in this game has music.
+]]
+SoundBank.HEARTBEAT = {
+	caption = "[your own heart]",
+	id = "rbxasset://sounds/action_falling.mp3",
+	volume = 0.85,
+	speed = 0.6,
+	looped = true,
+}
+
+SoundBank.CHASE_BED = {
+	caption = "",
+	id = "rbxasset://sounds/uuhhh.mp3",
+	volume = 0.6,
+	speed = 0.45,
+	looped = true,
+}
+
 SoundBank.HUNT_START = {
 	caption = "[SOMETHING IS COMING]",
 	id = "rbxasset://sounds/hit.wav",

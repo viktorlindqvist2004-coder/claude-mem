@@ -28,8 +28,8 @@ NightScript.NIGHT1 = {
 		{ text = "Good. That's you on the payroll.", seconds = 3.5 },
 	},
 	helpful_wet_floor = {
-		{ text = "Careful at the foot of the stairs — there's water down there, and it isn't yours.", seconds = 6 },
-		{ text = "Mop it before someone slips. That's a genuine one, that.", seconds = 4.5 },
+		{ text = "There's water at the foot of the atrium stairs. Pipe's been weeping since the nineties.", seconds = 6 },
+		{ text = "Mop it before someone goes over on it. The mop's in the custodial store, off the service corridor.", seconds = 6 },
 	},
 	music_changes_early = {
 		{ text = "...", seconds = 2 },

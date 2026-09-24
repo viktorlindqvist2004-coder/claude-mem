@@ -1824,47 +1824,19 @@ local function buildAtrium()
 	end
 
 	--[[
-		The stair to the balcony -- a stair, this time, and one that arrives
-		somewhere.
+		There is no stair here.
 
-		It was fourteen treads 16 cm thick spaced 37 cm apart, which is 21 cm
-		of air between each one: a ladder of floating slabs you could see
-		straight through, with a horizontal handrail hanging in space beside
-		it. And it climbed northward into the middle of the atrium void, five
-		metres up, where there is no floor. It went nowhere and it looked like
-		it went nowhere.
+		There was one for a long time and it never did anything. It climbed to
+		a balcony nobody has a reason to stand on: the only room on the first
+		floor is the food court, and you reach that off the arm. So it was a
+		large piece of geometry in the most-looked-at room in the building whose
+		entire function was to be walked past.
 
-		So: twenty solid steps running west to east along the north side of
-		the balcony, 26 cm rise on a 36 cm going -- 36 degrees, which is a real
-		stair -- landing on a slab that meets the balcony deck. Each step is
-		one block from the floor to its own tread, so there is nothing to see
-		through and nothing to fall between. A handrail that follows the
-		pitch, on posts, on the open side.
+		It was also wrong for most of that time -- fourteen floating treads
+		climbing into the middle of the void -- and rebuilding it properly only
+		made it a correct thing that still had no purpose. The escalators are
+		the way up and they always were.
 	]]
-	local stairZ, stairW = -5.1, 1.5
-	local stairX0, stairGo, stairRise = -10.4, 0.36, FLOOR1 / 20
-	for i = 0, 19 do
-		local top = (i + 1) * stairRise
-		P("F1_Step", V(stairGo, top, stairW),
-			at(stairX0 + 0.18 + i * stairGo, top / 2, stairZ), C.trim)
-	end
-	-- The landing, which oversails south far enough to meet the balcony deck.
-	P("StairLanding", V(1.4, 0.3, 2.1), at(-2.6, FLOOR1 - 0.15, stairZ - 0.3), C.trim)
-	--[[
-		The handrail, on the open north side, following the pitch. The old one
-		was level, floating, and on the wrong side.
-	]]
-	local stairRun = 20 * stairGo
-	local stairSpan = math.sqrt(FLOOR1 * FLOOR1 + stairRun * stairRun)
-	local stairAngle = math.deg(math.atan2(FLOOR1, stairRun))
-	local rail = P("StairHandrail", V(stairSpan, 0.06, 0.06),
-		at(stairX0 + stairRun / 2, FLOOR1 / 2 + 0.98, stairZ + stairW / 2 - 0.05), C.trim)
-	rail.Orientation = Vector3.new(0, 0, stairAngle)
-	for i = 0, 4 do
-		local px = stairX0 + 0.6 + i * (stairRun / 4.6)
-		local py = (px - stairX0) * (FLOOR1 / stairRun)
-		P("StairPost", V(0.05, 0.98, 0.05), at(px, py + 0.49, stairZ + stairW / 2 - 0.05), C.metal)
-	end
 
 	--[[
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if

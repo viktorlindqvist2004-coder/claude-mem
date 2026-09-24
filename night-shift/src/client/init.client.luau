@@ -595,6 +595,43 @@ strikeLabel.TextSize = 30
 ]]
 local showCard: (any) -> ()
 
+--[[
+	The Hunt overlay. A red wash that does not fade on its own -- it is on until
+	the server says it is off, because the whole point of the state is that you
+	cannot wait it out standing still.
+]]
+local hunted = Instance.new("Frame")
+hunted.Name = "Hunted"
+hunted.Size = UDim2.fromScale(1, 1)
+hunted.BackgroundColor3 = Color3.fromRGB(120, 12, 10)
+hunted.BackgroundTransparency = 0.82
+hunted.BorderSizePixel = 0
+hunted.ZIndex = 40
+hunted.Visible = false
+hunted.Parent = gui
+
+-- 0 when it is at the far end of its reach, 1 when it is on you.
+local huntClose = 0
+
+--[[
+	While it is hunting: a heartbeat in the vignette and a shake that never
+	settles. Everything else in this game shakes once and decays; this is the
+	one state that does not let go, because the whole point of it is that you
+	cannot stand still and wait it out.
+]]
+RunService.RenderStepped:Connect(function()
+	if not hunted.Visible then
+		return
+	end
+	local t = os.clock()
+	-- The pulse doubles in rate as it closes: 1.6 Hz out at the edge, 3.2 Hz
+	-- when it is behind you.
+	local beat = math.abs(math.sin(t * (5 + huntClose * 5)))
+	hunted.BackgroundTransparency = 0.86 - huntClose * 0.34 - beat * 0.1
+    -- And the camera never comes to rest.
+	shake = math.max(shake, 0.25 + huntClose * 0.95)
+end)
+
 local function showStrike(text: string)
 	strikeLabel.Text = text
 	strikeLabel.TextTransparency = 0
@@ -646,7 +683,32 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 	elseif kind == "order" then
 		showHint(`They want {payload.wants}. It'll be in the back.`, BONE)
 	elseif kind == "violation" then
-		showHint(`You broke rule {payload.number}.`, RED)
+		showHint(`RULE {payload.number}. {payload.text or ""}`, RED)
+	elseif kind == "hunt" then
+		--[[
+			The Hunt, on screen.
+
+			Not a hint and a red tint. While this is on, the camera does not
+			stop moving and the screen does not stop pulsing, and both get
+			worse the closer the thing is -- `close` comes from the server
+			every half second and is 0 at the far end of its reach and 1 when
+			it is about to have you. A state you can read off the shake alone,
+			with your eyes on the corridor and not on the HUD.
+		]]
+		if payload and payload.on then
+			huntClose = math.clamp(tonumber(payload.close) or 0.3, 0, 1)
+			if not hunted.Visible then
+				hunted.Visible = true
+				playFlat("huntStart", SoundBank.HUNT_START)
+				bang(1.6, true)
+				showHint("RUN. GET THROUGH A DOOR.", RED)
+			end
+		else
+			huntClose = 0
+			hunted.Visible = false
+			hunted.BackgroundTransparency = 0.82
+			showHint("It's stopped.", BONE)
+		end
 	elseif kind == "contradiction" then
 		showHint(`Rule {payload.rule} was right about him.`, RED)
 	elseif kind == "clue" then

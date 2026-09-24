@@ -39,10 +39,10 @@ local Night = { number = 5, title = "Closing" }
 
 Night.objectives = {
 	{ "kill_lights", "Kill the lights, floor by floor", 3, false },
-	{ "tags_back", "Put the four name tags back where they came from", 4, false },
-	{ "the_panel", "Open the clock", 1, false },
-	{ "the_relay", "Hold the master timer panel", 33, true },
-	{ "name_him", "Radio Calder and give her the name", 1, true },
+	{ "tags_back", "Put the four name tags back where each of them worked", 4, false },
+	{ "the_panel", "Open the clock, in the atrium", 1, false },
+	{ "the_relay", "Hold the master timer panel, inside the clock", 33, true },
+	{ "name_him", "Radio DS Calder and give her the name", 1, true },
 }
 
 local striking = false

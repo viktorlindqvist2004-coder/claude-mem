@@ -39,15 +39,15 @@ local Night = {
 }
 
 Night.objectives = {
-	{ "clock_in", "Clock in at the time clock", 1, false },
-	{ "read_rules", "Read the list taped inside the locker", 1, false },
-	{ "face_shelves", "Face up the supermarket shelves", #Places.SHELF_BAYS, false },
-	{ "mop_landing", "Fetch the mop, and mop the landing", 2, false },
-	{ "pull_shutters", "Pull the shop shutters down before 02:00", 4, false },
-	{ "bins_to_dock", "Take the bins to the loading dock", #Places.BINS, false },
-	{ "change_fuse", "Change the fuse on the basement board", 1, true },
-	{ "find_out", "Find out what is in the water", 1, true },
-	{ "clock_out", "Go home", 1, true },
+	{ "clock_in", "Clock in at the time clock, in the staff room", 1, false },
+	{ "read_rules", "Read the list taped inside the locker, in the staff room", 1, false },
+	{ "face_shelves", "Face up the shelves in the supermarket, off the north arm", #Places.SHELF_BAYS, false },
+	{ "mop_landing", "Fetch the mop from the custodial store, and mop the atrium stair landing", 2, false },
+	{ "pull_shutters", "Pull the shop shutters down in both arms, before 02:00", 4, false },
+	{ "bins_to_dock", "Wheel the bins to the loading dock, south end of the service corridor", #Places.BINS, false },
+	{ "change_fuse", "Change the fuse in the basement cupboard, down the service stair", 1, true },
+	{ "find_out", "Find out what is in the water, beside the basement fuse box", 1, true },
+	{ "clock_out", "Go home through the staff door, past the loading dock", 1, true },
 }
 
 -- ── The four jobs ───────────────────────────────────────────────────────────

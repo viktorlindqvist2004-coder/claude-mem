@@ -33,11 +33,11 @@ local METRE = Places.METRE
 local Night = { number = 2, title = "The Mannequins" }
 
 Night.objectives = {
-	{ "dress_window", "Dress the window mannequins to the plan", 4, false },
-	{ "count_stock", "Count the stock against the 1998 book", 3, false },
-	{ "find_tape", "Find whatever Lo left in the custodial store", 1, false },
-	{ "put_them_back", "Put them back where they were", 4, true },
-	{ "the_collar", "The red collar", 1, true },
+	{ "dress_window", "Dress the window mannequins in Fashion, off the east arm", 4, false },
+	{ "count_stock", "Count the stock in Fashion and the stockroom, against the 1998 book", 3, false },
+	{ "find_tape", "Find what Lo left on the cart, in the custodial store", 1, false },
+	{ "put_them_back", "Put the mannequins back in the Fashion window bay", 4, true },
+	{ "the_collar", "The red collar, in the Fashion window bay", 1, true },
 }
 
 local placed = 0

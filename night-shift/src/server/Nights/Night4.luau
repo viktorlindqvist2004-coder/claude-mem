@@ -27,12 +27,12 @@ local METRE = Places.METRE
 local Night = { number = 4, title = "Blackout" }
 
 Night.objectives = {
-	{ "generator", "Start the generator: prime it, fuel it, pull it", 3, false },
-	{ "monitors", "Get somebody on the monitors", 1, false },
-	{ "walts_office", "Find what Walt was looking at", 1, false },
-	{ "the_stair", "The stair behind the food court", 1, true },
-	{ "the_office", "The office at the top of it", 1, true },
-	{ "the_rota", "This week's rota", 1, true },
+	{ "generator", "Start the generator in the plant room: prime it, fuel it, pull it", 3, false },
+	{ "monitors", "Get somebody on the monitors, in the camera room", 1, false },
+	{ "walts_office", "Find what Walt was looking at, in the security office drawer", 1, false },
+	{ "the_stair", "The stair behind the food court, on the first floor", 1, true },
+	{ "the_office", "The office at the top of that stair", 1, true },
+	{ "the_rota", "This week's rota, in the office on Floor 3", 1, true },
 }
 
 local generatorSteps = { "Prime the pump", "Fill the tank", "Pull the cord" }

@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "b321750"
-Build.LAST_COMMIT = "522fed0"
-Build.SUMMARY = "Three rules you carry, four suspects, and mannequins that lurch"
-Build.WHEN = "24 Sep 01:30"
+Build.COMMIT = "900418b"
+Build.LAST_COMMIT = "2d11c27"
+Build.SUMMARY = "Build mannequins out of the two primitives that have no corners"
+Build.WHEN = "24 Sep 01:47"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -1096,65 +1096,81 @@ export type Piece = {
 ]]
 MannequinBody.CHEST_HEIGHT = 1.18
 MannequinBody.PIECES = {
+	--[[
+		The joints are smaller than the limbs they join, and every segment
+		overlaps the next.
+
+		The first version had a ball at every joint sized to look like a joint,
+		which put a visible bead at the knee, the elbow, the ankle and the
+		shoulder -- so the whole thing read as a string of circles rather than
+		as a body. A knee is not a sphere stuck between two tubes; it is the
+		place where one tube ends inside another. So each ball is now narrower
+		than the limb above it and sits buried in the overlap, doing its job
+		(you can see where it bends) without ever showing an outline.
+
+		The ankles are gone entirely. The calf runs down into the foot.
+	]]
+
 	-- ── Stand ───────────────────────────────────────────────────────────────
-	-- A disc and a rod. Mannequins do not balance, they are bolted down, and
-	-- the rod going into the heel is half of why they look wrong.
 	{ name = "MannequinBase", offset = { 0, -1.16, 0 }, size = { 0.36, 0.035, 0.36 },
 		shape = "Cylinder", tilt = { 0, 0, 90 }, steel = true },
 	{ name = "MannequinPost", offset = { 0, -1.05, -0.04 }, size = { 0.2, 0.05, 0.05 },
 		shape = "Cylinder", tilt = { 0, 0, 90 }, steel = true },
 
 	-- ── Legs ────────────────────────────────────────────────────────────────
-	-- Thigh, knee, calf, ankle, foot. Twice. The knee is the part that does
-	-- the work: a leg without one is a pole.
-	{ name = "MannequinFoot", offset = { -0.085, -1.115, 0.03 }, size = { 0.1, 0.07, 0.24 }, shape = "Ball" },
-	{ name = "MannequinFoot", offset = { 0.085, -1.115, 0.03 }, size = { 0.1, 0.07, 0.24 }, shape = "Ball" },
-	{ name = "MannequinAnkle", offset = { -0.085, -1.06, 0 }, size = { 0.09, 0.1, 0.09 }, shape = "Ball" },
-	{ name = "MannequinAnkle", offset = { 0.085, -1.06, 0 }, size = { 0.09, 0.1, 0.09 }, shape = "Ball" },
-	{ name = "MannequinCalf", offset = { -0.085, -0.85, 0 }, size = { 0.38, 0.115, 0.115 },
+	-- Thigh down into knee, knee buried in calf, calf down into foot.
+	{ name = "MannequinFoot", offset = { -0.085, -1.11, 0.04 }, size = { 0.105, 0.085, 0.26 }, shape = "Ball" },
+	{ name = "MannequinFoot", offset = { 0.085, -1.11, 0.04 }, size = { 0.105, 0.085, 0.26 }, shape = "Ball" },
+	{ name = "MannequinCalf", offset = { -0.085, -0.87, 0 }, size = { 0.48, 0.108, 0.112 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinCalf", offset = { 0.085, -0.85, 0 }, size = { 0.38, 0.115, 0.115 },
+	{ name = "MannequinCalf", offset = { 0.085, -0.87, 0 }, size = { 0.48, 0.108, 0.112 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinKnee", offset = { -0.085, -0.63, 0 }, size = { 0.13, 0.14, 0.13 }, shape = "Ball" },
-	{ name = "MannequinKnee", offset = { 0.085, -0.63, 0 }, size = { 0.13, 0.14, 0.13 }, shape = "Ball" },
-	{ name = "MannequinThigh", offset = { -0.085, -0.42, 0 }, size = { 0.4, 0.15, 0.15 },
+	{ name = "MannequinKnee", offset = { -0.085, -0.64, 0 }, size = { 0.118, 0.15, 0.125 }, shape = "Ball" },
+	{ name = "MannequinKnee", offset = { 0.085, -0.64, 0 }, size = { 0.118, 0.15, 0.125 }, shape = "Ball" },
+	{ name = "MannequinThigh", offset = { -0.085, -0.41, 0 }, size = { 0.5, 0.145, 0.15 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinThigh", offset = { 0.085, -0.42, 0 }, size = { 0.4, 0.15, 0.15 },
+	{ name = "MannequinThigh", offset = { 0.085, -0.41, 0 }, size = { 0.5, 0.145, 0.15 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
 
 	-- ── Body ────────────────────────────────────────────────────────────────
-	-- Pelvis, waist, chest. Three ellipsoids, widest at the hips and the
-	-- shoulders and narrow between them, which is the silhouette the whole
-	-- thing lives or dies on.
-	{ name = "MannequinPelvis", offset = { 0, -0.2, 0 }, size = { 0.33, 0.28, 0.24 }, shape = "Ball" },
-	{ name = "MannequinWaist", offset = { 0, -0.02, 0 }, size = { 0.26, 0.22, 0.19 }, shape = "Ball" },
-	{ name = "MannequinTorso", offset = { 0, 0.14, 0 }, size = { 0.36, 0.44, 0.25 }, shape = "Ball" },
+	--[[
+		Three ellipsoids that overlap each other by a third, so there is no
+		seam anywhere on the trunk: widest at the hips and across the chest,
+		narrow between them. Deeper than it is wide at the waist, which is what
+		stops the silhouette from reading as a barrel.
+	]]
+	{ name = "MannequinPelvis", offset = { 0, -0.22, 0.005 }, size = { 0.315, 0.34, 0.235 }, shape = "Ball" },
+	{ name = "MannequinWaist", offset = { 0, -0.05, 0 }, size = { 0.255, 0.3, 0.205 }, shape = "Ball" },
+	{ name = "MannequinTorso", offset = { 0, 0.15, -0.005 }, size = { 0.35, 0.5, 0.245 }, shape = "Ball" },
+	-- The yoke across the top of the chest, which is what shoulders hang off.
+	{ name = "MannequinYoke", offset = { 0, 0.3, 0 }, size = { 0.37, 0.14, 0.2 },
+		shape = "Cylinder" },
 
 	-- ── Arms ────────────────────────────────────────────────────────────────
-	-- Hanging, slightly clear of the body. These used to be left off on the
-	-- grounds that an armless mannequin reads wrong, which is true, and is
-	-- also the reason a half-glimpsed one never passed for a person.
-	{ name = "MannequinShoulder", offset = { -0.185, 0.27, 0 }, size = { 0.15, 0.15, 0.16 }, shape = "Ball" },
-	{ name = "MannequinShoulder", offset = { 0.185, 0.27, 0 }, size = { 0.15, 0.15, 0.16 }, shape = "Ball" },
-	{ name = "MannequinUpperArm", offset = { -0.2, 0.11, 0.005 }, size = { 0.3, 0.105, 0.105 },
+	-- Hanging, just clear of the body, with both joints inside the limb above.
+	{ name = "MannequinShoulder", offset = { -0.185, 0.295, 0 }, size = { 0.135, 0.145, 0.16 }, shape = "Ball" },
+	{ name = "MannequinShoulder", offset = { 0.185, 0.295, 0 }, size = { 0.135, 0.145, 0.16 }, shape = "Ball" },
+	{ name = "MannequinUpperArm", offset = { -0.2, 0.12, 0.005 }, size = { 0.38, 0.1, 0.105 },
 		shape = "Cylinder", tilt = { 0, 0, 86 } },
-	{ name = "MannequinUpperArm", offset = { 0.2, 0.11, 0.005 }, size = { 0.3, 0.105, 0.105 },
+	{ name = "MannequinUpperArm", offset = { 0.2, 0.12, 0.005 }, size = { 0.38, 0.1, 0.105 },
 		shape = "Cylinder", tilt = { 0, 0, 94 } },
-	{ name = "MannequinElbow", offset = { -0.215, -0.05, 0.01 }, size = { 0.1, 0.1, 0.1 }, shape = "Ball" },
-	{ name = "MannequinElbow", offset = { 0.215, -0.05, 0.01 }, size = { 0.1, 0.1, 0.1 }, shape = "Ball" },
-	{ name = "MannequinForearm", offset = { -0.222, -0.21, 0.02 }, size = { 0.28, 0.085, 0.085 },
+	{ name = "MannequinElbow", offset = { -0.215, -0.06, 0.01 }, size = { 0.088, 0.11, 0.092 }, shape = "Ball" },
+	{ name = "MannequinElbow", offset = { 0.215, -0.06, 0.01 }, size = { 0.088, 0.11, 0.092 }, shape = "Ball" },
+	{ name = "MannequinForearm", offset = { -0.222, -0.215, 0.02 }, size = { 0.34, 0.082, 0.086 },
 		shape = "Cylinder", tilt = { 0, 0, 88 } },
-	{ name = "MannequinForearm", offset = { 0.222, -0.21, 0.02 }, size = { 0.28, 0.085, 0.085 },
+	{ name = "MannequinForearm", offset = { 0.222, -0.215, 0.02 }, size = { 0.34, 0.082, 0.086 },
 		shape = "Cylinder", tilt = { 0, 0, 92 } },
-	{ name = "MannequinHand", offset = { -0.226, -0.375, 0.025 }, size = { 0.075, 0.15, 0.06 }, shape = "Ball" },
-	{ name = "MannequinHand", offset = { 0.226, -0.375, 0.025 }, size = { 0.075, 0.15, 0.06 }, shape = "Ball" },
+	{ name = "MannequinHand", offset = { -0.226, -0.38, 0.028 }, size = { 0.072, 0.17, 0.058 }, shape = "Ball" },
+	{ name = "MannequinHand", offset = { 0.226, -0.38, 0.028 }, size = { 0.072, 0.17, 0.058 }, shape = "Ball" },
 
 	-- ── Head ────────────────────────────────────────────────────────────────
-	-- A neck you can see, and an egg with nothing on it. No face: a blank one
-	-- is worse than any face anybody could put on it.
-	{ name = "MannequinNeck", offset = { 0, 0.41, -0.005 }, size = { 0.12, 0.085, 0.085 },
+	-- The neck runs up into the skull rather than stopping short of it, so
+	-- there is no collar of air where the two meet.
+	{ name = "MannequinNeck", offset = { 0, 0.42, -0.005 }, size = { 0.17, 0.082, 0.086 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinHead", offset = { 0, 0.55, -0.01 }, size = { 0.165, 0.225, 0.19 }, shape = "Ball" },
+	{ name = "MannequinHead", offset = { 0, 0.55, -0.012 }, size = { 0.16, 0.235, 0.195 }, shape = "Ball" },
+	-- The jaw, which is the one thing that turns an egg into a head.
+	{ name = "MannequinJaw", offset = { 0, 0.5, 0.025 }, size = { 0.125, 0.12, 0.155 }, shape = "Ball" },
 }
 
 --[[
@@ -2707,6 +2723,47 @@ SoundBank.DUMMY_CLOSE = {
 	speed = 1.9,
 	rollOffMinMetres = 1,
 	rollOffMaxMetres = 14,
+}
+
+--[[
+	The Hunt.
+
+	Breaking a rule used to raise a number and put the EXIT boxes out one at a
+	time down the corridor ahead of you. That is a good idea and it is not a
+	consequence -- it is a mood change, and you can walk through it.
+
+	This is the consequence. It is the loudest thing in the game by a wide
+	margin, it starts the instant the rule is broken, it comes from behind, and
+	it does not stop until you have got somewhere with a door. A player who
+	breaks Rule 3 should be typing "sorry" into the chat.
+]]
+SoundBank.HUNT_START = {
+	caption = "[SOMETHING IS COMING]",
+	id = "rbxasset://sounds/hit.wav",
+	volume = 1.0,
+	speed = 0.35,
+	rollOffMinMetres = 40,
+	rollOffMaxMetres = 90,
+}
+
+-- The loop that follows you. Positional, at the thing, so the direction it is
+-- coming from is information you can act on.
+SoundBank.HUNT_LOOP = {
+	caption = "[running, behind you]",
+	id = "rbxasset://sounds/action_falling.mp3",
+	volume = 0.95,
+	speed = 0.5,
+	looped = true,
+	rollOffMinMetres = 6,
+	rollOffMaxMetres = 55,
+}
+
+-- And the silence afterwards, which is the actual reward.
+SoundBank.HUNT_OVER = {
+	caption = "[it stops]",
+	id = "rbxasset://sounds/unsheath.mp3",
+	volume = 0.5,
+	speed = 0.4,
 }
 
 SoundBank.STARTLE_LARGE = { caption = "[BANG]", id = "rbxasset://sounds/hit.wav", volume = 1.0, speed = 0.45 }
@@ -5103,9 +5160,19 @@ type Walker = {
 	-- Where it stood the last time somebody looked at it, so that looking away
 	-- and looking back can be measured in metres.
 	lastSeenAt: Vector3?,
+	-- A hunter does not freeze when it is looked at, and it does not lurch.
+	-- It runs. See Mannequins.hunt.
+	hunting: boolean?,
 }
 
 local walkers: { Walker } = {}
+--[[
+	Forward-declared: Mannequins.start's heartbeat ends the hunt when its time
+	is up, and it is defined above the hunt. A local declared after the function
+	that closes over it is not that local, it is a nil global.
+]]
+local hunting: { walker: Walker, until_: number, sound: Sound?, nextTell: number?, nextBang: number? }? = nil
+local endHunt: () -> ()
 local connection: RBXScriptConnection? = nil
 local downed: { [Player]: boolean } = {}
 local takenThisNight = 0
@@ -5169,6 +5236,7 @@ local function buildWalker(point: { number }, colour: Color3?): Walker
 		lurchUntil = 0,
 		nextLurch = 0,
 		lastSeenAt = nil,
+		hunting = false,
 	}
 end
 
@@ -5337,6 +5405,38 @@ function Mannequins.start()
 	]]
 	connection = RunService.Heartbeat:Connect(function(delta)
 		local now = os.clock()
+		if hunting then
+			if now >= hunting.until_ then
+				endHunt()
+			elseif now >= (hunting.nextTell or 0) then
+				--[[
+					Tell the client how close it is, twice a second. The shake
+					and the pulse are driven off this number, so being chased
+					feels different at twenty metres and at three, without the
+					player having to look at anything.
+				]]
+				hunting.nextTell = now + 0.5
+				local target = nearestTarget(hunting.walker)
+				local metres = if target
+					then (target.Position - hunting.walker.root.Position).Magnitude / METRE
+					else 40
+				Hud.effect("hunt", { on = true, close = math.clamp(1 - metres / 22, 0, 1) })
+				--[[
+					And a hit every couple of seconds, louder as it closes. The
+					loop alone is a texture; the hits are what stop anybody
+					thinking about anything else.
+				]]
+				if now >= (hunting.nextBang or 0) then
+					hunting.nextBang = now + math.max(0.9, 3.2 - (22 - metres) / 9)
+					SoundBank.play(SoundBank.STARTLE_LARGE, hunting.walker.root)
+					Hud.effect("startle", {
+						shake = math.clamp(1.6 - metres / 22, 0.5, 1.6),
+						flash = metres < 8,
+						large = true,
+					})
+				end
+			end
+		end
 		local base = AttentionService.entitySpeed() * METRE
 		for _, walker in walkers do
 			if not walker.root.Parent then
@@ -5346,7 +5446,13 @@ function Mannequins.start()
 				continue
 			end
 
-			if observed(walker) then
+			--[[
+				A hunter is exempt from the whole observation rule. Looking at
+				it is not a defence, which is the point: Night 2 teaches you
+				that watching works, and the first time you break a rule the
+				building takes that away.
+			]]
+			if observed(walker) and not walker.hunting then
 				--[[
 					Seen, so it stops -- and turns its head to whoever is
 					looking. Then the reckoning: how far did it come while
@@ -5415,7 +5521,7 @@ function Mannequins.start()
 				not drift, it does not do anything at all -- which is what makes
 				the next four metres so hard to believe.
 			]]
-			if now < walker.nextLurch then
+			if not walker.hunting and now < walker.nextLurch then
 				continue
 			end
 			if now >= walker.lurchUntil then
@@ -5430,7 +5536,8 @@ function Mannequins.start()
 				average that is slower than the old constant walk. It does not
 				feel slower. It never will.
 			]]
-			local speed = base * 4.0 * delta
+			-- A hunter runs flat out and never stops. Everything else lurches.
+			local speed = base * (if walker.hunting then 2.6 else 4.0) * delta
 			-- No pathfinding: it comes at you in a straight line, and the walls
 			-- are what makes that frightening rather than trivial.
 			local step = flat.Unit * math.min(speed, flat.Magnitude)
@@ -5442,7 +5549,7 @@ function Mannequins.start()
 				limb.part.CFrame = walker.root.CFrame * limb.offset
 			end
 
-			if now >= walker.lurchUntil then
+			if not walker.hunting and now >= walker.lurchUntil then
 				walker.nextLurch = now + math.random(35, 150) / 100
 			end
 		end
@@ -5472,6 +5579,7 @@ function Mannequins.release()
 end
 
 function Mannequins.stop()
+	endHunt()
 	if connection then
 		connection:Disconnect()
 		connection = nil
@@ -5484,6 +5592,88 @@ function Mannequins.stop()
 		Mannequins.revive(player)
 	end
 end
+
+--[[
+	The Hunt — what breaking a rule costs.
+
+	Every rule in this game used to be enforced by a number going up and a
+	light going out. That is not a consequence, it is a mood, and you can walk
+	through a mood. The crew learned within one night that the rules were
+	decoration.
+
+	So: you break one, and one of these comes for you. It starts behind you, it
+	does not stop when you look at it -- that is the entire difference between
+	this and Night 2 -- it is louder than anything else in the building, and it
+	runs. For eighteen seconds. Reach a room with a door and shut it behind
+	you, or get somewhere the building keeps a light, and it gives up.
+
+	It cannot kill anybody. It puts you down where a crewmate has to come and
+	find you at four in the morning, which in this game is worse.
+]]
+function Mannequins.hunt(target: Player, seconds: number?)
+	if hunting then
+		-- Already being chased. Breaking a second rule buys more of it.
+		hunting.until_ += seconds or 18
+		return
+	end
+	local root = target.Character and target.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return
+	end
+
+	--[[
+		Behind them, and far enough back that the first thing they know about
+		it is the sound. Eight metres: close enough to be on them in five
+		seconds, far enough that turning round does not put it in their face.
+	]]
+	local behind = root.Position - root.CFrame.LookVector * (8 * METRE)
+	local walker = buildWalker({ behind.X / METRE, 0.15, behind.Z / METRE },
+		Color3.fromRGB(150, 146, 140))
+	walker.frozenUntil = 0
+	walker.hunting = true
+	table.insert(walkers, walker)
+
+	SoundBank.play(SoundBank.HUNT_START, walker.root)
+	local loop = SoundBank.make(SoundBank.HUNT_LOOP, walker.root, "Hunt")
+	loop:Play()
+
+	Hud.effect("hunt", { on = true })
+	Hud.effect("startle", { shake = 1.4, flash = true, large = true })
+	Hud.caption(SoundBank.HUNT_START.caption or "[something is coming]",
+		Places.roomAt(walker.root.Position))
+
+	hunting = { walker = walker, until_ = os.clock() + (seconds or 18), sound = loop }
+end
+
+function Mannequins.isHunting(): boolean
+	return hunting ~= nil
+end
+
+function endHunt()
+	local hunt = hunting
+	if not hunt then
+		return
+	end
+	hunting = nil
+	-- Guarded: the offline harness's sounds are plain tables.
+	if hunt.sound and typeof(hunt.sound) == "Instance" then
+		hunt.sound:Stop()
+	end
+	if hunt.walker.root.Parent then
+		SoundBank.play(SoundBank.HUNT_OVER, hunt.walker.root)
+	end
+	for i, w in walkers do
+		if w == hunt.walker then
+			table.remove(walkers, i)
+			break
+		end
+	end
+	hunt.walker.model:Destroy()
+	Hud.effect("hunt", { on = false })
+	Hud.caption(SoundBank.HUNT_OVER.caption or "[it stops]")
+end
+
+Mannequins.endHunt = endHunt
 
 function Mannequins.taken(): number
 	return takenThisNight
@@ -5541,15 +5731,15 @@ local Night = {
 }
 
 Night.objectives = {
-	{ "clock_in", "Clock in at the time clock", 1, false },
-	{ "read_rules", "Read the list taped inside the locker", 1, false },
-	{ "face_shelves", "Face up the supermarket shelves", #Places.SHELF_BAYS, false },
-	{ "mop_landing", "Fetch the mop, and mop the landing", 2, false },
-	{ "pull_shutters", "Pull the shop shutters down before 02:00", 4, false },
-	{ "bins_to_dock", "Take the bins to the loading dock", #Places.BINS, false },
-	{ "change_fuse", "Change the fuse on the basement board", 1, true },
-	{ "find_out", "Find out what is in the water", 1, true },
-	{ "clock_out", "Go home", 1, true },
+	{ "clock_in", "Clock in at the time clock, in the staff room", 1, false },
+	{ "read_rules", "Read the list taped inside the locker, in the staff room", 1, false },
+	{ "face_shelves", "Face up the shelves in the supermarket, off the north arm", #Places.SHELF_BAYS, false },
+	{ "mop_landing", "Fetch the mop from the custodial store, and mop the atrium stair landing", 2, false },
+	{ "pull_shutters", "Pull the shop shutters down in both arms, before 02:00", 4, false },
+	{ "bins_to_dock", "Wheel the bins to the loading dock, south end of the service corridor", #Places.BINS, false },
+	{ "change_fuse", "Change the fuse in the basement cupboard, down the service stair", 1, true },
+	{ "find_out", "Find out what is in the water, beside the basement fuse box", 1, true },
+	{ "clock_out", "Go home through the staff door, past the loading dock", 1, true },
 }
 
 -- ── The four jobs ───────────────────────────────────────────────────────────
@@ -6022,11 +6212,11 @@ local METRE = Places.METRE
 local Night = { number = 2, title = "The Mannequins" }
 
 Night.objectives = {
-	{ "dress_window", "Dress the window mannequins to the plan", 4, false },
-	{ "count_stock", "Count the stock against the 1998 book", 3, false },
-	{ "find_tape", "Find whatever Lo left in the custodial store", 1, false },
-	{ "put_them_back", "Put them back where they were", 4, true },
-	{ "the_collar", "The red collar", 1, true },
+	{ "dress_window", "Dress the window mannequins in Fashion, off the east arm", 4, false },
+	{ "count_stock", "Count the stock in Fashion and the stockroom, against the 1998 book", 3, false },
+	{ "find_tape", "Find what Lo left on the cart, in the custodial store", 1, false },
+	{ "put_them_back", "Put the mannequins back in the Fashion window bay", 4, true },
+	{ "the_collar", "The red collar, in the Fashion window bay", 1, true },
 }
 
 local placed = 0
@@ -6348,10 +6538,10 @@ local METRE = Places.METRE
 local Night = { number = 3, title = "Night Customers" }
 
 Night.objectives = {
-	{ "serve", "Serve the register", 5, false },
-	{ "tape_three", "Whatever Walt left in his office", 1, false },
-	{ "the_complaint", "The complaint form in the filing cabinet", 1, false },
-	{ "the_man", "The man at the back of the queue", 1, true },
+	{ "serve", "Serve the register on lane one, in the supermarket", 5, false },
+	{ "tape_three", "Whatever Walt left on the key board, in the security office", 1, false },
+	{ "the_complaint", "The complaint form in the security office filing cabinet", 1, false },
+	{ "the_man", "The man at the back of the queue, at lane one", 1, true },
 	{ "the_paper", "Decide what to do with the form", 1, true },
 }
 
@@ -6641,12 +6831,12 @@ local METRE = Places.METRE
 local Night = { number = 4, title = "Blackout" }
 
 Night.objectives = {
-	{ "generator", "Start the generator: prime it, fuel it, pull it", 3, false },
-	{ "monitors", "Get somebody on the monitors", 1, false },
-	{ "walts_office", "Find what Walt was looking at", 1, false },
-	{ "the_stair", "The stair behind the food court", 1, true },
-	{ "the_office", "The office at the top of it", 1, true },
-	{ "the_rota", "This week's rota", 1, true },
+	{ "generator", "Start the generator in the plant room: prime it, fuel it, pull it", 3, false },
+	{ "monitors", "Get somebody on the monitors, in the camera room", 1, false },
+	{ "walts_office", "Find what Walt was looking at, in the security office drawer", 1, false },
+	{ "the_stair", "The stair behind the food court, on the first floor", 1, true },
+	{ "the_office", "The office at the top of that stair", 1, true },
+	{ "the_rota", "This week's rota, in the office on Floor 3", 1, true },
 }
 
 local generatorSteps = { "Prime the pump", "Fill the tank", "Pull the cord" }
@@ -7021,10 +7211,10 @@ local Night = { number = 5, title = "Closing" }
 
 Night.objectives = {
 	{ "kill_lights", "Kill the lights, floor by floor", 3, false },
-	{ "tags_back", "Put the four name tags back where they came from", 4, false },
-	{ "the_panel", "Open the clock", 1, false },
-	{ "the_relay", "Hold the master timer panel", 33, true },
-	{ "name_him", "Radio Calder and give her the name", 1, true },
+	{ "tags_back", "Put the four name tags back where each of them worked", 4, false },
+	{ "the_panel", "Open the clock, in the atrium", 1, false },
+	{ "the_relay", "Hold the master timer panel, inside the clock", 33, true },
+	{ "name_him", "Radio DS Calder and give her the name", 1, true },
 }
 
 local striking = false
@@ -8330,7 +8520,23 @@ local function lightTheJob()
 		objective that wants four of them, and the player cannot tell which
 		four are left.
 	]]
+	--[[
+		Only what you can actually press E on.
+
+		This used to glow anything the objective named that did not have a
+		*disabled* prompt -- which let through every part that had no prompt at
+		all. There are nine shutters in this building and Night 1 puts a prompt
+		on four of them, so five shutters lit up, could not be pulled, and the
+		crew stood in front of them pressing E. A glow that means "not this one"
+		is worse than no glow, because it costs the player the walk.
+
+		So: a live prompt, or nothing. Some objectives are a place rather than a
+		thing -- the dock floor you wheel a bin to -- and those have no prompt on
+		purpose, so if none of a job's targets has one, they all glow and the
+		glow means "here" instead of "press this".
+	]]
 	local candidates = {}
+	local named = {}
 	for _, name in Targets.FOR[current.id] or {} do
 		-- A trailing star means "everything starting with this": the shelf
 		-- bays are numbered as the night makes them, so there is no one name.
@@ -8338,6 +8544,15 @@ local function lightTheJob()
 			then World.allPrefixed(string.sub(name, 1, -2))
 			else World.all(name)
 		for _, part in parts do
+			table.insert(named, part)
+			local prompt = part:FindFirstChildWhichIsA("ProximityPrompt")
+			if prompt and prompt.Enabled then
+				table.insert(candidates, part)
+			end
+		end
+	end
+	if #candidates == 0 then
+		for _, part in named do
 			local prompt = part:FindFirstChildWhichIsA("ProximityPrompt")
 			if not (prompt and not prompt.Enabled) then
 				table.insert(candidates, part)
@@ -8499,10 +8714,39 @@ function ctx.rule(id: string)
 	error(`no rule {id}`)
 end
 
+--[[
+	Breaking a rule, and what it costs.
+
+	It used to cost a number going up and, for Rule 3, the EXIT boxes going out
+	one at a time down the corridor ahead of you. Both of those are mood, and a
+	player can walk through a mood: after one night the crew had worked out that
+	the list was decoration and stopped reading it.
+
+	A major rule now starts the Hunt. One of the mannequins comes for you, from
+	behind, at speed, and looking at it does nothing -- which is the cruelty of
+	it, because Night 2 spends an hour teaching you that looking at them works.
+	It is the loudest thing in the game and it lasts eighteen seconds, which is
+	a very long time to be running through a dark shopping centre.
+
+	It cannot kill anybody. It puts you down where somebody else has to come and
+	find you, which in a co-op game at four in the morning is worse.
+]]
 function ctx.violation(ruleId: string)
 	local r = ctx.rule(ruleId)
 	AttentionService.onRuleViolation((r.violationSeverity == "major") and "major" or "minor")
-	Hud.effect("violation", { number = r.number })
+	Hud.effect("violation", { number = r.number, text = r.text })
+	if r.violationSeverity == "major" then
+		local who = Players:GetPlayers()[1]
+		for _, player in Players:GetPlayers() do
+			if ctx.root(player) then
+				who = player
+				break
+			end
+		end
+		if who then
+			Mannequins.hunt(who)
+		end
+	end
 end
 
 -- Objectives
@@ -11977,13 +12221,48 @@ local function buildAtrium()
 			{ color = Color3.fromRGB(190, 60, 52), density = 92, font = Enum.Font.GothamBold })
 	end
 
-	-- The fire stair, in the corner, still there because it has to be.
-	for i = 0, 13 do
-		P("Step", V(1.6, 0.16, 0.34), at(-w / 2 + 2.2, i * (FLOOR1 / 14), -d / 2 + 2.0 + i * 0.34), C.trim)
-		P("StairRail", V(0.06, 0.9, 0.34),
-			at(-w / 2 + 3.1, i * (FLOOR1 / 14) + 0.5, -d / 2 + 2.0 + i * 0.34), C.metal)
+	--[[
+		The stair to the balcony -- a stair, this time, and one that arrives
+		somewhere.
+
+		It was fourteen treads 16 cm thick spaced 37 cm apart, which is 21 cm
+		of air between each one: a ladder of floating slabs you could see
+		straight through, with a horizontal handrail hanging in space beside
+		it. And it climbed northward into the middle of the atrium void, five
+		metres up, where there is no floor. It went nowhere and it looked like
+		it went nowhere.
+
+		So: twenty solid steps running west to east along the north side of
+		the balcony, 26 cm rise on a 36 cm going -- 36 degrees, which is a real
+		stair -- landing on a slab that meets the balcony deck. Each step is
+		one block from the floor to its own tread, so there is nothing to see
+		through and nothing to fall between. A handrail that follows the
+		pitch, on posts, on the open side.
+	]]
+	local stairZ, stairW = -5.1, 1.5
+	local stairX0, stairGo, stairRise = -10.4, 0.36, FLOOR1 / 20
+	for i = 0, 19 do
+		local top = (i + 1) * stairRise
+		P("F1_Step", V(stairGo, top, stairW),
+			at(stairX0 + 0.18 + i * stairGo, top / 2, stairZ), C.trim)
 	end
-	P("StairHandrail", V(0.06, 0.06, 5.0), at(-w / 2 + 3.1, FLOOR1 / 2 + 0.95, -d / 2 + 4.3), C.trim)
+	-- The landing, which oversails south far enough to meet the balcony deck.
+	P("StairLanding", V(1.4, 0.3, 2.1), at(-2.6, FLOOR1 - 0.15, stairZ - 0.3), C.trim)
+	--[[
+		The handrail, on the open north side, following the pitch. The old one
+		was level, floating, and on the wrong side.
+	]]
+	local stairRun = 20 * stairGo
+	local stairSpan = math.sqrt(FLOOR1 * FLOOR1 + stairRun * stairRun)
+	local stairAngle = math.deg(math.atan2(FLOOR1, stairRun))
+	local rail = P("StairHandrail", V(stairSpan, 0.06, 0.06),
+		at(stairX0 + stairRun / 2, FLOOR1 / 2 + 0.98, stairZ + stairW / 2 - 0.05), C.trim)
+	rail.Orientation = Vector3.new(0, 0, stairAngle)
+	for i = 0, 4 do
+		local px = stairX0 + 0.6 + i * (stairRun / 4.6)
+		local py = (px - stairX0) * (FLOOR1 / stairRun)
+		P("StairPost", V(0.05, 0.98, 0.05), at(px, py + 0.49, stairZ + stairW / 2 - 0.05), C.metal)
+	end
 
 	--[[
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if
@@ -12043,7 +12322,14 @@ local function buildAtrium()
 	]]
 
 	-- Two island units, both shuttered, at the entrance end.
-	kiosk(-8.0, -5.4, 2.2, 2.6, 0, 5502, false)
+	--[[
+		One island unit, not two.
+
+		The west one stood at -8.0, -5.4 -- which is in the middle of the new
+		stair flight, and was the thing being pointed at in the report anyway.
+		A single barrow off to one side is what a hall this size has; two
+		flanking the entrance was symmetry for its own sake.
+	]]
 	kiosk(8.2, -5.4, 2.2, 2.6, 0, 5503, false)
 
 	--[[
@@ -12103,7 +12389,9 @@ local function buildAtrium()
 		{ color = Color3.fromRGB(176, 176, 182), scaled = false, density = 66, align = Enum.TextXAlignment.Left })
 
 	-- The wall by the entrance: everything a mall puts where people queue.
-	vending(-w / 2 + 0.6, 0, -5.2, "x", true)
+	-- Moved north: -5.2 is the foot of the new stair flight, and -1.4 is
+	-- behind the directory board.
+	vending(-w / 2 + 0.6, 0, 1.8, "x", true)
 	payphone(-w / 2 + 0.35, 0, -3.2, "x")
 	cashMachine(w / 2 - 0.35, 0, -5.4, "x")
 	picture(w / 2 - 0.12, 2.3, -1.5, "x", 7701)
@@ -12240,7 +12528,7 @@ local function firstFloorUnits()
 	end
 	-- Off to one side: the middle of this wall is the food court doorway.
 	picture(-5.6, y + 2.1, d / 2 - 0.2, "z", 3304)
-	pottedTree(-9.4, y, -5.2, 3305)
+	pottedTree(-9.4, y, -2.4, 3305)
 	pottedTree(9.4, y, 5.2, 3306)
 end
 
@@ -12785,10 +13073,19 @@ local function serviceCorridor()
 		lit += 7.5
 	end
 
-	-- And the things that stack up in a corridor nobody shows customers.
-	-- Against the east wall, between two doors. It used to sit dead centre in
-	-- the security office doorway.
-	P("Trolley", V(0.6, 0.9, 0.5), at(x + 0.6, 0.45, 12), C.metal)
+	--[[
+		Nothing against the east wall either.
+
+		There was one part here, a 0.6 x 0.9 x 0.5 cuboid in pale metal, named
+		Trolley. Not built with the trolley function -- which has a chassis, a
+		basket, a handle and four castors -- just a box with a label on it, ten
+		metres short of the staff room on the route every night starts with. So
+		the first thing anybody ever saw in this game was a white box in a
+		corridor, and it got reported as exactly that.
+
+		A prop that is one cuboid is not a prop. It is a placeholder that was
+		never came back to, and the fix is not to make it a better box.
+	]]
 	--[[
 		All of it against the west wall, in a line, leaving the corridor clear.
 
@@ -13901,14 +14198,48 @@ local function dressCustodial(cx, cz, y, h, w, d)
 	handle.Name = "MopHandle"
 	P("MopHead", V(0.22, 0.2, 0.14), at(cx - 1.05, y + 0.42, south + 0.2), Color3.fromRGB(150, 146, 134))
 
-	P("Cart", V(0.56, 0.9, 0.92), at(cx - 0.35, y + 0.5, south + 0.55), C.metal)
-	P("CartShelf", V(0.56, 0.03, 0.9), at(cx - 0.35, y + 0.5, south + 0.55), C.trim)
-	P("CartHandle", V(0.06, 0.06, 0.9), at(cx - 0.35, y + 0.98, south + 0.55), C.metal)
+	--[[
+		The cleaner's cart, which was the same mistake as the corridor trolley
+		and worse, because Night 2 sends you to find something on it.
+
+		It was a solid 0.56 x 0.9 x 0.92 block in pale metal with a shelf drawn
+		inside it and a handle across the top: a white box you are told to go
+		and search. A cart is a frame you can see through, with a bag hanging
+		in a hoop at one end and a tray of bottles at the other, and that is
+		about a dozen small parts.
+
+		The part named Cart is still the one Night 2 looks up. It is the frame
+		now rather than the block.
+	]]
+	local kx, kz = cx - 0.35, south + 0.55
+	-- Four uprights and the handle across them: the frame you see through.
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
-			P("Castor", V(0.08, 0.1, 0.08), at(cx - 0.35 + sx * 0.22, y + 0.05, south + 0.55 + sz * 0.38), C.dark)
+			P("CartPost", V(0.045, 0.92, 0.045), at(kx + sx * 0.24, y + 0.5, kz + sz * 0.4), C.metal)
+			local castor = P("Castor", V(0.06, 0.13, 0.13), at(kx + sx * 0.24, y + 0.065, kz + sz * 0.4), C.dark)
+			castor.Shape = Enum.PartType.Cylinder
+			castor.Orientation = Vector3.new(0, 90, 0)
 		end
 	end
+	local cart = P("Cart", V(0.06, 0.06, 0.92), at(kx, y + 0.95, kz), C.metal)
+	cart.Name = "Cart"
+	for _, sz in { -1, 1 } do
+		P("CartRail", V(0.53, 0.05, 0.05), at(kx, y + 0.95, kz + sz * 0.4), C.metal)
+	end
+	-- The bottom tray, the bottles on it, and the bag hoop at the near end.
+	P("CartShelf", V(0.5, 0.03, 0.82), at(kx, y + 0.18, kz), C.trim)
+	P("CartShelfLip", V(0.5, 0.05, 0.03), at(kx, y + 0.2, kz + 0.41), C.trim)
+	for i = 0, 3 do
+		P("CartBottle", V(0.08, 0.24, 0.08),
+			at(kx - 0.15 + (i % 2) * 0.3, y + 0.32, kz - 0.3 + math.floor(i / 2) * 0.22),
+			({ Color3.fromRGB(150, 146, 136), Color3.fromRGB(86, 110, 96) })[i % 2 + 1])
+	end
+	P("CartHoop", V(0.5, 0.04, 0.04), at(kx, y + 0.9, kz - 0.42), C.metal)
+	local bag = P("CartBag", V(0.46, 0.56, 0.3), at(kx, y + 0.62, kz - 0.42), Color3.fromRGB(58, 56, 54))
+	bag.Transparency = 0.15
+	-- And the rags over the rail, which is what says somebody was using it.
+	P("CartCloth", V(0.2, 0.22, 0.04), at(kx - 0.14, y + 0.86, kz + 0.42), Color3.fromRGB(128, 120, 104))
+	P("CartCloth", V(0.16, 0.18, 0.04), at(kx + 0.12, y + 0.88, kz + 0.42), Color3.fromRGB(116, 110, 96))
 	P("WetSign", V(0.28, 0.5, 0.26), at(cx - 0.3, y + 0.25, north - 0.9), Color3.fromRGB(180, 96, 30))
 
 	tube(cx, y + h - 0.16, cz, false)
@@ -14184,7 +14515,23 @@ local function buildFloorThree()
 		paper(7.2 + (i % 6) * 0.42, y + 2.35 - math.floor(i / 6) * 0.34, 8.42, "z",
 			Color3.fromRGB(172, 166, 148))
 	end
-	P("Filing", V(0.6, 1.3, 0.7), at(11.2, y + 0.65, 4.4), C.metal)
+	--[[
+		A filing cabinet, not a cuboid called Filing.
+
+		The security office builds one properly -- a top, three drawer fronts,
+		three handles, three card labels -- and this one was a single block at
+		the far end of a room you reach at the end of Night 4. One part with a
+		noun for a name is a placeholder, and in a torch beam it is a box.
+	]]
+	P("Filing", V(0.6, 1.24, 0.7), at(11.2, y + 0.68, 4.4), C.metal)
+	P("FilingPlinth", V(0.54, 0.06, 0.64), at(11.2, y + 0.03, 4.4), C.dark)
+	P("FilingTop", V(0.64, 0.04, 0.74), at(11.2, y + 1.32, 4.4), C.trim)
+	for k = 0, 2 do
+		P("DrawerFront", V(0.54, 0.36, 0.03), at(11.2, y + 0.34 + k * 0.42, 4.06), C.trim)
+		P("DrawerHandle", V(0.2, 0.03, 0.03), at(11.2, y + 0.45 + k * 0.42, 4.03), C.metal)
+		P("DrawerLabel", V(0.13, 0.05, 0.01), at(11.2, y + 0.26 + k * 0.42, 4.04),
+			Color3.fromRGB(198, 194, 180))
+	end
 	P("CoatStand", V(0.1, 1.8, 0.1), at(6.6, y + 0.9, 4.2), C.metal)
 	P("CoatStandFoot", V(0.5, 0.05, 0.5), at(6.6, y + 0.02, 4.2), C.metal)
 	-- A wall clock with no hands on it. Nobody in this room needs one.
@@ -14782,8 +15129,25 @@ local function buildExterior()
 	P("BinStore", V(5.0, 2.0, 3.0), at(dockX - 8, 1.0, dockZ - 5), C.block)
 	P("BinStoreRoof", V(5.4, 0.16, 3.4), at(dockX - 8, 2.05, dockZ - 5), C.metal)
 	for i = 0, 2 do
-		P("Bin", V(1.1, 1.2, 0.95), at(dockX - 9.6 + i * 1.5, 0.6, dockZ - 5), C.trim)
-		P("BinLid", V(1.14, 0.08, 1.0), at(dockX - 9.6 + i * 1.5, 1.24, dockZ - 5), C.dark)
+		--[[
+			The same bin as the one inside, not a box with a lid on it.
+
+			These were two parts: a cuboid and a flat plate. The loading dock
+			eight metres away builds the real thing -- tapered body, lid hinged
+			at the back so it sits proud, push bar, two wheels -- and these are
+			the ones you see first, from the yard, on the walk in.
+		]]
+		local bx = dockX - 9.6 + i * 1.5
+		P("Bin", V(1.16, 1.0, 0.92), at(bx, 0.56, dockZ - 5), C.trim)
+		P("BinTaper", V(1.02, 0.28, 0.8), at(bx, 0.2, dockZ - 5.04), C.trim)
+		P("BinLid", V(1.2, 0.07, 0.98), at(bx, 1.09, dockZ - 5.02), C.dark)
+		P("BinHinge", V(1.2, 0.06, 0.08), at(bx, 1.06, dockZ - 4.56), C.metal)
+		P("BinBar", V(1.3, 0.06, 0.06), at(bx, 1.02, dockZ - 5.5), C.metal)
+		for _, sx in { -1, 1 } do
+			local wheel = P("BinWheel", V(0.1, 0.24, 0.24), at(bx + sx * 0.5, 0.12, dockZ - 4.7), C.dark)
+			wheel.Shape = Enum.PartType.Cylinder
+			wheel.Orientation = Vector3.new(0, 0, 90)
+		end
 	end
 
 	-- Walt's car, in bay 2, where it has been since 1998.
@@ -16122,6 +16486,43 @@ strikeLabel.TextSize = 30
 ]]
 local showCard: (any) -> ()
 
+--[[
+	The Hunt overlay. A red wash that does not fade on its own -- it is on until
+	the server says it is off, because the whole point of the state is that you
+	cannot wait it out standing still.
+]]
+local hunted = Instance.new("Frame")
+hunted.Name = "Hunted"
+hunted.Size = UDim2.fromScale(1, 1)
+hunted.BackgroundColor3 = Color3.fromRGB(120, 12, 10)
+hunted.BackgroundTransparency = 0.82
+hunted.BorderSizePixel = 0
+hunted.ZIndex = 40
+hunted.Visible = false
+hunted.Parent = gui
+
+-- 0 when it is at the far end of its reach, 1 when it is on you.
+local huntClose = 0
+
+--[[
+	While it is hunting: a heartbeat in the vignette and a shake that never
+	settles. Everything else in this game shakes once and decays; this is the
+	one state that does not let go, because the whole point of it is that you
+	cannot stand still and wait it out.
+]]
+RunService.RenderStepped:Connect(function()
+	if not hunted.Visible then
+		return
+	end
+	local t = os.clock()
+	-- The pulse doubles in rate as it closes: 1.6 Hz out at the edge, 3.2 Hz
+	-- when it is behind you.
+	local beat = math.abs(math.sin(t * (5 + huntClose * 5)))
+	hunted.BackgroundTransparency = 0.86 - huntClose * 0.34 - beat * 0.1
+    -- And the camera never comes to rest.
+	shake = math.max(shake, 0.25 + huntClose * 0.95)
+end)
+
 local function showStrike(text: string)
 	strikeLabel.Text = text
 	strikeLabel.TextTransparency = 0
@@ -16173,7 +16574,32 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 	elseif kind == "order" then
 		showHint(`They want {payload.wants}. It'll be in the back.`, BONE)
 	elseif kind == "violation" then
-		showHint(`You broke rule {payload.number}.`, RED)
+		showHint(`RULE {payload.number}. {payload.text or ""}`, RED)
+	elseif kind == "hunt" then
+		--[[
+			The Hunt, on screen.
+
+			Not a hint and a red tint. While this is on, the camera does not
+			stop moving and the screen does not stop pulsing, and both get
+			worse the closer the thing is -- `close` comes from the server
+			every half second and is 0 at the far end of its reach and 1 when
+			it is about to have you. A state you can read off the shake alone,
+			with your eyes on the corridor and not on the HUD.
+		]]
+		if payload and payload.on then
+			huntClose = math.clamp(tonumber(payload.close) or 0.3, 0, 1)
+			if not hunted.Visible then
+				hunted.Visible = true
+				playFlat("huntStart", SoundBank.HUNT_START)
+				bang(1.6, true)
+				showHint("RUN. GET THROUGH A DOOR.", RED)
+			end
+		else
+			huntClose = 0
+			hunted.Visible = false
+			hunted.BackgroundTransparency = 0.82
+			showHint("It's stopped.", BONE)
+		end
 	elseif kind == "contradiction" then
 		showHint(`Rule {payload.rule} was right about him.`, RED)
 	elseif kind == "clue" then

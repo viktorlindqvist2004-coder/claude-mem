@@ -318,6 +318,47 @@ SoundBank.DUMMY_CLOSE = {
 	rollOffMaxMetres = 14,
 }
 
+--[[
+	The Hunt.
+
+	Breaking a rule used to raise a number and put the EXIT boxes out one at a
+	time down the corridor ahead of you. That is a good idea and it is not a
+	consequence -- it is a mood change, and you can walk through it.
+
+	This is the consequence. It is the loudest thing in the game by a wide
+	margin, it starts the instant the rule is broken, it comes from behind, and
+	it does not stop until you have got somewhere with a door. A player who
+	breaks Rule 3 should be typing "sorry" into the chat.
+]]
+SoundBank.HUNT_START = {
+	caption = "[SOMETHING IS COMING]",
+	id = "rbxasset://sounds/hit.wav",
+	volume = 1.0,
+	speed = 0.35,
+	rollOffMinMetres = 40,
+	rollOffMaxMetres = 90,
+}
+
+-- The loop that follows you. Positional, at the thing, so the direction it is
+-- coming from is information you can act on.
+SoundBank.HUNT_LOOP = {
+	caption = "[running, behind you]",
+	id = "rbxasset://sounds/action_falling.mp3",
+	volume = 0.95,
+	speed = 0.5,
+	looped = true,
+	rollOffMinMetres = 6,
+	rollOffMaxMetres = 55,
+}
+
+-- And the silence afterwards, which is the actual reward.
+SoundBank.HUNT_OVER = {
+	caption = "[it stops]",
+	id = "rbxasset://sounds/unsheath.mp3",
+	volume = 0.5,
+	speed = 0.4,
+}
+
 SoundBank.STARTLE_LARGE = { caption = "[BANG]", id = "rbxasset://sounds/hit.wav", volume = 1.0, speed = 0.45 }
 SoundBank.STARTLE_SMALL = { caption = "[a sharp knock, close]", id = "rbxasset://sounds/snap.mp3", volume = 0.55, speed = 0.8 }
 SoundBank.POWER_CUT = { caption = "[everything stops]", id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.35 }

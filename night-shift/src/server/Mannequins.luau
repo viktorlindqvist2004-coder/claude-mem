@@ -52,9 +52,19 @@ type Walker = {
 	-- Where it stood the last time somebody looked at it, so that looking away
 	-- and looking back can be measured in metres.
 	lastSeenAt: Vector3?,
+	-- A hunter does not freeze when it is looked at, and it does not lurch.
+	-- It runs. See Mannequins.hunt.
+	hunting: boolean?,
 }
 
 local walkers: { Walker } = {}
+--[[
+	Forward-declared: Mannequins.start's heartbeat ends the hunt when its time
+	is up, and it is defined above the hunt. A local declared after the function
+	that closes over it is not that local, it is a nil global.
+]]
+local hunting: { walker: Walker, until_: number, sound: Sound?, nextTell: number?, nextBang: number? }? = nil
+local endHunt: () -> ()
 local connection: RBXScriptConnection? = nil
 local downed: { [Player]: boolean } = {}
 local takenThisNight = 0
@@ -118,6 +128,7 @@ local function buildWalker(point: { number }, colour: Color3?): Walker
 		lurchUntil = 0,
 		nextLurch = 0,
 		lastSeenAt = nil,
+		hunting = false,
 	}
 end
 
@@ -286,6 +297,38 @@ function Mannequins.start()
 	]]
 	connection = RunService.Heartbeat:Connect(function(delta)
 		local now = os.clock()
+		if hunting then
+			if now >= hunting.until_ then
+				endHunt()
+			elseif now >= (hunting.nextTell or 0) then
+				--[[
+					Tell the client how close it is, twice a second. The shake
+					and the pulse are driven off this number, so being chased
+					feels different at twenty metres and at three, without the
+					player having to look at anything.
+				]]
+				hunting.nextTell = now + 0.5
+				local target = nearestTarget(hunting.walker)
+				local metres = if target
+					then (target.Position - hunting.walker.root.Position).Magnitude / METRE
+					else 40
+				Hud.effect("hunt", { on = true, close = math.clamp(1 - metres / 22, 0, 1) })
+				--[[
+					And a hit every couple of seconds, louder as it closes. The
+					loop alone is a texture; the hits are what stop anybody
+					thinking about anything else.
+				]]
+				if now >= (hunting.nextBang or 0) then
+					hunting.nextBang = now + math.max(0.9, 3.2 - (22 - metres) / 9)
+					SoundBank.play(SoundBank.STARTLE_LARGE, hunting.walker.root)
+					Hud.effect("startle", {
+						shake = math.clamp(1.6 - metres / 22, 0.5, 1.6),
+						flash = metres < 8,
+						large = true,
+					})
+				end
+			end
+		end
 		local base = AttentionService.entitySpeed() * METRE
 		for _, walker in walkers do
 			if not walker.root.Parent then
@@ -295,7 +338,13 @@ function Mannequins.start()
 				continue
 			end
 
-			if observed(walker) then
+			--[[
+				A hunter is exempt from the whole observation rule. Looking at
+				it is not a defence, which is the point: Night 2 teaches you
+				that watching works, and the first time you break a rule the
+				building takes that away.
+			]]
+			if observed(walker) and not walker.hunting then
 				--[[
 					Seen, so it stops -- and turns its head to whoever is
 					looking. Then the reckoning: how far did it come while
@@ -364,7 +413,7 @@ function Mannequins.start()
 				not drift, it does not do anything at all -- which is what makes
 				the next four metres so hard to believe.
 			]]
-			if now < walker.nextLurch then
+			if not walker.hunting and now < walker.nextLurch then
 				continue
 			end
 			if now >= walker.lurchUntil then
@@ -379,7 +428,8 @@ function Mannequins.start()
 				average that is slower than the old constant walk. It does not
 				feel slower. It never will.
 			]]
-			local speed = base * 4.0 * delta
+			-- A hunter runs flat out and never stops. Everything else lurches.
+			local speed = base * (if walker.hunting then 2.6 else 4.0) * delta
 			-- No pathfinding: it comes at you in a straight line, and the walls
 			-- are what makes that frightening rather than trivial.
 			local step = flat.Unit * math.min(speed, flat.Magnitude)
@@ -391,7 +441,7 @@ function Mannequins.start()
 				limb.part.CFrame = walker.root.CFrame * limb.offset
 			end
 
-			if now >= walker.lurchUntil then
+			if not walker.hunting and now >= walker.lurchUntil then
 				walker.nextLurch = now + math.random(35, 150) / 100
 			end
 		end
@@ -421,6 +471,7 @@ function Mannequins.release()
 end
 
 function Mannequins.stop()
+	endHunt()
 	if connection then
 		connection:Disconnect()
 		connection = nil
@@ -433,6 +484,88 @@ function Mannequins.stop()
 		Mannequins.revive(player)
 	end
 end
+
+--[[
+	The Hunt — what breaking a rule costs.
+
+	Every rule in this game used to be enforced by a number going up and a
+	light going out. That is not a consequence, it is a mood, and you can walk
+	through a mood. The crew learned within one night that the rules were
+	decoration.
+
+	So: you break one, and one of these comes for you. It starts behind you, it
+	does not stop when you look at it -- that is the entire difference between
+	this and Night 2 -- it is louder than anything else in the building, and it
+	runs. For eighteen seconds. Reach a room with a door and shut it behind
+	you, or get somewhere the building keeps a light, and it gives up.
+
+	It cannot kill anybody. It puts you down where a crewmate has to come and
+	find you at four in the morning, which in this game is worse.
+]]
+function Mannequins.hunt(target: Player, seconds: number?)
+	if hunting then
+		-- Already being chased. Breaking a second rule buys more of it.
+		hunting.until_ += seconds or 18
+		return
+	end
+	local root = target.Character and target.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return
+	end
+
+	--[[
+		Behind them, and far enough back that the first thing they know about
+		it is the sound. Eight metres: close enough to be on them in five
+		seconds, far enough that turning round does not put it in their face.
+	]]
+	local behind = root.Position - root.CFrame.LookVector * (8 * METRE)
+	local walker = buildWalker({ behind.X / METRE, 0.15, behind.Z / METRE },
+		Color3.fromRGB(150, 146, 140))
+	walker.frozenUntil = 0
+	walker.hunting = true
+	table.insert(walkers, walker)
+
+	SoundBank.play(SoundBank.HUNT_START, walker.root)
+	local loop = SoundBank.make(SoundBank.HUNT_LOOP, walker.root, "Hunt")
+	loop:Play()
+
+	Hud.effect("hunt", { on = true })
+	Hud.effect("startle", { shake = 1.4, flash = true, large = true })
+	Hud.caption(SoundBank.HUNT_START.caption or "[something is coming]",
+		Places.roomAt(walker.root.Position))
+
+	hunting = { walker = walker, until_ = os.clock() + (seconds or 18), sound = loop }
+end
+
+function Mannequins.isHunting(): boolean
+	return hunting ~= nil
+end
+
+function endHunt()
+	local hunt = hunting
+	if not hunt then
+		return
+	end
+	hunting = nil
+	-- Guarded: the offline harness's sounds are plain tables.
+	if hunt.sound and typeof(hunt.sound) == "Instance" then
+		hunt.sound:Stop()
+	end
+	if hunt.walker.root.Parent then
+		SoundBank.play(SoundBank.HUNT_OVER, hunt.walker.root)
+	end
+	for i, w in walkers do
+		if w == hunt.walker then
+			table.remove(walkers, i)
+			break
+		end
+	end
+	hunt.walker.model:Destroy()
+	Hud.effect("hunt", { on = false })
+	Hud.caption(SoundBank.HUNT_OVER.caption or "[it stops]")
+end
+
+Mannequins.endHunt = endHunt
 
 function Mannequins.taken(): number
 	return takenThisNight

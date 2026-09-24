@@ -55,65 +55,81 @@ export type Piece = {
 ]]
 MannequinBody.CHEST_HEIGHT = 1.18
 MannequinBody.PIECES = {
+	--[[
+		The joints are smaller than the limbs they join, and every segment
+		overlaps the next.
+
+		The first version had a ball at every joint sized to look like a joint,
+		which put a visible bead at the knee, the elbow, the ankle and the
+		shoulder -- so the whole thing read as a string of circles rather than
+		as a body. A knee is not a sphere stuck between two tubes; it is the
+		place where one tube ends inside another. So each ball is now narrower
+		than the limb above it and sits buried in the overlap, doing its job
+		(you can see where it bends) without ever showing an outline.
+
+		The ankles are gone entirely. The calf runs down into the foot.
+	]]
+
 	-- ── Stand ───────────────────────────────────────────────────────────────
-	-- A disc and a rod. Mannequins do not balance, they are bolted down, and
-	-- the rod going into the heel is half of why they look wrong.
 	{ name = "MannequinBase", offset = { 0, -1.16, 0 }, size = { 0.36, 0.035, 0.36 },
 		shape = "Cylinder", tilt = { 0, 0, 90 }, steel = true },
 	{ name = "MannequinPost", offset = { 0, -1.05, -0.04 }, size = { 0.2, 0.05, 0.05 },
 		shape = "Cylinder", tilt = { 0, 0, 90 }, steel = true },
 
 	-- ── Legs ────────────────────────────────────────────────────────────────
-	-- Thigh, knee, calf, ankle, foot. Twice. The knee is the part that does
-	-- the work: a leg without one is a pole.
-	{ name = "MannequinFoot", offset = { -0.085, -1.115, 0.03 }, size = { 0.1, 0.07, 0.24 }, shape = "Ball" },
-	{ name = "MannequinFoot", offset = { 0.085, -1.115, 0.03 }, size = { 0.1, 0.07, 0.24 }, shape = "Ball" },
-	{ name = "MannequinAnkle", offset = { -0.085, -1.06, 0 }, size = { 0.09, 0.1, 0.09 }, shape = "Ball" },
-	{ name = "MannequinAnkle", offset = { 0.085, -1.06, 0 }, size = { 0.09, 0.1, 0.09 }, shape = "Ball" },
-	{ name = "MannequinCalf", offset = { -0.085, -0.85, 0 }, size = { 0.38, 0.115, 0.115 },
+	-- Thigh down into knee, knee buried in calf, calf down into foot.
+	{ name = "MannequinFoot", offset = { -0.085, -1.11, 0.04 }, size = { 0.105, 0.085, 0.26 }, shape = "Ball" },
+	{ name = "MannequinFoot", offset = { 0.085, -1.11, 0.04 }, size = { 0.105, 0.085, 0.26 }, shape = "Ball" },
+	{ name = "MannequinCalf", offset = { -0.085, -0.87, 0 }, size = { 0.48, 0.108, 0.112 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinCalf", offset = { 0.085, -0.85, 0 }, size = { 0.38, 0.115, 0.115 },
+	{ name = "MannequinCalf", offset = { 0.085, -0.87, 0 }, size = { 0.48, 0.108, 0.112 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinKnee", offset = { -0.085, -0.63, 0 }, size = { 0.13, 0.14, 0.13 }, shape = "Ball" },
-	{ name = "MannequinKnee", offset = { 0.085, -0.63, 0 }, size = { 0.13, 0.14, 0.13 }, shape = "Ball" },
-	{ name = "MannequinThigh", offset = { -0.085, -0.42, 0 }, size = { 0.4, 0.15, 0.15 },
+	{ name = "MannequinKnee", offset = { -0.085, -0.64, 0 }, size = { 0.118, 0.15, 0.125 }, shape = "Ball" },
+	{ name = "MannequinKnee", offset = { 0.085, -0.64, 0 }, size = { 0.118, 0.15, 0.125 }, shape = "Ball" },
+	{ name = "MannequinThigh", offset = { -0.085, -0.41, 0 }, size = { 0.5, 0.145, 0.15 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinThigh", offset = { 0.085, -0.42, 0 }, size = { 0.4, 0.15, 0.15 },
+	{ name = "MannequinThigh", offset = { 0.085, -0.41, 0 }, size = { 0.5, 0.145, 0.15 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
 
 	-- ── Body ────────────────────────────────────────────────────────────────
-	-- Pelvis, waist, chest. Three ellipsoids, widest at the hips and the
-	-- shoulders and narrow between them, which is the silhouette the whole
-	-- thing lives or dies on.
-	{ name = "MannequinPelvis", offset = { 0, -0.2, 0 }, size = { 0.33, 0.28, 0.24 }, shape = "Ball" },
-	{ name = "MannequinWaist", offset = { 0, -0.02, 0 }, size = { 0.26, 0.22, 0.19 }, shape = "Ball" },
-	{ name = "MannequinTorso", offset = { 0, 0.14, 0 }, size = { 0.36, 0.44, 0.25 }, shape = "Ball" },
+	--[[
+		Three ellipsoids that overlap each other by a third, so there is no
+		seam anywhere on the trunk: widest at the hips and across the chest,
+		narrow between them. Deeper than it is wide at the waist, which is what
+		stops the silhouette from reading as a barrel.
+	]]
+	{ name = "MannequinPelvis", offset = { 0, -0.22, 0.005 }, size = { 0.315, 0.34, 0.235 }, shape = "Ball" },
+	{ name = "MannequinWaist", offset = { 0, -0.05, 0 }, size = { 0.255, 0.3, 0.205 }, shape = "Ball" },
+	{ name = "MannequinTorso", offset = { 0, 0.15, -0.005 }, size = { 0.35, 0.5, 0.245 }, shape = "Ball" },
+	-- The yoke across the top of the chest, which is what shoulders hang off.
+	{ name = "MannequinYoke", offset = { 0, 0.3, 0 }, size = { 0.37, 0.14, 0.2 },
+		shape = "Cylinder" },
 
 	-- ── Arms ────────────────────────────────────────────────────────────────
-	-- Hanging, slightly clear of the body. These used to be left off on the
-	-- grounds that an armless mannequin reads wrong, which is true, and is
-	-- also the reason a half-glimpsed one never passed for a person.
-	{ name = "MannequinShoulder", offset = { -0.185, 0.27, 0 }, size = { 0.15, 0.15, 0.16 }, shape = "Ball" },
-	{ name = "MannequinShoulder", offset = { 0.185, 0.27, 0 }, size = { 0.15, 0.15, 0.16 }, shape = "Ball" },
-	{ name = "MannequinUpperArm", offset = { -0.2, 0.11, 0.005 }, size = { 0.3, 0.105, 0.105 },
+	-- Hanging, just clear of the body, with both joints inside the limb above.
+	{ name = "MannequinShoulder", offset = { -0.185, 0.295, 0 }, size = { 0.135, 0.145, 0.16 }, shape = "Ball" },
+	{ name = "MannequinShoulder", offset = { 0.185, 0.295, 0 }, size = { 0.135, 0.145, 0.16 }, shape = "Ball" },
+	{ name = "MannequinUpperArm", offset = { -0.2, 0.12, 0.005 }, size = { 0.38, 0.1, 0.105 },
 		shape = "Cylinder", tilt = { 0, 0, 86 } },
-	{ name = "MannequinUpperArm", offset = { 0.2, 0.11, 0.005 }, size = { 0.3, 0.105, 0.105 },
+	{ name = "MannequinUpperArm", offset = { 0.2, 0.12, 0.005 }, size = { 0.38, 0.1, 0.105 },
 		shape = "Cylinder", tilt = { 0, 0, 94 } },
-	{ name = "MannequinElbow", offset = { -0.215, -0.05, 0.01 }, size = { 0.1, 0.1, 0.1 }, shape = "Ball" },
-	{ name = "MannequinElbow", offset = { 0.215, -0.05, 0.01 }, size = { 0.1, 0.1, 0.1 }, shape = "Ball" },
-	{ name = "MannequinForearm", offset = { -0.222, -0.21, 0.02 }, size = { 0.28, 0.085, 0.085 },
+	{ name = "MannequinElbow", offset = { -0.215, -0.06, 0.01 }, size = { 0.088, 0.11, 0.092 }, shape = "Ball" },
+	{ name = "MannequinElbow", offset = { 0.215, -0.06, 0.01 }, size = { 0.088, 0.11, 0.092 }, shape = "Ball" },
+	{ name = "MannequinForearm", offset = { -0.222, -0.215, 0.02 }, size = { 0.34, 0.082, 0.086 },
 		shape = "Cylinder", tilt = { 0, 0, 88 } },
-	{ name = "MannequinForearm", offset = { 0.222, -0.21, 0.02 }, size = { 0.28, 0.085, 0.085 },
+	{ name = "MannequinForearm", offset = { 0.222, -0.215, 0.02 }, size = { 0.34, 0.082, 0.086 },
 		shape = "Cylinder", tilt = { 0, 0, 92 } },
-	{ name = "MannequinHand", offset = { -0.226, -0.375, 0.025 }, size = { 0.075, 0.15, 0.06 }, shape = "Ball" },
-	{ name = "MannequinHand", offset = { 0.226, -0.375, 0.025 }, size = { 0.075, 0.15, 0.06 }, shape = "Ball" },
+	{ name = "MannequinHand", offset = { -0.226, -0.38, 0.028 }, size = { 0.072, 0.17, 0.058 }, shape = "Ball" },
+	{ name = "MannequinHand", offset = { 0.226, -0.38, 0.028 }, size = { 0.072, 0.17, 0.058 }, shape = "Ball" },
 
 	-- ── Head ────────────────────────────────────────────────────────────────
-	-- A neck you can see, and an egg with nothing on it. No face: a blank one
-	-- is worse than any face anybody could put on it.
-	{ name = "MannequinNeck", offset = { 0, 0.41, -0.005 }, size = { 0.12, 0.085, 0.085 },
+	-- The neck runs up into the skull rather than stopping short of it, so
+	-- there is no collar of air where the two meet.
+	{ name = "MannequinNeck", offset = { 0, 0.42, -0.005 }, size = { 0.17, 0.082, 0.086 },
 		shape = "Cylinder", tilt = { 0, 0, 90 } },
-	{ name = "MannequinHead", offset = { 0, 0.55, -0.01 }, size = { 0.165, 0.225, 0.19 }, shape = "Ball" },
+	{ name = "MannequinHead", offset = { 0, 0.55, -0.012 }, size = { 0.16, 0.235, 0.195 }, shape = "Ball" },
+	-- The jaw, which is the one thing that turns an egg into a head.
+	{ name = "MannequinJaw", offset = { 0, 0.5, 0.025 }, size = { 0.125, 0.12, 0.155 }, shape = "Ball" },
 }
 
 --[[

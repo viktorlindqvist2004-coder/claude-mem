@@ -1795,13 +1795,48 @@ local function buildAtrium()
 			{ color = Color3.fromRGB(190, 60, 52), density = 92, font = Enum.Font.GothamBold })
 	end
 
-	-- The fire stair, in the corner, still there because it has to be.
-	for i = 0, 13 do
-		P("Step", V(1.6, 0.16, 0.34), at(-w / 2 + 2.2, i * (FLOOR1 / 14), -d / 2 + 2.0 + i * 0.34), C.trim)
-		P("StairRail", V(0.06, 0.9, 0.34),
-			at(-w / 2 + 3.1, i * (FLOOR1 / 14) + 0.5, -d / 2 + 2.0 + i * 0.34), C.metal)
+	--[[
+		The stair to the balcony -- a stair, this time, and one that arrives
+		somewhere.
+
+		It was fourteen treads 16 cm thick spaced 37 cm apart, which is 21 cm
+		of air between each one: a ladder of floating slabs you could see
+		straight through, with a horizontal handrail hanging in space beside
+		it. And it climbed northward into the middle of the atrium void, five
+		metres up, where there is no floor. It went nowhere and it looked like
+		it went nowhere.
+
+		So: twenty solid steps running west to east along the north side of
+		the balcony, 26 cm rise on a 36 cm going -- 36 degrees, which is a real
+		stair -- landing on a slab that meets the balcony deck. Each step is
+		one block from the floor to its own tread, so there is nothing to see
+		through and nothing to fall between. A handrail that follows the
+		pitch, on posts, on the open side.
+	]]
+	local stairZ, stairW = -5.1, 1.5
+	local stairX0, stairGo, stairRise = -10.4, 0.36, FLOOR1 / 20
+	for i = 0, 19 do
+		local top = (i + 1) * stairRise
+		P("F1_Step", V(stairGo, top, stairW),
+			at(stairX0 + 0.18 + i * stairGo, top / 2, stairZ), C.trim)
 	end
-	P("StairHandrail", V(0.06, 0.06, 5.0), at(-w / 2 + 3.1, FLOOR1 / 2 + 0.95, -d / 2 + 4.3), C.trim)
+	-- The landing, which oversails south far enough to meet the balcony deck.
+	P("StairLanding", V(1.4, 0.3, 2.1), at(-2.6, FLOOR1 - 0.15, stairZ - 0.3), C.trim)
+	--[[
+		The handrail, on the open north side, following the pitch. The old one
+		was level, floating, and on the wrong side.
+	]]
+	local stairRun = 20 * stairGo
+	local stairSpan = math.sqrt(FLOOR1 * FLOOR1 + stairRun * stairRun)
+	local stairAngle = math.deg(math.atan2(FLOOR1, stairRun))
+	local rail = P("StairHandrail", V(stairSpan, 0.06, 0.06),
+		at(stairX0 + stairRun / 2, FLOOR1 / 2 + 0.98, stairZ + stairW / 2 - 0.05), C.trim)
+	rail.Orientation = Vector3.new(0, 0, stairAngle)
+	for i = 0, 4 do
+		local px = stairX0 + 0.6 + i * (stairRun / 4.6)
+		local py = (px - stairX0) * (FLOOR1 / stairRun)
+		P("StairPost", V(0.05, 0.98, 0.05), at(px, py + 0.49, stairZ + stairW / 2 - 0.05), C.metal)
+	end
 
 	--[[
 		The fountain, capped in 1991. On Night 5 it runs, which only lands if
@@ -1861,7 +1896,14 @@ local function buildAtrium()
 	]]
 
 	-- Two island units, both shuttered, at the entrance end.
-	kiosk(-8.0, -5.4, 2.2, 2.6, 0, 5502, false)
+	--[[
+		One island unit, not two.
+
+		The west one stood at -8.0, -5.4 -- which is in the middle of the new
+		stair flight, and was the thing being pointed at in the report anyway.
+		A single barrow off to one side is what a hall this size has; two
+		flanking the entrance was symmetry for its own sake.
+	]]
 	kiosk(8.2, -5.4, 2.2, 2.6, 0, 5503, false)
 
 	--[[
@@ -1921,7 +1963,9 @@ local function buildAtrium()
 		{ color = Color3.fromRGB(176, 176, 182), scaled = false, density = 66, align = Enum.TextXAlignment.Left })
 
 	-- The wall by the entrance: everything a mall puts where people queue.
-	vending(-w / 2 + 0.6, 0, -5.2, "x", true)
+	-- Moved north: -5.2 is the foot of the new stair flight, and -1.4 is
+	-- behind the directory board.
+	vending(-w / 2 + 0.6, 0, 1.8, "x", true)
 	payphone(-w / 2 + 0.35, 0, -3.2, "x")
 	cashMachine(w / 2 - 0.35, 0, -5.4, "x")
 	picture(w / 2 - 0.12, 2.3, -1.5, "x", 7701)
@@ -2058,7 +2102,7 @@ local function firstFloorUnits()
 	end
 	-- Off to one side: the middle of this wall is the food court doorway.
 	picture(-5.6, y + 2.1, d / 2 - 0.2, "z", 3304)
-	pottedTree(-9.4, y, -5.2, 3305)
+	pottedTree(-9.4, y, -2.4, 3305)
 	pottedTree(9.4, y, 5.2, 3306)
 end
 
@@ -2603,10 +2647,19 @@ local function serviceCorridor()
 		lit += 7.5
 	end
 
-	-- And the things that stack up in a corridor nobody shows customers.
-	-- Against the east wall, between two doors. It used to sit dead centre in
-	-- the security office doorway.
-	P("Trolley", V(0.6, 0.9, 0.5), at(x + 0.6, 0.45, 12), C.metal)
+	--[[
+		Nothing against the east wall either.
+
+		There was one part here, a 0.6 x 0.9 x 0.5 cuboid in pale metal, named
+		Trolley. Not built with the trolley function -- which has a chassis, a
+		basket, a handle and four castors -- just a box with a label on it, ten
+		metres short of the staff room on the route every night starts with. So
+		the first thing anybody ever saw in this game was a white box in a
+		corridor, and it got reported as exactly that.
+
+		A prop that is one cuboid is not a prop. It is a placeholder that was
+		never came back to, and the fix is not to make it a better box.
+	]]
 	--[[
 		All of it against the west wall, in a line, leaving the corridor clear.
 
@@ -3719,14 +3772,48 @@ local function dressCustodial(cx, cz, y, h, w, d)
 	handle.Name = "MopHandle"
 	P("MopHead", V(0.22, 0.2, 0.14), at(cx - 1.05, y + 0.42, south + 0.2), Color3.fromRGB(150, 146, 134))
 
-	P("Cart", V(0.56, 0.9, 0.92), at(cx - 0.35, y + 0.5, south + 0.55), C.metal)
-	P("CartShelf", V(0.56, 0.03, 0.9), at(cx - 0.35, y + 0.5, south + 0.55), C.trim)
-	P("CartHandle", V(0.06, 0.06, 0.9), at(cx - 0.35, y + 0.98, south + 0.55), C.metal)
+	--[[
+		The cleaner's cart, which was the same mistake as the corridor trolley
+		and worse, because Night 2 sends you to find something on it.
+
+		It was a solid 0.56 x 0.9 x 0.92 block in pale metal with a shelf drawn
+		inside it and a handle across the top: a white box you are told to go
+		and search. A cart is a frame you can see through, with a bag hanging
+		in a hoop at one end and a tray of bottles at the other, and that is
+		about a dozen small parts.
+
+		The part named Cart is still the one Night 2 looks up. It is the frame
+		now rather than the block.
+	]]
+	local kx, kz = cx - 0.35, south + 0.55
+	-- Four uprights and the handle across them: the frame you see through.
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
-			P("Castor", V(0.08, 0.1, 0.08), at(cx - 0.35 + sx * 0.22, y + 0.05, south + 0.55 + sz * 0.38), C.dark)
+			P("CartPost", V(0.045, 0.92, 0.045), at(kx + sx * 0.24, y + 0.5, kz + sz * 0.4), C.metal)
+			local castor = P("Castor", V(0.06, 0.13, 0.13), at(kx + sx * 0.24, y + 0.065, kz + sz * 0.4), C.dark)
+			castor.Shape = Enum.PartType.Cylinder
+			castor.Orientation = Vector3.new(0, 90, 0)
 		end
 	end
+	local cart = P("Cart", V(0.06, 0.06, 0.92), at(kx, y + 0.95, kz), C.metal)
+	cart.Name = "Cart"
+	for _, sz in { -1, 1 } do
+		P("CartRail", V(0.53, 0.05, 0.05), at(kx, y + 0.95, kz + sz * 0.4), C.metal)
+	end
+	-- The bottom tray, the bottles on it, and the bag hoop at the near end.
+	P("CartShelf", V(0.5, 0.03, 0.82), at(kx, y + 0.18, kz), C.trim)
+	P("CartShelfLip", V(0.5, 0.05, 0.03), at(kx, y + 0.2, kz + 0.41), C.trim)
+	for i = 0, 3 do
+		P("CartBottle", V(0.08, 0.24, 0.08),
+			at(kx - 0.15 + (i % 2) * 0.3, y + 0.32, kz - 0.3 + math.floor(i / 2) * 0.22),
+			({ Color3.fromRGB(150, 146, 136), Color3.fromRGB(86, 110, 96) })[i % 2 + 1])
+	end
+	P("CartHoop", V(0.5, 0.04, 0.04), at(kx, y + 0.9, kz - 0.42), C.metal)
+	local bag = P("CartBag", V(0.46, 0.56, 0.3), at(kx, y + 0.62, kz - 0.42), Color3.fromRGB(58, 56, 54))
+	bag.Transparency = 0.15
+	-- And the rags over the rail, which is what says somebody was using it.
+	P("CartCloth", V(0.2, 0.22, 0.04), at(kx - 0.14, y + 0.86, kz + 0.42), Color3.fromRGB(128, 120, 104))
+	P("CartCloth", V(0.16, 0.18, 0.04), at(kx + 0.12, y + 0.88, kz + 0.42), Color3.fromRGB(116, 110, 96))
 	P("WetSign", V(0.28, 0.5, 0.26), at(cx - 0.3, y + 0.25, north - 0.9), Color3.fromRGB(180, 96, 30))
 
 	tube(cx, y + h - 0.16, cz, false)
@@ -4002,7 +4089,23 @@ local function buildFloorThree()
 		paper(7.2 + (i % 6) * 0.42, y + 2.35 - math.floor(i / 6) * 0.34, 8.42, "z",
 			Color3.fromRGB(172, 166, 148))
 	end
-	P("Filing", V(0.6, 1.3, 0.7), at(11.2, y + 0.65, 4.4), C.metal)
+	--[[
+		A filing cabinet, not a cuboid called Filing.
+
+		The security office builds one properly -- a top, three drawer fronts,
+		three handles, three card labels -- and this one was a single block at
+		the far end of a room you reach at the end of Night 4. One part with a
+		noun for a name is a placeholder, and in a torch beam it is a box.
+	]]
+	P("Filing", V(0.6, 1.24, 0.7), at(11.2, y + 0.68, 4.4), C.metal)
+	P("FilingPlinth", V(0.54, 0.06, 0.64), at(11.2, y + 0.03, 4.4), C.dark)
+	P("FilingTop", V(0.64, 0.04, 0.74), at(11.2, y + 1.32, 4.4), C.trim)
+	for k = 0, 2 do
+		P("DrawerFront", V(0.54, 0.36, 0.03), at(11.2, y + 0.34 + k * 0.42, 4.06), C.trim)
+		P("DrawerHandle", V(0.2, 0.03, 0.03), at(11.2, y + 0.45 + k * 0.42, 4.03), C.metal)
+		P("DrawerLabel", V(0.13, 0.05, 0.01), at(11.2, y + 0.26 + k * 0.42, 4.04),
+			Color3.fromRGB(198, 194, 180))
+	end
 	P("CoatStand", V(0.1, 1.8, 0.1), at(6.6, y + 0.9, 4.2), C.metal)
 	P("CoatStandFoot", V(0.5, 0.05, 0.5), at(6.6, y + 0.02, 4.2), C.metal)
 	-- A wall clock with no hands on it. Nobody in this room needs one.
@@ -4600,8 +4703,25 @@ local function buildExterior()
 	P("BinStore", V(5.0, 2.0, 3.0), at(dockX - 8, 1.0, dockZ - 5), C.block)
 	P("BinStoreRoof", V(5.4, 0.16, 3.4), at(dockX - 8, 2.05, dockZ - 5), C.metal)
 	for i = 0, 2 do
-		P("Bin", V(1.1, 1.2, 0.95), at(dockX - 9.6 + i * 1.5, 0.6, dockZ - 5), C.trim)
-		P("BinLid", V(1.14, 0.08, 1.0), at(dockX - 9.6 + i * 1.5, 1.24, dockZ - 5), C.dark)
+		--[[
+			The same bin as the one inside, not a box with a lid on it.
+
+			These were two parts: a cuboid and a flat plate. The loading dock
+			eight metres away builds the real thing -- tapered body, lid hinged
+			at the back so it sits proud, push bar, two wheels -- and these are
+			the ones you see first, from the yard, on the walk in.
+		]]
+		local bx = dockX - 9.6 + i * 1.5
+		P("Bin", V(1.16, 1.0, 0.92), at(bx, 0.56, dockZ - 5), C.trim)
+		P("BinTaper", V(1.02, 0.28, 0.8), at(bx, 0.2, dockZ - 5.04), C.trim)
+		P("BinLid", V(1.2, 0.07, 0.98), at(bx, 1.09, dockZ - 5.02), C.dark)
+		P("BinHinge", V(1.2, 0.06, 0.08), at(bx, 1.06, dockZ - 4.56), C.metal)
+		P("BinBar", V(1.3, 0.06, 0.06), at(bx, 1.02, dockZ - 5.5), C.metal)
+		for _, sx in { -1, 1 } do
+			local wheel = P("BinWheel", V(0.1, 0.24, 0.24), at(bx + sx * 0.5, 0.12, dockZ - 4.7), C.dark)
+			wheel.Shape = Enum.PartType.Cylinder
+			wheel.Orientation = Vector3.new(0, 0, 90)
+		end
 	end
 
 	-- Walt's car, in bay 2, where it has been since 1998.

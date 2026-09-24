@@ -31,10 +31,10 @@ local METRE = Places.METRE
 local Night = { number = 3, title = "Night Customers" }
 
 Night.objectives = {
-	{ "serve", "Serve the register", 5, false },
-	{ "tape_three", "Whatever Walt left in his office", 1, false },
-	{ "the_complaint", "The complaint form in the filing cabinet", 1, false },
-	{ "the_man", "The man at the back of the queue", 1, true },
+	{ "serve", "Serve the register on lane one, in the supermarket", 5, false },
+	{ "tape_three", "Whatever Walt left on the key board, in the security office", 1, false },
+	{ "the_complaint", "The complaint form in the security office filing cabinet", 1, false },
+	{ "the_man", "The man at the back of the queue, at lane one", 1, true },
 	{ "the_paper", "Decide what to do with the form", 1, true },
 }
 

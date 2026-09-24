@@ -100,7 +100,23 @@ local function lightTheJob()
 		objective that wants four of them, and the player cannot tell which
 		four are left.
 	]]
+	--[[
+		Only what you can actually press E on.
+
+		This used to glow anything the objective named that did not have a
+		*disabled* prompt -- which let through every part that had no prompt at
+		all. There are nine shutters in this building and Night 1 puts a prompt
+		on four of them, so five shutters lit up, could not be pulled, and the
+		crew stood in front of them pressing E. A glow that means "not this one"
+		is worse than no glow, because it costs the player the walk.
+
+		So: a live prompt, or nothing. Some objectives are a place rather than a
+		thing -- the dock floor you wheel a bin to -- and those have no prompt on
+		purpose, so if none of a job's targets has one, they all glow and the
+		glow means "here" instead of "press this".
+	]]
 	local candidates = {}
+	local named = {}
 	for _, name in Targets.FOR[current.id] or {} do
 		-- A trailing star means "everything starting with this": the shelf
 		-- bays are numbered as the night makes them, so there is no one name.
@@ -108,6 +124,15 @@ local function lightTheJob()
 			then World.allPrefixed(string.sub(name, 1, -2))
 			else World.all(name)
 		for _, part in parts do
+			table.insert(named, part)
+			local prompt = part:FindFirstChildWhichIsA("ProximityPrompt")
+			if prompt and prompt.Enabled then
+				table.insert(candidates, part)
+			end
+		end
+	end
+	if #candidates == 0 then
+		for _, part in named do
 			local prompt = part:FindFirstChildWhichIsA("ProximityPrompt")
 			if not (prompt and not prompt.Enabled) then
 				table.insert(candidates, part)
@@ -269,10 +294,39 @@ function ctx.rule(id: string)
 	error(`no rule {id}`)
 end
 
+--[[
+	Breaking a rule, and what it costs.
+
+	It used to cost a number going up and, for Rule 3, the EXIT boxes going out
+	one at a time down the corridor ahead of you. Both of those are mood, and a
+	player can walk through a mood: after one night the crew had worked out that
+	the list was decoration and stopped reading it.
+
+	A major rule now starts the Hunt. One of the mannequins comes for you, from
+	behind, at speed, and looking at it does nothing -- which is the cruelty of
+	it, because Night 2 spends an hour teaching you that looking at them works.
+	It is the loudest thing in the game and it lasts eighteen seconds, which is
+	a very long time to be running through a dark shopping centre.
+
+	It cannot kill anybody. It puts you down where somebody else has to come and
+	find you, which in a co-op game at four in the morning is worse.
+]]
 function ctx.violation(ruleId: string)
 	local r = ctx.rule(ruleId)
 	AttentionService.onRuleViolation((r.violationSeverity == "major") and "major" or "minor")
-	Hud.effect("violation", { number = r.number })
+	Hud.effect("violation", { number = r.number, text = r.text })
+	if r.violationSeverity == "major" then
+		local who = Players:GetPlayers()[1]
+		for _, player in Players:GetPlayers() do
+			if ctx.root(player) then
+				who = player
+				break
+			end
+		end
+		if who then
+			Mannequins.hunt(who)
+		end
+	end
 end
 
 -- Objectives

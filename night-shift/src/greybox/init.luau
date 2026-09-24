@@ -2763,6 +2763,35 @@ local function dressStaffRoom(cx, cz, y, h, w, d)
 	local east = cx + w / 2 - WALL / 2
 	local west = cx - w / 2 + WALL / 2
 
+	--[[
+		The door, which is the only one in this building that shuts.
+
+		Every other opening here is a hole with a frame round it, because for
+		four nights nothing in the mall has ever needed to be kept out. This
+		one does: the staff room is where the crew start, where the list is,
+		and where you go when something is behind you. Shut it and whatever is
+		chasing you cannot follow -- it stands on the other side of it and
+		hits it, which is a great deal worse than being caught.
+
+		It hangs open against the inside of the east wall, which is how the
+		crew left it, and swings to across the 1.1 m opening. The hinge is at
+		the south jamb.
+	]]
+	local hingeZ = cz - 0.55
+	local leaf = P("RefugeDoor", V(0.06, 2.1, 1.06), at(cx + w / 2 - 0.06, y + 1.05, cz), C.trim)
+	leaf.Name = "RefugeDoor"
+	leaf:SetAttribute("ShutX", cx + w / 2 - 0.06)
+	leaf:SetAttribute("ShutZ", cz)
+	leaf:SetAttribute("OpenX", cx + w / 2 - 0.59)
+	leaf:SetAttribute("OpenZ", hingeZ + 0.03)
+	leaf:SetAttribute("Y", y + 1.05)
+	-- Built open, the way it was left.
+	leaf.CFrame = at(cx + w / 2 - 0.59, y + 1.05, hingeZ + 0.03) * CFrame.Angles(0, math.rad(90), 0)
+	P("RefugeDoorFrame", V(0.1, 2.24, 1.22), at(cx + w / 2 - 0.02, y + 1.12, cz), C.trim)
+	P("RefugeDoorHandle", V(0.05, 0.05, 0.16), at(cx + w / 2 - 0.62, y + 1.06, hingeZ + 0.95), C.metal)
+	-- The closer at the top, which is what a staff room door has.
+	P("RefugeDoorCloser", V(0.08, 0.1, 0.3), at(cx + w / 2 - 0.14, y + 2.18, cz - 0.3), C.metal)
+
 	-- ── North wall: the lockers ─────────────────────────────────────────────
 	for i = 0, 3 do
 		locker(west + 0.75 + i * 0.96, y, north - 0.27, 0, -1)

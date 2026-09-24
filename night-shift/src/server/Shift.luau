@@ -811,6 +811,31 @@ function Shift.begin(night: number)
 		})
 	end
 
+	--[[
+		The refuge, every night.
+
+		The staff room is where the crew start, where the list is, and the only
+		room in the building with a door that shuts. Wiring it up here rather
+		than in a night means it is there on all five of them, which matters:
+		a way out that exists on some nights and not others is not a rule the
+		player can learn.
+	]]
+	Mannequins.setRefuge(Places.ROOM.StaffRoom.x, Places.ROOM.StaffRoom.z, 6.0, 5.0)
+	local refugeDoor = World.first("RefugeDoor")
+	if refugeDoor then
+		local shut = false
+		local prompt
+		prompt = World.prompt(refugeDoor, {
+			action = "Shut the door",
+			object = "Staff room door",
+			distanceMetres = 3,
+		}, function()
+			shut = not shut
+			Mannequins.sealRefuge(shut, refugeDoor)
+			prompt.ActionText = if shut then "Open the door" else "Shut the door"
+		end)
+	end
+
 	if jobGlowWatch then
 		jobGlowWatch:disconnect()
 	end

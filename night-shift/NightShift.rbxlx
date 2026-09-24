@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "1e036a7"
-Build.LAST_COMMIT = "41c5f35"
-Build.SUMMARY = "Make the mannequins R15 rigs, which are an actual human mesh"
-Build.WHEN = "24 Sep 01:58"
+Build.COMMIT = "fcccae2"
+Build.LAST_COMMIT = "4bee126"
+Build.SUMMARY = "Fix the Hunt standing still, give five seconds' grace, add the heartbeat"
+Build.WHEN = "24 Sep 02:00"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -2766,6 +2766,32 @@ SoundBank.CHASE_BED = {
 	looped = true,
 }
 
+--[[
+	It hitting the door you shut.
+
+	The loudest single sound in the game, and the only one that is supposed to
+	make somebody let go of the keyboard. Five of them, slowing down, and then
+	nothing -- which is the whole shape of surviving a hunt: it does not stop,
+	it gives up, and you can hear the difference.
+]]
+SoundBank.DOOR_HIT = {
+	caption = "[SOMETHING HITS THE DOOR]",
+	id = "rbxasset://sounds/hit.wav",
+	volume = 1.0,
+	speed = 0.28,
+	rollOffMinMetres = 30,
+	rollOffMaxMetres = 70,
+}
+
+SoundBank.DOOR_SHUT = {
+	caption = "[the door shuts]",
+	id = "rbxasset://sounds/switch3.wav",
+	volume = 0.6,
+	speed = 0.55,
+	rollOffMinMetres = 3,
+	rollOffMaxMetres = 20,
+}
+
 SoundBank.HUNT_START = {
 	caption = "[SOMETHING IS COMING]",
 	id = "rbxasset://sounds/hit.wav",
@@ -5237,7 +5263,13 @@ local walkers: { Walker } = {}
 	that closes over it is not that local, it is a nil global.
 ]]
 local hunting: { walker: Walker, until_: number, sound: Sound?, nextTell: number?, nextBang: number? }? = nil
-local endHunt: () -> ()
+local endHunt: (number?) -> ()
+-- The refuge, for the same reason: the heartbeat loop is written above it.
+local refuge: { minX: number, maxX: number, minZ: number, maxZ: number }? = nil
+local sealed = false
+local barring = false
+local inRefuge: (Vector3) -> boolean
+local barTheDoor: (BasePart) -> ()
 local connection: RBXScriptConnection? = nil
 local downed: { [Player]: boolean } = {}
 local takenThisNight = 0
@@ -5631,6 +5663,20 @@ function Mannequins.start()
 			if not target then
 				continue
 			end
+			--[[
+				A shut door is a wall. Nothing walks into the refuge while it
+				is sealed -- and if it was hunting whoever is in there, this is
+				where it starts hitting the door instead.
+			]]
+			if sealed and inRefuge(target.Position) then
+				if walker.hunting and not barring then
+					local door = World.first("RefugeDoor")
+					if door then
+						barTheDoor(door)
+					end
+				end
+				continue
+			end
 			local to = target.Position - walker.root.Position
 			local flat = Vector3.new(to.X, 0, to.Z)
 			if flat.Magnitude < 1.6 * METRE then
@@ -5739,6 +5785,109 @@ end
 	It cannot kill anybody. It puts you down where a crewmate has to come and
 	find you at four in the morning, which in this game is worse.
 ]]
+--[[
+	The refuge.
+
+	One room in this building has a door that shuts, and this is what shutting
+	it does. A hunt you cannot survive is not a chase, it is a timer with a
+	soundtrack -- the player learns within two of them that running is theatre
+	and that the only thing to do is wait it out facing a wall.
+
+	So: get inside, shut the door, and the thing cannot follow. It stands on
+	the other side and hits it five times, slowing down, and then it gives up.
+	Nothing about that is quiet and nothing about it is quick, but it ends, and
+	it ends because of something the player did.
+
+	The rectangle is the staff room. `sealed` is the door.
+]]
+function Mannequins.setRefuge(cx: number, cz: number, w: number, d: number)
+	refuge = {
+		minX = (cx - w / 2) * METRE,
+		maxX = (cx + w / 2) * METRE,
+		minZ = (cz - d / 2) * METRE,
+		maxZ = (cz + d / 2) * METRE,
+	}
+end
+
+function inRefuge(position: Vector3): boolean
+	local r = refuge
+	return r ~= nil
+		and position.X > r.minX and position.X < r.maxX
+		and position.Z > r.minZ and position.Z < r.maxZ
+end
+
+Mannequins.inRefuge = inRefuge
+
+--[[
+	It reaches the shut door, and gives up against it.
+
+	Five hits, each quieter and further apart than the last, with the screen
+	state wound down between them rather than switched off. The player should
+	be able to hear it losing interest.
+]]
+function barTheDoor(door: BasePart)
+	if barring then
+		return
+	end
+	barring = true
+	task.spawn(function()
+		local hunt = hunting
+		if hunt then
+			hunt.until_ = os.clock() + 12
+			-- It stops at the door and stays there.
+			hunt.walker.frozenUntil = os.clock() + 60
+			if hunt.sound and typeof(hunt.sound) == "Instance" then
+				hunt.sound.Volume = SoundBank.HUNT_LOOP.volume * 0.6
+			end
+		end
+		for i = 1, 5 do
+			if not hunting then
+				break
+			end
+			SoundBank.play(SoundBank.DOOR_HIT, door, 0)
+			Hud.effect("startle", { shake = 1.8 - i * 0.22, flash = i < 3, large = true })
+			Hud.effect("hunt", { on = true, close = math.max(0, 0.95 - i * 0.18) })
+			if i == 1 then
+				Hud.caption(SoundBank.DOOR_HIT.caption or "[it hits the door]", "the staff room")
+			end
+			task.wait(0.75 + i * 0.35)
+		end
+		--[[
+			And then it gives up -- over three seconds, not in a frame. The
+			client winds the vignette, the shake and the heartbeat down
+			together, because a state that ends instantly never happened.
+		]]
+		if hunting then
+			endHunt(3.0)
+		end
+		barring = false
+	end)
+end
+
+--[[
+	Shutting and opening it. Shutting it while something is coming is the whole
+	feature; shutting it the rest of the time is a door.
+]]
+function Mannequins.sealRefuge(shut: boolean, door: BasePart?)
+	sealed = shut
+	if not door then
+		return
+	end
+	local y = (door:GetAttribute("Y") :: number) or 1.05
+	local x = (door:GetAttribute(if shut then "ShutX" else "OpenX") :: number) or 0
+	local z = (door:GetAttribute(if shut then "ShutZ" else "OpenZ") :: number) or 0
+	local turn = if shut then 0 else math.rad(90)
+	door.CFrame = Places.cf({ x, y, z }) * CFrame.Angles(0, turn, 0)
+	SoundBank.play(SoundBank.DOOR_SHUT, door)
+	if shut and hunting then
+		barTheDoor(door)
+	end
+end
+
+function Mannequins.refugeSealed(): boolean
+	return sealed
+end
+
 function Mannequins.hunt(target: Player, seconds: number?)
 	if hunting then
 		-- Already being chased. Breaking a second rule buys more of it.
@@ -5780,7 +5929,7 @@ function Mannequins.isHunting(): boolean
 	return hunting ~= nil
 end
 
-function endHunt()
+function endHunt(fadeSeconds: number?)
 	local hunt = hunting
 	if not hunt then
 		return
@@ -5800,7 +5949,9 @@ function endHunt()
 		end
 	end
 	hunt.walker.model:Destroy()
-	Hud.effect("hunt", { on = false })
+	-- `fade` is how long the client takes to wind everything down. Zero is the
+	-- old behaviour: the state simply stops, which reads as it never happening.
+	Hud.effect("hunt", { on = false, fade = fadeSeconds or 0 })
 	Hud.caption(SoundBank.HUNT_OVER.caption or "[it stops]")
 end
 
@@ -9638,6 +9789,31 @@ function Shift.begin(night: number)
 			what = card.what,
 			question = NightScript.THE_QUESTION,
 		})
+	end
+
+	--[[
+		The refuge, every night.
+
+		The staff room is where the crew start, where the list is, and the only
+		room in the building with a door that shuts. Wiring it up here rather
+		than in a night means it is there on all five of them, which matters:
+		a way out that exists on some nights and not others is not a rule the
+		player can learn.
+	]]
+	Mannequins.setRefuge(Places.ROOM.StaffRoom.x, Places.ROOM.StaffRoom.z, 6.0, 5.0)
+	local refugeDoor = World.first("RefugeDoor")
+	if refugeDoor then
+		local shut = false
+		local prompt
+		prompt = World.prompt(refugeDoor, {
+			action = "Shut the door",
+			object = "Staff room door",
+			distanceMetres = 3,
+		}, function()
+			shut = not shut
+			Mannequins.sealRefuge(shut, refugeDoor)
+			prompt.ActionText = if shut then "Open the door" else "Shut the door"
+		end)
 	end
 
 	if jobGlowWatch then
@@ -13659,6 +13835,35 @@ local function dressStaffRoom(cx, cz, y, h, w, d)
 	local east = cx + w / 2 - WALL / 2
 	local west = cx - w / 2 + WALL / 2
 
+	--[[
+		The door, which is the only one in this building that shuts.
+
+		Every other opening here is a hole with a frame round it, because for
+		four nights nothing in the mall has ever needed to be kept out. This
+		one does: the staff room is where the crew start, where the list is,
+		and where you go when something is behind you. Shut it and whatever is
+		chasing you cannot follow -- it stands on the other side of it and
+		hits it, which is a great deal worse than being caught.
+
+		It hangs open against the inside of the east wall, which is how the
+		crew left it, and swings to across the 1.1 m opening. The hinge is at
+		the south jamb.
+	]]
+	local hingeZ = cz - 0.55
+	local leaf = P("RefugeDoor", V(0.06, 2.1, 1.06), at(cx + w / 2 - 0.06, y + 1.05, cz), C.trim)
+	leaf.Name = "RefugeDoor"
+	leaf:SetAttribute("ShutX", cx + w / 2 - 0.06)
+	leaf:SetAttribute("ShutZ", cz)
+	leaf:SetAttribute("OpenX", cx + w / 2 - 0.59)
+	leaf:SetAttribute("OpenZ", hingeZ + 0.03)
+	leaf:SetAttribute("Y", y + 1.05)
+	-- Built open, the way it was left.
+	leaf.CFrame = at(cx + w / 2 - 0.59, y + 1.05, hingeZ + 0.03) * CFrame.Angles(0, math.rad(90), 0)
+	P("RefugeDoorFrame", V(0.1, 2.24, 1.22), at(cx + w / 2 - 0.02, y + 1.12, cz), C.trim)
+	P("RefugeDoorHandle", V(0.05, 0.05, 0.16), at(cx + w / 2 - 0.62, y + 1.06, hingeZ + 0.95), C.metal)
+	-- The closer at the top, which is what a staff room door has.
+	P("RefugeDoorCloser", V(0.08, 0.1, 0.3), at(cx + w / 2 - 0.14, y + 2.18, cz - 0.3), C.metal)
+
 	-- ── North wall: the lockers ─────────────────────────────────────────────
 	for i = 0, 3 do
 		locker(west + 0.75 + i * 0.96, y, north - 0.27, 0, -1)
@@ -16998,6 +17203,8 @@ hunted.Parent = gui
 
 -- 0 when it is at the far end of its reach, 1 when it is on you.
 local huntClose = 0
+-- And the wind-down, once it has given up. See the "hunt" effect.
+local huntFadeStart, huntFadeFor, huntFadeFrom = 0, 0, 0
 
 --[[
 	While it is hunting: a heartbeat in the vignette and a shake that never
@@ -17010,11 +17217,35 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 	local t = os.clock()
+
+	if huntFadeFor > 0 then
+		local through = (t - huntFadeStart) / huntFadeFor
+		if through >= 1 then
+			huntFadeFor = 0
+			huntClose = 0
+			hunted.Visible = false
+			hunted.BackgroundTransparency = 0.82
+			stopFlatLoop("heartbeat")
+			stopFlatLoop("chaseBed")
+			return
+		end
+		huntClose = huntFadeFrom * (1 - through)
+		local heart = flat.heartbeat
+		if heart then
+			heart.Volume = (0.55 + huntClose * 0.45) * (1 - through)
+			heart.PlaybackSpeed = 0.7 + huntClose * 0.85
+		end
+		local bed = flat.chaseBed
+		if bed then
+			bed.Volume = SoundBank.CHASE_BED.volume * (1 - through)
+		end
+	end
+
 	-- The pulse doubles in rate as it closes: 1.6 Hz out at the edge, 3.2 Hz
 	-- when it is behind you.
 	local beat = math.abs(math.sin(t * (5 + huntClose * 5)))
 	hunted.BackgroundTransparency = 0.86 - huntClose * 0.34 - beat * 0.1
-    -- And the camera never comes to rest.
+	-- And the camera never comes to rest.
 	shake = math.max(shake, 0.25 + huntClose * 0.95)
 end)
 
@@ -17101,11 +17332,34 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 			heart.Volume = 0.55 + huntClose * 0.45
 			flatLoop("chaseBed", SoundBank.CHASE_BED)
 		else
-			huntClose = 0
-			hunted.Visible = false
-			hunted.BackgroundTransparency = 0.82
-			stopFlatLoop("heartbeat")
-			stopFlatLoop("chaseBed")
+			--[[
+				It gives up; it does not vanish.
+
+				The state used to end in a frame: the vignette hidden, both
+				loops cut, the shake released. Which reads as a bug, because
+				nothing in the world stops like that -- and worse, it throws
+				away the one moment the whole chase is for, which is the twenty
+				seconds afterwards where you are standing behind a door with
+				your heart going.
+
+				So everything winds down together over `fade` seconds: the red
+				lifts, the pulse slows, the heartbeat drops in rate and volume,
+				the shake bleeds out. Zero fade is still instant, for the paths
+				that want it.
+			]]
+			local fade = (payload and tonumber(payload.fade)) or 0
+			if fade > 0 and hunted.Visible then
+				huntFadeFrom = huntClose
+				huntFadeStart = os.clock()
+				huntFadeFor = fade
+			else
+				huntClose = 0
+				huntFadeFor = 0
+				hunted.Visible = false
+				hunted.BackgroundTransparency = 0.82
+				stopFlatLoop("heartbeat")
+				stopFlatLoop("chaseBed")
+			end
 			showHint("It's stopped.", BONE)
 		end
 	elseif kind == "clock_armed" then

@@ -637,6 +637,8 @@ hunted.Parent = gui
 
 -- 0 when it is at the far end of its reach, 1 when it is on you.
 local huntClose = 0
+-- And the wind-down, once it has given up. See the "hunt" effect.
+local huntFadeStart, huntFadeFor, huntFadeFrom = 0, 0, 0
 
 --[[
 	While it is hunting: a heartbeat in the vignette and a shake that never
@@ -649,11 +651,35 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 	local t = os.clock()
+
+	if huntFadeFor > 0 then
+		local through = (t - huntFadeStart) / huntFadeFor
+		if through >= 1 then
+			huntFadeFor = 0
+			huntClose = 0
+			hunted.Visible = false
+			hunted.BackgroundTransparency = 0.82
+			stopFlatLoop("heartbeat")
+			stopFlatLoop("chaseBed")
+			return
+		end
+		huntClose = huntFadeFrom * (1 - through)
+		local heart = flat.heartbeat
+		if heart then
+			heart.Volume = (0.55 + huntClose * 0.45) * (1 - through)
+			heart.PlaybackSpeed = 0.7 + huntClose * 0.85
+		end
+		local bed = flat.chaseBed
+		if bed then
+			bed.Volume = SoundBank.CHASE_BED.volume * (1 - through)
+		end
+	end
+
 	-- The pulse doubles in rate as it closes: 1.6 Hz out at the edge, 3.2 Hz
 	-- when it is behind you.
 	local beat = math.abs(math.sin(t * (5 + huntClose * 5)))
 	hunted.BackgroundTransparency = 0.86 - huntClose * 0.34 - beat * 0.1
-    -- And the camera never comes to rest.
+	-- And the camera never comes to rest.
 	shake = math.max(shake, 0.25 + huntClose * 0.95)
 end)
 
@@ -740,11 +766,34 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 			heart.Volume = 0.55 + huntClose * 0.45
 			flatLoop("chaseBed", SoundBank.CHASE_BED)
 		else
-			huntClose = 0
-			hunted.Visible = false
-			hunted.BackgroundTransparency = 0.82
-			stopFlatLoop("heartbeat")
-			stopFlatLoop("chaseBed")
+			--[[
+				It gives up; it does not vanish.
+
+				The state used to end in a frame: the vignette hidden, both
+				loops cut, the shake released. Which reads as a bug, because
+				nothing in the world stops like that -- and worse, it throws
+				away the one moment the whole chase is for, which is the twenty
+				seconds afterwards where you are standing behind a door with
+				your heart going.
+
+				So everything winds down together over `fade` seconds: the red
+				lifts, the pulse slows, the heartbeat drops in rate and volume,
+				the shake bleeds out. Zero fade is still instant, for the paths
+				that want it.
+			]]
+			local fade = (payload and tonumber(payload.fade)) or 0
+			if fade > 0 and hunted.Visible then
+				huntFadeFrom = huntClose
+				huntFadeStart = os.clock()
+				huntFadeFor = fade
+			else
+				huntClose = 0
+				huntFadeFor = 0
+				hunted.Visible = false
+				hunted.BackgroundTransparency = 0.82
+				stopFlatLoop("heartbeat")
+				stopFlatLoop("chaseBed")
+			end
 			showHint("It's stopped.", BONE)
 		end
 	elseif kind == "clock_armed" then

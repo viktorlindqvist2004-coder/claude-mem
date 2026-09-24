@@ -359,6 +359,32 @@ SoundBank.CHASE_BED = {
 	looped = true,
 }
 
+--[[
+	It hitting the door you shut.
+
+	The loudest single sound in the game, and the only one that is supposed to
+	make somebody let go of the keyboard. Five of them, slowing down, and then
+	nothing -- which is the whole shape of surviving a hunt: it does not stop,
+	it gives up, and you can hear the difference.
+]]
+SoundBank.DOOR_HIT = {
+	caption = "[SOMETHING HITS THE DOOR]",
+	id = "rbxasset://sounds/hit.wav",
+	volume = 1.0,
+	speed = 0.28,
+	rollOffMinMetres = 30,
+	rollOffMaxMetres = 70,
+}
+
+SoundBank.DOOR_SHUT = {
+	caption = "[the door shuts]",
+	id = "rbxasset://sounds/switch3.wav",
+	volume = 0.6,
+	speed = 0.55,
+	rollOffMinMetres = 3,
+	rollOffMaxMetres = 20,
+}
+
 SoundBank.HUNT_START = {
 	caption = "[SOMETHING IS COMING]",
 	id = "rbxasset://sounds/hit.wav",

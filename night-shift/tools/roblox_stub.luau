@@ -89,6 +89,25 @@ local function newInstance(class)
 			return store[k]
 		end,
 		__newindex = function(_, k, v)
+			if k == "Parent" then
+				--[[
+					Reparenting moves a thing. This only ever added: it appended
+					to the new parent's Children and left the proxy in the old
+					one's, so anything built in place and then put into a Model
+					was listed twice by GetDescendants -- and eight checkers
+					counted it twice, measured it against itself, and reported
+					a building 300 parts larger than the one that ships.
+				]]
+				local old = store.Parent and store.Parent._self
+				if old then
+					for i, child in old.Children do
+						if child == proxy then
+							table.remove(old.Children, i)
+							break
+						end
+					end
+				end
+			end
 			store[k] = v
 			if k == "Name" then self.Name = v end
 			if k == "Parent" and v ~= nil then

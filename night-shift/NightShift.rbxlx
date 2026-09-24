@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "900418b"
-Build.LAST_COMMIT = "2d11c27"
-Build.SUMMARY = "Build mannequins out of the two primitives that have no corners"
-Build.WHEN = "24 Sep 01:47"
+Build.COMMIT = "d4cb86a"
+Build.LAST_COMMIT = "50f720e"
+Build.SUMMARY = "Make breaking a rule cost something, and fix the stair, the glow and the box"
+Build.WHEN = "24 Sep 01:52"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -3503,6 +3503,41 @@ local built, buildError = pcall(World.ensureBuilt)
 if not built then
 	warn(`[Night Shift] the mall did not build: {buildError}`)
 end
+
+--[[
+	And then every mannequin becomes a person-shaped thing.
+
+	The greybox builds each one out of ellipsoids and cylinders, which gets the
+	proportions right and the silhouette wrong -- and a mannequin whose
+	silhouette is wrong never passes, for even half a second, for somebody
+	standing at the end of a corridor, which is the only job it has. Roblox
+	already ships a human mesh in the R15 body, so this swaps them.
+
+	It is deliberately not inside the greybox. The greybox has to run offline,
+	against a stubbed API, for eight geometry checkers that need a body with a
+	real footprint; and the rig call is a live-service one that can fail. So
+	the primitives are built first and are the fallback, and this is a pass
+	over the finished building that upgrades what it can.
+]]
+local Rigs = require(script.Rigs)
+--[[
+	Off the boot path on purpose. Generating a dozen rigs is a live-service
+	call a dozen times, and nothing in the first twenty minutes of Night 1 is
+	in the same room as a mannequin -- so it is not worth a single second of
+	a player standing in a yard waiting for a shop window two rooms away.
+]]
+task.spawn(function()
+	local ok, result = pcall(function()
+		return Rigs.replaceStatics(World.mall())
+	end)
+	if ok and typeof(result) == "number" and result > 0 then
+		print(`[Night Shift] {result} mannequins are R15 rigs`)
+	elseif ok then
+		print("[Night Shift] rigs unavailable here — the mannequins are the greybox bodies")
+	else
+		warn(`[Night Shift] mannequin rigs failed: {result}`)
+	end
+end)
 Case.reset()
 letThemIn()
 
@@ -5136,6 +5171,7 @@ local MannequinBody = require(Shared.MannequinBody)
 local SoundBank = require(Shared.SoundBank)
 
 local AttentionService = require(script.Parent.AttentionService)
+local Rigs = require(script.Parent.Rigs)
 local Gaze = require(script.Parent.Gaze)
 local Hud = require(script.Parent.Hud)
 local World = require(script.Parent.World)
@@ -5192,21 +5228,65 @@ local takenThisNight = 0
 	line.
 ]]
 local function buildWalker(point: { number }, colour: Color3?): Walker
-	local model = Instance.new("Model")
-	model.Name = "Walker"
-
 	local skin = colour or Color3.fromRGB(196, 190, 178)
+	local chest = Places.cf(point) * CFrame.new(0, MannequinBody.CHEST_HEIGHT * METRE, 0)
+
+	--[[
+		A real R15 rig if this place can make one, and the greybox's primitive
+		body if it cannot.
+
+		Both are driven the same way afterwards: an invisible root at chest
+		height, and every part of the body anchored to it by a fixed offset
+		recorded once, here. A physics assembly walking on a Humanoid would
+		pathfind, fall over, push players and cost a solver; these are moved
+		one CFrame at a time by a server that owns all of it.
+	]]
+	local model = Rigs.build(Places.cf(point), skin)
+	local limbs = {}
+
+	if model then
+		model.Name = "Walker"
+		local root = Instance.new("Part")
+		root.Name = "Torso"
+		root.Size = Vector3.new(0.3, 0.3, 0.3) * METRE
+		root.CFrame = chest
+		root.Anchored = true
+		root.CanCollide = false
+		root.CanQuery = false
+		root.Transparency = 1
+		root.Parent = model
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") and d ~= root then
+				table.insert(limbs, { part = d, offset = root.CFrame:ToObjectSpace(d.CFrame) })
+			end
+		end
+		model.PrimaryPart = root
+		model.Parent = World.nodes()
+		return {
+			model = model,
+			root = root,
+			limbs = limbs,
+			seen = false,
+			frozenUntil = 0,
+			lurchUntil = 0,
+			nextLurch = 0,
+			lastSeenAt = nil,
+			hunting = false,
+		}
+	end
+
+	model = Instance.new("Model")
+	model.Name = "Walker"
 
 	local root = Instance.new("Part")
 	root.Name = "Torso"
 	root.Size = Vector3.new(0.3, 0.3, 0.3) * METRE
-	root.CFrame = Places.cf(point) * CFrame.new(0, MannequinBody.CHEST_HEIGHT * METRE, 0)
+	root.CFrame = chest
 	root.Anchored = true
 	root.CanCollide = false
 	root.Transparency = 1
 	root.Parent = model
 
-	local limbs = {}
 	for _, piece in MannequinBody.PIECES do
 		local part = Instance.new("Part")
 		part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3]) * METRE
@@ -7964,6 +8044,284 @@ return Power
       </Item>
       <Item class="ModuleScript" referent="38">
         <Properties>
+          <string name="Name">Rigs</string>
+          <string name="Source"><![CDATA[--!strict
+--[[
+	Rigs — mannequins that are actually the shape of a person.
+
+	Everything in this building is built out of Roblox's primitives, and for
+	almost everything that is the right call: a wall is a box, a shelf is a
+	box, a wheelie bin is eleven boxes and reads perfectly. A person is not.
+	Ellipsoids and cylinders got the proportions right and the silhouette
+	wrong, and a mannequin whose silhouette is wrong is a mannequin that never
+	passes for somebody standing at the end of a corridor -- which is the only
+	job it has.
+
+	Roblox already ships a human mesh: the R15 character body. So these are
+	real R15 rigs, generated from an empty HumanoidDescription, stripped of
+	everything that makes them look like a player -- the face, the shirt, the
+	pants, the accessories, the name tag, the colours -- and then anchored,
+	posed and painted the flat off-white that shop mannequins are. Shoulders,
+	calves, hands, a head with a jaw. Because it is the actual mesh.
+
+	Two things this file is careful about:
+
+	  1. It never assumes the rig API is there. CreateHumanoidModelFromDescription
+	     is a live-service call that can fail, and the offline test harness has
+	     no such method at all. Every path through here falls back to the
+	     greybox's primitive body, which is the same height and the same
+	     footprint, so a failure is a downgrade and never a hole in the world.
+
+	  2. It never leaves a Humanoid alive. A live Humanoid in a horror game is
+	     a thing that can be damaged, that collides with players, that shows a
+	     health bar, and that walks. These do not move on their own -- the
+	     server moves them, one CFrame at a time, and it owns every part.
+]]
+
+local Players = game:GetService("Players")
+
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Places = require(Shared.Places)
+
+local Rigs = {}
+
+local METRE = Places.METRE
+
+-- Shop mannequin, not a person: flat, cool, and very slightly shiny.
+local SKIN = Color3.fromRGB(198, 193, 183)
+local STAND = Color3.fromRGB(122, 120, 116)
+
+--[[
+	An R15 body is 5.6 studs from the soles to the top of the head by default,
+	which at this project's scale (1 stud = 0.3 m) is 1.68 m. A shop mannequin
+	is 1.85. Scaling the description gets the height without touching any of
+	the proportions.
+]]
+local WANT_METRES = 1.85
+local RIG_METRES = 5.6 * 0.3
+
+local available: boolean? = nil
+
+--[[
+	Is the rig API usable in this place at all?
+
+	Asked once, answered once. A pcall per mannequin on a method that does not
+	exist is thirty pcalls on Night 2 for thirty identical failures.
+]]
+local function rigsWork(): boolean
+	if available ~= nil then
+		return available
+	end
+	local ok = pcall(function()
+		local description = Instance.new("HumanoidDescription")
+		local model = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
+		model:Destroy()
+		description:Destroy()
+	end)
+	available = ok
+	return ok
+end
+
+Rigs.available = rigsWork
+
+--[[
+	Strip everything that says "player" and keep everything that says "body".
+]]
+local function strip(model: Model, skin: Color3)
+	for _, d in model:GetDescendants() do
+		if d:IsA("Decal") or d:IsA("Accessory") or d:IsA("Shirt") or d:IsA("Pants")
+			or d:IsA("ShirtGraphic") or d:IsA("BodyColors") or d:IsA("CharacterMesh")
+			or d:IsA("Sound") or d:IsA("Script") or d:IsA("LocalScript") then
+			d:Destroy()
+		end
+	end
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.CanCollide = false
+			d.CanQuery = false
+			d.CastShadow = false
+			d.Color = skin
+			d.Material = Enum.Material.SmoothPlastic
+			-- The faint sheen on moulded resin. Any more and it reads as glass.
+			d.Reflectance = 0.06
+			d.Massless = true
+		end
+	end
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		--[[
+			The rig is scaled through the Humanoid's scale values before the
+			Humanoid goes, because once it is gone nothing will apply them.
+		]]
+		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+		humanoid.NameDisplayDistance = 0
+		humanoid:Destroy()
+	end
+end
+
+--[[
+	The pose.
+
+	A generated R15 stands in a wide A-pose with its palms turned forward,
+	which is a game character waiting for an animation, not a mannequin. A shop
+	mannequin has its arms down and very slightly out, hanging straight, and
+	that is four CFrame nudges on parts that are already anchored.
+]]
+local ARM_DROP = {
+	LeftUpperArm = -0.20,
+	RightUpperArm = 0.20,
+	LeftLowerArm = -0.10,
+	RightLowerArm = 0.10,
+	LeftHand = -0.06,
+	RightHand = 0.06,
+}
+
+local function pose(model: Model)
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return
+	end
+	for name, roll in ARM_DROP do
+		local part = model:FindFirstChild(name) :: BasePart?
+		if part then
+			-- Rotate the limb about the point it hangs from, not its own centre.
+			local shoulder = part.Position + Vector3.new(0, part.Size.Y / 2, 0)
+			local turn = CFrame.new(shoulder) * CFrame.Angles(0, 0, roll) * CFrame.new(-shoulder)
+			part.CFrame = turn * part.CFrame
+		end
+	end
+end
+
+--[[
+	The stand: a chrome disc and the rod that goes up into the heel. It is half
+	of why a mannequin looks wrong, and a rig standing on nothing looks like a
+	person.
+]]
+local function stand(model: Model, footCFrame: CFrame)
+	local disc = Instance.new("Part")
+	disc.Name = "MannequinBase"
+	disc.Shape = Enum.PartType.Cylinder
+	disc.Size = Vector3.new(0.035, 0.36, 0.36) * METRE
+	disc.CFrame = footCFrame * CFrame.new(0, 0.018 * METRE, 0) * CFrame.Angles(0, 0, math.rad(90))
+	disc.Anchored = true
+	disc.CanCollide = false
+	disc.Color = STAND
+	disc.Material = Enum.Material.Metal
+	disc.Reflectance = 0.2
+	disc.Parent = model
+
+	local rod = Instance.new("Part")
+	rod.Name = "MannequinPost"
+	rod.Shape = Enum.PartType.Cylinder
+	rod.Size = Vector3.new(0.22 * METRE, 0.05 * METRE, 0.05 * METRE)
+	rod.CFrame = footCFrame * CFrame.new(0, 0.12 * METRE, -0.04 * METRE) * CFrame.Angles(0, 0, math.rad(90))
+	rod.Anchored = true
+	rod.CanCollide = false
+	rod.Color = STAND
+	rod.Material = Enum.Material.Metal
+	rod.Parent = model
+end
+
+--[[
+	Build one, standing on `footCFrame` — the point on the floor between its
+	feet, facing the way the CFrame looks. Returns nil if rigs are unavailable,
+	and the caller falls back.
+]]
+function Rigs.build(footCFrame: CFrame, skin: Color3?): Model?
+	if not rigsWork() then
+		return nil
+	end
+	local ok, model = pcall(function()
+		local description = Instance.new("HumanoidDescription")
+		local scale = WANT_METRES / RIG_METRES
+		description.HeightScale = scale
+		description.WidthScale = 1.0
+		description.DepthScale = 1.0
+		description.HeadScale = 0.95
+		description.BodyTypeScale = 0
+		description.ProportionScale = 1
+		local built = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
+		description:Destroy()
+		return built
+	end)
+	if not ok or typeof(model) ~= "Instance" then
+		available = false
+		return nil
+	end
+
+	local rig = model :: Model
+	rig.Name = "Mannequin"
+	strip(rig, skin or SKIN)
+
+	--[[
+		Stand it on the floor. PivotTo puts the model's pivot -- the middle of
+		the HumanoidRootPart, which is at hip height -- where you ask, so the
+		floor point has to be lifted by however far the pivot is above the
+		soles. Measuring it rather than assuming it means a change to the
+		height scale does not silently sink every mannequin into the slab.
+	]]
+	local box, size = rig:GetBoundingBox()
+	local soles = box.Position.Y - size.Y / 2
+	local lift = rig:GetPivot().Position.Y - soles
+	rig:PivotTo(footCFrame * CFrame.new(0, lift, 0))
+
+	pose(rig)
+	stand(rig, footCFrame)
+	for _, d in rig:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+		end
+	end
+	return rig
+end
+
+--[[
+	Swap every mannequin the greybox built for a rig.
+
+	The greybox puts each one in a Model named Mannequin carrying the floor
+	point it stands on and the way it faces. This walks those, builds a rig per
+	model, and destroys the primitives underneath it. One pass, after the
+	building is up, before anybody is let in.
+]]
+function Rigs.replaceStatics(mall: Instance?): number
+	if not mall or not rigsWork() then
+		return 0
+	end
+	local swapped = 0
+	for _, d in mall:GetDescendants() do
+		if d:IsA("Model") and d.Name == "Mannequin" and d:GetAttribute("FootX") ~= nil then
+			local x = d:GetAttribute("FootX") :: number
+			local y = d:GetAttribute("FootY") :: number
+			local z = d:GetAttribute("FootZ") :: number
+			local turn = (d:GetAttribute("Turn") :: number) or 0
+			local skin = Color3.fromRGB(
+				(d:GetAttribute("SkinR") :: number) or 198,
+				(d:GetAttribute("SkinG") :: number) or 193,
+				(d:GetAttribute("SkinB") :: number) or 183)
+			local foot = Places.cf({ x, y, z }) * CFrame.Angles(0, math.rad(turn), 0)
+			local rig = Rigs.build(foot, skin)
+			if rig then
+				rig.Parent = d.Parent
+				d:Destroy()
+				swapped += 1
+			else
+				-- Rigs stopped working part way through. Leave the rest as they
+				-- are rather than half-swapping the building.
+				break
+			end
+		end
+	end
+	return swapped
+end
+
+return Rigs
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="39">
+        <Properties>
           <string name="Name">Scares</string>
           <string name="Source"><![CDATA[--!strict
 --[[
@@ -8415,7 +8773,7 @@ return Scares
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="39">
+      <Item class="ModuleScript" referent="40">
         <Properties>
           <string name="Name">Shift</string>
           <string name="Source"><![CDATA[--!strict
@@ -9334,7 +9692,7 @@ return Shift
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="40">
+      <Item class="ModuleScript" referent="41">
         <Properties>
           <string name="Name">TestPanel</string>
           <string name="Source"><![CDATA[--!strict
@@ -9797,7 +10155,7 @@ return TestPanel
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="41">
+      <Item class="ModuleScript" referent="42">
         <Properties>
           <string name="Name">Tubes</string>
           <string name="Source"><![CDATA[--!strict
@@ -10081,7 +10439,7 @@ return Tubes
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="42">
+      <Item class="ModuleScript" referent="43">
         <Properties>
           <string name="Name">World</string>
           <string name="Source"><![CDATA[--!strict
@@ -10417,11 +10775,11 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="43">
+  <Item class="ServerStorage" referent="44">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="ModuleScript" referent="44">
+    <Item class="ModuleScript" referent="45">
       <Properties>
         <string name="Name">Greybox</string>
         <string name="Source"><![CDATA[--[[
@@ -11458,9 +11816,32 @@ end
 	walk on Night 2 are built by the server at runtime and the two have to be
 	the same object down to the centimetre.
 ]]
+--[[
+	Each one goes in its own Model, named and tagged.
+
+	The greybox builds the primitive body -- and at runtime the server walks
+	these models and swaps every one of them for a real R15 rig, which is an
+	actual human mesh rather than a stack of ellipsoids. See server/Rigs.luau.
+
+	The primitives are not wasted. They are what the offline checkers measure
+	(clearance, walkability, overlap all need a body with a footprint, and
+	none of them can build a rig), and they are the fallback in any place where
+	the rig API is unavailable. Same height, same footprint, same stand.
+]]
 local function mannequin(x, y, z, turn, colour)
 	local c = colour or Color3.fromRGB(196, 190, 178)
+	local model = Instance.new("Model")
+	model.Name = "Mannequin"
+	model:SetAttribute("Turn", turn or 0)
+	model:SetAttribute("SkinR", math.floor(c.R * 255))
+	model:SetAttribute("SkinG", math.floor(c.G * 255))
+	model:SetAttribute("SkinB", math.floor(c.B * 255))
+	model:SetAttribute("FootX", x)
+	model:SetAttribute("FootY", y)
+	model:SetAttribute("FootZ", z)
+
 	local base = at(x, y + MannequinBody.CHEST_HEIGHT, z) * CFrame.Angles(0, math.rad(turn or 0), 0)
+	local first
 	for _, piece in MannequinBody.PIECES do
 		local o = piece.offset
 		local part = P(piece.name, V(piece.size[1], piece.size[2], piece.size[3]),
@@ -11470,7 +11851,12 @@ local function mannequin(x, y, z, turn, colour)
 			part.CFrame = part.CFrame * CFrame.Angles(
 				math.rad(piece.tilt[1]), math.rad(piece.tilt[2]), math.rad(piece.tilt[3]))
 		end
+		part.Parent = model
+		first = first or part
 	end
+	model.PrimaryPart = first
+	model.Parent = root
+	return model
 end
 
 --[[
@@ -15482,7 +15868,7 @@ end
 return Greybox
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="45">
+      <Item class="ModuleScript" referent="46">
         <Properties>
           <string name="Name">Surfaces</string>
           <string name="Source"><![CDATA[--[[
@@ -15878,15 +16264,15 @@ return Surfaces
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="46">
+  <Item class="StarterPlayer" referent="47">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="47">
+    <Item class="StarterPlayerScripts" referent="48">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="48">
+      <Item class="LocalScript" referent="49">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--!strict
@@ -17161,7 +17547,7 @@ print("[Night Shift] client up — night 1, Northlight Galleria")
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="49">
+  <Item class="Workspace" referent="50">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>

@@ -315,6 +315,41 @@ local built, buildError = pcall(World.ensureBuilt)
 if not built then
 	warn(`[Night Shift] the mall did not build: {buildError}`)
 end
+
+--[[
+	And then every mannequin becomes a person-shaped thing.
+
+	The greybox builds each one out of ellipsoids and cylinders, which gets the
+	proportions right and the silhouette wrong -- and a mannequin whose
+	silhouette is wrong never passes, for even half a second, for somebody
+	standing at the end of a corridor, which is the only job it has. Roblox
+	already ships a human mesh in the R15 body, so this swaps them.
+
+	It is deliberately not inside the greybox. The greybox has to run offline,
+	against a stubbed API, for eight geometry checkers that need a body with a
+	real footprint; and the rig call is a live-service one that can fail. So
+	the primitives are built first and are the fallback, and this is a pass
+	over the finished building that upgrades what it can.
+]]
+local Rigs = require(script.Rigs)
+--[[
+	Off the boot path on purpose. Generating a dozen rigs is a live-service
+	call a dozen times, and nothing in the first twenty minutes of Night 1 is
+	in the same room as a mannequin -- so it is not worth a single second of
+	a player standing in a yard waiting for a shop window two rooms away.
+]]
+task.spawn(function()
+	local ok, result = pcall(function()
+		return Rigs.replaceStatics(World.mall())
+	end)
+	if ok and typeof(result) == "number" and result > 0 then
+		print(`[Night Shift] {result} mannequins are R15 rigs`)
+	elseif ok then
+		print("[Night Shift] rigs unavailable here — the mannequins are the greybox bodies")
+	else
+		warn(`[Night Shift] mannequin rigs failed: {result}`)
+	end
+end)
 Case.reset()
 letThemIn()
 

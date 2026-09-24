@@ -28,6 +28,7 @@ local MannequinBody = require(Shared.MannequinBody)
 local SoundBank = require(Shared.SoundBank)
 
 local AttentionService = require(script.Parent.AttentionService)
+local Rigs = require(script.Parent.Rigs)
 local Gaze = require(script.Parent.Gaze)
 local Hud = require(script.Parent.Hud)
 local World = require(script.Parent.World)
@@ -84,21 +85,65 @@ local takenThisNight = 0
 	line.
 ]]
 local function buildWalker(point: { number }, colour: Color3?): Walker
-	local model = Instance.new("Model")
-	model.Name = "Walker"
-
 	local skin = colour or Color3.fromRGB(196, 190, 178)
+	local chest = Places.cf(point) * CFrame.new(0, MannequinBody.CHEST_HEIGHT * METRE, 0)
+
+	--[[
+		A real R15 rig if this place can make one, and the greybox's primitive
+		body if it cannot.
+
+		Both are driven the same way afterwards: an invisible root at chest
+		height, and every part of the body anchored to it by a fixed offset
+		recorded once, here. A physics assembly walking on a Humanoid would
+		pathfind, fall over, push players and cost a solver; these are moved
+		one CFrame at a time by a server that owns all of it.
+	]]
+	local model = Rigs.build(Places.cf(point), skin)
+	local limbs = {}
+
+	if model then
+		model.Name = "Walker"
+		local root = Instance.new("Part")
+		root.Name = "Torso"
+		root.Size = Vector3.new(0.3, 0.3, 0.3) * METRE
+		root.CFrame = chest
+		root.Anchored = true
+		root.CanCollide = false
+		root.CanQuery = false
+		root.Transparency = 1
+		root.Parent = model
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") and d ~= root then
+				table.insert(limbs, { part = d, offset = root.CFrame:ToObjectSpace(d.CFrame) })
+			end
+		end
+		model.PrimaryPart = root
+		model.Parent = World.nodes()
+		return {
+			model = model,
+			root = root,
+			limbs = limbs,
+			seen = false,
+			frozenUntil = 0,
+			lurchUntil = 0,
+			nextLurch = 0,
+			lastSeenAt = nil,
+			hunting = false,
+		}
+	end
+
+	model = Instance.new("Model")
+	model.Name = "Walker"
 
 	local root = Instance.new("Part")
 	root.Name = "Torso"
 	root.Size = Vector3.new(0.3, 0.3, 0.3) * METRE
-	root.CFrame = Places.cf(point) * CFrame.new(0, MannequinBody.CHEST_HEIGHT * METRE, 0)
+	root.CFrame = chest
 	root.Anchored = true
 	root.CanCollide = false
 	root.Transparency = 1
 	root.Parent = model
 
-	local limbs = {}
 	for _, piece in MannequinBody.PIECES do
 		local part = Instance.new("Part")
 		part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3]) * METRE

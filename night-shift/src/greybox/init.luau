@@ -1032,9 +1032,32 @@ end
 	walk on Night 2 are built by the server at runtime and the two have to be
 	the same object down to the centimetre.
 ]]
+--[[
+	Each one goes in its own Model, named and tagged.
+
+	The greybox builds the primitive body -- and at runtime the server walks
+	these models and swaps every one of them for a real R15 rig, which is an
+	actual human mesh rather than a stack of ellipsoids. See server/Rigs.luau.
+
+	The primitives are not wasted. They are what the offline checkers measure
+	(clearance, walkability, overlap all need a body with a footprint, and
+	none of them can build a rig), and they are the fallback in any place where
+	the rig API is unavailable. Same height, same footprint, same stand.
+]]
 local function mannequin(x, y, z, turn, colour)
 	local c = colour or Color3.fromRGB(196, 190, 178)
+	local model = Instance.new("Model")
+	model.Name = "Mannequin"
+	model:SetAttribute("Turn", turn or 0)
+	model:SetAttribute("SkinR", math.floor(c.R * 255))
+	model:SetAttribute("SkinG", math.floor(c.G * 255))
+	model:SetAttribute("SkinB", math.floor(c.B * 255))
+	model:SetAttribute("FootX", x)
+	model:SetAttribute("FootY", y)
+	model:SetAttribute("FootZ", z)
+
 	local base = at(x, y + MannequinBody.CHEST_HEIGHT, z) * CFrame.Angles(0, math.rad(turn or 0), 0)
+	local first
 	for _, piece in MannequinBody.PIECES do
 		local o = piece.offset
 		local part = P(piece.name, V(piece.size[1], piece.size[2], piece.size[3]),
@@ -1044,7 +1067,12 @@ local function mannequin(x, y, z, turn, colour)
 			part.CFrame = part.CFrame * CFrame.Angles(
 				math.rad(piece.tilt[1]), math.rad(piece.tilt[2]), math.rad(piece.tilt[3]))
 		end
+		part.Parent = model
+		first = first or part
 	end
+	model.PrimaryPart = first
+	model.Parent = root
+	return model
 end
 
 --[[

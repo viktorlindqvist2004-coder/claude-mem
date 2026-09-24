@@ -51,6 +51,7 @@ ORDER = [
     ("Power", "src/server/Power.luau"),
     ("AttentionService", "src/server/AttentionService.luau"),
     ("Gaze", "src/server/Gaze.luau"),
+    ("Rigs", "src/server/Rigs.luau"),
     ("Case", "src/server/Case.luau"),
     ("Mannequins", "src/server/Mannequins.luau"),
     ("Customers", "src/server/Customers.luau"),

@@ -2,8 +2,16 @@
 --[[
 	CaseFile — the mystery, as data.
 
-	Seven suspects, twenty-two clues. The crew wins by naming the Night Manager to
-	DS Calder and backing it with three clues they actually found.
+	Four suspects, twenty-two clues. The crew wins by naming the Night Manager to
+	DS Calder and backing it with two clues they actually found.
+
+	It was seven suspects and three clues. Seven names on a board is not a harder
+	mystery than four, it is a longer list -- three of them were eliminated by
+	evidence the crew had no reason to connect to them, so in play they were not
+	suspects at all, they were noise on the one screen that is supposed to make
+	the week make sense. What is left is the four people this story is actually
+	about: the man who bought the clock, the guard the police blamed, the
+	supervisor who wrote the rules, and the man who wound it.
 
 	Two rules this file exists to enforce:
 
@@ -20,8 +28,7 @@
 
 local CaseFile = {}
 
-export type SuspectId =
-	"wren" | "halvard" | "walt" | "kask" | "vale" | "nora" | "the_building"
+export type SuspectId = "wren" | "halvard" | "walt" | "nora"
 
 export type Suspect = {
 	id: SuspectId,
@@ -61,36 +68,12 @@ CaseFile.SUSPECTS = {
 		eliminationKind = "employment record",
 	},
 	{
-		id = "kask",
-		name = "Ivor Kask",
-		role = "\"Night Manager\", six weeks in 1989",
-		summary = "On the payroll for six weeks in spring 1989, paid in cash, no address on file. Out of focus in every copy of the staff photograph. The dates line up exactly with the first complaints.",
-		eliminatedBy = "C13",
-		eliminationKind = "physical object",
-	},
-	{
-		id = "vale",
-		name = "Margaret Vale",
-		role = "Centre Manager, 1986–1998",
-		summary = "Buried the complaints, fitted the lock, redated the 1998 incident report, kept the night rota running after four people vanished off it, and deleted Floor 3 from the directory in 1987.",
-		eliminatedBy = "VALE_STATEMENT",
-		eliminationKind = "living witness",
-	},
-	{
 		id = "nora",
 		name = "Nora",
 		role = "Checkout, 1996–1998, missing",
-		summary = "Knew more than a cashier should. Prepared for something. The new lines on her rule sheet are signed \"— N.\", and the Night Manager occasionally defends her.",
+		summary = "Knew more than a cashier should. Wrote the three rules, and wrote them in a hand that means she had seen all three happen. The Night Manager defends her, which nobody asked him to do.",
 		eliminatedBy = "C09", -- against C02
 		eliminationKind = "handwriting",
-	},
-	{
-		id = "the_building",
-		name = "Nobody. The building itself.",
-		role = "—",
-		summary = "Everything that has happened here is the mall. There is no person to name.",
-		eliminatedBy = "C16",
-		eliminationKind = "Calder: \"A building doesn't keep a rota.\"",
 	},
 }
 
@@ -130,19 +113,16 @@ CaseFile.CLUES = {
 }
 
 -- The clues that actually support the answer. Calder accepts an accusation of Wren
--- backed by any three of these; she has no set of three for anybody else, which is
--- what makes working down the board a bad strategy rather than a forbidden one.
+-- backed by any two of these; she has no pair for anybody else, which is what makes
+-- working down the board a bad strategy rather than a forbidden one.
 CaseFile.SUPPORTING = {
 	wren = { "C18", "C19", "C21", "C22" },
 	halvard = {},
 	walt = {},
-	kask = {},
-	vale = {},
 	nora = {},
-	the_building = {},
 }
 
-CaseFile.REQUIRED_SUPPORTING_CLUES = 3
+CaseFile.REQUIRED_SUPPORTING_CLUES = 2
 CaseFile.ANSWER = "wren" :: SuspectId
 
 function CaseFile.getClue(id: string): Clue?

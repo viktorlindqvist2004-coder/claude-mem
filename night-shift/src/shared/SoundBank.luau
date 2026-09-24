@@ -289,6 +289,35 @@ SoundBank.TASK_DONE = { caption = "[done]", id = "rbxasset://sounds/pop_mid_up_1
 	scarcity is the entire reason they work. The transient carries the fright; a
 	sustained roar just gets the headphones taken off.
 ]]
+--[[
+	A mannequin moving.
+
+	One hard, dry knock per lurch, at the mannequin, quiet and very short. It is
+	the single most important sound in Night 2 and it has been missing: they
+	moved in complete silence, which sounds like nothing happening. A knock
+	behind you that was not there a second ago is worth more than any amount of
+	animation, because you have to turn round to find out, and turning round is
+	the whole game.
+]]
+SoundBank.DUMMY_STEP = {
+	caption = "[something knocks, close]",
+	id = "rbxasset://sounds/snap.mp3",
+	volume = 0.5,
+	speed = 0.55,
+	rollOffMinMetres = 2,
+	rollOffMaxMetres = 26,
+}
+
+-- The moment one of them is suddenly much closer than it was.
+SoundBank.DUMMY_CLOSE = {
+	caption = "[a sharp scrape, very close]",
+	id = "rbxasset://sounds/metal.ogg",
+	volume = 0.45,
+	speed = 1.9,
+	rollOffMinMetres = 1,
+	rollOffMaxMetres = 14,
+}
+
 SoundBank.STARTLE_LARGE = { caption = "[BANG]", id = "rbxasset://sounds/hit.wav", volume = 1.0, speed = 0.45 }
 SoundBank.STARTLE_SMALL = { caption = "[a sharp knock, close]", id = "rbxasset://sounds/snap.mp3", volume = 0.55, speed = 0.8 }
 SoundBank.POWER_CUT = { caption = "[everything stops]", id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.35 }

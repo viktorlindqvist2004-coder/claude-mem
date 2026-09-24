@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "6226920"
-Build.LAST_COMMIT = "7dbcb18"
-Build.SUMMARY = "Find the things inside other things, and take the wheel out of the atrium"
-Build.WHEN = "23 Sep 19:12"
+Build.COMMIT = "1a061cb"
+Build.LAST_COMMIT = "5b7b3a7"
+Build.SUMMARY = "Take the fountain out, quieten the tap and the boots, stand the pallets up"
+Build.WHEN = "24 Sep 00:43"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -58,8 +58,16 @@ return Build
 --[[
 	CaseFile — the mystery, as data.
 
-	Seven suspects, twenty-two clues. The crew wins by naming the Night Manager to
-	DS Calder and backing it with three clues they actually found.
+	Four suspects, twenty-two clues. The crew wins by naming the Night Manager to
+	DS Calder and backing it with two clues they actually found.
+
+	It was seven suspects and three clues. Seven names on a board is not a harder
+	mystery than four, it is a longer list -- three of them were eliminated by
+	evidence the crew had no reason to connect to them, so in play they were not
+	suspects at all, they were noise on the one screen that is supposed to make
+	the week make sense. What is left is the four people this story is actually
+	about: the man who bought the clock, the guard the police blamed, the
+	supervisor who wrote the rules, and the man who wound it.
 
 	Two rules this file exists to enforce:
 
@@ -76,8 +84,7 @@ return Build
 
 local CaseFile = {}
 
-export type SuspectId =
-	"wren" | "halvard" | "walt" | "kask" | "vale" | "nora" | "the_building"
+export type SuspectId = "wren" | "halvard" | "walt" | "nora"
 
 export type Suspect = {
 	id: SuspectId,
@@ -117,36 +124,12 @@ CaseFile.SUSPECTS = {
 		eliminationKind = "employment record",
 	},
 	{
-		id = "kask",
-		name = "Ivor Kask",
-		role = "\"Night Manager\", six weeks in 1989",
-		summary = "On the payroll for six weeks in spring 1989, paid in cash, no address on file. Out of focus in every copy of the staff photograph. The dates line up exactly with the first complaints.",
-		eliminatedBy = "C13",
-		eliminationKind = "physical object",
-	},
-	{
-		id = "vale",
-		name = "Margaret Vale",
-		role = "Centre Manager, 1986–1998",
-		summary = "Buried the complaints, fitted the lock, redated the 1998 incident report, kept the night rota running after four people vanished off it, and deleted Floor 3 from the directory in 1987.",
-		eliminatedBy = "VALE_STATEMENT",
-		eliminationKind = "living witness",
-	},
-	{
 		id = "nora",
 		name = "Nora",
 		role = "Checkout, 1996–1998, missing",
-		summary = "Knew more than a cashier should. Prepared for something. The new lines on her rule sheet are signed \"— N.\", and the Night Manager occasionally defends her.",
+		summary = "Knew more than a cashier should. Wrote the three rules, and wrote them in a hand that means she had seen all three happen. The Night Manager defends her, which nobody asked him to do.",
 		eliminatedBy = "C09", -- against C02
 		eliminationKind = "handwriting",
-	},
-	{
-		id = "the_building",
-		name = "Nobody. The building itself.",
-		role = "—",
-		summary = "Everything that has happened here is the mall. There is no person to name.",
-		eliminatedBy = "C16",
-		eliminationKind = "Calder: \"A building doesn't keep a rota.\"",
 	},
 }
 
@@ -186,19 +169,16 @@ CaseFile.CLUES = {
 }
 
 -- The clues that actually support the answer. Calder accepts an accusation of Wren
--- backed by any three of these; she has no set of three for anybody else, which is
--- what makes working down the board a bad strategy rather than a forbidden one.
+-- backed by any two of these; she has no pair for anybody else, which is what makes
+-- working down the board a bad strategy rather than a forbidden one.
 CaseFile.SUPPORTING = {
 	wren = { "C18", "C19", "C21", "C22" },
 	halvard = {},
 	walt = {},
-	kask = {},
-	vale = {},
 	nora = {},
-	the_building = {},
 }
 
-CaseFile.REQUIRED_SUPPORTING_CLUES = 3
+CaseFile.REQUIRED_SUPPORTING_CLUES = 2
 CaseFile.ANSWER = "wren" :: SuspectId
 
 function CaseFile.getClue(id: string): Clue?
@@ -1524,30 +1504,62 @@ NightScript.SPEAKER_OF = {
 	holding that question from the first minute.
 ]]
 NightScript.CARDS = {
+	--[[
+		Five cards, one story, and the win condition on every one of them.
+
+		They used to describe the night's mood. A player who has just walked
+		into a dark building does not need mood, they can see the building --
+		they need to know what they are doing here and how it ends, and they
+		need to be told it again every night, because a horror game is played in
+		twenty-minute sittings a week apart.
+
+		So each card is three things: where the story has got to, the standing
+		goal, and tonight's job in one line. Nothing else.
+	]]
 	[1] = {
 		place = "NORTHLIGHT GALLERIA — NORTHMOOR",
-		when = "TONIGHT · 22:00",
-		what = "You are the new night crew.\nThe centre closed to the public in 1998.\nIt has never, technically, closed since.",
+		when = "NIGHT 1 OF 5 · 22:00",
+		what = "Four night staff clocked in here on 14 November 1998.\n"
+			.. "None of them clocked out. The centre shut that week.\n\n"
+			.. "Northmoor Police have reopened it. You have five nights to find\n"
+			.. "out who took them, and on the last night you tell DS Calder.\n\n"
+			.. "TONIGHT: do the jobs. Read the list in the locker — three rules,\n"
+			.. "and R shows them to you anywhere after that.",
 	},
 	[2] = {
 		place = "NORTHLIGHT GALLERIA — SECOND NIGHT",
-		when = "22:00",
-		what = "Four people clocked in here on 14 November 1998.\nNone of them clocked out.\nThe man on the tannoy was already working here.",
+		when = "NIGHT 2 OF 5 · 22:00",
+		what = "There is a man on the tannoy. He is helpful, he knows this\n"
+			.. "building better than anyone alive, and he is on no staff list\n"
+			.. "since it was built.\n\n"
+			.. "Five nights. Find out who took them. Tell Calder on the last.\n\n"
+			.. "TONIGHT: the shop floor, and Rule 2.",
 	},
 	[3] = {
 		place = "NORTHLIGHT GALLERIA — THIRD NIGHT",
-		when = "22:00",
-		what = "Somebody has been adding lines to Nora's list.\nIt is not her handwriting.\nFind out whose.",
+		when = "NIGHT 3 OF 5 · 22:00",
+		what = "The centre has been shut for twenty-eight years.\n"
+			.. "Tonight there are customers.\n\n"
+			.. "Five nights. Find out who took them. Tell Calder on the last.\n\n"
+			.. "TONIGHT: work the register, and read what Walt filed in 1998.",
 	},
 	[4] = {
 		place = "NORTHLIGHT GALLERIA — FOURTH NIGHT",
-		when = "22:00 · NO MAINS",
-		what = "He is not in the office.\nHe is not on the cameras.\nThere is a floor that is on no directory in this building.",
+		when = "NIGHT 4 OF 5 · 22:00 · NO MAINS",
+		what = "The clock in the atrium was not bought new. It came out of\n"
+			.. "Northmoor Station when they closed it, and something came with it.\n\n"
+			.. "Five nights. Find out who took them. Tell Calder on the last.\n\n"
+			.. "TONIGHT: get the power back, and find the floor that is on no\n"
+			.. "directory in this building.",
 	},
 	[5] = {
 		place = "NORTHLIGHT GALLERIA — LAST NIGHT",
-		when = "22:00 · CLOSING",
-		what = "Put the four of them back where they worked.\nOpen the clock.\nThen tell Calder who it is.",
+		when = "NIGHT 5 OF 5 · 22:00 · CLOSING",
+		what = "You know what he is. Tonight you prove who.\n\n"
+			.. "DS Calder is on the radio at the end of it. Give her one name\n"
+			.. "and two things you found in this building.\n\n"
+			.. "TONIGHT: put the four name tags back, open the clock, hold on\n"
+			.. "through the strike.",
 	},
 }
 
@@ -1720,6 +1732,20 @@ return Places
 --[[
 	RuleBook — Nora's list, as data.
 
+	Three rules. There were eighteen.
+
+	Eighteen rules is not a harder game than three, it is a vaguer one. Nobody
+	holds eighteen conditional clauses in their head at four in the morning, so
+	nobody was playing by any of them -- they were read once on Night 1, filed
+	under "atmosphere", and every scare after that arrived as something
+	arbitrary happening rather than as a rule you had just broken. A rule you
+	cannot recall is not a rule, it is set dressing.
+
+	So: one rule per thing in this building that can hurt you, and nothing else.
+	The voice. The mannequins. The clock. Each one is a single sentence, each
+	one names the thing it is about, and each one is on a sheet the crew carry
+	and can open with one key whenever they like.
+
 	Three properties every rule in here has to keep:
 
 	  1. It is verifiable in the world. No rule is ever about something the player
@@ -1740,180 +1766,62 @@ type Rule = Types.Rule
 local RuleBook = {}
 
 RuleBook.SHEET_HEADER = "RULES FOR NIGHT STAFF"
-RuleBook.SHEET_FOOTER = "keep this here. don't take it home. — N."
+RuleBook.SHEET_FOOTER = "Three. That's all of them. Keep it on you. — N."
 
 RuleBook.RULES = {
-	{
-		id = "clock_in",
-		number = "1",
-		text = "Clock in at 22:00. If the time clock says 3:33, do not clock in. Go home and come back tomorrow.",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "Player interacts with the time clock",
-		violationSeverity = "major",
-	},
-	{
-		id = "music_changes",
-		number = "2",
-		text = "The music is a 90-minute tape. If a song changes early, stand still until the next one starts. Don't walk during a song you don't know.",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "Muzak loop plays an unscheduled track change",
-		complianceWindowSeconds = 22,
-		violationSeverity = "minor",
-	},
-	{
-		id = "no_third_floor",
-		number = "3",
-		--[[
-			This used to be about a lift, and there is no lift any more -- an
-			escalator and a lift twelve metres apart is one circulation core
-			too many, and the escalator is the one you can see the first floor
-			from. The rule is unchanged in what it means: it hangs on the
-			stair behind the food court, which is the thing Night 4 actually
-			sends somebody up.
-		]]
-		text = "There is no third floor. The stair behind the food court doesn't go anywhere — if you find yourself on it, come back down.",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "A stair appears behind the food court",
-		violationSeverity = "major",
-	},
+	--[[
+		The voice. It is somebody you know, from a room you have just left, and
+		the only defence is that it needs you to answer.
+	]]
 	{
 		id = "stockroom_name",
-		number = "4",
-		text = "If someone calls your name from the stockroom, don't answer. Answering twice is worse than answering once.",
+		number = "1",
+		text = "If something calls your name, don't answer it. Not once, not to tell it to stop.",
 		provenance = "nora",
 		appearsOnNight = 1,
-		trigger = "A voice calls a specific player's name from the stockroom",
+		trigger = "A voice says a player's name from an adjacent room",
 		complianceWindowSeconds = 12,
 		violationSeverity = "major",
 	},
+
+	--[[
+		The mannequins. The rule is the mechanic said out loud: they move when
+		they are not being looked at, so the rule is do not stop looking.
+	]]
 	{
-		id = "fitting_mirrors",
-		number = "5",
-		text = "The fitting room mirrors are fine.",
-		provenance = "nora_struck", -- "They are not. Corrected 12 Oct."
-		appearsOnNight = 1,
-		trigger = "—",
-		violationSeverity = "none",
-	},
-	{
-		id = "count_mannequins",
-		number = "6",
-		text = "Count the mannequins when you start and when you finish. The two numbers should match. They will not always match.",
+		id = "watch_the_dummies",
+		number = "2",
+		text = "Never turn your back on a mannequin. They only move when nobody is looking, and somebody is always not looking.",
 		provenance = "nora",
 		appearsOnNight = 1,
-		trigger = "Player counts the window displays",
-		violationSeverity = "none",
-	},
-	{
-		id = "ask_him_the_time",
-		number = "7",
-		text = "If he asks you to go down to the basement, ask him what time it is first. He will not tell you.",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "The Night Manager requests a trip to the basement",
-		violationSeverity = "none", -- this one is evidence, not a hazard
-	},
-	{
-		id = "take_nothing_home",
-		number = "8",
-		text = "Don't take anything home. Not a pen, not a receipt.",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "Player carries a mall item past the entrance at 06:00",
+		trigger = "A mannequin closes on a player who is not looking at it",
 		violationSeverity = "major",
 	},
+
+	--[[
+		The clock. It ticks every two seconds all night, from anywhere in the
+		building, and the one thing it has never done is stop.
+	]]
 	{
-		id = "torn",
-		number = "9",
-		text = "(torn away)",
-		provenance = "torn",
-		appearsOnNight = 1,
-		trigger = "—",
-		violationSeverity = "none",
-	},
-	{
-		id = "escalator",
-		number = "10",
-		text = "If you can hear the escalator, you're near the escalator.",
-		provenance = "nora_struck", -- "The escalators have been off since 1991."
-		appearsOnNight = 1,
-		trigger = "—",
-		violationSeverity = "none",
-	},
-	{
-		id = "shutters_before_two",
-		number = "11",
-		text = "Pull the shutters before 02:00. After 02:00 they don't keep anything out, they keep you in.",
+		id = "the_clock_stops",
+		number = "3",
+		text = "The clock ticks all night. If it ever stops, stand still until it starts again. Don't walk, don't talk, don't turn round.",
 		provenance = "nora",
 		appearsOnNight = 1,
-		trigger = "02:00 passes with any shutter open",
+		trigger = "The clock stops ticking",
+		complianceWindowSeconds = 20,
 		violationSeverity = "major",
-	},
-	{
-		id = "read_it_again",
-		number = "12",
-		text = "He will tell you I'm a liar. Read this list again tomorrow and see whether it's changed. It changes.",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "—",
-		violationSeverity = "none",
-	},
-	{
-		id = "unfinished",
-		number = "13",
-		text = "If the clock ever starts again,",
-		provenance = "nora",
-		appearsOnNight = 1,
-		trigger = "Night 5: the Great Clock ticks",
-		violationSeverity = "none",
 	},
 }
 
--- The Night Manager's insertions. Each one argues for compliance with him, and
--- each one appears the night before it matters.
-RuleBook.FORGED = {
-	{
-		id = "forged_red_collar",
-		number = "12b",
-		text = "The red collar is only a collar. Put her back with the others.",
-		provenance = "forged",
-		appearsOnNight = 2,
-		trigger = "Night 2, 04:00",
-		violationSeverity = "none",
-	},
-	{
-		id = "forged_rule_seven_joke",
-		number = "7b",
-		text = "Rule 7 was a joke between friends. Don't be rude to management.",
-		provenance = "forged",
-		appearsOnNight = 3,
-		trigger = "Night 3, 05:00",
-		violationSeverity = "none",
-	},
-	{
-		id = "forged_staff_only",
-		number = "3b",
-		text = "Floor 3 is staff only. You are staff now.",
-		provenance = "forged",
-		appearsOnNight = 4,
-		trigger = "Night 4, 04:00",
-		violationSeverity = "none",
-	},
-	{
-		-- He signs this one. He gets her initial right and her handwriting wrong,
-		-- and that is the last tell in the game.
-		id = "forged_signed",
-		number = "14",
-		text = "The clock is the only thing keeping this place standing. — N.",
-		provenance = "forged",
-		appearsOnNight = 5,
-		trigger = "Night 5, on entering the staff room",
-		violationSeverity = "none",
-	},
-}
+--[[
+	Nothing. There were four forged lines here that the Night Manager added to
+	the sheet as the week went on, and "the list changes, read it again" is a
+	good idea in a game with a list short enough to notice a change in. With
+	eighteen entries nobody noticed, and with three the beat is better spent
+	elsewhere.
+]]
+RuleBook.FORGED = {}
 
 function RuleBook.getById(id: string): Rule?
 	for _, rule in RuleBook.RULES do
@@ -2631,6 +2539,35 @@ SoundBank.TASK_DONE = { caption = "[done]", id = "rbxasset://sounds/pop_mid_up_1
 	scarcity is the entire reason they work. The transient carries the fright; a
 	sustained roar just gets the headphones taken off.
 ]]
+--[[
+	A mannequin moving.
+
+	One hard, dry knock per lurch, at the mannequin, quiet and very short. It is
+	the single most important sound in Night 2 and it has been missing: they
+	moved in complete silence, which sounds like nothing happening. A knock
+	behind you that was not there a second ago is worth more than any amount of
+	animation, because you have to turn round to find out, and turning round is
+	the whole game.
+]]
+SoundBank.DUMMY_STEP = {
+	caption = "[something knocks, close]",
+	id = "rbxasset://sounds/snap.mp3",
+	volume = 0.5,
+	speed = 0.55,
+	rollOffMinMetres = 2,
+	rollOffMaxMetres = 26,
+}
+
+-- The moment one of them is suddenly much closer than it was.
+SoundBank.DUMMY_CLOSE = {
+	caption = "[a sharp scrape, very close]",
+	id = "rbxasset://sounds/metal.ogg",
+	volume = 0.45,
+	speed = 1.9,
+	rollOffMinMetres = 1,
+	rollOffMaxMetres = 14,
+}
+
 SoundBank.STARTLE_LARGE = { caption = "[BANG]", id = "rbxasset://sounds/hit.wav", volume = 1.0, speed = 0.45 }
 SoundBank.STARTLE_SMALL = { caption = "[a sharp knock, close]", id = "rbxasset://sounds/snap.mp3", volume = 0.55, speed = 0.8 }
 SoundBank.POWER_CUT = { caption = "[everything stops]", id = "rbxasset://sounds/switch3.wav", volume = 0.8, speed = 0.35 }
@@ -3434,6 +3371,10 @@ local World = require(script.Parent.World)
 
 local Atmos = {}
 
+-- The clock's movement, and whether it is running. See Rule 3.
+local clockAnchor: BasePart? = nil
+local clockTicking = false
+
 local emitters: { Sound } = {}
 local muzak: { Sound } = {}
 local muzakPlaying = true
@@ -3692,10 +3633,22 @@ function Atmos.build()
 		nothing else in it, and it is the sound the whole building is arranged
 		around — every other emitter is kept out of earshot of it deliberately.
 	]]
-	local clockAnchor = anchorAt("ClockMovement", { 0, 4.0, 0 })
+	--[[
+		The tick, and the ability to stop it.
+
+		Rule 3 is "if the clock stops, stand still", which only works if the
+		clock can stop -- and if stopping it is the loudest thing that happens
+		all night without making a sound. Every two seconds for four hours
+		teaches the ear the interval; the fourth second of the first missing
+		tick is the scare.
+	]]
+	clockAnchor = anchorAt("ClockMovement", { 0, 4.0, 0 })
+	clockTicking = true
 	task.spawn(function()
-		while clockAnchor.Parent do
-			SoundBank.play(SoundBank.CLOCK_TICK, clockAnchor, 0.03)
+		while clockAnchor and clockAnchor.Parent do
+			if clockTicking then
+				SoundBank.play(SoundBank.CLOCK_TICK, clockAnchor, 0.03)
+			end
 			task.wait(2)
 		end
 	end)
@@ -3709,7 +3662,29 @@ function Atmos.build()
 		.. (if SoundBank.LOOPS_ENABLED then "" else " — room tone is off until the loops are recorded"))
 end
 
--- Rule 2. The tape changes track early, and then there is nothing at all.
+--[[
+	Rule 3. The clock stops.
+
+	Nothing plays. That is the whole event: a building whose only constant is a
+	tick every two seconds goes completely silent, and every player notices at
+	the same moment from wherever they are standing. The muzak goes with it,
+	because a stopped clock over a running tape is two states, not one.
+]]
+function Atmos.clockStops()
+	clockTicking = false
+	Atmos.setMuzak(false)
+end
+
+function Atmos.clockResumes(powerOn: boolean?)
+	clockTicking = true
+	Atmos.setMuzak(powerOn == true)
+end
+
+function Atmos.clockIsTicking(): boolean
+	return clockTicking
+end
+
+-- The tape changes track early, and then there is nothing at all.
 function Atmos.tapeSkips()
 	Hud.caption(SoundBank.MUZAK_TRACK_CHANGE.caption or "[the tape changes track]")
 	local anchor = World.nodes():FindFirstChild("CeilingSpeaker1")
@@ -4979,6 +4954,13 @@ type Walker = {
 	limbs: { { part: BasePart, offset: CFrame } },
 	seen: boolean,
 	frozenUntil: number,
+	-- A lurch is a burst of movement and then a pause. These three are what
+	-- makes it a lurch rather than a glide. See Mannequins.start.
+	lurchUntil: number,
+	nextLurch: number,
+	-- Where it stood the last time somebody looked at it, so that looking away
+	-- and looking back can be measured in metres.
+	lastSeenAt: Vector3?,
 }
 
 local walkers: { Walker } = {}
@@ -5026,7 +5008,16 @@ local function buildWalker(point: { number }, colour: Color3?): Walker
 	model.PrimaryPart = root
 	model.Parent = World.nodes()
 
-	return { model = model, root = root, limbs = limbs, seen = false, frozenUntil = 0 }
+	return {
+		model = model,
+		root = root,
+		limbs = limbs,
+		seen = false,
+		frozenUntil = 0,
+		lurchUntil = 0,
+		nextLurch = 0,
+		lastSeenAt = nil,
+	}
 end
 
 --[[
@@ -5087,11 +5078,11 @@ local function down(player: Player)
 		humanoid.JumpPower = 0
 	end
 	local rescuePoint = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	Hud.effect("startle", { shake = 1.0, flash = true, large = true })
+	Hud.effect("startle", { shake = 1.8, flash = true, large = true })
 	Hud.effect("downed", { who = player.Name })
 	-- Positional, so the rest of the crew know which room it happened in.
 	if rescuePoint then
-		SoundBank.play(SoundBank.STARTLE_SMALL, rescuePoint, 0.1)
+		SoundBank.play(SoundBank.STARTLE_LARGE, rescuePoint)
 		Hud.caption(`[{player.DisplayName} goes down]`, Places.roomAt(rescuePoint.Position))
 	end
 
@@ -5166,17 +5157,85 @@ function Mannequins.start()
 		return
 	end
 	takenThisNight = 0
+	--[[
+		They lurch. They do not glide.
+
+		The old loop moved every unobserved mannequin a constant distance every
+		frame, which is a thing sliding towards you at walking pace -- and a
+		constant velocity is the least frightening motion there is, because
+		after two seconds of it you know exactly where it will be for the rest
+		of the night. You can back away from it forever.
+
+		A lurch is a short burst of much faster movement and then a long stop.
+		Same average speed; completely different animal. You look away for a
+		second and a half and it has either not moved at all or it has covered
+		four metres, and you cannot tell which until you turn round. That is the
+		whole horror of the thing and the old loop threw it away.
+
+		Three more things the silence was costing:
+
+		  * Each lurch knocks. Quiet, dry, positional, at the mannequin. It is
+		    the only warning you get and it comes from behind you.
+		  * Looking back at one that has closed on you while you were not
+		    looking plays a scrape and shakes the screen, scaled to how far it
+		    came. Two metres is a flinch. Six is not.
+		  * A frozen one turns to face whoever is looking at it. It does not
+		    move -- it is being observed, so it cannot -- but the thing you are
+		    staring at is staring back, and it was not a moment ago.
+	]]
 	connection = RunService.Heartbeat:Connect(function(delta)
-		local speed = AttentionService.entitySpeed() * METRE * delta
+		local now = os.clock()
+		local base = AttentionService.entitySpeed() * METRE
 		for _, walker in walkers do
 			if not walker.root.Parent then
 				continue
 			end
-			if os.clock() < walker.frozenUntil then
+			if now < walker.frozenUntil then
 				continue
 			end
+
 			if observed(walker) then
+				--[[
+					Seen, so it stops -- and turns its head to whoever is
+					looking. Then the reckoning: how far did it come while
+					nobody was watching?
+				]]
+				if not walker.seen then
+					local came = if walker.lastSeenAt
+						then (walker.root.Position - walker.lastSeenAt).Magnitude / METRE
+						else 0
+					if came > 1.2 then
+						SoundBank.play(SoundBank.DUMMY_CLOSE, walker.root)
+						local near = nearestTarget(walker)
+						local distance = if near
+							then (near.Position - walker.root.Position).Magnitude / METRE
+							else 99
+						Hud.effect("startle", {
+							shake = math.clamp(came / 7, 0.15, 0.85),
+							flash = false,
+							large = distance < 4,
+						})
+						if distance < 5 then
+							Hud.caption("[it is much closer than it was]",
+								Places.roomAt(walker.root.Position))
+						end
+					end
+				end
 				walker.seen = true
+				walker.lastSeenAt = walker.root.Position
+				walker.lurchUntil = 0
+				walker.nextLurch = now + math.random(30, 110) / 100
+
+				local watcher = nearestTarget(walker)
+				if watcher then
+					walker.root.CFrame = CFrame.lookAt(
+						walker.root.Position,
+						Vector3.new(watcher.Position.X, walker.root.Position.Y, watcher.Position.Z)
+					)
+					for _, limb in walker.limbs do
+						limb.part.CFrame = walker.root.CFrame * limb.offset
+					end
+				end
 				continue
 			end
 			walker.seen = false
@@ -5195,10 +5254,32 @@ function Mannequins.start()
 					end
 				end
 				-- It does not follow you down. It goes back to standing.
-				walker.frozenUntil = os.clock() + 8
+				walker.frozenUntil = now + 8
 				continue
 			end
-			-- No pathfinding: it walks at you in a straight line, and the walls
+
+			--[[
+				Between lurches it is a mannequin. It does not creep, it does
+				not drift, it does not do anything at all -- which is what makes
+				the next four metres so hard to believe.
+			]]
+			if now < walker.nextLurch then
+				continue
+			end
+			if now >= walker.lurchUntil then
+				-- Starting one. The knock is the whole warning system.
+				walker.lurchUntil = now + math.random(28, 55) / 100
+				SoundBank.play(SoundBank.DUMMY_STEP, walker.root)
+			end
+
+			--[[
+				Four times the walking speed for a third of a second, then a
+				stop of between a third of a second and a second and a half. On
+				average that is slower than the old constant walk. It does not
+				feel slower. It never will.
+			]]
+			local speed = base * 4.0 * delta
+			-- No pathfinding: it comes at you in a straight line, and the walls
 			-- are what makes that frightening rather than trivial.
 			local step = flat.Unit * math.min(speed, flat.Magnitude)
 			walker.root.CFrame = CFrame.lookAt(
@@ -5207,6 +5288,10 @@ function Mannequins.start()
 			)
 			for _, limb in walker.limbs do
 				limb.part.CFrame = walker.root.CFrame * limb.offset
+			end
+
+			if now >= walker.lurchUntil then
+				walker.nextLurch = now + math.random(35, 150) / 100
 			end
 		end
 	end)
@@ -5695,7 +5780,6 @@ Night.beats = {
 			ctx.say(S.shutter_deadline_met)
 		else
 			ctx.fail("pull_shutters", "Too late. They don't keep anything out after two.")
-			ctx.violation("shutters_before_two")
 			ctx.say(S.shutter_deadline_missed)
 		end
 	end },
@@ -6041,8 +6125,13 @@ Night.beats = {
 				end
 			end)
 		end
-		local rule = ctx.rule("forged_red_collar")
-		ctx.question("Ask her who wrote rule 12b", function()
+		--[[
+			Rule 2 is the mannequins, and he is about to tell you it is not
+			about the mannequins. He is the only person in this building who
+			would know.
+		]]
+		local rule = ctx.rule("watch_the_dummies")
+		ctx.question("Ask him why rule 2 exists", function()
 			ctx.question(nil, nil)
 			ctx.say(S.sheet_changed)
 			ctx.effect("contradiction", { rule = rule.number, text = rule.text })
@@ -6578,7 +6667,9 @@ local function office(ctx)
 			ctx.sheet(player, "ROTA — THIS WEEK", lines)
 
 			ctx.say(S.the_rota)
-			local rule = ctx.rule("read_it_again")
+			-- Rule 3 is the clock. He has just dated a rota in a building
+			-- whose clock has read 3:33 since the night you started.
+			local rule = ctx.rule("the_clock_stops")
 			ctx.effect("contradiction", { rule = rule.number, text = rule.text })
 			ctx.question("Ask him when he typed it", function()
 				ctx.question(nil, nil)
@@ -8408,10 +8499,22 @@ end
 -- ── Rule helpers the nights reuse ───────────────────────────────────────────
 
 --[[
-	Rule 2. The tape changes track early and you stand still until the next one
-	starts. Standing still: nothing happens, and the nothing is very long.
-	Walking: the fittings ahead of the walker go out one at a time, down the
-	corridor, which is the only punishment in the game you can watch arriving.
+	Rule 3. The clock stops, and you stand still until it starts again.
+
+	This used to be Rule 2 and it used to be about the music: a 90-minute tape
+	skipped a track and you froze until the next one began. The mechanic was
+	always the best one in the game and it was hung on the worst peg -- nobody
+	can tell a song they do not know from a song that started early, in a
+	building where the tape is inaudible anyway.
+
+	The clock is the opposite. It ticks every two seconds, you can hear it from
+	anywhere, and the one thing it has never done in forty years is stop. When
+	it stops you know immediately, from any room, without being told -- which is
+	the whole requirement for a rule about reacting to something.
+
+	Standing still: nothing happens, and the nothing is very long. Walking: the
+	fittings ahead of the walker go out one at a time, down the corridor, which
+	is still the only punishment in this game you can watch arriving.
 ]]
 function ctx.standStillWindow(seconds: number?)
 	local positions: { [Player]: Vector3 } = {}
@@ -8422,11 +8525,11 @@ function ctx.standStillWindow(seconds: number?)
 		end
 	end
 	standStill = {
-		until_ = os.clock() + (seconds or ctx.rule("music_changes").complianceWindowSeconds or 22),
+		until_ = os.clock() + (seconds or ctx.rule("the_clock_stops").complianceWindowSeconds or 20),
 		positions = positions,
 	}
-	Hud.effect("music_stop", nil)
-	task.spawn(Atmos.tapeSkips)
+	Hud.effect("clock_stop", nil)
+	task.spawn(Atmos.clockStops)
 end
 
 local function stepStandStill()
@@ -8436,15 +8539,15 @@ local function stepStandStill()
 	end
 	if os.clock() >= window.until_ then
 		standStill = nil
-		Atmos.setMuzak(Power.on)
-		Hud.effect("music_resume", nil)
+		Atmos.clockResumes(Power.on)
+		Hud.effect("clock_resume", nil)
 		return
 	end
 	for player, origin in window.positions do
 		local root = ctx.root(player)
 		if root and (root.Position - origin).Magnitude > 2.2 * METRE then
 			window.positions[player] = root.Position
-			ctx.violation("music_changes")
+			ctx.violation("the_clock_stops")
 			--[[
 				The fittings ahead of the walker go out, one at a time, down the
 				corridor. Since the bulkheads went dark these are the EXIT boxes
@@ -15760,8 +15863,25 @@ local function openSheet(title: string, body: any)
 	ProximityPromptService.Enabled = false
 end
 
+--[[
+	The rule sheet is carried, not visited.
+
+	It used to live taped inside a locker in the staff room, which meant that
+	from about 22:20 onwards nobody could read it. A rule you have to walk back
+	across a dark shopping centre to check is a rule you do not check, and three
+	rules you cannot remember are no better than eighteen.
+
+	So the moment it is read once, the crew have it. R opens it anywhere, any
+	time, as many times as they like, and closes it the same way everything else
+	in this game closes.
+]]
+local carriedRules: { title: string, body: any }? = nil
+
 remotes.Sheet.OnClientEvent:Connect(function(title, body)
 	playFlat("paper", SoundBank.PAPER)
+	if typeof(body) == "table" and body.rules then
+		carriedRules = { title = title, body = body }
+	end
 	openSheet(title, body)
 end)
 
@@ -15888,8 +16008,10 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 		showHint(`Rule {payload.rule} was right about him.`, RED)
 	elseif kind == "clue" then
 		showHint(`Evidence: {payload.name}`, Color3.fromRGB(198, 190, 160))
-	elseif kind == "music_stop" then
-		showHint("The tape has changed track early. Rule 2.", RED)
+	elseif kind == "clock_stop" then
+		showHint("THE CLOCK HAS STOPPED. Stand still. Rule 3.", RED)
+	elseif kind == "clock_resume" then
+		showHint("It's ticking again.", BONE)
 	elseif kind == "downed" then
 		showHint(`{payload.who} is down. Somebody go and get them.`, RED)
 	elseif kind == "revived" then
@@ -16353,6 +16475,18 @@ UserInputService.InputBegan:Connect(function(input, processed)
 			table.insert(lines, "Nothing yet.")
 		end
 		openSheet("TONIGHT, SO FAR", lines)
+	elseif input.KeyCode == Enum.KeyCode.R then
+		-- The list, wherever you are standing.
+		if paper.Visible then
+			paper.Visible = false
+			return
+		end
+		if carriedRules then
+			playFlat("paper", SoundBank.PAPER)
+			openSheet(carriedRules.title, carriedRules.body)
+		else
+			showHint("You haven't read the list yet. It's taped inside a locker in the staff room.", DIM)
+		end
 	elseif input.KeyCode == Enum.KeyCode.V then
 		captionsOn = not captionsOn
 		renderCaptions()
@@ -16424,7 +16558,7 @@ task.delay(8, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [R] the rules   [Q] walkie   [C] transcript   [X] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")
 ]]></string>
         </Properties>

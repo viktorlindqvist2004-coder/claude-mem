@@ -44,6 +44,13 @@ type Walker = {
 	limbs: { { part: BasePart, offset: CFrame } },
 	seen: boolean,
 	frozenUntil: number,
+	-- A lurch is a burst of movement and then a pause. These three are what
+	-- makes it a lurch rather than a glide. See Mannequins.start.
+	lurchUntil: number,
+	nextLurch: number,
+	-- Where it stood the last time somebody looked at it, so that looking away
+	-- and looking back can be measured in metres.
+	lastSeenAt: Vector3?,
 }
 
 local walkers: { Walker } = {}
@@ -91,7 +98,16 @@ local function buildWalker(point: { number }, colour: Color3?): Walker
 	model.PrimaryPart = root
 	model.Parent = World.nodes()
 
-	return { model = model, root = root, limbs = limbs, seen = false, frozenUntil = 0 }
+	return {
+		model = model,
+		root = root,
+		limbs = limbs,
+		seen = false,
+		frozenUntil = 0,
+		lurchUntil = 0,
+		nextLurch = 0,
+		lastSeenAt = nil,
+	}
 end
 
 --[[
@@ -152,11 +168,11 @@ local function down(player: Player)
 		humanoid.JumpPower = 0
 	end
 	local rescuePoint = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	Hud.effect("startle", { shake = 1.0, flash = true, large = true })
+	Hud.effect("startle", { shake = 1.8, flash = true, large = true })
 	Hud.effect("downed", { who = player.Name })
 	-- Positional, so the rest of the crew know which room it happened in.
 	if rescuePoint then
-		SoundBank.play(SoundBank.STARTLE_SMALL, rescuePoint, 0.1)
+		SoundBank.play(SoundBank.STARTLE_LARGE, rescuePoint)
 		Hud.caption(`[{player.DisplayName} goes down]`, Places.roomAt(rescuePoint.Position))
 	end
 
@@ -231,17 +247,85 @@ function Mannequins.start()
 		return
 	end
 	takenThisNight = 0
+	--[[
+		They lurch. They do not glide.
+
+		The old loop moved every unobserved mannequin a constant distance every
+		frame, which is a thing sliding towards you at walking pace -- and a
+		constant velocity is the least frightening motion there is, because
+		after two seconds of it you know exactly where it will be for the rest
+		of the night. You can back away from it forever.
+
+		A lurch is a short burst of much faster movement and then a long stop.
+		Same average speed; completely different animal. You look away for a
+		second and a half and it has either not moved at all or it has covered
+		four metres, and you cannot tell which until you turn round. That is the
+		whole horror of the thing and the old loop threw it away.
+
+		Three more things the silence was costing:
+
+		  * Each lurch knocks. Quiet, dry, positional, at the mannequin. It is
+		    the only warning you get and it comes from behind you.
+		  * Looking back at one that has closed on you while you were not
+		    looking plays a scrape and shakes the screen, scaled to how far it
+		    came. Two metres is a flinch. Six is not.
+		  * A frozen one turns to face whoever is looking at it. It does not
+		    move -- it is being observed, so it cannot -- but the thing you are
+		    staring at is staring back, and it was not a moment ago.
+	]]
 	connection = RunService.Heartbeat:Connect(function(delta)
-		local speed = AttentionService.entitySpeed() * METRE * delta
+		local now = os.clock()
+		local base = AttentionService.entitySpeed() * METRE
 		for _, walker in walkers do
 			if not walker.root.Parent then
 				continue
 			end
-			if os.clock() < walker.frozenUntil then
+			if now < walker.frozenUntil then
 				continue
 			end
+
 			if observed(walker) then
+				--[[
+					Seen, so it stops -- and turns its head to whoever is
+					looking. Then the reckoning: how far did it come while
+					nobody was watching?
+				]]
+				if not walker.seen then
+					local came = if walker.lastSeenAt
+						then (walker.root.Position - walker.lastSeenAt).Magnitude / METRE
+						else 0
+					if came > 1.2 then
+						SoundBank.play(SoundBank.DUMMY_CLOSE, walker.root)
+						local near = nearestTarget(walker)
+						local distance = if near
+							then (near.Position - walker.root.Position).Magnitude / METRE
+							else 99
+						Hud.effect("startle", {
+							shake = math.clamp(came / 7, 0.15, 0.85),
+							flash = false,
+							large = distance < 4,
+						})
+						if distance < 5 then
+							Hud.caption("[it is much closer than it was]",
+								Places.roomAt(walker.root.Position))
+						end
+					end
+				end
 				walker.seen = true
+				walker.lastSeenAt = walker.root.Position
+				walker.lurchUntil = 0
+				walker.nextLurch = now + math.random(30, 110) / 100
+
+				local watcher = nearestTarget(walker)
+				if watcher then
+					walker.root.CFrame = CFrame.lookAt(
+						walker.root.Position,
+						Vector3.new(watcher.Position.X, walker.root.Position.Y, watcher.Position.Z)
+					)
+					for _, limb in walker.limbs do
+						limb.part.CFrame = walker.root.CFrame * limb.offset
+					end
+				end
 				continue
 			end
 			walker.seen = false
@@ -260,10 +344,32 @@ function Mannequins.start()
 					end
 				end
 				-- It does not follow you down. It goes back to standing.
-				walker.frozenUntil = os.clock() + 8
+				walker.frozenUntil = now + 8
 				continue
 			end
-			-- No pathfinding: it walks at you in a straight line, and the walls
+
+			--[[
+				Between lurches it is a mannequin. It does not creep, it does
+				not drift, it does not do anything at all -- which is what makes
+				the next four metres so hard to believe.
+			]]
+			if now < walker.nextLurch then
+				continue
+			end
+			if now >= walker.lurchUntil then
+				-- Starting one. The knock is the whole warning system.
+				walker.lurchUntil = now + math.random(28, 55) / 100
+				SoundBank.play(SoundBank.DUMMY_STEP, walker.root)
+			end
+
+			--[[
+				Four times the walking speed for a third of a second, then a
+				stop of between a third of a second and a second and a half. On
+				average that is slower than the old constant walk. It does not
+				feel slower. It never will.
+			]]
+			local speed = base * 4.0 * delta
+			-- No pathfinding: it comes at you in a straight line, and the walls
 			-- are what makes that frightening rather than trivial.
 			local step = flat.Unit * math.min(speed, flat.Magnitude)
 			walker.root.CFrame = CFrame.lookAt(
@@ -272,6 +378,10 @@ function Mannequins.start()
 			)
 			for _, limb in walker.limbs do
 				limb.part.CFrame = walker.root.CFrame * limb.offset
+			end
+
+			if now >= walker.lurchUntil then
+				walker.nextLurch = now + math.random(35, 150) / 100
 			end
 		end
 	end)

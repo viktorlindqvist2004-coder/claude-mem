@@ -288,8 +288,13 @@ Night.beats = {
 				end
 			end)
 		end
-		local rule = ctx.rule("forged_red_collar")
-		ctx.question("Ask her who wrote rule 12b", function()
+		--[[
+			Rule 2 is the mannequins, and he is about to tell you it is not
+			about the mannequins. He is the only person in this building who
+			would know.
+		]]
+		local rule = ctx.rule("watch_the_dummies")
+		ctx.question("Ask him why rule 2 exists", function()
 			ctx.question(nil, nil)
 			ctx.say(S.sheet_changed)
 			ctx.effect("contradiction", { rule = rule.number, text = rule.text })

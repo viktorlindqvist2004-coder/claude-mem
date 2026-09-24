@@ -400,30 +400,62 @@ NightScript.SPEAKER_OF = {
 	holding that question from the first minute.
 ]]
 NightScript.CARDS = {
+	--[[
+		Five cards, one story, and the win condition on every one of them.
+
+		They used to describe the night's mood. A player who has just walked
+		into a dark building does not need mood, they can see the building --
+		they need to know what they are doing here and how it ends, and they
+		need to be told it again every night, because a horror game is played in
+		twenty-minute sittings a week apart.
+
+		So each card is three things: where the story has got to, the standing
+		goal, and tonight's job in one line. Nothing else.
+	]]
 	[1] = {
 		place = "NORTHLIGHT GALLERIA — NORTHMOOR",
-		when = "TONIGHT · 22:00",
-		what = "You are the new night crew.\nThe centre closed to the public in 1998.\nIt has never, technically, closed since.",
+		when = "NIGHT 1 OF 5 · 22:00",
+		what = "Four night staff clocked in here on 14 November 1998.\n"
+			.. "None of them clocked out. The centre shut that week.\n\n"
+			.. "Northmoor Police have reopened it. You have five nights to find\n"
+			.. "out who took them, and on the last night you tell DS Calder.\n\n"
+			.. "TONIGHT: do the jobs. Read the list in the locker — three rules,\n"
+			.. "and R shows them to you anywhere after that.",
 	},
 	[2] = {
 		place = "NORTHLIGHT GALLERIA — SECOND NIGHT",
-		when = "22:00",
-		what = "Four people clocked in here on 14 November 1998.\nNone of them clocked out.\nThe man on the tannoy was already working here.",
+		when = "NIGHT 2 OF 5 · 22:00",
+		what = "There is a man on the tannoy. He is helpful, he knows this\n"
+			.. "building better than anyone alive, and he is on no staff list\n"
+			.. "since it was built.\n\n"
+			.. "Five nights. Find out who took them. Tell Calder on the last.\n\n"
+			.. "TONIGHT: the shop floor, and Rule 2.",
 	},
 	[3] = {
 		place = "NORTHLIGHT GALLERIA — THIRD NIGHT",
-		when = "22:00",
-		what = "Somebody has been adding lines to Nora's list.\nIt is not her handwriting.\nFind out whose.",
+		when = "NIGHT 3 OF 5 · 22:00",
+		what = "The centre has been shut for twenty-eight years.\n"
+			.. "Tonight there are customers.\n\n"
+			.. "Five nights. Find out who took them. Tell Calder on the last.\n\n"
+			.. "TONIGHT: work the register, and read what Walt filed in 1998.",
 	},
 	[4] = {
 		place = "NORTHLIGHT GALLERIA — FOURTH NIGHT",
-		when = "22:00 · NO MAINS",
-		what = "He is not in the office.\nHe is not on the cameras.\nThere is a floor that is on no directory in this building.",
+		when = "NIGHT 4 OF 5 · 22:00 · NO MAINS",
+		what = "The clock in the atrium was not bought new. It came out of\n"
+			.. "Northmoor Station when they closed it, and something came with it.\n\n"
+			.. "Five nights. Find out who took them. Tell Calder on the last.\n\n"
+			.. "TONIGHT: get the power back, and find the floor that is on no\n"
+			.. "directory in this building.",
 	},
 	[5] = {
 		place = "NORTHLIGHT GALLERIA — LAST NIGHT",
-		when = "22:00 · CLOSING",
-		what = "Put the four of them back where they worked.\nOpen the clock.\nThen tell Calder who it is.",
+		when = "NIGHT 5 OF 5 · 22:00 · CLOSING",
+		what = "You know what he is. Tonight you prove who.\n\n"
+			.. "DS Calder is on the radio at the end of it. Give her one name\n"
+			.. "and two things you found in this building.\n\n"
+			.. "TONIGHT: put the four name tags back, open the clock, hold on\n"
+			.. "through the strike.",
 	},
 }
 

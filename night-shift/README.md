@@ -3,7 +3,7 @@
 A 1–4 player co-op horror game for Roblox. You are the new night crew at a mall
 that closed to the public in 1998 and has never, technically, closed since.
 
-Five nights. A list of handwritten rules from 1998. A manager you only ever hear.
+Five nights. Three handwritten rules from 1998. A manager you only ever hear.
 
 You win by working out who he is, and telling the police — with evidence.
 
@@ -26,7 +26,7 @@ every five seconds and feeds Studio, so a push is in an open session about five 
 later. Then **PLUGINS** → **Rojo** → **Connect**. Full instructions in
 [`docs/19-opening-it.md`](docs/19-opening-it.md).
 
-`F` torch · `E` interact · `SHIFT` run · `Q` walkie · `C` transcript · `V` captions ·
+`F` torch · `E` interact · `SHIFT` run · `R` the three rules · `Q` walkie · `C` transcript · `V` captions ·
 `F9` test panel
 
 **The test panel** (F9) is fifty-odd buttons: any night, any hour, 03:33, the Strike, the
@@ -44,7 +44,7 @@ runs all five nights — every beat, every proximity prompt, every test-panel bu
 
 **Built and playable.** About 3500 parts, 29 lights, twelve named rooms plus the atrium,
 two mall arms on two levels, Floor 3, a car park and an interview room. Five nights of
-content, twenty-two clues, seven suspects and four endings.
+content, twenty-two clues, four suspects and four endings.
 
 **Not finished:** the art is greybox — real materials are assigned from Roblox's built-in
 PBR set, but nothing is photographically textured yet
@@ -66,7 +66,7 @@ recording plays as a subtitle, which is a supported state, not a broken one.
 | [`docs/05-art-direction.md`](docs/05-art-direction.md) | How to get genuinely realistic visuals out of Roblox. |
 | [`docs/06-audio-direction.md`](docs/06-audio-direction.md) | Voice, music-as-mechanic, mix. |
 | [`docs/07-technical-architecture.md`](docs/07-technical-architecture.md) | Rojo/Luau structure, services, networking, anti-cheat. |
-| [`docs/09-the-investigation.md`](docs/09-the-investigation.md) | The mystery: seven suspects, twenty-two clues, the detective, and how you win. |
+| [`docs/09-the-investigation.md`](docs/09-the-investigation.md) | The mystery: four suspects, twenty-two clues, the detective, and how you win. |
 | [`docs/10-fear-design.md`](docs/10-fear-design.md) | Dread, the Presence, eyes in the dark, and the thirty startles. |
 | [`docs/11-direction-log.md`](docs/11-direction-log.md) | **Every piece of direction given, and how it was resolved. Outranks the other docs.** |
 | [`docs/12-the-strike.md`](docs/12-the-strike.md) | The digital clock, and the night it strikes thirty-three times. |

@@ -29,6 +29,10 @@ local World = require(script.Parent.World)
 
 local Atmos = {}
 
+-- The clock's movement, and whether it is running. See Rule 3.
+local clockAnchor: BasePart? = nil
+local clockTicking = false
+
 local emitters: { Sound } = {}
 local muzak: { Sound } = {}
 local muzakPlaying = true
@@ -287,10 +291,22 @@ function Atmos.build()
 		nothing else in it, and it is the sound the whole building is arranged
 		around — every other emitter is kept out of earshot of it deliberately.
 	]]
-	local clockAnchor = anchorAt("ClockMovement", { 0, 4.0, 0 })
+	--[[
+		The tick, and the ability to stop it.
+
+		Rule 3 is "if the clock stops, stand still", which only works if the
+		clock can stop -- and if stopping it is the loudest thing that happens
+		all night without making a sound. Every two seconds for four hours
+		teaches the ear the interval; the fourth second of the first missing
+		tick is the scare.
+	]]
+	clockAnchor = anchorAt("ClockMovement", { 0, 4.0, 0 })
+	clockTicking = true
 	task.spawn(function()
-		while clockAnchor.Parent do
-			SoundBank.play(SoundBank.CLOCK_TICK, clockAnchor, 0.03)
+		while clockAnchor and clockAnchor.Parent do
+			if clockTicking then
+				SoundBank.play(SoundBank.CLOCK_TICK, clockAnchor, 0.03)
+			end
 			task.wait(2)
 		end
 	end)
@@ -304,7 +320,29 @@ function Atmos.build()
 		.. (if SoundBank.LOOPS_ENABLED then "" else " — room tone is off until the loops are recorded"))
 end
 
--- Rule 2. The tape changes track early, and then there is nothing at all.
+--[[
+	Rule 3. The clock stops.
+
+	Nothing plays. That is the whole event: a building whose only constant is a
+	tick every two seconds goes completely silent, and every player notices at
+	the same moment from wherever they are standing. The muzak goes with it,
+	because a stopped clock over a running tape is two states, not one.
+]]
+function Atmos.clockStops()
+	clockTicking = false
+	Atmos.setMuzak(false)
+end
+
+function Atmos.clockResumes(powerOn: boolean?)
+	clockTicking = true
+	Atmos.setMuzak(powerOn == true)
+end
+
+function Atmos.clockIsTicking(): boolean
+	return clockTicking
+end
+
+-- The tape changes track early, and then there is nothing at all.
 function Atmos.tapeSkips()
 	Hud.caption(SoundBank.MUZAK_TRACK_CHANGE.caption or "[the tape changes track]")
 	local anchor = World.nodes():FindFirstChild("CeilingSpeaker1")

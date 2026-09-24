@@ -430,7 +430,6 @@ Night.beats = {
 			ctx.say(S.shutter_deadline_met)
 		else
 			ctx.fail("pull_shutters", "Too late. They don't keep anything out after two.")
-			ctx.violation("shutters_before_two")
 			ctx.say(S.shutter_deadline_missed)
 		end
 	end },

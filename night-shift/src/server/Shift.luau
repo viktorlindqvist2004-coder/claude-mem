@@ -421,10 +421,22 @@ end
 -- ── Rule helpers the nights reuse ───────────────────────────────────────────
 
 --[[
-	Rule 2. The tape changes track early and you stand still until the next one
-	starts. Standing still: nothing happens, and the nothing is very long.
-	Walking: the fittings ahead of the walker go out one at a time, down the
-	corridor, which is the only punishment in the game you can watch arriving.
+	Rule 3. The clock stops, and you stand still until it starts again.
+
+	This used to be Rule 2 and it used to be about the music: a 90-minute tape
+	skipped a track and you froze until the next one began. The mechanic was
+	always the best one in the game and it was hung on the worst peg -- nobody
+	can tell a song they do not know from a song that started early, in a
+	building where the tape is inaudible anyway.
+
+	The clock is the opposite. It ticks every two seconds, you can hear it from
+	anywhere, and the one thing it has never done in forty years is stop. When
+	it stops you know immediately, from any room, without being told -- which is
+	the whole requirement for a rule about reacting to something.
+
+	Standing still: nothing happens, and the nothing is very long. Walking: the
+	fittings ahead of the walker go out one at a time, down the corridor, which
+	is still the only punishment in this game you can watch arriving.
 ]]
 function ctx.standStillWindow(seconds: number?)
 	local positions: { [Player]: Vector3 } = {}
@@ -435,11 +447,11 @@ function ctx.standStillWindow(seconds: number?)
 		end
 	end
 	standStill = {
-		until_ = os.clock() + (seconds or ctx.rule("music_changes").complianceWindowSeconds or 22),
+		until_ = os.clock() + (seconds or ctx.rule("the_clock_stops").complianceWindowSeconds or 20),
 		positions = positions,
 	}
-	Hud.effect("music_stop", nil)
-	task.spawn(Atmos.tapeSkips)
+	Hud.effect("clock_stop", nil)
+	task.spawn(Atmos.clockStops)
 end
 
 local function stepStandStill()
@@ -449,15 +461,15 @@ local function stepStandStill()
 	end
 	if os.clock() >= window.until_ then
 		standStill = nil
-		Atmos.setMuzak(Power.on)
-		Hud.effect("music_resume", nil)
+		Atmos.clockResumes(Power.on)
+		Hud.effect("clock_resume", nil)
 		return
 	end
 	for player, origin in window.positions do
 		local root = ctx.root(player)
 		if root and (root.Position - origin).Magnitude > 2.2 * METRE then
 			window.positions[player] = root.Position
-			ctx.violation("music_changes")
+			ctx.violation("the_clock_stops")
 			--[[
 				The fittings ahead of the walker go out, one at a time, down the
 				corridor. Since the bulkheads went dark these are the EXIT boxes

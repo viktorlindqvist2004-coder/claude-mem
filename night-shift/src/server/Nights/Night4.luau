@@ -205,7 +205,9 @@ local function office(ctx)
 			ctx.sheet(player, "ROTA — THIS WEEK", lines)
 
 			ctx.say(S.the_rota)
-			local rule = ctx.rule("read_it_again")
+			-- Rule 3 is the clock. He has just dated a rota in a building
+			-- whose clock has read 3:33 since the night you started.
+			local rule = ctx.rule("the_clock_stops")
 			ctx.effect("contradiction", { rule = rule.number, text = rule.text })
 			ctx.question("Ask him when he typed it", function()
 				ctx.question(nil, nil)

@@ -506,8 +506,25 @@ local function openSheet(title: string, body: any)
 	ProximityPromptService.Enabled = false
 end
 
+--[[
+	The rule sheet is carried, not visited.
+
+	It used to live taped inside a locker in the staff room, which meant that
+	from about 22:20 onwards nobody could read it. A rule you have to walk back
+	across a dark shopping centre to check is a rule you do not check, and three
+	rules you cannot remember are no better than eighteen.
+
+	So the moment it is read once, the crew have it. R opens it anywhere, any
+	time, as many times as they like, and closes it the same way everything else
+	in this game closes.
+]]
+local carriedRules: { title: string, body: any }? = nil
+
 remotes.Sheet.OnClientEvent:Connect(function(title, body)
 	playFlat("paper", SoundBank.PAPER)
+	if typeof(body) == "table" and body.rules then
+		carriedRules = { title = title, body = body }
+	end
 	openSheet(title, body)
 end)
 
@@ -634,8 +651,10 @@ remotes.Effect.OnClientEvent:Connect(function(kind: string, payload: any)
 		showHint(`Rule {payload.rule} was right about him.`, RED)
 	elseif kind == "clue" then
 		showHint(`Evidence: {payload.name}`, Color3.fromRGB(198, 190, 160))
-	elseif kind == "music_stop" then
-		showHint("The tape has changed track early. Rule 2.", RED)
+	elseif kind == "clock_stop" then
+		showHint("THE CLOCK HAS STOPPED. Stand still. Rule 3.", RED)
+	elseif kind == "clock_resume" then
+		showHint("It's ticking again.", BONE)
 	elseif kind == "downed" then
 		showHint(`{payload.who} is down. Somebody go and get them.`, RED)
 	elseif kind == "revived" then
@@ -1099,6 +1118,18 @@ UserInputService.InputBegan:Connect(function(input, processed)
 			table.insert(lines, "Nothing yet.")
 		end
 		openSheet("TONIGHT, SO FAR", lines)
+	elseif input.KeyCode == Enum.KeyCode.R then
+		-- The list, wherever you are standing.
+		if paper.Visible then
+			paper.Visible = false
+			return
+		end
+		if carriedRules then
+			playFlat("paper", SoundBank.PAPER)
+			openSheet(carriedRules.title, carriedRules.body)
+		else
+			showHint("You haven't read the list yet. It's taped inside a locker in the staff room.", DIM)
+		end
 	elseif input.KeyCode == Enum.KeyCode.V then
 		captionsOn = not captionsOn
 		renderCaptions()
@@ -1170,5 +1201,5 @@ task.delay(8, function()
 	TweenService:Create(stamp, TweenInfo.new(1.5), { TextTransparency = 1 }):Play()
 end)
 
-showHint("[F] torch   [E] interact   [SHIFT] run   [Q] walkie   [C] transcript   [X] close", DIM)
+showHint("[F] torch   [E] interact   [SHIFT] run   [R] the rules   [Q] walkie   [C] transcript   [X] close", DIM)
 print("[Night Shift] client up — night 1, Northlight Galleria")

@@ -38,6 +38,7 @@ ORDER = [
     ("VoiceBank", "src/shared/VoiceBank.luau"),
     ("NightScript", "src/shared/NightScript.luau"),
     ("Targets", "src/shared/Targets.luau"),
+    ("MannequinBody", "src/shared/MannequinBody.luau"),
     ("Surfaces", "src/greybox/Surfaces.luau"),
     ("Greybox", "src/greybox/init.luau"),
     ("Objectives", "src/server/Objectives.luau"),

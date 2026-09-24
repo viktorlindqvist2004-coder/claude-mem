@@ -37,6 +37,7 @@ local Workspace = game:GetService("Workspace")
 
 -- What everything is made of, and the lettering on it. See Surfaces.luau.
 local Surfaces = require(script.Surfaces)
+local MannequinBody = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").MannequinBody)
 
 local function st(m) return m / 0.3 end
 
@@ -1027,21 +1028,22 @@ local function garment(x, y, z, colour)
 end
 
 --[[
-	A mannequin. Torso, head, two legs, no arms, because the unarmed ones are the
-	ones that read wrong, and on Night 2 these are the whole game.
+	A mannequin. The shape is in Shared.MannequinBody, because the ones that
+	walk on Night 2 are built by the server at runtime and the two have to be
+	the same object down to the centimetre.
 ]]
 local function mannequin(x, y, z, turn, colour)
 	local c = colour or Color3.fromRGB(196, 190, 178)
-	local parts = {
-		P("MannequinBase", V(0.34, 0.04, 0.34), at(x, y + 0.02, z), C.metal),
-		P("MannequinLeg", V(0.13, 0.86, 0.15), at(x - 0.08, y + 0.47, z), c),
-		P("MannequinLeg", V(0.13, 0.86, 0.15), at(x + 0.08, y + 0.47, z), c),
-		P("MannequinTorso", V(0.38, 0.62, 0.22), at(x, y + 1.2, z), c),
-		P("MannequinNeck", V(0.08, 0.1, 0.08), at(x, y + 1.56, z), c),
-		P("MannequinHead", V(0.17, 0.24, 0.2), at(x, y + 1.72, z), c),
-	}
-	for _, part in parts do
-		part.Orientation = Vector3.new(0, turn or 0, 0)
+	local base = at(x, y + MannequinBody.CHEST_HEIGHT, z) * CFrame.Angles(0, math.rad(turn or 0), 0)
+	for _, piece in MannequinBody.PIECES do
+		local o = piece.offset
+		local part = P(piece.name, V(piece.size[1], piece.size[2], piece.size[3]),
+			base * CFrame.new(st(o[1]), st(o[2]), st(o[3])), c)
+		MannequinBody.dress(part, piece, c, C.metal)
+		if piece.tilt then
+			part.CFrame = part.CFrame * CFrame.Angles(
+				math.rad(piece.tilt[1]), math.rad(piece.tilt[2]), math.rad(piece.tilt[3]))
+		end
 	end
 end
 
@@ -1771,7 +1773,27 @@ local function buildAtrium()
 	]]
 	escalator(3.0, -4.2, 0, FLOOR1, 10.0, false, 8801)
 	escalator(3.0, -2.2, 0, FLOOR1, 10.0, false, 8802)
-	P("EscalatorSign", V(0.5, 0.3, 0.05), at(-2.4, 2.4, -3.2), C.panel)
+	--[[
+		The notice that says they are not running -- on something.
+
+		It was a blank 50 x 30 plate hanging in mid air at 2.4 m, five metres
+		from the escalator it was about, in a hall with no ceiling within seven
+		metres to hang it from. A sign with nothing holding it up is the first
+		thing the eye finds in a dark room, and it was not even printed.
+
+		A stopped escalator in a shopping centre gets a chain across the foot of
+		it and the notice on the chain. Two posts, a chain, a sign, per run.
+	]]
+	for _, ez in { -4.2, -2.2 } do
+		for _, e in { -1, 1 } do
+			P("BarrierPost", V(0.06, 0.95, 0.06), at(-2.6, 0.47, ez + e * 0.8), C.metal)
+			P("BarrierFoot", V(0.26, 0.03, 0.26), at(-2.6, 0.02, ez + e * 0.8), C.dark)
+		end
+		P("BarrierChain", V(0.03, 0.03, 1.6), at(-2.6, 0.8, ez), C.metal)
+		local notice = P("EscalatorSign", V(0.05, 0.26, 0.46), at(-2.6, 0.62, ez), C.panel)
+		printed(notice, Enum.NormalId.Left, "ESCALATOR\nOUT OF SERVICE",
+			{ color = Color3.fromRGB(190, 60, 52), density = 92, font = Enum.Font.GothamBold })
+	end
 
 	-- The fire stair, in the corner, still there because it has to be.
 	for i = 0, 13 do
@@ -2597,7 +2619,6 @@ local function serviceCorridor()
 		corner, or in a deliberate row, and the floor stays clear because
 		people walk across it.
 	]]
-	local against = x - SERVICE_W / 2 + 0.45
 	--[[
 		Empty pallets, on edge against the wall.
 
@@ -2612,20 +2633,17 @@ local function serviceCorridor()
 			at(x - SERVICE_W / 2 + 0.34 + i * 0.13, 0.46, -6 + i * 0.06), C.wood)
 		pal.Orientation = Vector3.new(0, 0, -9 - i * 2)
 	end
-	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -16), C.trim)
-	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -15.3), C.trim)
 	--[[
-		A wet floor sign: two hinged panels standing in an A, not a small
-		coloured box on the floor. The gap between the panels is the whole
-		silhouette -- it is the only reason you read it as a sign rather than
-		as something somebody left there.
+		And nothing else. There were two pale boxes called Bin and an orange
+		wet-floor sign along this wall, and all three got reported as "random
+		boxes in the first corridor" -- which is what they were. The bins were
+		rectangles with no lid, no wheels and no reason to be in a corridor
+		rather than at the dock; the wet floor sign stood forty metres from the
+		only wet floor in the building.
+
+		The first thing a player walks down should have a wall, a duct, a light
+		and the empties. A corridor is allowed to be a corridor.
 	]]
-	for _, e in { -1, 1 } do
-		local panel = P("FloorSign", V(0.34, 0.62, 0.03), at(against, 0.31, 1 + e * 0.1),
-			Color3.fromRGB(196, 132, 34))
-		panel.Orientation = Vector3.new(e * 13, 0, 0)
-	end
-	P("FloorSignHinge", V(0.34, 0.03, 0.2), at(against, 0.6, 1), Color3.fromRGB(150, 96, 26))
 
 	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do

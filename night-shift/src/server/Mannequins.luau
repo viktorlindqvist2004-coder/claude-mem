@@ -24,6 +24,7 @@ local RunService = game:GetService("RunService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Places = require(Shared.Places)
+local MannequinBody = require(Shared.MannequinBody)
 local SoundBank = require(Shared.SoundBank)
 
 local AttentionService = require(script.Parent.AttentionService)
@@ -59,41 +60,51 @@ local downed: { [Player]: boolean } = {}
 local takenThisNight = 0
 
 --[[
-	A mannequin that walks. The body is the same slabs the shop-window ones are
-	built from, because the moment one of them is a different model the player
-	knows which ones matter.
+	A mannequin that walks, and it is exactly the mannequin in the window.
+
+	The body comes out of Shared.MannequinBody -- the same twenty-seven pieces,
+	the same measurements -- because the moment one of them is a different model
+	the player knows which ones matter, and Night 2 is over. It used to be four
+	rectangular slabs here against six in the greybox, which is two different
+	objects with the same name.
+
+	The root is an invisible box at the chest. Everything else is anchored to it
+	by hand: a physics assembly of twenty-seven parts, times eleven mannequins,
+	is a great deal of solver for something that only ever walks in a straight
+	line.
 ]]
 local function buildWalker(point: { number }, colour: Color3?): Walker
 	local model = Instance.new("Model")
 	model.Name = "Walker"
 
+	local skin = colour or Color3.fromRGB(196, 190, 178)
+
 	local root = Instance.new("Part")
 	root.Name = "Torso"
-	root.Size = Vector3.new(0.38 * METRE, 0.62 * METRE, 0.22 * METRE)
-	root.CFrame = Places.cf(point) * CFrame.new(0, 1.2 * METRE, 0)
+	root.Size = Vector3.new(0.3, 0.3, 0.3) * METRE
+	root.CFrame = Places.cf(point) * CFrame.new(0, MannequinBody.CHEST_HEIGHT * METRE, 0)
 	root.Anchored = true
 	root.CanCollide = false
-	root.Color = colour or Color3.fromRGB(196, 190, 178)
+	root.Transparency = 1
 	root.Parent = model
 
 	local limbs = {}
-	local function limb(name: string, size: Vector3, offset: Vector3)
+	for _, piece in MannequinBody.PIECES do
 		local part = Instance.new("Part")
-		part.Name = name
-		part.Size = size
-		local at = CFrame.new(offset)
-		part.CFrame = root.CFrame * at
+		part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3]) * METRE
+		MannequinBody.dress(part, piece, skin, Color3.fromRGB(122, 120, 116))
+		local offset = CFrame.new(Vector3.new(piece.offset[1], piece.offset[2], piece.offset[3]) * METRE)
+		if piece.tilt then
+			offset = offset * CFrame.Angles(
+				math.rad(piece.tilt[1]), math.rad(piece.tilt[2]), math.rad(piece.tilt[3]))
+		end
+		part.CFrame = root.CFrame * offset
 		part.Anchored = true
 		part.CanCollide = false
-		part.Color = root.Color
+		part.CastShadow = false
 		part.Parent = model
-		table.insert(limbs, { part = part, offset = at })
+		table.insert(limbs, { part = part, offset = offset })
 	end
-
-	limb("Head", Vector3.new(0.17, 0.24, 0.2) * METRE, Vector3.new(0, 0.52, 0) * METRE)
-	limb("Neck", Vector3.new(0.08, 0.1, 0.08) * METRE, Vector3.new(0, 0.36, 0) * METRE)
-	limb("LegL", Vector3.new(0.13, 0.86, 0.15) * METRE, Vector3.new(-0.08, -0.73, 0) * METRE)
-	limb("LegR", Vector3.new(0.13, 0.86, 0.15) * METRE, Vector3.new(0.08, -0.73, 0) * METRE)
 
 	model.PrimaryPart = root
 	model.Parent = World.nodes()

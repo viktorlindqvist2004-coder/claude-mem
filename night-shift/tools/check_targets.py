@@ -14,6 +14,9 @@ counted too, since they are not in the greybox.
 """
 
 import io, os, re, subprocess, sys, tempfile
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import greybox_bundle  # noqa: E402
+
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 dump = '''
 local mall = workspace:FindFirstChild("Mall")
@@ -23,10 +26,7 @@ for _, d in mall:GetDescendants() do
 end
 for k, v in seen do print(string.format("%s\\t%d", k, v)) end
 '''
-stub = io.open("tools/roblox_stub.luau").read()
-surf = io.open("src/greybox/Surfaces.luau").read()
-gb = io.open("src/greybox/init.luau").read().replace("require(script.Surfaces)", "__M.Surfaces")
-bundle = stub + "\nlocal __M={}\n__M.Surfaces=(function()\n"+surf+"\nend)()\nlocal function MODULE()\n"+gb+"\nend\nlocal G=MODULE()\nG.build()\n"+dump
+bundle = greybox_bundle.bundle(dump)
 with tempfile.TemporaryDirectory() as t:
     f=os.path.join(t,"t.luau"); io.open(f,"w").write(bundle)
     r=subprocess.run([os.path.join(os.environ.get("LUAU_DIR", "/tmp"), "luau"), f],capture_output=True,text=True)

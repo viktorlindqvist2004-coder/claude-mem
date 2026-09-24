@@ -36,10 +36,10 @@
 
 local Build = {}
 
-Build.COMMIT = "1a061cb"
-Build.LAST_COMMIT = "5b7b3a7"
-Build.SUMMARY = "Take the fountain out, quieten the tap and the boots, stand the pallets up"
-Build.WHEN = "24 Sep 00:43"
+Build.COMMIT = "b321750"
+Build.LAST_COMMIT = "522fed0"
+Build.SUMMARY = "Three rules you carry, four suspects, and mannequins that lurch"
+Build.WHEN = "24 Sep 01:30"
 -- True when the working tree had uncommitted source changes at stamp time.
 Build.DIRTY = true
 
@@ -1038,6 +1038,147 @@ return MallLayout
       </Item>
       <Item class="ModuleScript" referent="8">
         <Properties>
+          <string name="Name">MannequinBody</string>
+          <string name="Source"><![CDATA[--!strict
+--[[
+	MannequinBody — what a mannequin is, in one place.
+
+	It used to be six rectangular slabs: two for the legs, one for the torso,
+	one for the neck, one for the head, one for the base. A person made of
+	boxes does not read as a person, it reads as a wardrobe, and the whole of
+	Night 2 rests on a shape you glimpse at the end of a corridor and take,
+	for half a second, for somebody standing there. A box never gets that half
+	second.
+
+	So it is built out of the two Roblox primitives that have no corners:
+
+	  * A Part with Shape = Ball and a non-uniform Size is an ellipsoid, not a
+	    sphere. That is the whole trick, and it gives the chest, the pelvis,
+	    the shoulders and the head their actual shapes rather than an
+	    approximation of them.
+	  * A Part with Shape = Cylinder is a capsule-less tube along its own X
+	    axis, which is every limb segment here. Orientation turns it upright.
+
+	Twenty-three parts instead of six. A shop mannequin is a torso that tapers
+	to a waist, a pelvis that flares back out, two legs with a knee in them,
+	shoulders that are round because a shoulder is round, arms hanging slightly
+	clear of the body, and an egg for a head with no face on it. Every joint is
+	a ball, because the thing that makes a limb read as a limb is that you can
+	see where it bends.
+
+	The numbers are metres, relative to the centre of the chest, which is what
+	both the static ones and the walking ones are positioned by. 1.86 m to the
+	crown of the head, which is a real mannequin.
+
+	This lives in Shared, not in the greybox, because the walking ones on Night
+	2 are built at runtime by the server and they have to be the same object.
+	The moment one of them is a different model the player knows which ones
+	matter, and the game is over.
+]]
+
+local MannequinBody = {}
+
+export type Piece = {
+	name: string,
+	-- Metres, relative to the centre of the chest.
+	offset: { number },
+	size: { number },
+	shape: "Ball" | "Cylinder" | "Block",
+	-- Degrees. A Cylinder's axis is its X, so an upright limb is 90 about Z.
+	tilt: { number }?,
+	-- Chrome rather than plaster: the stand, and nothing else.
+	steel: boolean?,
+}
+
+--[[
+	The chest sits 1.18 m off the floor. Everything else is measured from it,
+	so moving the body is moving one number.
+]]
+MannequinBody.CHEST_HEIGHT = 1.18
+MannequinBody.PIECES = {
+	-- ── Stand ───────────────────────────────────────────────────────────────
+	-- A disc and a rod. Mannequins do not balance, they are bolted down, and
+	-- the rod going into the heel is half of why they look wrong.
+	{ name = "MannequinBase", offset = { 0, -1.16, 0 }, size = { 0.36, 0.035, 0.36 },
+		shape = "Cylinder", tilt = { 0, 0, 90 }, steel = true },
+	{ name = "MannequinPost", offset = { 0, -1.05, -0.04 }, size = { 0.2, 0.05, 0.05 },
+		shape = "Cylinder", tilt = { 0, 0, 90 }, steel = true },
+
+	-- ── Legs ────────────────────────────────────────────────────────────────
+	-- Thigh, knee, calf, ankle, foot. Twice. The knee is the part that does
+	-- the work: a leg without one is a pole.
+	{ name = "MannequinFoot", offset = { -0.085, -1.115, 0.03 }, size = { 0.1, 0.07, 0.24 }, shape = "Ball" },
+	{ name = "MannequinFoot", offset = { 0.085, -1.115, 0.03 }, size = { 0.1, 0.07, 0.24 }, shape = "Ball" },
+	{ name = "MannequinAnkle", offset = { -0.085, -1.06, 0 }, size = { 0.09, 0.1, 0.09 }, shape = "Ball" },
+	{ name = "MannequinAnkle", offset = { 0.085, -1.06, 0 }, size = { 0.09, 0.1, 0.09 }, shape = "Ball" },
+	{ name = "MannequinCalf", offset = { -0.085, -0.85, 0 }, size = { 0.38, 0.115, 0.115 },
+		shape = "Cylinder", tilt = { 0, 0, 90 } },
+	{ name = "MannequinCalf", offset = { 0.085, -0.85, 0 }, size = { 0.38, 0.115, 0.115 },
+		shape = "Cylinder", tilt = { 0, 0, 90 } },
+	{ name = "MannequinKnee", offset = { -0.085, -0.63, 0 }, size = { 0.13, 0.14, 0.13 }, shape = "Ball" },
+	{ name = "MannequinKnee", offset = { 0.085, -0.63, 0 }, size = { 0.13, 0.14, 0.13 }, shape = "Ball" },
+	{ name = "MannequinThigh", offset = { -0.085, -0.42, 0 }, size = { 0.4, 0.15, 0.15 },
+		shape = "Cylinder", tilt = { 0, 0, 90 } },
+	{ name = "MannequinThigh", offset = { 0.085, -0.42, 0 }, size = { 0.4, 0.15, 0.15 },
+		shape = "Cylinder", tilt = { 0, 0, 90 } },
+
+	-- ── Body ────────────────────────────────────────────────────────────────
+	-- Pelvis, waist, chest. Three ellipsoids, widest at the hips and the
+	-- shoulders and narrow between them, which is the silhouette the whole
+	-- thing lives or dies on.
+	{ name = "MannequinPelvis", offset = { 0, -0.2, 0 }, size = { 0.33, 0.28, 0.24 }, shape = "Ball" },
+	{ name = "MannequinWaist", offset = { 0, -0.02, 0 }, size = { 0.26, 0.22, 0.19 }, shape = "Ball" },
+	{ name = "MannequinTorso", offset = { 0, 0.14, 0 }, size = { 0.36, 0.44, 0.25 }, shape = "Ball" },
+
+	-- ── Arms ────────────────────────────────────────────────────────────────
+	-- Hanging, slightly clear of the body. These used to be left off on the
+	-- grounds that an armless mannequin reads wrong, which is true, and is
+	-- also the reason a half-glimpsed one never passed for a person.
+	{ name = "MannequinShoulder", offset = { -0.185, 0.27, 0 }, size = { 0.15, 0.15, 0.16 }, shape = "Ball" },
+	{ name = "MannequinShoulder", offset = { 0.185, 0.27, 0 }, size = { 0.15, 0.15, 0.16 }, shape = "Ball" },
+	{ name = "MannequinUpperArm", offset = { -0.2, 0.11, 0.005 }, size = { 0.3, 0.105, 0.105 },
+		shape = "Cylinder", tilt = { 0, 0, 86 } },
+	{ name = "MannequinUpperArm", offset = { 0.2, 0.11, 0.005 }, size = { 0.3, 0.105, 0.105 },
+		shape = "Cylinder", tilt = { 0, 0, 94 } },
+	{ name = "MannequinElbow", offset = { -0.215, -0.05, 0.01 }, size = { 0.1, 0.1, 0.1 }, shape = "Ball" },
+	{ name = "MannequinElbow", offset = { 0.215, -0.05, 0.01 }, size = { 0.1, 0.1, 0.1 }, shape = "Ball" },
+	{ name = "MannequinForearm", offset = { -0.222, -0.21, 0.02 }, size = { 0.28, 0.085, 0.085 },
+		shape = "Cylinder", tilt = { 0, 0, 88 } },
+	{ name = "MannequinForearm", offset = { 0.222, -0.21, 0.02 }, size = { 0.28, 0.085, 0.085 },
+		shape = "Cylinder", tilt = { 0, 0, 92 } },
+	{ name = "MannequinHand", offset = { -0.226, -0.375, 0.025 }, size = { 0.075, 0.15, 0.06 }, shape = "Ball" },
+	{ name = "MannequinHand", offset = { 0.226, -0.375, 0.025 }, size = { 0.075, 0.15, 0.06 }, shape = "Ball" },
+
+	-- ── Head ────────────────────────────────────────────────────────────────
+	-- A neck you can see, and an egg with nothing on it. No face: a blank one
+	-- is worse than any face anybody could put on it.
+	{ name = "MannequinNeck", offset = { 0, 0.41, -0.005 }, size = { 0.12, 0.085, 0.085 },
+		shape = "Cylinder", tilt = { 0, 0, 90 } },
+	{ name = "MannequinHead", offset = { 0, 0.55, -0.01 }, size = { 0.165, 0.225, 0.19 }, shape = "Ball" },
+}
+
+--[[
+	Apply a piece to a part that already exists. Shared so that the static ones
+	and the walking ones cannot drift apart: there is one place that decides
+	what shape a mannequin is, and it is this function.
+]]
+function MannequinBody.dress(part: BasePart, piece: Piece, colour: Color3, steelColour: Color3)
+	part.Name = piece.name
+	part.Color = if piece.steel then steelColour else colour
+	part.Material = if piece.steel then Enum.Material.Metal else Enum.Material.SmoothPlastic
+	if piece.shape == "Ball" then
+		part.Shape = Enum.PartType.Ball
+	elseif piece.shape == "Cylinder" then
+		part.Shape = Enum.PartType.Cylinder
+	end
+end
+
+return MannequinBody
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="9">
+        <Properties>
           <string name="Name">Net</string>
           <string name="Source"><![CDATA[--!strict
 --[[
@@ -1099,7 +1240,7 @@ return Net
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="9">
+      <Item class="ModuleScript" referent="10">
         <Properties>
           <string name="Name">NightScript</string>
           <string name="Source"><![CDATA[--!strict
@@ -1578,7 +1719,7 @@ return NightScript
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="10">
+      <Item class="ModuleScript" referent="11">
         <Properties>
           <string name="Name">Places</string>
           <string name="Source"><![CDATA[--!strict
@@ -1725,7 +1866,7 @@ return Places
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="11">
+      <Item class="ModuleScript" referent="12">
         <Properties>
           <string name="Name">RuleBook</string>
           <string name="Source"><![CDATA[--!strict
@@ -1862,7 +2003,7 @@ return RuleBook
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="12">
+      <Item class="ModuleScript" referent="13">
         <Properties>
           <string name="Name">ScareCatalog</string>
           <string name="Source"><![CDATA[--!strict
@@ -2100,7 +2241,7 @@ return ScareCatalog
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="13">
+      <Item class="ModuleScript" referent="14">
         <Properties>
           <string name="Name">ShiftClock</string>
           <string name="Source"><![CDATA[--!strict
@@ -2195,7 +2336,7 @@ return ShiftClock
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="14">
+      <Item class="ModuleScript" referent="15">
         <Properties>
           <string name="Name">Signal</string>
           <string name="Source"><![CDATA[--!strict
@@ -2245,7 +2386,7 @@ return Signal
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="15">
+      <Item class="ModuleScript" referent="16">
         <Properties>
           <string name="Name">SoundBank</string>
           <string name="Source"><![CDATA[--!strict
@@ -2661,7 +2802,7 @@ return SoundBank
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="16">
+      <Item class="ModuleScript" referent="17">
         <Properties>
           <string name="Name">Targets</string>
           <string name="Source"><![CDATA[--!strict
@@ -2739,7 +2880,7 @@ return Targets
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">Types</string>
           <string name="Source"><![CDATA[--!strict
@@ -2831,7 +2972,7 @@ return {}
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="18">
+      <Item class="ModuleScript" referent="19">
         <Properties>
           <string name="Name">VoiceBank</string>
           <string name="Source"><![CDATA[--!strict
@@ -2980,11 +3121,11 @@ return VoiceBank
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="19">
+  <Item class="ServerScriptService" referent="20">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Script" referent="20">
+    <Item class="Script" referent="21">
       <Properties>
         <string name="Name">Server</string>
         <token name="RunContext">0</token>
@@ -3337,7 +3478,7 @@ end
 print("[Night Shift] server up — Northlight Galleria, five nights")
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">Atmos</string>
           <string name="Source"><![CDATA[--!strict
@@ -3734,7 +3875,7 @@ return Atmos
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">AttentionService</string>
           <string name="Source"><![CDATA[--!strict
@@ -3847,7 +3988,7 @@ return AttentionService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">Case</string>
           <string name="Source"><![CDATA[--!strict
@@ -3959,7 +4100,7 @@ return Case
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">Customers</string>
           <string name="Source"><![CDATA[--!strict
@@ -4173,7 +4314,7 @@ return Customers
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">Dread</string>
           <string name="Source"><![CDATA[--!strict
@@ -4621,7 +4762,7 @@ return Dread
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="27">
         <Properties>
           <string name="Name">Gaze</string>
           <string name="Source"><![CDATA[--!strict
@@ -4747,7 +4888,7 @@ return Gaze
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="27">
+      <Item class="ModuleScript" referent="28">
         <Properties>
           <string name="Name">Hud</string>
           <string name="Source"><![CDATA[--!strict
@@ -4905,7 +5046,7 @@ return Hud
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="28">
+      <Item class="ModuleScript" referent="29">
         <Properties>
           <string name="Name">Mannequins</string>
           <string name="Source"><![CDATA[--!strict
@@ -4934,6 +5075,7 @@ local RunService = game:GetService("RunService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Places = require(Shared.Places)
+local MannequinBody = require(Shared.MannequinBody)
 local SoundBank = require(Shared.SoundBank)
 
 local AttentionService = require(script.Parent.AttentionService)
@@ -4969,41 +5111,51 @@ local downed: { [Player]: boolean } = {}
 local takenThisNight = 0
 
 --[[
-	A mannequin that walks. The body is the same slabs the shop-window ones are
-	built from, because the moment one of them is a different model the player
-	knows which ones matter.
+	A mannequin that walks, and it is exactly the mannequin in the window.
+
+	The body comes out of Shared.MannequinBody -- the same twenty-seven pieces,
+	the same measurements -- because the moment one of them is a different model
+	the player knows which ones matter, and Night 2 is over. It used to be four
+	rectangular slabs here against six in the greybox, which is two different
+	objects with the same name.
+
+	The root is an invisible box at the chest. Everything else is anchored to it
+	by hand: a physics assembly of twenty-seven parts, times eleven mannequins,
+	is a great deal of solver for something that only ever walks in a straight
+	line.
 ]]
 local function buildWalker(point: { number }, colour: Color3?): Walker
 	local model = Instance.new("Model")
 	model.Name = "Walker"
 
+	local skin = colour or Color3.fromRGB(196, 190, 178)
+
 	local root = Instance.new("Part")
 	root.Name = "Torso"
-	root.Size = Vector3.new(0.38 * METRE, 0.62 * METRE, 0.22 * METRE)
-	root.CFrame = Places.cf(point) * CFrame.new(0, 1.2 * METRE, 0)
+	root.Size = Vector3.new(0.3, 0.3, 0.3) * METRE
+	root.CFrame = Places.cf(point) * CFrame.new(0, MannequinBody.CHEST_HEIGHT * METRE, 0)
 	root.Anchored = true
 	root.CanCollide = false
-	root.Color = colour or Color3.fromRGB(196, 190, 178)
+	root.Transparency = 1
 	root.Parent = model
 
 	local limbs = {}
-	local function limb(name: string, size: Vector3, offset: Vector3)
+	for _, piece in MannequinBody.PIECES do
 		local part = Instance.new("Part")
-		part.Name = name
-		part.Size = size
-		local at = CFrame.new(offset)
-		part.CFrame = root.CFrame * at
+		part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3]) * METRE
+		MannequinBody.dress(part, piece, skin, Color3.fromRGB(122, 120, 116))
+		local offset = CFrame.new(Vector3.new(piece.offset[1], piece.offset[2], piece.offset[3]) * METRE)
+		if piece.tilt then
+			offset = offset * CFrame.Angles(
+				math.rad(piece.tilt[1]), math.rad(piece.tilt[2]), math.rad(piece.tilt[3]))
+		end
+		part.CFrame = root.CFrame * offset
 		part.Anchored = true
 		part.CanCollide = false
-		part.Color = root.Color
+		part.CastShadow = false
 		part.Parent = model
-		table.insert(limbs, { part = part, offset = at })
+		table.insert(limbs, { part = part, offset = offset })
 	end
-
-	limb("Head", Vector3.new(0.17, 0.24, 0.2) * METRE, Vector3.new(0, 0.52, 0) * METRE)
-	limb("Neck", Vector3.new(0.08, 0.1, 0.08) * METRE, Vector3.new(0, 0.36, 0) * METRE)
-	limb("LegL", Vector3.new(0.13, 0.86, 0.15) * METRE, Vector3.new(-0.08, -0.73, 0) * METRE)
-	limb("LegR", Vector3.new(0.13, 0.86, 0.15) * METRE, Vector3.new(0.08, -0.73, 0) * METRE)
 
 	model.PrimaryPart = root
 	model.Parent = World.nodes()
@@ -5341,11 +5493,11 @@ return Mannequins
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="29">
+      <Item class="Folder" referent="30">
         <Properties>
           <string name="Name">Nights</string>
         </Properties>
-        <Item class="ModuleScript" referent="30">
+        <Item class="ModuleScript" referent="31">
           <Properties>
             <string name="Name">Night1</string>
             <string name="Source"><![CDATA[--!strict
@@ -5832,7 +5984,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="31">
+        <Item class="ModuleScript" referent="32">
           <Properties>
             <string name="Name">Night2</string>
             <string name="Source"><![CDATA[--!strict
@@ -6160,7 +6312,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="32">
+        <Item class="ModuleScript" referent="33">
           <Properties>
             <string name="Name">Night3</string>
             <string name="Source"><![CDATA[--!strict
@@ -6457,7 +6609,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="33">
+        <Item class="ModuleScript" referent="34">
           <Properties>
             <string name="Name">Night4</string>
             <string name="Source"><![CDATA[--!strict
@@ -6825,7 +6977,7 @@ return Night
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="34">
+        <Item class="ModuleScript" referent="35">
           <Properties>
             <string name="Name">Night5</string>
             <string name="Source"><![CDATA[--!strict
@@ -7284,7 +7436,7 @@ return Night
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="35">
+      <Item class="ModuleScript" referent="36">
         <Properties>
           <string name="Name">Objectives</string>
           <string name="Source"><![CDATA[--!strict
@@ -7450,7 +7602,7 @@ return Objectives
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="36">
+      <Item class="ModuleScript" referent="37">
         <Properties>
           <string name="Name">Power</string>
           <string name="Source"><![CDATA[--!strict
@@ -7620,7 +7772,7 @@ return Power
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="37">
+      <Item class="ModuleScript" referent="38">
         <Properties>
           <string name="Name">Scares</string>
           <string name="Source"><![CDATA[--!strict
@@ -8073,7 +8225,7 @@ return Scares
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="38">
+      <Item class="ModuleScript" referent="39">
         <Properties>
           <string name="Name">Shift</string>
           <string name="Source"><![CDATA[--!strict
@@ -8938,7 +9090,7 @@ return Shift
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="39">
+      <Item class="ModuleScript" referent="40">
         <Properties>
           <string name="Name">TestPanel</string>
           <string name="Source"><![CDATA[--!strict
@@ -9401,7 +9553,7 @@ return TestPanel
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="40">
+      <Item class="ModuleScript" referent="41">
         <Properties>
           <string name="Name">Tubes</string>
           <string name="Source"><![CDATA[--!strict
@@ -9685,7 +9837,7 @@ return Tubes
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="41">
+      <Item class="ModuleScript" referent="42">
         <Properties>
           <string name="Name">World</string>
           <string name="Source"><![CDATA[--!strict
@@ -10021,11 +10173,11 @@ return World
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="42">
+  <Item class="ServerStorage" referent="43">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="ModuleScript" referent="43">
+    <Item class="ModuleScript" referent="44">
       <Properties>
         <string name="Name">Greybox</string>
         <string name="Source"><![CDATA[--[[
@@ -10067,6 +10219,7 @@ local Workspace = game:GetService("Workspace")
 
 -- What everything is made of, and the lettering on it. See Surfaces.luau.
 local Surfaces = require(script.Surfaces)
+local MannequinBody = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").MannequinBody)
 
 local function st(m) return m / 0.3 end
 
@@ -11057,21 +11210,22 @@ local function garment(x, y, z, colour)
 end
 
 --[[
-	A mannequin. Torso, head, two legs, no arms, because the unarmed ones are the
-	ones that read wrong, and on Night 2 these are the whole game.
+	A mannequin. The shape is in Shared.MannequinBody, because the ones that
+	walk on Night 2 are built by the server at runtime and the two have to be
+	the same object down to the centimetre.
 ]]
 local function mannequin(x, y, z, turn, colour)
 	local c = colour or Color3.fromRGB(196, 190, 178)
-	local parts = {
-		P("MannequinBase", V(0.34, 0.04, 0.34), at(x, y + 0.02, z), C.metal),
-		P("MannequinLeg", V(0.13, 0.86, 0.15), at(x - 0.08, y + 0.47, z), c),
-		P("MannequinLeg", V(0.13, 0.86, 0.15), at(x + 0.08, y + 0.47, z), c),
-		P("MannequinTorso", V(0.38, 0.62, 0.22), at(x, y + 1.2, z), c),
-		P("MannequinNeck", V(0.08, 0.1, 0.08), at(x, y + 1.56, z), c),
-		P("MannequinHead", V(0.17, 0.24, 0.2), at(x, y + 1.72, z), c),
-	}
-	for _, part in parts do
-		part.Orientation = Vector3.new(0, turn or 0, 0)
+	local base = at(x, y + MannequinBody.CHEST_HEIGHT, z) * CFrame.Angles(0, math.rad(turn or 0), 0)
+	for _, piece in MannequinBody.PIECES do
+		local o = piece.offset
+		local part = P(piece.name, V(piece.size[1], piece.size[2], piece.size[3]),
+			base * CFrame.new(st(o[1]), st(o[2]), st(o[3])), c)
+		MannequinBody.dress(part, piece, c, C.metal)
+		if piece.tilt then
+			part.CFrame = part.CFrame * CFrame.Angles(
+				math.rad(piece.tilt[1]), math.rad(piece.tilt[2]), math.rad(piece.tilt[3]))
+		end
 	end
 end
 
@@ -11801,7 +11955,27 @@ local function buildAtrium()
 	]]
 	escalator(3.0, -4.2, 0, FLOOR1, 10.0, false, 8801)
 	escalator(3.0, -2.2, 0, FLOOR1, 10.0, false, 8802)
-	P("EscalatorSign", V(0.5, 0.3, 0.05), at(-2.4, 2.4, -3.2), C.panel)
+	--[[
+		The notice that says they are not running -- on something.
+
+		It was a blank 50 x 30 plate hanging in mid air at 2.4 m, five metres
+		from the escalator it was about, in a hall with no ceiling within seven
+		metres to hang it from. A sign with nothing holding it up is the first
+		thing the eye finds in a dark room, and it was not even printed.
+
+		A stopped escalator in a shopping centre gets a chain across the foot of
+		it and the notice on the chain. Two posts, a chain, a sign, per run.
+	]]
+	for _, ez in { -4.2, -2.2 } do
+		for _, e in { -1, 1 } do
+			P("BarrierPost", V(0.06, 0.95, 0.06), at(-2.6, 0.47, ez + e * 0.8), C.metal)
+			P("BarrierFoot", V(0.26, 0.03, 0.26), at(-2.6, 0.02, ez + e * 0.8), C.dark)
+		end
+		P("BarrierChain", V(0.03, 0.03, 1.6), at(-2.6, 0.8, ez), C.metal)
+		local notice = P("EscalatorSign", V(0.05, 0.26, 0.46), at(-2.6, 0.62, ez), C.panel)
+		printed(notice, Enum.NormalId.Left, "ESCALATOR\nOUT OF SERVICE",
+			{ color = Color3.fromRGB(190, 60, 52), density = 92, font = Enum.Font.GothamBold })
+	end
 
 	-- The fire stair, in the corner, still there because it has to be.
 	for i = 0, 13 do
@@ -12627,7 +12801,6 @@ local function serviceCorridor()
 		corner, or in a deliberate row, and the floor stays clear because
 		people walk across it.
 	]]
-	local against = x - SERVICE_W / 2 + 0.45
 	--[[
 		Empty pallets, on edge against the wall.
 
@@ -12642,20 +12815,17 @@ local function serviceCorridor()
 			at(x - SERVICE_W / 2 + 0.34 + i * 0.13, 0.46, -6 + i * 0.06), C.wood)
 		pal.Orientation = Vector3.new(0, 0, -9 - i * 2)
 	end
-	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -16), C.trim)
-	P("Bin", V(0.6, 1.0, 0.55), at(against, 0.5, -15.3), C.trim)
 	--[[
-		A wet floor sign: two hinged panels standing in an A, not a small
-		coloured box on the floor. The gap between the panels is the whole
-		silhouette -- it is the only reason you read it as a sign rather than
-		as something somebody left there.
+		And nothing else. There were two pale boxes called Bin and an orange
+		wet-floor sign along this wall, and all three got reported as "random
+		boxes in the first corridor" -- which is what they were. The bins were
+		rectangles with no lid, no wheels and no reason to be in a corridor
+		rather than at the dock; the wet floor sign stood forty metres from the
+		only wet floor in the building.
+
+		The first thing a player walks down should have a wall, a duct, a light
+		and the empties. A corridor is allowed to be a corridor.
 	]]
-	for _, e in { -1, 1 } do
-		local panel = P("FloorSign", V(0.34, 0.62, 0.03), at(against, 0.31, 1 + e * 0.1),
-			Color3.fromRGB(196, 132, 34))
-		panel.Orientation = Vector3.new(e * 13, 0, 0)
-	end
-	P("FloorSignHinge", V(0.34, 0.03, 0.2), at(against, 0.6, 1), Color3.fromRGB(150, 96, 26))
 
 	-- The stair down. Fourteen treads, no handrail, and it turns black at six.
 	for i = 0, 13 do
@@ -14948,7 +15118,7 @@ end
 return Greybox
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="44">
+      <Item class="ModuleScript" referent="45">
         <Properties>
           <string name="Name">Surfaces</string>
           <string name="Source"><![CDATA[--[[
@@ -15344,15 +15514,15 @@ return Surfaces
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="45">
+  <Item class="StarterPlayer" referent="46">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="46">
+    <Item class="StarterPlayerScripts" referent="47">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="47">
+      <Item class="LocalScript" referent="48">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--!strict
@@ -16565,7 +16735,7 @@ print("[Night Shift] client up — night 1, Northlight Galleria")
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="48">
+  <Item class="Workspace" referent="49">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>

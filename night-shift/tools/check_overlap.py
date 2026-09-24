@@ -21,6 +21,9 @@ object are supposed to touch.
 
 import io, os, subprocess, sys, tempfile, collections
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import greybox_bundle  # noqa: E402
+
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 LUAU = os.path.join(os.environ.get("LUAU_DIR", "/tmp"), "luau")
 M = 1 / 0.3
@@ -77,16 +80,7 @@ end
 print(table.concat(rows, "\\n"))
 """
 
-stub = io.open("tools/roblox_stub.luau", encoding="utf-8").read()
-surfaces = io.open("src/greybox/Surfaces.luau", encoding="utf-8").read()
-greybox = io.open("src/greybox/init.luau", encoding="utf-8").read()
-greybox = greybox.replace("require(script.Surfaces)", "__M.Surfaces")
-bundle = (
-    stub
-    + "\nlocal __M = {}\n__M.Surfaces = (function()\n" + surfaces + "\nend)()\n"
-    + "local function MODULE()\n" + greybox + "\nend\nlocal G = MODULE()\nG.build()\n"
-    + dump
-)
+bundle = greybox_bundle.bundle(dump)
 
 with tempfile.TemporaryDirectory() as tmp:
     path = os.path.join(tmp, "overlap.luau")
